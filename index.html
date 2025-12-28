@@ -5,136 +5,182 @@
   <title>App Builder</title>
 
   <style>
-    body {
+    :root {
+      --bg: #0f172a;
+      --card: #111827;
+      --accent: #22c55e;
+      --text: #e5e7eb;
+      --muted: #9ca3af;
+    }
+
+    * {
+      box-sizing: border-box;
       font-family: sans-serif;
-      direction: rtl;
+    }
+
+    body {
       margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      direction: rtl;
+    }
+
+    nav {
+      display: flex;
+      gap: 8px;
       padding: 10px;
+      background: #020617;
+      position: sticky;
+      top: 0;
     }
 
     nav button {
-      margin: 5px;
-      padding: 8px 12px;
+      flex: 1;
+      background: #1f2933;
+      color: var(--text);
+      border: none;
+      padding: 10px;
+      border-radius: 8px;
       cursor: pointer;
+    }
+
+    nav button:hover {
+      background: var(--accent);
+      color: #000;
+    }
+
+    #app {
+      padding: 15px;
     }
 
     .view {
       display: none;
-      margin-top: 20px;
+      background: var(--card);
+      border-radius: 12px;
+      padding: 16px;
+      animation: fade .3s;
     }
 
     .view.active {
       display: block;
     }
+
+    h2 {
+      margin-top: 0;
+      color: var(--accent);
+    }
+
+    p {
+      color: var(--muted);
+      line-height: 1.7;
+    }
+
+    .quiz button {
+      display: block;
+      width: 100%;
+      margin: 6px 0;
+      padding: 10px;
+      border-radius: 8px;
+      border: none;
+      background: #1f2937;
+      color: var(--text);
+      cursor: pointer;
+    }
+
+    .quiz button:hover {
+      background: var(--accent);
+      color: #000;
+    }
+
+    @keyframes fade {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
   </style>
 </head>
 <body>
 
-  <!-- منوی بالا -->
-  <nav>
-    <button onclick="Engine.open('home')">خانه</button>
-    <button onclick="Engine.open('lesson')">آموزش</button>
-    <button onclick="Engine.open('quiz')">آزمون</button>
-    <button onclick="Engine.open('result')">نتیجه</button>
-  </nav>
+<nav>
+  <button onclick="Engine.open('home')">خانه</button>
+  <button onclick="Engine.open('lesson')">آموزش</button>
+  <button onclick="Engine.open('quiz')">آزمون</button>
+  <button onclick="Engine.open('result')">نتیجه</button>
+</nav>
 
-  <!-- محل رندر صفحات -->
-  <div id="app"></div>
+<div id="app"></div>
 
-  <script>
-    const Engine = {
-      current: "home",
-      lang: "fa",
-      score: 0,
+<script>
+const Engine = {
+  score: 0,
 
-      command: {
-        languages: {
-          fa: {
-            home: "خانه",
-            lesson: "آموزش",
-            quiz: "آزمون",
-            result: "نتیجه",
-            welcome: "به اپ خوش آمدید",
-            yourScore: "امتیاز شما"
-          }
-        },
+  pages: [
+    { id: "home", type: "home" },
+    { id: "lesson", type: "lesson" },
+    {
+      id: "quiz",
+      type: "quiz",
+      question: "2 + 2 = ؟",
+      options: [2,3,4,5],
+      answer: 4
+    },
+    { id: "result", type: "result" }
+  ],
 
-        pages: [
-          { id: "home", type: "static" },
-          { id: "lesson", type: "content", text: "درس‌ها به‌صورت خودکار ساخته می‌شوند." },
-          {
-            id: "quiz",
-            type: "quiz",
-            question: "2 + 2 = ؟",
-            options: [2, 3, 4, 5],
-            answer: 4
-          },
-          { id: "result", type: "result" }
-        ]
-      },
+  init() {
+    this.render();
+    this.open("home");
+  },
 
-      t(key) {
-        return this.command.languages[this.lang][key];
-      },
+  render() {
+    const app = document.getElementById("app");
+    app.innerHTML = "";
 
-      init() {
-        this.render();
-        this.open("home");
-      },
+    this.pages.forEach(p => {
+      const s = document.createElement("section");
+      s.className = "view";
+      s.dataset.view = p.id;
 
-      render() {
-        const app = document.getElementById("app");
-        app.innerHTML = "";
-
-        this.command.pages.forEach(p => {
-          const s = document.createElement("section");
-          s.className = "view";
-          s.dataset.view = p.id;
-
-          if (p.type === "static") {
-            s.innerHTML = `<h2>${this.t("home")}</h2><p>${this.t("welcome")}</p>`;
-          }
-
-          if (p.type === "content") {
-            s.innerHTML = `<h2>${this.t("lesson")}</h2><p>${p.text}</p>`;
-          }
-
-          if (p.type === "quiz") {
-            s.innerHTML = `
-              <h2>${this.t("quiz")}</h2>
-              <p>${p.question}</p>
-              ${p.options.map(o =>
-                `<button onclick="Engine.answer(${o}, ${p.answer})">${o}</button>`
-              ).join("")}
-            `;
-          }
-
-          if (p.type === "result") {
-            s.innerHTML = `
-              <h2>${this.t("result")}</h2>
-              <p>${this.t("yourScore")}: <strong id="score">0</strong></p>
-            `;
-          }
-
-          app.appendChild(s);
-        });
-      },
-
-      answer(selected, correct) {
-        if (selected === correct) this.score += 10;
-        document.getElementById("score").innerText = this.score;
-        this.open("result");
-      },
-
-      open(view) {
-        document.querySelectorAll(".view").forEach(v => v.classList.remove("active"));
-        document.querySelector(`[data-view="${view}"]`)?.classList.add("active");
-        this.current = view;
+      if (p.type === "home") {
+        s.innerHTML = `<h2>خانه</h2><p>به اپ ساز خودکار خوش آمدید</p>`;
       }
-    };
 
-    Engine.init();
-  </script>
+      if (p.type === "lesson") {
+        s.innerHTML = `<h2>آموزش</h2><p>درس‌ها به‌صورت خودکار تولید می‌شوند</p>`;
+      }
+
+      if (p.type === "quiz") {
+        s.classList.add("quiz");
+        s.innerHTML = `
+          <h2>آزمون</h2>
+          <p>${p.question}</p>
+          ${p.options.map(o =>
+            `<button onclick="Engine.answer(${o}, ${p.answer})">${o}</button>`
+          ).join("")}
+        `;
+      }
+
+      if (p.type === "result") {
+        s.innerHTML = `<h2>نتیجه</h2><p>امتیاز شما: <b id="score">0</b></p>`;
+      }
+
+      app.appendChild(s);
+    });
+  },
+
+  answer(val, correct) {
+    if (val === correct) this.score += 10;
+    document.getElementById("score").innerText = this.score;
+    this.open("result");
+  },
+
+  open(view) {
+    document.querySelectorAll(".view").forEach(v => v.classList.remove("active"));
+    document.querySelector(`[data-view="${view}"]`).classList.add("active");
+  }
+};
+
+Engine.init();
+</script>
 
 </body>
 </html>
