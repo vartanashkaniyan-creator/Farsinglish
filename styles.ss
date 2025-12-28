@@ -1,3 +1,4 @@
+/* تنظیمات پیش‌فرض */
 * {
     margin: 0;
     padding: 0;
@@ -5,56 +6,94 @@
 }
 
 body {
-    font-family: Arial, sans-serif;
-    background-color: #f0f0f0;
+    font-family: 'Roboto', sans-serif;
+    background: linear-gradient(45deg, #f3f4f9, #d9e7f1);
     color: #333;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+}
+
+/* تنظیمات برای کانتینر */
+.container {
+    background: white;
+    border-radius: 10px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    width: 90%;
+    max-width: 800px;
+    padding: 20px;
     text-align: center;
 }
 
-header {
-    background-color: #333;
-    color: white;
-    padding: 10px 0;
+/* طراحی هدر */
+header h1 {
+    color: #333;
+    margin-bottom: 20px;
+    font-size: 2.5rem;
 }
 
-nav ul {
-    list-style-type: none;
+/* طراحی textarea */
+textarea {
+    width: 100%;
+    height: 120px;
+    padding: 15px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    font-size: 16px;
+    resize: none;
+    outline: none;
+    margin-bottom: 20px;
+    transition: border-color 0.3s;
 }
 
-nav ul li {
-    display: inline;
-    margin-right: 20px;
+textarea:focus {
+    border-color: #4CAF50;
 }
 
-nav ul li a {
-    color: white;
-    text-decoration: none;
-}
-
+/* طراحی دکمه */
 button {
     padding: 10px 20px;
     background-color: #4CAF50;
     color: white;
     border: none;
     border-radius: 5px;
+    font-size: 16px;
     cursor: pointer;
+    transition: background-color 0.3s ease;
+    width: 50%;
 }
 
 button:hover {
     background-color: #45a049;
 }
 
+/* طراحی قسمت خروجی */
+.output {
+    background-color: #f9f9f9;
+    padding: 20px;
+    border-radius: 8px;
+    border: 1px solid #ddd;
+    margin-top: 20px;
+    text-align: left;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+}
+
+/* طراحی فوتر */
 footer {
-    margin-top: 50px;
-    background-color: #333;
-    color: white;
-    padding: 10px;
+    margin-top: 40px;
+    color: #777;
+    font-size: 14px;
 }
 
 /* طراحی واکنش‌گرا */
 @media screen and (max-width: 600px) {
-    nav ul li {
-        display: block;
-        margin: 5px 0;
+    textarea {
+        width: 100%;
+        height: 100px;
+    }
+    button {
+        width: 70%;
     }
 }
