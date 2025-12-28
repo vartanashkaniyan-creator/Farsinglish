@@ -1,81 +1,118 @@
 function generate() {
-  const raw = document.getElementById("command").value;
-  const cfg = {};
+  const input = document.getElementById("command").value;
+  const model = parseDSL(input);
+  const appHTML = buildApp(model);
+  document.getElementById("preview").srcdoc = appHTML;
+}
 
-  raw.split("\n").forEach(line => {
-    const [k, v] = line.split("=");
-    if (k && v) cfg[k.trim()] = v.trim();
+/* ========= PARSER (چندلایه) ========= */
+function parseDSL(text) {
+  const lines = text.split("\n");
+  const tree = {};
+  let currentBlock = null;
+  let currentSub = null;
+
+  lines.forEach(l => {
+    let line = l.trim();
+    if (!line) return;
+
+    if (line.endsWith("{") && !currentBlock) {
+      currentBlock = line.replace("{","").trim();
+      tree[currentBlock] = {};
+    }
+    else if (line.endsWith("{") && currentBlock) {
+      currentSub = line.replace("{","").trim();
+      tree[currentBlock][currentSub] = {};
+    }
+    else if (line === "}") {
+      if (currentSub) currentSub = null;
+      else currentBlock = null;
+    }
+    else if (line.includes(":")) {
+      const [k,v] = line.split(":");
+      if (currentSub)
+        tree[currentBlock][currentSub][k.trim()] = v.trim();
+      else
+        tree[currentBlock][k.trim()] = v.trim();
+    }
   });
 
-  // ===== Resolver =====
-  const screens = (cfg.SCREENS || "").split(",");
-  const dark = cfg.THEME === "dark";
-  const rtl = cfg.RTL === "true";
+  return tree;
+}
 
-  // ===== UI Generator =====
-  let ui = `<h2>${cfg.APP_NAME || "My App"}</h2>`;
+/* ========= RESOLVER + GENERATOR ========= */
+function buildApp(model) {
+  const app = model.APP || {};
+  const screens = model.SCREENS || {};
 
-  if (screens.includes("home")) {
-    ui += `<button onclick="go('lesson')">📘 درس‌ها</button>`;
+  let body = `<h2>${app.NAME || "My App"}</h2>`;
+
+  // HOME
+  if (screens.home) {
+    body += `<button onclick="go('lesson')">شروع</button>`;
   }
 
-  if (screens.includes("lesson")) {
-    ui += `
+  // LESSON
+  if (screens.lesson) {
+    body += `
       <div id="lesson" class="page">
         <h3>Lesson 1</h3>
         <p>Hello = سلام</p>
-      </div>`;
+        <button onclick="completeLesson()">پایان درس</button>
+      </div>
+    `;
   }
 
-  if (cfg.QUIZ) {
-    ui += `
-      <div class="quiz">
+  // QUIZ (شرط‌دار)
+  if (screens.quiz) {
+    body += `
+      <div id="quiz" class="page">
         <p>سلام یعنی؟</p>
-        <button onclick="score(1)">Hello</button>
-        <button onclick="score(0)">Bye</button>
-      </div>`;
+        <button onclick="answer(true)">Hello</button>
+        <button onclick="answer(false)">Bye</button>
+      </div>
+    `;
   }
 
-  // ===== Logic Generator =====
-  let logic = `
-    let totalScore = 0;
-    function go(id){
-      document.querySelectorAll('.page').forEach(p=>p.style.display='none');
-      document.getElementById(id).style.display='block';
-    }
-    function score(v){
-      totalScore += v;
-      ${cfg.SCORE ? "alert('امتیاز: '+totalScore)" : ""}
-      ${cfg.USER_PROGRESS ? "localStorage.setItem('score',totalScore);" : ""}
-    }
-  `;
-
-  // ===== App Template =====
-  const app = `
+  return `
   <html>
   <head>
     <meta name="viewport" content="width=device-width,initial-scale=1">
     <style>
       body{
-        font-family:${cfg.FONT || "sans-serif"};
-        background:${dark ? "#0f172a" : "#fff"};
-        color:${dark ? "#fff" : "#000"};
-        direction:${rtl ? "rtl" : "ltr"};
+        font-family:sans-serif;
+        background:${app.THEME === "dark" ? "#0f172a" : "#fff"};
+        color:${app.THEME === "dark" ? "#fff" : "#000"};
+        direction:${app.LANG?.includes("fa") ? "rtl":"ltr"};
         padding:15px;
       }
-      button{
-        width:100%;padding:12px;margin:6px 0;
-        border-radius:12px;border:none;
-      }
+      button{width:100%;padding:12px;margin:6px 0;border-radius:12px}
       .page{display:none}
     </style>
   </head>
   <body>
-    ${ui}
-    <script>${logic}<\/script>
+    ${body}
+    <script>
+      let lessonDone = false;
+
+      function go(id){
+        document.querySelectorAll('.page').forEach(p=>p.style.display='none');
+        const el = document.getElementById(id);
+        if(el) el.style.display='block';
+      }
+
+      function completeLesson(){
+        lessonDone = true;
+        localStorage.setItem("lesson","done");
+        alert("درس کامل شد");
+        ${screens.quiz?.condition ? "go('quiz')" : ""}
+      }
+
+      function answer(ok){
+        alert(ok ? "درست" : "غلط");
+      }
+    <\/script>
   </body>
   </html>
   `;
-
-  document.getElementById("preview").srcdoc = app;
 }
