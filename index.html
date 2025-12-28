@@ -3,31 +3,27 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>نسخه حرفه‌ای اپلیکیشن من</title>
+    <title>نرم‌افزار کد نویس خودکار</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="css/styles.css">
 </head>
 <body>
-    <header>
-        <nav>
-            <ul>
-                <li><a href="#">خانه</a></li>
-                <li><a href="#">درباره</a></li>
-                <li><a href="#">تماس</a></li>
-            </ul>
-        </nav>
-    </header>
+    <div class="container">
+        <header>
+            <h1>نرم‌افزار کدنویس خودکار</h1>
+        </header>
+        
+        <main>
+            <textarea id="command" placeholder="دستور خود را وارد کنید..."></textarea>
+            <button onclick="generateCode()">تولید کد</button>
 
-    <main>
-        <section>
-            <h1>به اپلیکیشن من خوش آمدید!</h1>
-            <p>این یک نسخه حرفه‌ای است که به راحتی قابل توسعه است.</p>
-            <button id="myButton">کلیک کن</button>
-        </section>
-    </main>
+            <div id="output" class="output"></div>
+        </main>
 
-    <footer>
-        <p>کپی‌رایت © 2025 اپلیکیشن من</p>
-    </footer>
+        <footer>
+            <p>&copy; 2025 اپلیکیشن من</p>
+        </footer>
+    </div>
 
     <script src="js/script.js"></script>
 </body>
