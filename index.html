@@ -53,6 +53,13 @@ nav button{
   font-weight:bold;
   color:#2196f3;
 }
+input,textarea{
+  width:100%;
+  padding:12px;
+  margin-top:10px;
+  border-radius:10px;
+  border:1px solid #ccc;
+}
 </style>
 </head>
 
@@ -73,37 +80,7 @@ nav button{
 const Engine = {
   score:0,
 
-  pages:{
-    home:`
-      <div class="card">
-        <h2>خانه</h2>
-        <p>این یک موتور حرفه‌ای ساخت اپ است.</p>
-        <p>با دستور، اپ تولید می‌کند.</p>
-      </div>`,
-
-    lesson:`
-      <div class="card">
-        <h2>آموزش</h2>
-        <p>محتوا به‌صورت خودکار ساخته شده.</p>
-      </div>`,
-
-    quiz:`
-      <div class="card quiz">
-        <h2>آزمون</h2>
-        <p>۲ + ۲ = ؟</p>
-        <button onclick="Engine.answer(2)">۲</button>
-        <button onclick="Engine.answer(3)">۳</button>
-        <button onclick="Engine.answer(4)">۴</button>
-        <button onclick="Engine.answer(5)">۵</button>
-      </div>`,
-
-    result:`
-      <div class="card">
-        <h2>نتیجه</h2>
-        <p>امتیاز شما:</p>
-        <div class="score" id="score">0</div>
-      </div>`
-  },
+  pages:{},
 
   open(page){
     document.getElementById("app").innerHTML=this.pages[page];
@@ -113,23 +90,78 @@ const Engine = {
   },
 
   answer(v){
-    if(v===4)this.score+=10;
+    if(v===4 || v===10)this.score+=10;
     this.open("result");
+  },
+
+  buildFromCommand(cmd){
+    const c = cmd.toLowerCase();
+
+    this.pages = {
+      home:`
+        <div class="card">
+          <h2>خانه</h2>
+          <p>اپ از روی دستور ساخته شد.</p>
+        </div>
+      `
+    };
+
+    if(c.includes("آموزش")){
+      this.pages.lesson = `
+        <div class="card">
+          <h2>آموزش</h2>
+          <p>محتوای آموزشی به‌صورت خودکار تولید شد.</p>
+        </div>
+      `;
+    }
+
+    if(c.includes("آزمون")){
+      this.pages.quiz = `
+        <div class="card quiz">
+          <h2>آزمون</h2>
+          <p>۵ + ۵ = ؟</p>
+          <button onclick="Engine.answer(8)">۸</button>
+          <button onclick="Engine.answer(9)">۹</button>
+          <button onclick="Engine.answer(10)">۱۰</button>
+        </div>
+      `;
+    }
+
+    this.pages.result = `
+      <div class="card">
+        <h2>نتیجه</h2>
+        <p>امتیاز شما:</p>
+        <div class="score" id="score">0</div>
+      </div>
+    `;
+
+    this.open("home");
   }
 };
 
+/* ===== INITIAL UI ===== */
+Engine.pages.home = `
+  <div class="card">
+    <h2>دستور ساخت اپ</h2>
+    <textarea id="cmd" placeholder="مثال: آموزش و آزمون بساز"></textarea>
+    <button style="margin-top:10px" onclick="
+      Engine.buildFromCommand(
+        document.getElementById('cmd').value
+      )
+    ">ساخت اپ</button>
+  </div>
+`;
+
 Engine.open("home");
 
-/* ========== PWA INLINE (بدون فایل جدا) ========== */
-
+/* ===== PWA INLINE ===== */
 if("serviceWorker" in navigator){
   const swCode = `
     self.addEventListener("install",e=>self.skipWaiting());
     self.addEventListener("fetch",e=>{});
   `;
   const blob = new Blob([swCode],{type:"text/javascript"});
-  const swURL = URL.createObjectURL(blob);
-  navigator.serviceWorker.register(swURL);
+  navigator.serviceWorker.register(URL.createObjectURL(blob));
 }
 </script>
 
