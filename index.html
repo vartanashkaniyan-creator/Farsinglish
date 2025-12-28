@@ -2,102 +2,90 @@
 <html lang="fa">
 <head>
   <meta charset="UTF-8">
-  <title>App Builder</title>
+  <title>Auto App Engine</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
 
   <style>
-    :root {
-      --bg: #0f172a;
-      --card: #111827;
-      --accent: #22c55e;
-      --text: #e5e7eb;
-      --muted: #9ca3af;
-    }
-
     * {
       box-sizing: border-box;
-      font-family: sans-serif;
     }
 
     body {
       margin: 0;
-      background: var(--bg);
-      color: var(--text);
+      font-family: sans-serif;
+      background: #f2f4f8;
       direction: rtl;
+      color: #333;
     }
 
     nav {
       display: flex;
-      gap: 8px;
-      padding: 10px;
-      background: #020617;
+      justify-content: space-around;
+      align-items: center;
+      padding: 12px;
+      background: #ffffff;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
       position: sticky;
       top: 0;
+      z-index: 10;
     }
 
     nav button {
-      flex: 1;
-      background: #1f2933;
-      color: var(--text);
+      padding: 10px 16px;
       border: none;
-      padding: 10px;
-      border-radius: 8px;
+      border-radius: 10px;
+      background: #e9edf3;
+      font-size: 14px;
       cursor: pointer;
+      transition: 0.2s;
     }
 
     nav button:hover {
-      background: var(--accent);
-      color: #000;
+      background: #d5dbea;
     }
 
     #app {
-      padding: 15px;
+      padding: 20px;
     }
 
-    .view {
-      display: none;
-      background: var(--card);
-      border-radius: 12px;
-      padding: 16px;
-      animation: fade .3s;
+    .card {
+      background: #ffffff;
+      border-radius: 14px;
+      padding: 20px;
+      margin-bottom: 16px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.06);
     }
 
-    .view.active {
-      display: block;
-    }
-
-    h2 {
+    h1 {
       margin-top: 0;
-      color: var(--accent);
-    }
-
-    p {
-      color: var(--muted);
-      line-height: 1.7;
+      font-size: 20px;
     }
 
     .quiz button {
-      display: block;
       width: 100%;
-      margin: 6px 0;
-      padding: 10px;
-      border-radius: 8px;
+      margin-top: 10px;
+      padding: 14px;
       border: none;
-      background: #1f2937;
-      color: var(--text);
+      border-radius: 12px;
+      background: #4caf50;
+      color: #fff;
+      font-size: 16px;
       cursor: pointer;
+      transition: 0.2s;
     }
 
     .quiz button:hover {
-      background: var(--accent);
-      color: #000;
+      background: #43a047;
     }
 
-    @keyframes fade {
-      from { opacity: 0; transform: translateY(10px); }
-      to { opacity: 1; transform: translateY(0); }
+    .score {
+      font-size: 18px;
+      font-weight: bold;
+      color: #2196f3;
     }
   </style>
 </head>
+
 <body>
 
 <nav>
@@ -113,73 +101,57 @@
 const Engine = {
   score: 0,
 
-  pages: [
-    { id: "home", type: "home" },
-    { id: "lesson", type: "lesson" },
-    {
-      id: "quiz",
-      type: "quiz",
-      question: "2 + 2 = ؟",
-      options: [2,3,4,5],
-      answer: 4
-    },
-    { id: "result", type: "result" }
-  ],
+  pages: {
+    home: `
+      <div class="card">
+        <h1>خانه</h1>
+        <p>به اپ ساز خودکار خوش آمدید.</p>
+        <p>این موتور می‌تواند اپ‌های مختلف را از روی دستور بسازد.</p>
+      </div>
+    `,
 
-  init() {
-    this.render();
-    this.open("home");
+    lesson: `
+      <div class="card">
+        <h1>آموزش</h1>
+        <p>این محتوا به صورت خودکار تولید شده است.</p>
+      </div>
+    `,
+
+    quiz: `
+      <div class="card quiz">
+        <h1>آزمون</h1>
+        <p>۲ + ۲ = ؟</p>
+        <button onclick="Engine.answer(2)">۲</button>
+        <button onclick="Engine.answer(3)">۳</button>
+        <button onclick="Engine.answer(4)">۴</button>
+        <button onclick="Engine.answer(5)">۵</button>
+      </div>
+    `,
+
+    result: `
+      <div class="card">
+        <h1>نتیجه</h1>
+        <p>امتیاز شما:</p>
+        <div class="score" id="score">0</div>
+      </div>
+    `
   },
 
-  render() {
+  open(page) {
     const app = document.getElementById("app");
-    app.innerHTML = "";
-
-    this.pages.forEach(p => {
-      const s = document.createElement("section");
-      s.className = "view";
-      s.dataset.view = p.id;
-
-      if (p.type === "home") {
-        s.innerHTML = `<h2>خانه</h2><p>به اپ ساز خودکار خوش آمدید</p>`;
-      }
-
-      if (p.type === "lesson") {
-        s.innerHTML = `<h2>آموزش</h2><p>درس‌ها به‌صورت خودکار تولید می‌شوند</p>`;
-      }
-
-      if (p.type === "quiz") {
-        s.classList.add("quiz");
-        s.innerHTML = `
-          <h2>آزمون</h2>
-          <p>${p.question}</p>
-          ${p.options.map(o =>
-            `<button onclick="Engine.answer(${o}, ${p.answer})">${o}</button>`
-          ).join("")}
-        `;
-      }
-
-      if (p.type === "result") {
-        s.innerHTML = `<h2>نتیجه</h2><p>امتیاز شما: <b id="score">0</b></p>`;
-      }
-
-      app.appendChild(s);
-    });
+    app.innerHTML = this.pages[page];
+    if (page === "result") {
+      document.getElementById("score").innerText = this.score;
+    }
   },
 
-  answer(val, correct) {
-    if (val === correct) this.score += 10;
-    document.getElementById("score").innerText = this.score;
+  answer(val) {
+    if (val === 4) this.score += 10;
     this.open("result");
-  },
-
-  open(view) {
-    document.querySelectorAll(".view").forEach(v => v.classList.remove("active"));
-    document.querySelector(`[data-view="${view}"]`).classList.add("active");
   }
 };
 
-Engine.init();
+Engine.open("home");
 </script>
 
 </body>
