@@ -1,48 +1,48 @@
-* {
-  box-sizing: border-box;
-  font-family: sans-serif;
-}
-
 body {
   margin: 0;
+  font-family: sans-serif;
   background: #f4f6f8;
+  color: #222;
 }
 
-.navbar {
+nav {
   display: flex;
-  gap: 10px;
-  padding: 10px;
-  background: #111;
-}
-
-.navbar button {
-  flex: 1;
-  padding: 12px;
-  border: none;
+  justify-content: space-around;
   background: #222;
-  color: white;
-  border-radius: 8px;
-  cursor: pointer;
+  padding: 10px;
 }
 
-.navbar button:hover {
-  background: #444;
-}
-
-#app {
-  padding: 20px;
+nav button {
+  background: none;
+  border: none;
+  color: #fff;
+  font-size: 16px;
 }
 
 .view {
   display: none;
-  animation: fade 0.3s ease;
+  padding: 20px;
 }
 
 .view.active {
   display: block;
 }
 
-@keyframes fade {
-  from { opacity: 0; transform: translateY(10px); }
-  to   { opacity: 1; transform: translateY(0); }
+.card {
+  background: #fff;
+  border-radius: 12px;
+  padding: 20px;
+  margin-top: 20px;
+}
+
+button.option {
+  display: block;
+  width: 100%;
+  margin: 10px 0;
+  padding: 12px;
+  border-radius: 8px;
+  border: none;
+  background: #4CAF50;
+  color: white;
+  font-size: 16px;
 }
