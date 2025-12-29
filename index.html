@@ -2,27 +2,38 @@
 <html lang="fa">
 <head>
   <meta charset="UTF-8">
-  <title>Ashk App Creator</title>
+  <title>App Preview</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      background: #111;
+      color: #0f0;
+      padding: 16px;
+    }
+    iframe {
+      width: 100%;
+      height: 80vh;
+      border: 1px solid #0f0;
+      background: #fff;
+    }
+  </style>
 </head>
 <body>
 
-  <h1>Ashk App Creator</h1>
+<h2>پیش‌نمایش اپ</h2>
 
-  <textarea
-    id="commandInput"
-    placeholder="مثال: create todo app یا اپ لیست بساز"
-    rows="4"
-    cols="40"
-  ></textarea>
+<iframe id="appFrame"></iframe>
 
-  <br><br>
+<script>
+  const code = localStorage.getItem("generatedCode");
 
-  <button id="generateBtn">تولید کد اپ</button>
-
-  <pre id="output">// generated code will appear here</pre>
-
-  <!-- فقط همین اسکریپت -->
-  <script src="js/main.js"></script>
+  if (code) {
+    const frame = document.getElementById("appFrame");
+    frame.srcdoc = code;
+  } else {
+    document.body.innerHTML += "<p>هیچ کدی برای پیش‌نمایش وجود ندارد</p>";
+  }
+</script>
 
 </body>
 </html>
