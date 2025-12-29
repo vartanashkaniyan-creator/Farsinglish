@@ -3,14 +3,20 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>App Builder</title>
+    <title>اپلیکیشن</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <div id="app"></div>
-    <button onclick="showApp('lesson')">آموزش</button>
-    <button onclick="showApp('quiz')">آزمون</button>
-    <button onclick="showApp('result')">نتیجه</button>
+    <div id="app">
+        <!-- صفحه ورود -->
+        <section id="login" class="view">
+            <h1>ورود به اپ</h1>
+            <input type="text" id="username" placeholder="نام کاربری" />
+            <input type="password" id="password" placeholder="رمز عبور" />
+            <button onclick="Engine.login()">ورود</button>
+        </section>
+    </div>
+
     <script src="script.js"></script>
 </body>
 </html>
