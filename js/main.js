@@ -1,24 +1,19 @@
-document.addEventListener("DOMContentLoaded", function () {
+document.addEventListener("DOMContentLoaded", () => {
   const btn = document.getElementById("generateBtn");
   const input = document.getElementById("commandInput");
   const output = document.getElementById("output");
 
-  if (!btn || !input || !output) {
-    console.log("Elements not found");
-    return;
-  }
-
-  btn.addEventListener("click", function () {
+  btn.onclick = () => {
     const cmd = input.value.trim().toLowerCase();
 
-    if (!cmd) {
-      output.textContent = "⛔ دستور خالی است";
+    if (cmd === "") {
+      output.textContent = "⛔ دستور وارد نشده";
       return;
     }
 
     if (cmd.includes("todo") || cmd.includes("لیست")) {
       output.textContent =
-`// Simple Todo App
+`<!-- Simple Todo App -->
 <html>
 <body>
 <h1>Todo App</h1>
@@ -27,7 +22,7 @@ document.addEventListener("DOMContentLoaded", function () {
 </body>
 </html>`;
     } else {
-      output.textContent = "❓ دستور شناخته نشد";
+      output.textContent = "❌ دستور شناخته نشد";
     }
-  });
+  };
 });
