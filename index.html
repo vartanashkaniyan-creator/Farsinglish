@@ -3,27 +3,28 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>اپلیکیشن آموزشی</title>
-    <link rel="stylesheet" href="style.css">
+    <title>آزمون آنلاین</title>
+    <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-    <div id="app">
-        <!-- صفحه ورود -->
-        <section id="login" class="view">
-            <h1 id="login-title">ورود به اپ</h1>
-            <input type="text" id="username" placeholder="نام کاربری" />
-            <input type="password" id="password" placeholder="رمز عبور" />
-            <button id="login-button" onclick="Engine.login()">${Engine.languagePack[Engine.lang].loginButton}</button>
-        </section>
-        
-        <!-- منوی انتخاب زبان -->
-        <section id="language-selection" class="view">
-            <h1>انتخاب زبان</h1>
-            <button onclick="Engine.changeLanguage('fa')">فارسی</button>
-            <button onclick="Engine.changeLanguage('en')">English</button>
-        </section>
+    <div id="login">
+        <h1>ورود به آزمون</h1>
+        <form id="quizForm">
+            <label for="question">۲ + ۲ = ؟</label>
+            <div>
+                <input type="radio" name="answer" value="2" id="answer1"> <label for="answer1">۲</label><br>
+                <input type="radio" name="answer" value="3" id="answer2"> <label for="answer2">۳</label><br>
+                <input type="radio" name="answer" value="4" id="answer3"> <label for="answer3">۴</label><br>
+                <input type="radio" name="answer" value="5" id="answer4"> <label for="answer4">۵</label><br>
+            </div>
+            <button type="submit">ثبت جواب</button>
+        </form>
+        <div id="result" class="hidden">
+            <h2>نتیجه آزمون:</h2>
+            <p id="score"></p>
+            <button onclick="reloadPage()">شروع مجدد</button>
+        </div>
     </div>
-
     <script src="script.js"></script>
 </body>
 </html>
