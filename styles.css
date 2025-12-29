@@ -1,3 +1,4 @@
+/* استایل کلی */
 body {
     font-family: 'Arial', sans-serif;
     background-color: #fafafa;
@@ -6,6 +7,7 @@ body {
     padding: 0;
 }
 
+/* صفحه ورود */
 #login {
     text-align: center;
     margin-top: 50px;
@@ -29,13 +31,43 @@ body {
     background-color: #45a049;
 }
 
+/* صفحه آموزشی */
+#lesson {
+    text-align: center;
+    margin-top: 50px;
+}
+
+#lesson button {
+    background-color: #4CAF50;
+    color: white;
+    font-size: 18px;
+    padding: 10px 20px;
+    margin: 10px;
+    cursor: pointer;
+    border-radius: 5px;
+    transition: background-color 0.3s ease;
+}
+
+#lesson button:hover {
+    background-color: #45a049;
+}
+
 h1 {
     font-size: 32px;
-    text-align: center;
-    margin-top: 20px;
+    color: #333;
 }
 
 p {
     font-size: 18px;
-    text-align: center;
+    color: #666;
+}
+
+/* برای صفحات دیگر */
+.container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+    min-height: 100vh;
+    padding: 20px;
 }
