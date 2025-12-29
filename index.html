@@ -3,73 +3,84 @@
 <head>
   <meta charset="UTF-8">
   <title>Ashk App Creator</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
   <style>
     body {
+      background: #1a1a1a;
+      color: #eaeaea;
       font-family: sans-serif;
-      background: #e6e6e0;
       padding: 16px;
     }
+
+    h1 {
+      margin-bottom: 8px;
+    }
+
     textarea {
       width: 100%;
       height: 120px;
-      font-size: 16px;
-      padding: 8px;
+      background: #111;
+      color: #00ff7f;
+      border: 1px solid #00ff7f;
+      padding: 10px;
+      font-size: 14px;
     }
+
     button {
       margin-top: 10px;
-      padding: 8px 16px;
-      font-size: 16px;
+      padding: 10px 16px;
+      font-size: 15px;
+      cursor: pointer;
     }
+
     pre {
-      background: #000;
-      color: #0f0;
-      padding: 12px;
       margin-top: 16px;
-      white-space: pre-wrap;
+      background: #000;
+      color: #00ff7f;
+      padding: 12px;
+      overflow-x: auto;
+      border: 1px solid #00ff7f;
+      min-height: 120px;
     }
   </style>
 </head>
+
 <body>
 
-<h1>Ashk App Creator</h1>
-<p>دستور اپ را بنویس (فارسی یا انگلیسی)</p>
+  <h1>Ashk App Creator</h1>
+  <p>دستور اپ را بنویس (فارسی یا انگلیسی):</p>
 
-<textarea id="command" placeholder="مثال: create todo app یا اپ لیست بساز"></textarea>
+  <!-- ❌ فرم نداریم → هیچ submit ای انجام نمی‌شود -->
+  <textarea id="command">create todo app</textarea>
 
-<br>
-<button onclick="generateApp()">تولید کد اپ</button>
+  <!-- 🔑 خیلی مهم: type="button" -->
+  <button type="button" onclick="generateCode()">تولید کد اپ</button>
 
-<pre id="output">// generated code will appear here</pre>
+  <pre id="output">// generated code will appear here</pre>
 
-<script>
-function generateApp() {
-  const input = document.getElementById("command").value.toLowerCase();
-  let code = "";
+  <script>
+    function generateCode() {
+      const cmd = document.getElementById("command").value.toLowerCase();
+      const output = document.getElementById("output");
 
-  if (input.includes("todo") || input.includes("لیست")) {
-    code = `
-<!DOCTYPE html>
+      if (cmd.includes("todo")) {
+        output.textContent = `<!DOCTYPE html>
 <html>
+<head>
+  <title>Todo App</title>
+</head>
 <body>
   <h2>Todo App</h2>
   <input placeholder="New task">
   <button>Add</button>
 </body>
-</html>
-    `;
-  } else {
-    code = "<h3>❌ دستور شناخته نشد</h3>";
-  }
-
-  document.getElementById("output").textContent = code;
-  localStorage.setItem("generatedCode", code);
-
-  // رفتن به پیش‌نمایش
-  setTimeout(() => {
-    window.location.href = "preview.html";
-  }, 500);
-}
-</script>
+</html>`;
+      } else {
+        output.textContent = "// دستور شناخته نشد";
+      }
+    }
+  </script>
 
 </body>
 </html>
