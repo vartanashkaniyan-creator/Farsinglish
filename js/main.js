@@ -1,18 +1,14 @@
-document.addEventListener("DOMContentLoaded", () => {
-  const btn = document.getElementById("generateBtn");
-  const input = document.getElementById("commandInput");
+function generateCode() {
+  const command = document.getElementById("command").value.trim().toLowerCase();
   const output = document.getElementById("output");
 
-  btn.addEventListener("click", () => {
-    const command = input.value.trim().toLowerCase();
+  if (!command) {
+    output.textContent = "❗ لطفاً دستور را وارد کنید";
+    return;
+  }
 
-    if (!command) {
-      output.textContent = "❗ دستور وارد کن";
-      return;
-    }
-
-    if (command.includes("todo") || command.includes("لیست")) {
-      output.textContent = `
+  if (command.includes("todo")) {
+    output.textContent = `
 <!DOCTYPE html>
 <html>
 <head>
@@ -25,9 +21,13 @@ document.addEventListener("DOMContentLoaded", () => {
 <button>Add</button>
 </body>
 </html>
-      `;
-    } else {
-      output.textContent = "❌ دستور شناخته نشد";
-    }
-  });
-});
+    `;
+  } else {
+    output.textContent = "❌ دستور شناخته نشد";
+  }
+}
+
+// ❌ عمداً خالی گذاشتیم تا صفحه عوض نشه
+function goPreview() {
+  alert("پیش‌نمایش بعداً اضافه می‌شود 🙂");
+}
