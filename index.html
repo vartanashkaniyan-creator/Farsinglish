@@ -3,53 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>نرم‌افزار کدنویس خودکار</title>
-    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="css/styles.css">
+    <title>App Builder</title>
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <div class="container">
-        <header>
-            <h1>نرم‌افزار کدنویس خودکار</h1>
-        </header>
-        
-        <main>
-            <textarea id="command" placeholder="دستور خود را وارد کنید..."></textarea>
-            <button onclick="generateCode()">تولید کد</button>
-
-            <div id="output" class="output"></div>
-
-            <!-- منو کشویی -->
-            <nav class="dropdown">
-                <button class="dropbtn">منو</button>
-                <div class="dropdown-content">
-                    <a href="#">صفحه اصلی</a>
-                    <a href="#">درباره ما</a>
-                    <a href="#">تماس با ما</a>
-                </div>
-            </nav>
-
-            <!-- گالری تصاویر -->
-            <div class="gallery">
-                <img src="image1.jpg" alt="تصویر 1">
-                <img src="image2.jpg" alt="تصویر 2">
-                <img src="image3.jpg" alt="تصویر 3">
-            </div>
-
-            <!-- فرم داینامیک -->
-            <form id="contactForm">
-                <input type="text" id="name" placeholder="نام شما" required>
-                <input type="email" id="email" placeholder="ایمیل شما" required>
-                <textarea id="message" placeholder="پیام شما" required></textarea>
-                <button type="submit">ارسال</button>
-            </form>
-        </main>
-
-        <footer>
-            <p>&copy; 2025 اپلیکیشن من</p>
-        </footer>
-    </div>
-
-    <script src="js/script.js"></script>
+    <div id="app"></div>
+    <button onclick="showApp('lesson')">آموزش</button>
+    <button onclick="showApp('quiz')">آزمون</button>
+    <button onclick="showApp('result')">نتیجه</button>
+    <script src="script.js"></script>
 </body>
 </html>
