@@ -1,15 +1,9 @@
 function generateCode() {
-  const command = document.getElementById("command").value.trim().toLowerCase();
   const output = document.getElementById("output");
+  const command = document.getElementById("command").value;
 
-  if (!command) {
-    output.textContent = "❗ لطفاً دستور را وارد کنید";
-    return;
-  }
-
-  if (command.includes("todo")) {
-    output.textContent = `
-<!DOCTYPE html>
+  output.textContent =
+`<!DOCTYPE html>
 <html>
 <head>
 <meta charset="UTF-8">
@@ -20,14 +14,9 @@ function generateCode() {
 <input placeholder="New task">
 <button>Add</button>
 </body>
-</html>
-    `;
-  } else {
-    output.textContent = "❌ دستور شناخته نشد";
-  }
+</html>`;
 }
 
-// ❌ عمداً خالی گذاشتیم تا صفحه عوض نشه
 function goPreview() {
-  alert("پیش‌نمایش بعداً اضافه می‌شود 🙂");
+  alert("پیش‌نمایش بعداً اضافه می‌شود");
 }
