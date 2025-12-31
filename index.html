@@ -1,24 +1,27 @@
 <!DOCTYPE html>
-<html lang="fa">
+<html lang="fa" dir="rtl">
 <head>
   <meta charset="UTF-8">
   <title>Ashk App Creator</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-  <h1>Ashk App Creator</h1>
-  <p>دستور را بنویس (فارسی یا انگلیسی)</p>
+  <div class="container">
+    <header>
+      <h1>Ashk App Creator</h1>
+      <p>دستور را بنویس (فارسی یا انگلیسی)</p>
+    </header>
 
-  <input id="command" placeholder="برنامه لیست کارها بساز">
-  <br><br>
+    <input id="command" placeholder="برنامه لیست کارها بساز">
 
-  <button onclick="generateCode()">تولید کد اپ</button>
-  <button onclick="goPreview()">پیش‌نمایش اپ</button>
+    <button id="generateBtn">تولید کد اپ</button>
+    <button id="previewBtn">پیش‌نمایش اپ</button>
 
-  <pre id="output">// generated code will appear here</pre>
+    <pre id="output">// generated code will appear here</pre>
+  </div>
 
-  <!-- مهم‌ترین خط -->
   <script src="main.js"></script>
-
 </body>
 </html>
