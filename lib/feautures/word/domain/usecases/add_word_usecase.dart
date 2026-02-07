@@ -36,6 +36,7 @@ class AddWordUseCase {
     try {
       return await _wordRepository.addWord(wordEntity);
     } on DuplicateWordException {
+      // این خطا را مستقیم پاس می‌دهیم تا تست آن را بگیرد
       rethrow;
     } catch (error) {
       throw AddWordException('خطا در افزودن کلمه: $error');
