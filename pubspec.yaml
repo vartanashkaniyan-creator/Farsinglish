@@ -1,3 +1,4 @@
+# pubspec.yaml
 name: english_learning_app
 description: "A Flutter application for learning English words with SRS."
 publish_to: 'none'
@@ -13,14 +14,14 @@ dependencies:
   path: ^1.8.3
   flutter_riverpod: ^2.4.9
   flutter_secure_storage: ^9.0.0
-  equatable: ^2.0.5    # برای مقایسه آسان objectها
+  equatable: ^2.0.5
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
   flutter_lints: ^3.0.1
-  mockito: ^5.4.0      # برای mocking در تست‌ها
-  build_runner: ^2.4.6 # برای generate کردن کدها
+  mockito: ^5.4.0
+  build_runner: ^2.4.6
 
 flutter:
   uses-material-design: true
