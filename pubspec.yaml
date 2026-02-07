@@ -1,5 +1,5 @@
 name: english_learning_app
-description: "یک اپلیکیشن آموزش زبان انگلیسی"
+description: "A Flutter application for learning English words with SRS."
 publish_to: 'none'
 version: 1.0.0+1
 
@@ -9,19 +9,18 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-  cupertino_icons: ^1.0.6
   sqflite: ^2.3.0
   path: ^1.8.3
   flutter_riverpod: ^2.4.9
   flutter_secure_storage: ^9.0.0
-  equatable: ^2.0.5
+  equatable: ^2.0.5    # برای مقایسه آسان objectها
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
   flutter_lints: ^3.0.1
-  mocktail: ^1.0.4  # تغییر mockito به mocktail
-  build_runner: ^2.4.8
+  mockito: ^5.4.0      # برای mocking در تست‌ها
+  build_runner: ^2.4.6 # برای generate کردن کدها
 
 flutter:
   uses-material-design: true
