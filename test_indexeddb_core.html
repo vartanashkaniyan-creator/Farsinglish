@@ -1,0 +1,527 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🧠 هسته IndexedDB Wrapper - Farsinglish</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Vazirmatn', 'Segoe UI', Tahoma, sans-serif;
+            background: linear-gradient(135deg, #0c2461, #1e3799);
+            color: #fff;
+            min-height: 100vh;
+            padding: 20px;
+            line-height: 1.8;
+        }
+        
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        h1 {
+            text-align: center;
+            margin-bottom: 10px;
+            color: #4cd137;
+            font-size: 2.5rem;
+            text-shadow: 0 2px 10px rgba(76, 209, 55, 0.3);
+        }
+        
+        .subtitle {
+            text-align: center;
+            color: #dcdde1;
+            margin-bottom: 30px;
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+        
+        .code-section {
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 15px;
+            padding: 25px;
+            margin: 20px 0;
+            border-right: 5px solid #00a8ff;
+        }
+        
+        .code-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .code-title {
+            font-size: 1.3rem;
+            color: #00a8ff;
+            font-weight: bold;
+        }
+        
+        .code-badge {
+            background: #e84118;
+            color: white;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            font-weight: bold;
+        }
+        
+        pre {
+            font-family: 'Courier New', monospace;
+            font-size: 0.95rem;
+            line-height: 1.5;
+            overflow-x: auto;
+            background: rgba(0, 0, 0, 0.5);
+            padding: 20px;
+            border-radius: 10px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .keyword {
+            color: #ff9ff3;
+        }
+        
+        .function {
+            color: #54a0ff;
+        }
+        
+        .string {
+            color: #1dd1a1;
+        }
+        
+        .comment {
+            color: #576574;
+            font-style: italic;
+        }
+        
+        .class-name {
+            color: #feca57;
+        }
+        
+        .features {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin: 30px 0;
+        }
+        
+        .feature-card {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 25px;
+            border-radius: 15px;
+            text-align: center;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: all 0.3s;
+        }
+        
+        .feature-card:hover {
+            transform: translateY(-5px);
+            border-color: #00a8ff;
+            box-shadow: 0 10px 30px rgba(0, 168, 255, 0.2);
+        }
+        
+        .feature-icon {
+            font-size: 2.5rem;
+            margin-bottom: 15px;
+            color: #4cd137;
+        }
+        
+        .feature-title {
+            font-size: 1.2rem;
+            margin-bottom: 10px;
+            color: #fff;
+        }
+        
+        .feature-desc {
+            color: #dcdde1;
+            font-size: 0.95rem;
+            line-height: 1.6;
+        }
+        
+        .action-buttons {
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+            margin-top: 40px;
+            flex-wrap: wrap;
+        }
+        
+        .btn {
+            padding: 18px 40px;
+            border: none;
+            border-radius: 50px;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            text-decoration: none;
+            min-width: 200px;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #4cd137, #44bd32);
+            color: white;
+        }
+        
+        .btn-secondary {
+            background: linear-gradient(135deg, #00a8ff, #0097e6);
+            color: white;
+        }
+        
+        .btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+        }
+        
+        @media (max-width: 768px) {
+            .container { padding: 20px; }
+            .features { grid-template-columns: 1fr; }
+            .btn { min-width: 100%; margin-bottom: 10px; }
+            h1 { font-size: 2rem; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧠 هسته IndexedDB Wrapper</h1>
+        <div class="subtitle">
+            نسخه کامل کلاس مدیریت پایگاه داده - آماده برای تست در مرورگر
+        </div>
+        
+        <div class="code-section">
+            <div class="code-header">
+                <div class="code-title">کلاس اصلی IndexedDBWrapper</div>
+                <div class="code-badge">Singleton Pattern</div>
+            </div>
+            <pre><code>// ==================== هسته اصلی IndexedDB ====================
+class IndexedDBWrapper {
+    constructor() {
+        if (IndexedDBWrapper.instance) {
+            return IndexedDBWrapper.instance;
+        }
+        
+        this.db = null;
+        this.dbName = 'farsinglish_db';
+        this.dbVersion = 1;
+        IndexedDBWrapper.instance = this;
+    }
+
+    async <span class="function">connect</span>(schemaConfig = null) {
+        return new Promise((resolve, reject) => {
+            if (this.db) {
+                resolve(this.db);
+                return;
+            }
+
+            const request = indexedDB.open(this.dbName, this.dbVersion);
+
+            request.onerror = (event) => {
+                reject(new Error(`Connection failed: ${event.target.error}`));
+            };
+
+            request.onsuccess = (event) => {
+                this.db = event.target.result;
+                resolve(this.db);
+            };
+
+            request.onupgradeneeded = (event) => {
+                const db = event.target.result;
+                if (schemaConfig) {
+                    this.<span class="function">_createTables</span>(db, schemaConfig);
+                }
+            };
+        });
+    }
+
+    <span class="function">_createTables</span>(db, schemaConfig) {
+        Object.entries(schemaConfig).forEach(([tableName, config]) => {
+            if (!db.objectStoreNames.contains(tableName)) {
+                const store = db.createObjectStore(tableName, {
+                    keyPath: config.keyPath || 'id',
+                    autoIncrement: config.autoIncrement || false
+                });
+
+                if (config.indexes && Array.isArray(config.indexes)) {
+                    config.indexes.forEach(indexConfig => {
+                        store.createIndex(
+                            indexConfig.name,
+                            indexConfig.keyPath,
+                            indexConfig.options || {}
+                        );
+                    });
+                }
+            }
+        });
+    }
+
+    <span class="function">getConnection</span>() { return this.db; }
+    <span class="function">isConnected</span>() { return !!this.db; }
+
+    async <span class="function">disconnect</span>() {
+        return new Promise((resolve) => {
+            if (this.db) {
+                this.db.close();
+                this.db = null;
+            }
+            resolve();
+        });
+    }
+
+    async <span class="function">deleteDatabase</span>() {
+        await this.disconnect();
+        return new Promise((resolve, reject) => {
+            const request = indexedDB.deleteDatabase(this.dbName);
+            request.onerror = (event) => reject(new Error(`Delete failed: ${event.target.error}`));
+            request.onsuccess = () => resolve();
+        });
+    }
+
+    <span class="function">startTransaction</span>(storeName, mode = 'readonly') {
+        if (!this.db) throw new Error('اتصال پایگاه داده برقرار نیست');
+        if (!this.db.objectStoreNames.contains(storeName)) {
+            throw new Error(`جدول ${storeName} وجود ندارد`);
+        }
+        return this.db.transaction(storeName, mode);
+    }
+
+    async <span class="function">executeInTransaction</span>(operation, storeName, mode = 'readwrite') {
+        return new Promise((resolve, reject) => {
+            const transaction = this.startTransaction(storeName, mode);
+            const store = transaction.objectStore(storeName);
+            
+            transaction.oncomplete = () => resolve();
+            transaction.onerror = (event) => reject(event.target.error);
+            
+            operation(store, transaction);
+        });
+    }
+}
+
+// ==================== اینترفیس برای تزریق وابستگی ====================
+class IDBWrapperInterface {
+    async <span class="function">connect</span>(schemaConfig) {}
+    <span class="function">getConnection</span>() {}
+    <span class="function">isConnected</span>() {}
+    async <span class="function">disconnect</span>() {}
+    async <span class="function">deleteDatabase</span>() {}
+    <span class="function">startTransaction</span>(storeName, mode) {}
+    async <span class="function">executeInTransaction</span>(operation, storeName, mode) {}
+}
+
+// ==================== اکسپورت به محیط جهانی ====================
+<span class="keyword">const</span> indexedDBWrapper = <span class="keyword">new</span> <span class="class-name">IndexedDBWrapper</span>();
+
+<span class="keyword">if</span> (<span class="keyword">typeof</span> window !== <span class="string">'undefined'</span>) {
+    window.<span class="class-name">IndexedDBWrapper</span> = IndexedDBWrapper;
+    window.indexedDBWrapper = indexedDBWrapper;
+    window.<span class="class-name">IDBWrapperInterface</span> = IDBWrapperInterface;
+}
+
+<span class="comment">// 🔥 کد آماده اجرا در مرورگر است</span></code></pre>
+        </div>
+        
+        <div class="features">
+            <div class="feature-card">
+                <div class="feature-icon">🔒</div>
+                <div class="feature-title">Singleton Pattern</div>
+                <div class="feature-desc">یک instance واحد در کل برنامه - جلوگیری از ایجاد دیتابیس‌های تکراری</div>
+            </div>
+            
+            <div class="feature-card">
+                <div class="feature-icon">⚡</div>
+                <div class="feature-title">اتصال هوشمند</div>
+                <div class="feature-desc">اتصال خودکار - ایجاد جداول در اولین اجرا - مدیریت versioning</div>
+            </div>
+            
+            <div class="feature-card">
+                <div class="feature-icon">🛡️</div>
+                <div class="feature-title">مدیریت خطا</div>
+                <div class="feature-desc">خطاگیری کامل - تراکنش‌های امن - اعتبارسنجی ورودی‌ها</div>
+            </div>
+            
+            <div class="feature-card">
+                <div class="feature-icon">🧩</div>
+                <div class="feature-title">اینترفیس استاندارد</div>
+                <div class="feature-desc">پیاده‌سازی IDBWrapperInterface برای تزریق وابستگی (DIP)</div>
+            </div>
+        </div>
+        
+        <div class="action-buttons">
+            <a href="test_indexeddb_runner.html" class="btn btn-primary">
+                <span>▶</span> اجرای تسترونر
+            </a>
+            <button onclick="testQuickConnection()" class="btn btn-secondary">
+                <span>🔧</span> تست اتصال سریع
+            </button>
+        </div>
+    </div>
+    
+    <script>
+        // ==================== کد واقعی در پس‌زمینه ====================
+        // (همان کد بالا اما بدون هایلایت)
+        class IndexedDBWrapper {
+            constructor() {
+                if (IndexedDBWrapper.instance) {
+                    return IndexedDBWrapper.instance;
+                }
+                
+                this.db = null;
+                this.dbName = 'farsinglish_db';
+                this.dbVersion = 1;
+                IndexedDBWrapper.instance = this;
+            }
+
+            async connect(schemaConfig = null) {
+                return new Promise((resolve, reject) => {
+                    if (this.db) {
+                        resolve(this.db);
+                        return;
+                    }
+
+                    const request = indexedDB.open(this.dbName, this.dbVersion);
+
+                    request.onerror = (event) => {
+                        reject(new Error(`Connection failed: ${event.target.error}`));
+                    };
+
+                    request.onsuccess = (event) => {
+                        this.db = event.target.result;
+                        resolve(this.db);
+                    };
+
+                    request.onupgradeneeded = (event) => {
+                        const db = event.target.result;
+                        if (schemaConfig) {
+                            this._createTables(db, schemaConfig);
+                        }
+                    };
+                });
+            }
+
+            _createTables(db, schemaConfig) {
+                Object.entries(schemaConfig).forEach(([tableName, config]) => {
+                    if (!db.objectStoreNames.contains(tableName)) {
+                        const store = db.createObjectStore(tableName, {
+                            keyPath: config.keyPath || 'id',
+                            autoIncrement: config.autoIncrement || false
+                        });
+
+                        if (config.indexes && Array.isArray(config.indexes)) {
+                            config.indexes.forEach(indexConfig => {
+                                store.createIndex(
+                                    indexConfig.name,
+                                    indexConfig.keyPath,
+                                    indexConfig.options || {}
+                                );
+                            });
+                        }
+                    }
+                });
+            }
+
+            getConnection() { return this.db; }
+            isConnected() { return !!this.db; }
+
+            async disconnect() {
+                return new Promise((resolve) => {
+                    if (this.db) {
+                        this.db.close();
+                        this.db = null;
+                    }
+                    resolve();
+                });
+            }
+
+            async deleteDatabase() {
+                await this.disconnect();
+                return new Promise((resolve, reject) => {
+                    const request = indexedDB.deleteDatabase(this.dbName);
+                    request.onerror = (event) => reject(new Error(`Delete failed: ${event.target.error}`));
+                    request.onsuccess = () => resolve();
+                });
+            }
+
+            startTransaction(storeName, mode = 'readonly') {
+                if (!this.db) throw new Error('اتصال پایگاه داده برقرار نیست');
+                if (!this.db.objectStoreNames.contains(storeName)) {
+                    throw new Error(`جدول ${storeName} وجود ندارد`);
+                }
+                return this.db.transaction(storeName, mode);
+            }
+
+            async executeInTransaction(operation, storeName, mode = 'readwrite') {
+                return new Promise((resolve, reject) => {
+                    const transaction = this.startTransaction(storeName, mode);
+                    const store = transaction.objectStore(storeName);
+                    
+                    transaction.oncomplete = () => resolve();
+                    transaction.onerror = (event) => reject(event.target.error);
+                    
+                    operation(store, transaction);
+                });
+            }
+        }
+
+        class IDBWrapperInterface {
+            async connect(schemaConfig) {}
+            getConnection() {}
+            isConnected() {}
+            async disconnect() {}
+            async deleteDatabase() {}
+            startTransaction(storeName, mode) {}
+            async executeInTransaction(operation, storeName, mode) {}
+        }
+
+        const indexedDBWrapper = new IndexedDBWrapper();
+
+        if (typeof window !== 'undefined') {
+            window.IndexedDBWrapper = IndexedDBWrapper;
+            window.indexedDBWrapper = indexedDBWrapper;
+            window.IDBWrapperInterface = IDBWrapperInterface;
+        }
+
+        // ==================== تست اتصال سریع ====================
+        async function testQuickConnection() {
+            try {
+                const schema = {
+                    test_users: {
+                        keyPath: 'id',
+                        indexes: [
+                            { name: 'email_idx', keyPath: 'email', options: { unique: true } }
+                        ]
+                    }
+                };
+                
+                await indexedDBWrapper.connect(schema);
+                alert('✅ اتصال تست موفق! دیتابیس ایجاد شد.\n\n' +
+                      '• نام دیتابیس: farsinglish_db\n' +
+                      '• جدول: test_users\n' +
+                      '• وضعیت: ' + (indexedDBWrapper.isConnected() ? 'متصل' : 'قطع'));
+            } catch (error) {
+                alert('❌ خطا در اتصال:\n' + error.message);
+            }
+        }
+        
+        console.log('✅ هسته IndexedDBWrapper بارگذاری شد');
+        console.log('- دسترسی: window.indexedDBWrapper');
+        console.log('- کلاس: window.IndexedDBWrapper');
+        console.log('- اینترفیس: window.IDBWrapperInterface');
+    </script>
+</body>
+</html>
