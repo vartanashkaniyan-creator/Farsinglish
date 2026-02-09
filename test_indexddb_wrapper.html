@@ -2,67 +2,226 @@
 <html lang="fa" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <title>تست IndexedDB Wrapper - Farsinglish</title>
+    <title>🧪 تست هوشمند IndexedDB - Farsinglish</title>
     <style>
-        body { 
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
-            padding: 20px; 
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        :root {
+            --success: #00b894;
+            --error: #d63031;
+            --warning: #fdcb6e;
+            --info: #74b9ff;
+            --dark: #2d3436;
+            --light: #f9f9f9;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Vazirmatn', 'Segoe UI', Tahoma, sans-serif;
+            background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%);
             min-height: 100vh;
-            color: #333;
+            padding: 20px;
+            color: var(--dark);
         }
+        
         .container {
-            max-width: 800px;
+            max-width: 900px;
             margin: 0 auto;
-            background: rgba(255, 255, 255, 0.95);
-            border-radius: 20px;
+            background: rgba(255, 255, 255, 0.98);
+            border-radius: 24px;
             padding: 30px;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            position: relative;
+            overflow: hidden;
         }
+        
+        .container::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 100px;
+            height: 100px;
+            background: linear-gradient(135deg, transparent 50%, var(--info) 50%);
+            opacity: 0.1;
+        }
+        
         h1 {
             text-align: center;
-            color: #2d3436;
+            color: var(--dark);
             margin-bottom: 10px;
-            font-size: 2.2rem;
+            font-size: 2.4rem;
+            position: relative;
+            display: inline-block;
+            left: 50%;
+            transform: translateX(-50%);
         }
+        
+        h1::after {
+            content: '';
+            position: absolute;
+            bottom: -10px;
+            right: 0;
+            width: 100px;
+            height: 4px;
+            background: var(--success);
+            border-radius: 2px;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+        
         .subtitle {
             text-align: center;
             color: #636e72;
             margin-bottom: 30px;
             font-size: 1.1rem;
+            line-height: 1.6;
         }
-        .test {
+        
+        .status-card {
+            background: linear-gradient(135deg, #dfe6e9, #b2bec3);
+            border-radius: 16px;
+            padding: 20px;
+            margin-bottom: 25px;
+            text-align: center;
+            border: 3px solid transparent;
+            transition: all 0.3s;
+        }
+        
+        .status-card.ready {
+            background: linear-gradient(135deg, #55efc4, #00b894);
+            color: white;
+        }
+        
+        .status-card.error {
+            background: linear-gradient(135deg, #fab1a0, #e17055);
+            color: white;
+        }
+        
+        .status-card.warning {
+            background: linear-gradient(135deg, #ffeaa7, #fdcb6e);
+            color: var(--dark);
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 15px;
+            margin: 25px 0;
+        }
+        
+        .stat-box {
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            text-align: center;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+            border-top: 5px solid var(--info);
+            transition: transform 0.3s;
+        }
+        
+        .stat-box:hover {
+            transform: translateY(-5px);
+        }
+        
+        .stat-value {
+            font-size: 2.8rem;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        
+        .stat-label {
+            font-size: 0.9rem;
+            color: #636e72;
+        }
+        
+        .test-item {
             background: white;
             padding: 20px;
             margin: 15px 0;
             border-radius: 12px;
-            border-right: 6px solid #4CAF50;
+            border-right: 6px solid var(--success);
             box-shadow: 0 5px 15px rgba(0,0,0,0.08);
-            transition: transform 0.3s;
+            transition: all 0.3s;
+            position: relative;
+            overflow: hidden;
         }
-        .test:hover {
-            transform: translateY(-3px);
+        
+        .test-item::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 100%;
+            height: 3px;
+            background: var(--success);
+            transform: translateX(-100%);
+            transition: transform 0.5s;
         }
-        .fail {
-            border-right-color: #e74c3c;
+        
+        .test-item.running::before {
+            transform: translateX(0);
+            background: var(--info);
         }
-        .pending {
-            border-right-color: #f39c12;
+        
+        .test-item.failed {
+            border-right-color: var(--error);
         }
-        .success {
-            color: #27ae60;
+        
+        .test-item.failed::before {
+            background: var(--error);
+        }
+        
+        .test-item.pending {
+            border-right-color: var(--warning);
+        }
+        
+        .test-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        
+        .test-title {
             font-weight: bold;
+            font-size: 1.1rem;
+            color: var(--dark);
         }
-        .error {
-            color: #e74c3c;
-            font-weight: bold;
+        
+        .test-time {
+            font-size: 0.85rem;
+            color: #636e72;
+            background: #f1f2f6;
+            padding: 4px 10px;
+            border-radius: 20px;
         }
-        .warning {
-            color: #f39c12;
+        
+        .test-details {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 10px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9rem;
+            white-space: pre-wrap;
+            word-break: break-all;
+            border-right: 3px solid #ddd;
         }
-        button {
-            padding: 14px 28px;
-            margin: 8px;
+        
+        .controls {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            justify-content: center;
+            margin: 30px 0;
+        }
+        
+        .btn {
+            padding: 16px 32px;
             border: none;
             border-radius: 50px;
             font-size: 16px;
@@ -72,405 +231,575 @@
             display: inline-flex;
             align-items: center;
             justify-content: center;
-            gap: 8px;
+            gap: 10px;
+            min-width: 180px;
         }
-        #runTests {
+        
+        .btn-primary {
             background: linear-gradient(135deg, #00b09b, #96c93d);
             color: white;
         }
-        #clearDB {
+        
+        .btn-secondary {
             background: linear-gradient(135deg, #ff7e5f, #feb47b);
             color: white;
         }
-        button:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 7px 20px rgba(0,0,0,0.2);
+        
+        .btn-warning {
+            background: linear-gradient(135deg, #fdcb6e, #e17055);
+            color: white;
         }
-        button:active {
+        
+        .btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+        }
+        
+        .btn:active {
             transform: translateY(-1px);
         }
-        .controls {
-            text-align: center;
-            margin: 30px 0;
-        }
-        .details {
-            font-size: 0.9rem;
-            color: #636e72;
-            margin-top: 8px;
-            padding: 10px;
-            background: #f8f9fa;
-            border-radius: 8px;
+        
+        .path-scanner {
+            background: #2d3436;
+            color: white;
+            padding: 20px;
+            border-radius: 12px;
+            margin: 20px 0;
             font-family: 'Courier New', monospace;
         }
-        .stats {
+        
+        .path-item {
+            padding: 8px 12px;
+            margin: 5px 0;
+            border-radius: 6px;
+            background: rgba(255,255,255,0.1);
             display: flex;
-            justify-content: space-around;
-            margin: 25px 0;
-            padding: 20px;
-            background: linear-gradient(135deg, #74b9ff, #0984e3);
-            border-radius: 15px;
-            color: white;
-            text-align: center;
+            align-items: center;
+            gap: 10px;
         }
-        .stat-item {
-            flex: 1;
+        
+        .path-item.found {
+            background: rgba(0, 184, 148, 0.2);
+            border-right: 3px solid var(--success);
         }
-        .stat-value {
-            font-size: 2.5rem;
-            font-weight: bold;
-            margin-bottom: 5px;
+        
+        .path-item.not-found {
+            opacity: 0.6;
         }
-        .stat-label {
+        
+        .log-container {
+            max-height: 400px;
+            overflow-y: auto;
+            margin-top: 20px;
+            padding: 15px;
+            background: #2d3436;
+            border-radius: 12px;
+        }
+        
+        .log-entry {
+            padding: 8px 12px;
+            margin: 5px 0;
+            border-radius: 6px;
+            font-family: 'Courier New', monospace;
             font-size: 0.9rem;
-            opacity: 0.9;
+            border-right: 3px solid transparent;
         }
-        .loading {
-            text-align: center;
-            padding: 20px;
-            color: #636e72;
+        
+        .log-entry.info { border-right-color: var(--info); background: rgba(116, 185, 255, 0.1); color: #74b9ff; }
+        .log-entry.success { border-right-color: var(--success); background: rgba(0, 184, 148, 0.1); color: #00b894; }
+        .log-entry.error { border-right-color: var(--error); background: rgba(214, 48, 49, 0.1); color: #ff7675; }
+        .log-entry.warning { border-right-color: var(--warning); background: rgba(253, 203, 110, 0.1); color: #fdcb6e; }
+        
+        .spinner {
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255,255,255,0.3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 1s linear infinite;
+            display: inline-block;
+            margin-left: 10px;
         }
-        .loading::after {
-            content: '...';
-            animation: dots 1.5s infinite;
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
         }
-        @keyframes dots {
-            0%, 20% { content: '.'; }
-            40% { content: '..'; }
-            60%, 100% { content: '...'; }
+        
+        @media (max-width: 768px) {
+            .container { padding: 15px; }
+            .stats-grid { grid-template-columns: repeat(2, 1fr); }
+            .btn { min-width: 140px; padding: 14px 20px; }
         }
-        .time {
-            font-size: 0.85rem;
-            color: #636e72;
-            float: left;
+        
+        @media (max-width: 480px) {
+            .stats-grid { grid-template-columns: 1fr; }
+            .controls { flex-direction: column; }
+            .btn { width: 100%; }
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>🧪 تست IndexedDB Wrapper</h1>
-        <div class="subtitle">بررسی هسته ذخیره‌سازی پروژه Farsinglish</div>
+        <h1>🔍 تست‌رونر هوشمند IndexedDB</h1>
+        <div class="subtitle">
+            سیستم تشخیص خودکار مسیر فایل‌ها | نسخه حرفه‌ای برای موبایل
+        </div>
         
-        <div class="stats">
-            <div class="stat-item">
+        <div class="status-card" id="statusCard">
+            <div id="statusText">در حال بررسی ساختار پروژه...</div>
+            <div id="statusDetails" class="test-details" style="margin-top:10px;display:none;"></div>
+        </div>
+        
+        <div class="path-scanner">
+            <h3 style="color:#74b9ff;margin-bottom:15px;">📡 اسکنر مسیرهای ممکن:</h3>
+            <div id="pathScannerResults"></div>
+        </div>
+        
+        <div class="stats-grid">
+            <div class="stat-box">
                 <div class="stat-value" id="totalTests">0</div>
                 <div class="stat-label">کل تست‌ها</div>
             </div>
-            <div class="stat-item">
-                <div class="stat-value" id="passedTests" style="color:#55efc4">0</div>
+            <div class="stat-box">
+                <div class="stat-value" id="passedTests" style="color:#00b894">0</div>
                 <div class="stat-label">موفق</div>
             </div>
-            <div class="stat-item">
-                <div class="stat-value" id="failedTests" style="color:#ff7675">0</div>
+            <div class="stat-box">
+                <div class="stat-value" id="failedTests" style="color:#d63031">0</div>
                 <div class="stat-label">ناموفق</div>
             </div>
-            <div class="stat-item">
-                <div class="stat-value" id="duration">0s</div>
-                <div class="stat-label">زمان</div>
+            <div class="stat-box">
+                <div class="stat-value" id="foundFiles">0</div>
+                <div class="stat-label">فایل‌های یافت‌شده</div>
             </div>
         </div>
         
         <div class="controls">
-            <button id="runTests" onclick="runTests()">
+            <button class="btn btn-primary" onclick="runAllTests()">
                 <span>▶</span> اجرای کامل تست‌ها
             </button>
-            <button id="clearDB" onclick="clearDB()">
-                <span>🗑️</span> پاک‌سازی دیتابیس
+            <button class="btn btn-secondary" onclick="scanProjectStructure()">
+                <span>🔍</span> اسکن مجدد پروژه
+            </button>
+            <button class="btn btn-warning" onclick="clearAllData()">
+                <span>🗑️</span> پاک‌سازی کامل
             </button>
         </div>
         
-        <div id="results">
-            <div class="loading" id="loadingStatus">
-                در حال بارگذاری فایل‌ها...
-            </div>
+        <div id="testResultsContainer">
+            <h3 style="color:#2d3436;margin:20px 0 10px 0;">نتایج تست‌ها:</h3>
+            <div id="testResults"></div>
+        </div>
+        
+        <div class="log-container">
+            <h3 style="color:#74b9ff;margin-bottom:15px;">📝 لاگ اجرا:</h3>
+            <div id="logOutput"></div>
         </div>
     </div>
 
     <script>
-        // ==================== تنظیمات ====================
-        const CONFIG = {
-            DB_NAME: 'farsinglish_test_db',
-            DB_VERSION: 1,
-            STORES: {
-                users: { keyPath: 'id' },
-                lessons: { keyPath: 'lessonId' },
-                progress: { keyPath: 'userId' }
-            }
-        };
-        
-        // ==================== متغیرهای جهانی ====================
-        let testResults = {
-            total: 0,
-            passed: 0,
-            failed: 0,
-            startTime: null
-        };
-        
-        // ==================== ابزارهای کمکی ====================
-        function updateStats() {
-            document.getElementById('totalTests').textContent = testResults.total;
-            document.getElementById('passedTests').textContent = testResults.passed;
-            document.getElementById('failedTests').textContent = testResults.failed;
-            
-            if (testResults.startTime) {
-                const duration = (Date.now() - testResults.startTime) / 1000;
-                document.getElementById('duration').textContent = duration.toFixed(1) + 's';
-            }
-        }
-        
-        function addTestResult(name, passed, details = '') {
-            testResults.total++;
-            if (passed) testResults.passed++; else testResults.failed++;
-            
-            const resultDiv = document.createElement('div');
-            resultDiv.className = `test ${passed ? '' : 'fail'}`;
-            
-            const time = new Date().toLocaleTimeString('fa-IR', { 
-                hour: '2-digit', 
-                minute: '2-digit',
-                second: '2-digit'
-            });
-            
-            resultDiv.innerHTML = `
-                <div>
-                    <strong>${passed ? '✅' : '❌'} ${name}</strong>
-                    <span class="time">${time}</span>
-                </div>
-                ${details ? `<div class="details">${details}</div>` : ''}
-            `;
-            
-            document.getElementById('results').appendChild(resultDiv);
-            updateStats();
-            return resultDiv;
-        }
-        
-        function showMessage(type, text) {
-            const msg = document.createElement('div');
-            msg.className = `test ${type}`;
-            msg.innerHTML = `<strong>${text}</strong>`;
-            document.getElementById('results').appendChild(msg);
-        }
-        
-        // ==================== بارگذاری فایل اصلی ====================
-        // ** اصلاح شده: تغییر از ../ به ./
-        const scriptsToLoad = [
-            './core/db/indexeddb-wrapper.js'  // ✅ مسیر اصلاح شده
-        ];
-        
-        let loadedScripts = 0;
-        
-        function loadScript(src) {
-            return new Promise((resolve, reject) => {
-                const script = document.createElement('script');
-                script.src = src;
-                script.onload = () => {
-                    console.log(`✅ بارگذاری شد: ${src}`);
-                    loadedScripts++;
-                    resolve();
-                };
-                script.onerror = () => {
-                    console.error(`❌ خطا در بارگذاری: ${src}`);
-                    reject(new Error(`خطا در بارگذاری ${src}`));
-                };
-                document.head.appendChild(script);
-            });
-        }
-        
-        async function loadAllScripts() {
-            try {
-                for (const src of scriptsToLoad) {
-                    await loadScript(src);
-                }
-                document.getElementById('loadingStatus').remove();
-                showMessage('success', '✅ تمام فایل‌ها با موفقیت بارگذاری شدند');
-            } catch (error) {
-                document.getElementById('loadingStatus').remove();
-                showMessage('error', `❌ خطا در بارگذاری: ${error.message}`);
-                throw error;
-            }
-        }
-        
-        // ==================== تست‌ها ====================
-        async function runTests() {
-            // پاک‌سازی نتایج قبلی
-            document.getElementById('results').innerHTML = '';
-            testResults = { total: 0, passed: 0, failed: 0, startTime: Date.now() };
-            updateStats();
-            
-            try {
-                // تست ۱: Singleton Pattern
-                const db1 = IndexedDBWrapper.getInstance();
-                const db2 = IndexedDBWrapper.getInstance();
-                const isSingleton = db1 === db2;
-                addTestResult(
-                    'الگوی Singleton',
-                    isSingleton,
-                    `db1 === db2: ${isSingleton}`
-                );
-                
-                // تست ۲: اتصال به دیتابیس
-                try {
-                    await db1.connect(CONFIG.DB_NAME, CONFIG.DB_VERSION, CONFIG.STORES);
-                    addTestResult(
-                        'اتصال به دیتابیس',
-                        true,
-                        `دیتابیس: ${CONFIG.DB_NAME} (ورژن ${CONFIG.DB_VERSION})`
-                    );
-                } catch (error) {
-                    addTestResult(
-                        'اتصال به دیتابیس',
-                        false,
-                        `خطا: ${error.message}`
-                    );
-                    throw error;
-                }
-                
-                // تست ۳: افزودن داده
-                const testUser = { 
-                    id: Date.now(), 
-                    name: 'کاربر تست',
-                    email: 'test@farsinglish.com',
-                    level: 1,
-                    xp: 0,
-                    createdAt: new Date().toISOString()
-                };
-                
-                await db1.add('users', testUser);
-                const retrievedUser = await db1.get('users', testUser.id);
-                const addPassed = retrievedUser && retrievedUser.name === testUser.name;
-                
-                addTestResult(
-                    'افزودن داده (Add)',
-                    addPassed,
-                    `شناسه: ${testUser.id}<br>نام: ${retrievedUser?.name || 'یافت نشد'}`
-                );
-                
-                // تست ۴: به‌روزرسانی داده
-                if (addPassed) {
-                    const updatedUser = { ...retrievedUser, level: 2, xp: 100 };
-                    await db1.update('users', updatedUser);
-                    const afterUpdate = await db1.get('users', testUser.id);
-                    const updatePassed = afterUpdate && afterUpdate.level === 2;
+        // ==================== سیستم تشخیص هوشمند مسیر ====================
+        class PathScanner {
+            constructor() {
+                this.possiblePaths = [
+                    // ساختار استاندارد
+                    './core/db/indexeddb-wrapper.js',
+                    'core/db/indexeddb-wrapper.js',
+                    '/core/db/indexeddb-wrapper.js',
+                    '../core/db/indexeddb-wrapper.js',
                     
-                    addTestResult(
-                        'به‌روزرسانی داده (Update)',
-                        updatePassed,
-                        `سطح: ${afterUpdate?.level || 'نامشخص'} | XP: ${afterUpdate?.xp || 0}`
-                    );
-                }
-                
-                // تست ۵: حذف داده
-                await db1.delete('users', testUser.id);
-                const afterDelete = await db1.get('users', testUser.id);
-                const deletePassed = afterDelete === undefined;
-                
-                addTestResult(
-                    'حذف داده (Delete)',
-                    deletePassed,
-                    deletePassed ? 'داده با موفقیت حذف شد' : 'داده هنوز موجود است'
-                );
-                
-                // تست ۶: عملیات Batch (چندتایی)
-                const testLessons = [
-                    { lessonId: 'lesson_1', title: 'درس اول', difficulty: 'easy', order: 1 },
-                    { lessonId: 'lesson_2', title: 'درس دوم', difficulty: 'medium', order: 2 },
-                    { lessonId: 'lesson_3', title: 'درس سوم', difficulty: 'hard', order: 3 }
+                    // ساختارهای جایگزین
+                    './db/indexeddb-wrapper.js',
+                    'db/indexeddb-wrapper.js',
+                    '../db/indexeddb-wrapper.js',
+                    
+                    // اگر فایل تست در پوشه db باشد
+                    './indexeddb-wrapper.js',
+                    'indexeddb-wrapper.js',
+                    
+                    // ساختارهای دیگر
+                    './src/core/db/indexeddb-wrapper.js',
+                    './js/core/db/indexeddb-wrapper.js',
+                    './scripts/core/db/indexeddb-wrapper.js',
+                    './assets/core/db/indexeddb-wrapper.js',
+                    
+                    // مسیرهای مطلق (برای تشخیص موقعیت)
+                    window.location.pathname.replace(/test.*\.html$/, '') + 'core/db/indexeddb-wrapper.js',
+                    window.location.pathname.replace(/\/[^\/]*$/, '/') + 'core/db/indexeddb-wrapper.js'
                 ];
                 
-                await Promise.all(
-                    testLessons.map(lesson => db1.add('lessons', lesson))
-                );
+                this.foundPaths = new Map();
+                this.projectStructure = [];
+            }
+            
+            async scan() {
+                this.log('info', 'شروع اسکن ساختار پروژه...');
+                const resultsDiv = document.getElementById('pathScannerResults');
+                resultsDiv.innerHTML = '';
                 
-                const allLessons = await db1.getAll('lessons');
-                const batchPassed = allLessons.length === 3;
+                let foundCount = 0;
                 
-                addTestResult(
-                    'عملیات Batch (چندتایی)',
-                    batchPassed,
-                    `${allLessons.length} درس ذخیره شد`
-                );
-                
-                // تست ۷: پاک‌سازی جدول
-                await db1.clearStore('lessons');
-                const afterClear = await db1.getAll('lessons');
-                const clearPassed = afterClear.length === 0;
-                
-                addTestResult(
-                    'پاک‌سازی جدول (Clear Store)',
-                    clearPassed,
-                    clearPassed ? 'جدول خالی شد' : `هنوز ${afterClear.length} رکورد موجود است`
-                );
-                
-                // تست ۸: مدیریت خطا (جدول ناموجود)
-                try {
-                    await db1.get('non_existent_table', 1);
-                    addTestResult(
-                        'مدیریت خطا',
-                        false,
-                        'باید خطا می‌داد اما نداد!'
-                    );
-                } catch (error) {
-                    addTestResult(
-                        'مدیریت خطا',
-                        true,
-                        `خطا به درستی گرفته شد: ${error.message}`
-                    );
+                for (const path of this.possiblePaths) {
+                    const itemDiv = document.createElement('div');
+                    itemDiv.className = 'path-item';
+                    
+                    try {
+                        const response = await fetch(path, { method: 'HEAD' });
+                        if (response.ok) {
+                            foundCount++;
+                            this.foundPaths.set(path, true);
+                            itemDiv.className += ' found';
+                            itemDiv.innerHTML = `
+                                <span style="color:#00b894">✓</span>
+                                <span style="flex:1">${path}</span>
+                                <small style="color:#00b894">${response.status} - ${response.statusText}</small>
+                            `;
+                            this.log('success', `✅ یافت شد: ${path}`);
+                        } else {
+                            itemDiv.className += ' not-found';
+                            itemDiv.innerHTML = `
+                                <span style="color:#636e72">✗</span>
+                                <span style="flex:1">${path}</span>
+                                <small style="color:#636e72">${response.status}</small>
+                            `;
+                        }
+                    } catch (error) {
+                        itemDiv.className += ' not-found';
+                        itemDiv.innerHTML = `
+                            <span style="color:#636e72">✗</span>
+                            <span style="flex:1">${path}</span>
+                            <small style="color:#636e72">خطا: ${error.message}</small>
+                        `;
+                    }
+                    
+                    resultsDiv.appendChild(itemDiv);
+                    // تأخیر کوچک برای نمایش بهتر
+                    await new Promise(resolve => setTimeout(resolve, 50));
                 }
                 
-                // تست ۹: وضعیت اتصال
-                const isConnected = db1.isConnected();
-                addTestResult(
-                    'وضعیت اتصال',
-                    isConnected,
-                    isConnected ? 'دیتابیس متصل است' : 'دیتابیس قطع است'
-                );
+                document.getElementById('foundFiles').textContent = foundCount;
                 
-                // جمع‌بندی
-                const successRate = Math.round((testResults.passed / testResults.total) * 100);
-                showMessage(
-                    successRate === 100 ? 'success' : successRate > 70 ? 'warning' : 'error',
-                    `🎯 جمع‌بندی: ${testResults.passed} از ${testResults.total} تست موفق (${successRate}%)`
-                );
+                if (foundCount > 0) {
+                    const firstPath = Array.from(this.foundPaths.keys())[0];
+                    this.updateStatus('ready', `✅ ${foundCount} مسیر معتبر یافت شد`, `فایل اصلی: ${firstPath}`);
+                    return firstPath;
+                } else {
+                    this.updateStatus('error', '❌ هیچ مسیر معتبری یافت نشد', 
+                        'لطفاً ساختار پوشه‌ها را بررسی کنید:\n' +
+                        '۱. مطمئن شوید فایل indexeddb-wrapper.js وجود دارد\n' +
+                        '۲. فایل تست را در پوشه core/db/ بگذارید\n' +
+                        '۳. یا ساختار پوشه‌ها را اصلاح کنید');
+                    return null;
+                }
+            }
+            
+            async loadFile(path) {
+                return new Promise((resolve, reject) => {
+                    const script = document.createElement('script');
+                    script.src = path;
+                    
+                    script.onload = () => {
+                        this.log('success', `فایل ${path} با موفقیت بارگذاری شد`);
+                        resolve(true);
+                    };
+                    
+                    script.onerror = (error) => {
+                        this.log('error', `خطا در بارگذاری ${path}: ${error.message}`);
+                        reject(error);
+                    };
+                    
+                    document.head.appendChild(script);
+                });
+            }
+            
+            log(type, message) {
+                const logOutput = document.getElementById('logOutput');
+                const entry = document.createElement('div');
+                entry.className = `log-entry ${type}`;
+                entry.textContent = `[${new Date().toLocaleTimeString('fa-IR')}] ${message}`;
+                logOutput.appendChild(entry);
+                logOutput.scrollTop = logOutput.scrollHeight;
+            }
+            
+            updateStatus(type, title, details = '') {
+                const statusCard = document.getElementById('statusCard');
+                const statusText = document.getElementById('statusText');
+                const statusDetails = document.getElementById('statusDetails');
                 
-            } catch (error) {
-                addTestResult(
-                    'خطای کلی تست‌ها',
-                    false,
-                    `خطا: ${error.message}<br><small>${error.stack}</small>`
-                );
-                showMessage('error', '❌ تست‌ها با خطا متوقف شدند');
+                statusCard.className = `status-card ${type}`;
+                statusText.innerHTML = title;
+                
+                if (details) {
+                    statusDetails.textContent = details;
+                    statusDetails.style.display = 'block';
+                } else {
+                    statusDetails.style.display = 'none';
+                }
             }
         }
         
-        async function clearDB() {
+        // ==================== مدیریت تست‌ها ====================
+        class TestManager {
+            constructor() {
+                this.results = {
+                    total: 0,
+                    passed: 0,
+                    failed: 0,
+                    startTime: null
+                };
+                this.currentTest = null;
+            }
+            
+            async runIndexedDBTests() {
+                this.results = { total: 0, passed: 0, failed: 0, startTime: Date.now() };
+                this.updateStats();
+                
+                const tests = [
+                    {
+                        name: 'الگوی Singleton',
+                        fn: () => {
+                            const db1 = IndexedDBWrapper.getInstance();
+                            const db2 = IndexedDBWrapper.getInstance();
+                            return db1 === db2;
+                        },
+                        desc: 'هر دو instance باید یکسان باشند'
+                    },
+                    {
+                        name: 'اتصال به دیتابیس',
+                        fn: async () => {
+                            const db = IndexedDBWrapper.getInstance();
+                            await db.connect('test_db', 1, {
+                                users: { keyPath: 'id' },
+                                lessons: { keyPath: 'lessonId' }
+                            });
+                            return db.isConnected();
+                        },
+                        desc: 'برقراری اتصال با دیتابیس'
+                    },
+                    {
+                        name: 'افزودن داده',
+                        fn: async () => {
+                            const db = IndexedDBWrapper.getInstance();
+                            const testData = { id: 1, name: 'تست' };
+                            await db.add('users', testData);
+                            const retrieved = await db.get('users', 1);
+                            return retrieved && retrieved.name === 'تست';
+                        },
+                        desc: 'ذخیره و بازیابی داده'
+                    },
+                    {
+                        name: 'به‌روزرسانی داده',
+                        fn: async () => {
+                            const db = IndexedDBWrapper.getInstance();
+                            await db.update('users', { id: 1, name: 'تست ویرایش شده' });
+                            const updated = await db.get('users', 1);
+                            return updated && updated.name === 'تست ویرایش شده';
+                        },
+                        desc: 'ویرایش داده موجود'
+                    },
+                    {
+                        name: 'حذف داده',
+                        fn: async () => {
+                            const db = IndexedDBWrapper.getInstance();
+                            await db.delete('users', 1);
+                            const deleted = await db.get('users', 1);
+                            return deleted === undefined;
+                        },
+                        desc: 'حذف رکورد از دیتابیس'
+                    },
+                    {
+                        name: 'دریافت همه رکوردها',
+                        fn: async () => {
+                            const db = IndexedDBWrapper.getInstance();
+                            await db.add('users', { id: 2, name: 'کاربر ۲' });
+                            await db.add('users', { id: 3, name: 'کاربر ۳' });
+                            const all = await db.getAll('users');
+                            return Array.isArray(all) && all.length >= 2;
+                        },
+                        desc: 'دریافت تمام داده‌های یک جدول'
+                    },
+                    {
+                        name: 'پاک‌سازی جدول',
+                        fn: async () => {
+                            const db = IndexedDBWrapper.getInstance();
+                            await db.clearStore('users');
+                            const all = await db.getAll('users');
+                            return all.length === 0;
+                        },
+                        desc: 'خالی کردن کامل یک جدول'
+                    },
+                    {
+                        name: 'مدیریت خطا',
+                        fn: async () => {
+                            const db = IndexedDBWrapper.getInstance();
+                            try {
+                                await db.get('table_not_exist', 1);
+                                return false;
+                            } catch (error) {
+                                return error.message.includes('وجود ندارد') || 
+                                       error.message.includes('not found') ||
+                                       error.message.includes('Store');
+                            }
+                        },
+                        desc: 'برخورد صحیح با خطاها'
+                    }
+                ];
+                
+                const resultsContainer = document.getElementById('testResults');
+                resultsContainer.innerHTML = '';
+                
+                for (const test of tests) {
+                    const testElement = this.createTestElement(test.name, test.desc);
+                    resultsContainer.appendChild(testElement);
+                    
+                    try {
+                        testElement.classList.add('running');
+                        const startTime = Date.now();
+                        
+                        const result = await test.fn();
+                        const duration = Date.now() - startTime;
+                        
+                        this.results.total++;
+                        if (result) {
+                            this.results.passed++;
+                            testElement.classList.remove('running');
+                            testElement.querySelector('.test-details').textContent = 
+                                `✅ موفق | زمان: ${duration}ms`;
+                        } else {
+                            this.results.failed++;
+                            testElement.classList.remove('running');
+                            testElement.classList.add('failed');
+                            testElement.querySelector('.test-details').textContent = 
+                                `❌ ناموفق | زمان: ${duration}ms`;
+                        }
+                    } catch (error) {
+                        this.results.total++;
+                        this.results.failed++;
+                        testElement.classList.remove('running');
+                        testElement.classList.add('failed');
+                        testElement.querySelector('.test-details').textContent = 
+                            `💥 خطا: ${error.message}`;
+                    }
+                    
+                    this.updateStats();
+                    await new Promise(resolve => setTimeout(resolve, 300));
+                }
+                
+                const successRate = Math.round((this.results.passed / this.results.total) * 100);
+                scanner.log(successRate === 100 ? 'success' : 'warning',
+                    `🎯 تست‌ها کامل شد: ${this.results.passed}/${this.results.total} موفق (${successRate}%)`);
+            }
+            
+            createTestElement(name, description) {
+                const div = document.createElement('div');
+                div.className = 'test-item pending';
+                
+                const time = new Date().toLocaleTimeString('fa-IR', {
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    second: '2-digit'
+                });
+                
+                div.innerHTML = `
+                    <div class="test-header">
+                        <div class="test-title">${name}</div>
+                        <div class="test-time">${time}</div>
+                    </div>
+                    <div style="color:#636e72;font-size:0.9rem;margin-bottom:10px;">${description}</div>
+                    <div class="test-details">در انتظار اجرا...</div>
+                `;
+                
+                return div;
+            }
+            
+            updateStats() {
+                document.getElementById('totalTests').textContent = this.results.total;
+                document.getElementById('passedTests').textContent = this.results.passed;
+                document.getElementById('failedTests').textContent = this.results.failed;
+                
+                if (this.results.startTime) {
+                    const duration = (Date.now() - this.results.startTime) / 1000;
+                    document.getElementById('duration').textContent = duration.toFixed(1) + 's';
+                }
+            }
+        }
+        
+        // ==================== متغیرهای جهانی ====================
+        const scanner = new PathScanner();
+        const testManager = new TestManager();
+        let mainFileLoaded = false;
+        
+        // ==================== توابع اصلی ====================
+        async function initialize() {
+            scanner.log('info', '🔍 راه‌اندازی تست‌رونر هوشمند...');
+            
+            const foundPath = await scanner.scan();
+            
+            if (foundPath) {
+                try {
+                    await scanner.loadFile(foundPath);
+                    mainFileLoaded = true;
+                    scanner.updateStatus('ready', 
+                        '✅ سیستم آماده اجرای تست‌ها', 
+                        `فایل اصلی از مسیر "${foundPath}" بارگذاری شد\n` +
+                        'دکمه "اجرای کامل تست‌ها" را فشار دهید');
+                } catch (error) {
+                    scanner.updateStatus('error',
+                        '❌ خطا در بارگذاری فایل اصلی',
+                        error.message);
+                }
+            }
+        }
+        
+        async function runAllTests() {
+            if (!mainFileLoaded) {
+                scanner.log('error', 'ابتدا فایل اصلی باید بارگذاری شود');
+                scanner.updateStatus('warning',
+                    '⚠️ فایل اصلی بارگذاری نشده',
+                    'لطفاً صبر کنید تا اسکن کامل شود یا دکمه اسکن مجدد را بزنید');
+                return;
+            }
+            
+            scanner.log('info', 'شروع اجرای تمام تست‌ها...');
+            await testManager.runIndexedDBTests();
+        }
+        
+        async function scanProjectStructure() {
+            scanner.log('info', 'اسکن مجدد ساختار پروژه...');
+            mainFileLoaded = false;
+            await initialize();
+        }
+        
+        async function clearAllData() {
+            if (!mainFileLoaded) {
+                scanner.log('warning', 'ابتدا فایل اصلی را بارگذاری کنید');
+                return;
+            }
+            
             try {
                 const db = IndexedDBWrapper.getInstance();
                 if (db.isConnected()) {
                     await db.clearDatabase();
-                    showMessage('success', '✅ دیتابیس با موفقیت پاک‌سازی شد');
+                    scanner.log('success', '✅ تمام داده‌های دیتابیس پاک شدند');
                 } else {
-                    showMessage('warning', '⚠️ ابتدا دیتابیس را متصل کنید');
+                    scanner.log('warning', 'دیتابیس متصل نیست');
                 }
             } catch (error) {
-                showMessage('error', `❌ خطا در پاک‌سازی: ${error.message}`);
+                scanner.log('error', `خطا در پاک‌سازی: ${error.message}`);
             }
         }
         
         // ==================== شروع خودکار ====================
         window.addEventListener('DOMContentLoaded', () => {
-            // بارگذاری فایل‌ها به صورت خودکار
-            loadAllScripts().catch(() => {
-                // اگر فایل اصلی وجود نداشت، پیام مناسب نمایش بده
-                setTimeout(() => {
-                    if (loadedScripts === 0) {
-                        document.getElementById('loadingStatus').innerHTML = 
-                            '⚠️ فایل اصلی یافت نشد. مطمئن شوید:<br>' +
-                            '۱. فایل <code>indexeddb-wrapper.js</code> در <code>./core/db/</code> وجود دارد<br>' +
-                            '۲. ساختار پوشه‌ها درست است:<br>' +
-                            '<pre>پروژه/<br>├── core/db/indexeddb-wrapper.js<br>└── test-indexeddb-wrapper.html</pre>';
-                    }
-                }, 3000);
+            scanner.log('info', 'صفحه تست‌رونر بارگذاری شد');
+            initialize().catch(error => {
+                scanner.log('error', `خطا در راه‌اندازی: ${error.message}`);
             });
         });
+        
+        // تشخیص ساختار فعلی
+        scanner.log('info', `موقعیت فعلی: ${window.location.pathname}`);
+        scanner.log('info', `نوع تست‌رونر: HTML مستقل - نیاز به سرور ندارد`);
     </script>
 </body>
 </html>
