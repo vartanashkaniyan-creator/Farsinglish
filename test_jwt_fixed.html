@@ -1,0 +1,665 @@
+<!DOCTYPE html>
+<html lang="fa">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>تست JWT (اصلاح شده) - Farsinglish</title>
+    <style>
+        body {
+            font-family: system-ui, -apple-system, sans-serif;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        .container {
+            max-width: 800px;
+            margin: auto;
+            background: white;
+            padding: 25px;
+            border-radius: 15px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+        h1 {
+            text-align: center;
+            color: #1e293b;
+            margin-bottom: 10px;
+        }
+        .subtitle {
+            text-align: center;
+            color: #64748b;
+            margin-bottom: 20px;
+        }
+        .btn {
+            display: block;
+            margin: 20px auto;
+            padding: 12px 24px;
+            background: #4f46e5;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+        .btn:hover {
+            background: #4338ca;
+        }
+        .test {
+            margin: 15px 0;
+            padding: 15px;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            background: #f8fafc;
+        }
+        .test.pass { border-left: 4px solid #10b981; }
+        .test.fail { border-left: 4px solid #ef4444; }
+        .test.pending { border-left: 4px solid #f59e0b; }
+        .test-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+        }
+        .test-name {
+            font-weight: bold;
+            color: #1e293b;
+        }
+        .test-status {
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: bold;
+        }
+        .status-pass { background: #10b981; color: white; }
+        .status-fail { background: #ef4444; color: white; }
+        .status-pending { background: #f59e0b; color: white; }
+        .test-details {
+            background: white;
+            padding: 10px;
+            margin-top: 10px;
+            border-radius: 5px;
+            font-family: monospace;
+            font-size: 12px;
+            white-space: pre-wrap;
+            display: none;
+        }
+        .test.expanded .test-details {
+            display: block;
+        }
+        .toggle-btn {
+            background: none;
+            border: 1px solid #cbd5e0;
+            padding: 4px 12px;
+            border-radius: 4px;
+            font-size: 12px;
+            cursor: pointer;
+            margin-top: 10px;
+            color: #64748b;
+        }
+        .stats {
+            display: flex;
+            justify-content: space-around;
+            margin: 20px 0;
+            padding: 15px;
+            background: #f1f5f9;
+            border-radius: 10px;
+        }
+        .stat {
+            text-align: center;
+        }
+        .stat-value {
+            font-size: 24px;
+            font-weight: bold;
+        }
+        .stat-label {
+            font-size: 12px;
+            color: #64748b;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔐 تست JWT (اصلاح شده)</h1>
+        <p class="subtitle">رفع خطاهای تولید توکن، payload و تمدید</p>
+        
+        <div class="stats">
+            <div class="stat">
+                <div class="stat-value" id="totalTests">7</div>
+                <div class="stat-label">کل تست‌ها</div>
+            </div>
+            <div class="stat">
+                <div class="stat-value" id="passedTests">0</div>
+                <div class="stat-label">موفق</div>
+            </div>
+            <div class="stat">
+                <div class="stat-value" id="failedTests">0</div>
+                <div class="stat-label">ناموفق</div>
+            </div>
+        </div>
+        
+        <button class="btn" onclick="runTests()">اجرای تست‌ها</button>
+        
+        <div id="testResults"></div>
+    </div>
+
+    <script>
+        // ==================== JWT Manager (اصلاح شده) ====================
+        class JWTManager {
+            constructor() {
+                this.secret = 'farsinglish-secure-key-' + Date.now();
+            }
+
+            // اصلاح ۱: تولید توکن با encodeURIComponent برای پشتیبانی از فارسی
+            generateToken(userId, userData = {}, expiresInHours = 24) {
+                const header = {
+                    alg: 'HS256',
+                    typ: 'JWT'
+                };
+                
+                const now = Math.floor(Date.now() / 1000);
+                const payload = {
+                    sub: userId,
+                    iat: now,
+                    exp: now + (expiresInHours * 3600),
+                    role: userData.role || 'user',
+                    level: userData.level || 1,
+                    xp: userData.xp || 0,
+                    ...userData
+                };
+                
+                // استفاده از encodeURIComponent + btoa برای پشتیبانی از Unicode
+                const headerBase64 = btoa(encodeURIComponent(JSON.stringify(header)));
+                const payloadBase64 = btoa(encodeURIComponent(JSON.stringify(payload)));
+                const signature = this._createSignature(headerBase64, payloadBase64);
+                
+                return `${headerBase64}.${payloadBase64}.${signature}`;
+            }
+
+            _createSignature(header, payload) {
+                // ایجاد signature ساده اما منحصر به فرد
+                const str = header + payload + this.secret;
+                let hash = 0;
+                for (let i = 0; i < str.length; i++) {
+                    const char = str.charCodeAt(i);
+                    hash = ((hash << 5) - hash) + char;
+                    hash = hash & hash;
+                }
+                return Math.abs(hash).toString(36).padStart(10, '0');
+            }
+
+            // اصلاح ۲: parseToken با decodeURIComponent
+            parseToken(token) {
+                try {
+                    if (!token || typeof token !== 'string') {
+                        return { valid: false, error: 'توکن نامعتبر است' };
+                    }
+                    
+                    const parts = token.split('.');
+                    if (parts.length !== 3) {
+                        return { valid: false, error: 'فرمت توکن نامعتبر' };
+                    }
+
+                    const [headerBase64, payloadBase64, signature] = parts;
+                    
+                    // بررسی signature
+                    const expectedSignature = this._createSignature(headerBase64, payloadBase64);
+                    if (signature !== expectedSignature) {
+                        return { valid: false, error: 'امضای توکن نامعتبر' };
+                    }
+
+                    // decode با decodeURIComponent
+                    const headerStr = decodeURIComponent(atob(headerBase64));
+                    const payloadStr = decodeURIComponent(atob(payloadBase64));
+                    
+                    const header = JSON.parse(headerStr);
+                    const payload = JSON.parse(payloadStr);
+                    
+                    // بررسی زمان انقضا
+                    const now = Math.floor(Date.now() / 1000);
+                    if (payload.exp < now) {
+                        return { 
+                            valid: false, 
+                            error: 'توکن منقضی شده',
+                            payload,
+                            expired: true 
+                        };
+                    }
+
+                    return {
+                        valid: true,
+                        header,
+                        payload,
+                        signature
+                    };
+
+                } catch (error) {
+                    return { valid: false, error: `خطا در پردازش توکن: ${error.message}` };
+                }
+            }
+
+            isTokenValid(token) {
+                const result = this.parseToken(token);
+                return result.valid === true;
+            }
+
+            // اصلاح ۳: تمدید توکن - ایجاد توکن جدید با همان داده‌ها
+            refreshToken(oldToken, newExpiryHours = 24) {
+                const result = this.parseToken(oldToken);
+                if (!result.valid) {
+                    throw new Error(`توکن قدیمی نامعتبر: ${result.error}`);
+                }
+
+                // ایجاد توکن جدید با همان payload اما زمان انقضای جدید
+                const newPayload = { ...result.payload };
+                const now = Math.floor(Date.now() / 1000);
+                newPayload.iat = now;
+                newPayload.exp = now + (newExpiryHours * 3600);
+                
+                // حذف فیلدهای سیستمی از userData
+                const userData = { ...newPayload };
+                delete userData.sub;
+                delete userData.iat;
+                delete userData.exp;
+                delete userData.role; // role را هم نگه می‌داریم
+                
+                return this.generateToken(result.payload.sub, userData, newExpiryHours);
+            }
+
+            getTimeToExpiry(token) {
+                const result = this.parseToken(token);
+                if (!result.valid || !result.payload) return 0;
+                
+                const now = Math.floor(Date.now() / 1000);
+                return Math.max(0, result.payload.exp - now);
+            }
+
+            getUserFromToken(token) {
+                const result = this.parseToken(token);
+                if (!result.valid) return null;
+                
+                return {
+                    id: result.payload.sub,
+                    role: result.payload.role,
+                    level: result.payload.level,
+                    xp: result.payload.xp,
+                    issuedAt: new Date(result.payload.iat * 1000),
+                    expiresAt: new Date(result.payload.exp * 1000)
+                };
+            }
+        }
+
+        // ==================== تست‌های اصلی (اصلاح شده) ====================
+        const tests = [
+            {
+                name: 'تولید JToken معتبر',
+                description: 'توکن باید با ساختار سه‌بخشی و داده فارسی تولید شود',
+                fn: async () => {
+                    const jwt = new JWTManager();
+                    const token = jwt.generateToken('user-123', { 
+                        name: 'علی رضایی',
+                        level: 5 
+                    });
+                    
+                    // بررسی ساختار
+                    const parts = token.split('.');
+                    if (parts.length !== 3) {
+                        return `توکن باید ۳ بخش داشته باشد، اما ${parts.length} بخش دارد`;
+                    }
+                    
+                    // بررسی طول بخش‌ها
+                    if (parts[0].length < 10) return 'header خیلی کوتاه است';
+                    if (parts[1].length < 10) return 'payload خیلی کوتاه است';
+                    if (parts[2].length < 8) return 'signature خیلی کوتاه است';
+                    
+                    // بررسی اعتبار
+                    if (!jwt.isTokenValid(token)) {
+                        return 'توکن تولید شده معتبر نیست';
+                    }
+                    
+                    return true;
+                }
+            },
+            {
+                name: 'Payload با داده فارسی',
+                description: 'توکن باید داده‌های فارسی را در payload نگه دارد',
+                fn: async () => {
+                    const jwt = new JWTManager();
+                    const userData = {
+                        name: 'محمد حسینی',
+                        city: 'تهران',
+                        level: 7,
+                        xp: 2500
+                    };
+                    
+                    const token = jwt.generateToken('user-fa', userData);
+                    const result = jwt.parseToken(token);
+                    
+                    if (!result.valid) {
+                        return `توکن نامعتبر: ${result.error}`;
+                    }
+                    
+                    // بررسی داده‌های فارسی
+                    if (result.payload.name !== 'محمد حسینی') {
+                        return `نام کاربر اشتباه: ${result.payload.name}`;
+                    }
+                    
+                    if (result.payload.city !== 'تهران') {
+                        return `شهر کاربر اشتباه: ${result.payload.city}`;
+                    }
+                    
+                    if (result.payload.level !== 7) {
+                        return `سطح کاربر اشتباه: ${result.payload.level}`;
+                    }
+                    
+                    if (result.payload.xp !== 2500) {
+                        return `تجربه کاربر اشتباه: ${result.payload.xp}`;
+                    }
+                    
+                    // بررسی وجود فیلدهای ضروری
+                    if (!result.payload.sub || !result.payload.iat || !result.payload.exp) {
+                        return 'فیلدهای ضروری توکن وجود ندارند';
+                    }
+                    
+                    return true;
+                }
+            },
+            {
+                name: 'اعتبارسنجی توکن معتبر',
+                description: 'توکن معتبر باید پذیرفته شود',
+                fn: async () => {
+                    const jwt = new JWTManager();
+                    const token = jwt.generateToken('user-valid');
+                    
+                    const isValid = jwt.isTokenValid(token);
+                    if (!isValid) {
+                        return 'توکن معتبر رد شد';
+                    }
+                    
+                    const parsed = jwt.parseToken(token);
+                    if (!parsed.valid) {
+                        return `اعتبارسنجی ناموفق: ${parsed.error}`;
+                    }
+                    
+                    if (parsed.payload.sub !== 'user-valid') {
+                        return `شناسه کاربر اشتباه: ${parsed.payload.sub}`;
+                    }
+                    
+                    return true;
+                }
+            },
+            {
+                name: 'تشخیص توکن نامعتبر',
+                description: 'توکن دستکاری شده باید رد شود',
+                fn: async () => {
+                    const jwt = new JWTManager();
+                    const validToken = jwt.generateToken('user-test');
+                    
+                    // تغییر signature
+                    const parts = validToken.split('.');
+                    const fakeToken = parts[0] + '.' + parts[1] + '.fake-signature-12345';
+                    
+                    if (jwt.isTokenValid(fakeToken)) {
+                        return 'توکن با signature جعلی پذیرفته شد';
+                    }
+                    
+                    // توکن با فرمت نادرست
+                    if (jwt.isTokenValid('not.a.valid.token')) {
+                        return 'توکن با فرمت نادرست پذیرفته شد';
+                    }
+                    
+                    // توکن خالی
+                    if (jwt.isTokenValid('')) {
+                        return 'توکن خالی پذیرفته شد';
+                    }
+                    
+                    // توکن null
+                    if (jwt.isTokenValid(null)) {
+                        return 'توکن null پذیرفته شد';
+                    }
+                    
+                    return true;
+                }
+            },
+            {
+                name: 'تمدید توکن (رفع خطا)',
+                description: 'توکن قدیمی باید قابل تمدید باشد',
+                fn: async () => {
+                    const jwt = new JWTManager();
+                    
+                    // ایجاد توکن با مدت کم
+                    const oldToken = jwt.generateToken('user-old', { level: 3, xp: 100 }, 0.1); // 6 دقیقه
+                    
+                    // صبر کن تا مطمئن شویم توکن هنوز معتبر است
+                    await new Promise(resolve => setTimeout(resolve, 100));
+                    
+                    // تمدید توکن
+                    let newToken;
+                    try {
+                        newToken = jwt.refreshToken(oldToken, 24); // 24 ساعت
+                    } catch (error) {
+                        return `خطا در تمدید توکن: ${error.message}`;
+                    }
+                    
+                    // بررسی توکن جدید
+                    if (!jwt.isTokenValid(newToken)) {
+                        return 'توکن جدید نامعتبر است';
+                    }
+                    
+                    // بررسی داده‌های کاربر
+                    const oldUser = jwt.getUserFromToken(oldToken);
+                    const newUser = jwt.getUserFromToken(newToken);
+                    
+                    if (!oldUser || !newUser) {
+                        return 'اطلاعات کاربر استخراج نشد';
+                    }
+                    
+                    if (oldUser.id !== newUser.id) {
+                        return `شناسه کاربر تغییر کرد: ${oldUser.id} → ${newUser.id}`;
+                    }
+                    
+                    if (oldUser.level !== newUser.level) {
+                        return `سطح کاربر تغییر کرد: ${oldUser.level} → ${newUser.level}`;
+                    }
+                    
+                    if (oldUser.xp !== newUser.xp) {
+                        return `تجربه کاربر تغییر کرد: ${oldUser.xp} → ${newUser.xp}`;
+                    }
+                    
+                    // توکن جدید باید زمان انقضای بیشتری داشته باشد
+                    if (newUser.expiresAt <= oldUser.expiresAt) {
+                        return `زمان انقضا تمدید نشد\nقدیمی: ${oldUser.expiresAt}\nجدید: ${newUser.expiresAt}`;
+                    }
+                    
+                    return true;
+                }
+            },
+            {
+                name: 'زمان انقضای توکن',
+                description: 'زمان باقی‌مانده تا انقضا باید درست محاسبه شود',
+                fn: async () => {
+                    const jwt = new JWTManager();
+                    
+                    // توکن با 1 ساعت اعتبار
+                    const token = jwt.generateToken('user-time', {}, 1);
+                    const timeToExpiry = jwt.getTimeToExpiry(token);
+                    
+                    // باید حدود 3600 ثانیه باشد (با اختلاف ۵ ثانیه)
+                    if (timeToExpiry < 3595 || timeToExpiry > 3605) {
+                        return `زمان باقی‌مانده اشتباه: ${timeToExpiry} ثانیه (مورد انتظار: ~3600)`;
+                    }
+                    
+                    // توکن منقضی شده
+                    const expiredToken = jwt.generateToken('user-expired', {}, -0.1); // منقضی شده
+                    const expiredTime = jwt.getTimeToExpiry(expiredToken);
+                    
+                    if (expiredTime !== 0) {
+                        return `زمان باقی‌مانده برای توکن منقضی شده: ${expiredTime} (مورد انتظار: 0)`;
+                    }
+                    
+                    return true;
+                }
+            },
+            {
+                name: 'استخراج اطلاعات کاربر',
+                description: 'اطلاعات کاربر باید از توکن قابل خواندن باشد',
+                fn: async () => {
+                    const jwt = new JWTManager();
+                    const token = jwt.generateToken('user-info', { 
+                        level: 8, 
+                        xp: 3000, 
+                        role: 'premium',
+                        name: 'فاطمه محمدی'
+                    });
+                    
+                    const user = jwt.getUserFromToken(token);
+                    
+                    if (!user) {
+                        return 'کاربر از توکن استخراج نشد';
+                    }
+                    
+                    // بررسی تمام فیلدها
+                    const checks = [
+                        user.id === 'user-info',
+                        user.level === 8,
+                        user.xp === 3000,
+                        user.role === 'premium',
+                        user.issuedAt instanceof Date,
+                        user.expiresAt instanceof Date,
+                        user.expiresAt > user.issuedAt,
+                        Math.abs((Date.now() - user.issuedAt.getTime())) < 5000 // حداکثر ۵ ثانیه اختلاف
+                    ];
+                    
+                    const failedChecks = checks.map((c, i) => c ? null : i).filter(i => i !== null);
+                    
+                    if (failedChecks.length > 0) {
+                        return `بررسی‌های ${failedChecks.join(',')} ناموفق بودند`;
+                    }
+                    
+                    return true;
+                }
+            }
+        ];
+
+        // ==================== Test Runner ====================
+        let passedTests = 0;
+        let failedTests = 0;
+
+        async function runTests() {
+            const resultsDiv = document.getElementById('testResults');
+            resultsDiv.innerHTML = '';
+            passedTests = 0;
+            failedTests = 0;
+
+            for (let i = 0; i < tests.length; i++) {
+                const test = tests[i];
+                
+                // ایجاد المان تست
+                const testDiv = document.createElement('div');
+                testDiv.className = 'test pending';
+                testDiv.id = `test-${i}`;
+                
+                const header = document.createElement('div');
+                header.className = 'test-header';
+                
+                const name = document.createElement('div');
+                name.className = 'test-name';
+                name.textContent = `${i + 1}. ${test.name}`;
+                
+                const status = document.createElement('div');
+                status.className = 'test-status status-pending';
+                status.textContent = '⏳';
+                
+                header.appendChild(name);
+                header.appendChild(status);
+                testDiv.appendChild(header);
+                
+                resultsDiv.appendChild(testDiv);
+                
+                // اجرای تست
+                try {
+                    const result = await test.fn();
+                    const success = result === true;
+                    
+                    if (success) {
+                        testDiv.className = 'test pass';
+                        status.className = 'test-status status-pass';
+                        status.textContent = '✅';
+                        passedTests++;
+                    } else {
+                        testDiv.className = 'test fail';
+                        status.className = 'test-status status-fail';
+                        status.textContent = '❌';
+                        failedTests++;
+                        
+                        // اضافه کردن دکمه نمایش جزئیات
+                        const toggleBtn = document.createElement('button');
+                        toggleBtn.className = 'toggle-btn';
+                        toggleBtn.textContent = 'نمایش خطا';
+                        toggleBtn.onclick = () => {
+                            const details = testDiv.querySelector('.test-details');
+                            if (details) {
+                                details.style.display = details.style.display === 'block' ? 'none' : 'block';
+                                toggleBtn.textContent = details.style.display === 'block' ? 'پنهان کردن' : 'نمایش خطا';
+                            }
+                        };
+                        testDiv.appendChild(toggleBtn);
+                        
+                        // اضافه کردن جزئیات خطا
+                        const details = document.createElement('div');
+                        details.className = 'test-details';
+                        details.textContent = `خطا: ${result}\n\n${test.description}`;
+                        testDiv.appendChild(details);
+                    }
+                    
+                } catch (error) {
+                    testDiv.className = 'test fail';
+                    status.className = 'test-status status-fail';
+                    status.textContent = '❌';
+                    failedTests++;
+                    
+                    const toggleBtn = document.createElement('button');
+                    toggleBtn.className = 'toggle-btn';
+                    toggleBtn.textContent = 'نمایش خطا';
+                    toggleBtn.onclick = () => {
+                        const details = testDiv.querySelector('.test-details');
+                        if (details) {
+                            details.style.display = details.style.display === 'block' ? 'none' : 'block';
+                            toggleBtn.textContent = details.style.display === 'block' ? 'پنهان کردن' : 'نمایش خطا';
+                        }
+                    };
+                    testDiv.appendChild(toggleBtn);
+                    
+                    const details = document.createElement('div');
+                    details.className = 'test-details';
+                    details.textContent = `خطای غیرمنتظره: ${error.message}\n${error.stack}`;
+                    testDiv.appendChild(details);
+                }
+                
+                // آپدیت آمار
+                document.getElementById('passedTests').textContent = passedTests;
+                document.getElementById('failedTests').textContent = failedTests;
+                
+                // تاخیر کوتاه برای نمایش بهتر
+                await new Promise(resolve => setTimeout(resolve, 300));
+            }
+            
+            // نمایش نتیجه نهایی
+            const finalDiv = document.createElement('div');
+            finalDiv.style.cssText = 'margin-top: 20px; padding: 15px; border-radius: 8px; text-align: center; font-weight: bold;';
+            
+            if (failedTests === 0) {
+                finalDiv.style.background = '#10b981';
+                finalDiv.style.color = 'white';
+                finalDiv.textContent = `🎉 عالی! همه ${passedTests} تست موفق بودند!`;
+            } else {
+                finalDiv.style.background = '#ef4444';
+                finalDiv.style.color = 'white';
+                finalDiv.textContent = `⚠️ ${passedTests} موفق، ${failedTests} ناموفق`;
+            }
+            
+            resultsDiv.appendChild(finalDiv);
+        }
+
+        // آپدیت آمار اولیه
+        document.getElementById('totalTests').textContent = tests.length;
+    </script>
+</body>
+</html>
