@@ -145,11 +145,22 @@
                     
                     // بارگذاری فایل
                     try {
-                        await loadScript(path);
-                        addLog('success', `✅ فایل بارگذاری شد: ${path}`);
-                        stats.loadedFiles++;
-                        updateStats();
-                        return true;
+                        // بارگذاری دستی فایل اصلی
+                        const response = await fetch(path);
+                        if (response.ok) {
+                            const code = await response.text();
+                            const script = document.createElement('script');
+                            script.type = 'module';
+                            script.textContent = code;
+                            document.head.appendChild(script);
+                            addLog('success', `✅ فایل بارگذاری شد: ${path}`);
+                            stats.loadedFiles++;
+                            updateStats();
+                            coreFilesLoaded = true;
+                            return true;
+                        } else {
+                            throw new Error('فایل یافت نشد');
+                        }
                     } catch (error) {
                         pathItem.innerHTML += ` <span style="color:#d63031">(خطا در بارگذاری)</span>`;
                         addLog('error', `❌ خطا در بارگذاری ${path}: ${error.message}`);
@@ -165,22 +176,29 @@
             return false;
         }
 
-        function loadScript(src) {
-            return new Promise((resolve, reject) => {
-                const script = document.createElement('script');
-                script.src = src;
-                
-                script.onload = () => {
-                    addLog('success', `✅ اسکریپت بارگذاری شد: ${src}`);
-                    resolve();
-                };
-                
-                script.onerror = () => {
-                    reject(new Error(`خطا در بارگذاری ${src}`));
-                };
-                
-                document.head.appendChild(script);
-            });
+        // ==================== بارگذاری دستی فایل اصلی ====================
+        async function loadCoreFileManually() {
+            try {
+                // مستقیماً محتوای فایل اصلی را بارگذاری می‌کنیم
+                const response = await fetch('./core/db/indexeddb-wrapper.js');
+                if (response.ok) {
+                    const code = await response.text();
+                    const script = document.createElement('script');
+                    script.type = 'module';
+                    script.textContent = code;
+                    document.head.appendChild(script);
+                    addLog('success', '✅ فایل اصلی به صورت دستی بارگذاری شد');
+                    stats.loadedFiles++;
+                    updateStats();
+                    coreFilesLoaded = true;
+                    return true;
+                } else {
+                    throw new Error('فایل یافت نشد');
+                }
+            } catch (error) {
+                addLog('warning', `⚠️ بارگذاری دستی ناموفق: ${error.message}`);
+                return false;
+            }
         }
 
         // ==================== تست‌های واقعی IndexedDB ====================
@@ -441,8 +459,12 @@
             // ۱. پیدا و بارگذاری فایل اصلی
             const fileLoaded = await findAndLoadCoreFile();
             
-            if (fileLoaded) {
-                coreFilesLoaded = true;
+            // ۲. اگر پیدا نشد، بارگذاری دستی را امتحان کن
+            if (!fileLoaded) {
+                await loadCoreFileManually();
+            }
+            
+            if (coreFilesLoaded) {
                 // فعال کردن دکمه‌ها
                 document.getElementById('dbBtn').disabled = false;
                 document.getElementById('modelBtn').disabled = false;
@@ -453,7 +475,7 @@
                 addLog('warning', '⚠️ فایل اصلی یافت نشد. تست‌های شبیه‌سازی اجرا می‌شوند');
             }
             
-            // ۲. اجرای تست‌ها
+            // ۳. اجرای تست‌ها
             await runAllTests();
             
             runBtn.textContent = '✅ تست‌ها کامل شد';
