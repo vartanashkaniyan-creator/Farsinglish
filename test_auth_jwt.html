@@ -1,0 +1,959 @@
+<!DOCTYPE html>
+<html lang="fa">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>تست JWT و Token Management - Farsinglish</title>
+    <style>
+        :root {
+            --primary: #4f46e5;
+            --success: #10b981;
+            --danger: #ef4444;
+            --warning: #f59e0b;
+            --dark: #1e293b;
+            --light: #f8fafc;
+            --border: #e2e8f0;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: system-ui, -apple-system, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            color: var(--dark);
+        }
+        
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid var(--border);
+        }
+        
+        h1 {
+            color: var(--dark);
+            font-size: 24px;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+        
+        .subtitle {
+            color: #64748b;
+            font-size: 14px;
+        }
+        
+        .controls {
+            text-align: center;
+            margin: 20px 0;
+        }
+        
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            background: var(--primary);
+            color: white;
+        }
+        
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(79, 70, 229, 0.3);
+        }
+        
+        .btn:active {
+            transform: translateY(0);
+        }
+        
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 15px;
+            margin: 25px 0;
+        }
+        
+        .stat-card {
+            background: var(--light);
+            border-radius: 10px;
+            padding: 15px;
+            text-align: center;
+            border: 1px solid var(--border);
+        }
+        
+        .stat-value {
+            font-size: 28px;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        
+        .stat-label {
+            font-size: 12px;
+            color: #64748b;
+        }
+        
+        .test-container {
+            margin: 25px 0;
+        }
+        
+        .test-category {
+            margin-bottom: 20px;
+        }
+        
+        .category-title {
+            font-size: 16px;
+            font-weight: bold;
+            color: var(--dark);
+            margin-bottom: 10px;
+            padding: 10px;
+            background: var(--light);
+            border-radius: 8px;
+            border-right: 4px solid var(--primary);
+        }
+        
+        .test-item {
+            margin: 8px 0;
+            padding: 12px;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: all 0.3s;
+        }
+        
+        .test-item:hover {
+            background: var(--light);
+            transform: translateX(5px);
+        }
+        
+        .test-name {
+            flex: 1;
+            font-size: 14px;
+        }
+        
+        .test-status {
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+        
+        .status-pass {
+            background: var(--success);
+            color: white;
+        }
+        
+        .status-fail {
+            background: var(--danger);
+            color: white;
+        }
+        
+        .status-pending {
+            background: var(--warning);
+            color: white;
+        }
+        
+        .details-btn {
+            background: none;
+            border: 1px solid var(--border);
+            padding: 4px 12px;
+            border-radius: 4px;
+            font-size: 12px;
+            cursor: pointer;
+            margin-right: 10px;
+            color: #64748b;
+        }
+        
+        .details-btn:hover {
+            background: var(--border);
+        }
+        
+        .test-details {
+            background: var(--light);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 12px;
+            margin-top: 10px;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            display: none;
+            white-space: pre-wrap;
+            word-break: break-all;
+        }
+        
+        .test-item.expanded .test-details {
+            display: block;
+        }
+        
+        .jwt-decoder {
+            background: #1e293b;
+            color: #e2e8f0;
+            border-radius: 10px;
+            padding: 20px;
+            margin: 20px 0;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+        }
+        
+        .jwt-title {
+            color: #94a3b8;
+            margin-bottom: 10px;
+            font-weight: bold;
+        }
+        
+        .jwt-part {
+            margin: 8px 0;
+            padding: 8px;
+            background: #0f172a;
+            border-radius: 4px;
+            word-break: break-all;
+        }
+        
+        .footer {
+            text-align: center;
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid var(--border);
+            color: #64748b;
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🔐 تست JWT و Token Management</h1>
+            <p class="subtitle">تولید، اعتبارسنجی و مدیریت توکن‌های امن</p>
+        </div>
+
+        <div class="controls">
+            <button class="btn" onclick="runAllTests()">🚀 اجرای همه تست‌ها</button>
+            <button class="btn" onclick="decodeSampleJWT()" style="background: var(--warning); margin-left: 10px;">
+                🔍 مشاهده نمونه JWT
+            </button>
+        </div>
+
+        <div class="stats">
+            <div class="stat-card">
+                <div class="stat-value" id="totalTests">10</div>
+                <div class="stat-label">کل تست‌ها</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="passedTests">0</div>
+                <div class="stat-label">موفق</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="failedTests">0</div>
+                <div class="stat-label">ناموفق</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="duration">0.0</div>
+                <div class="stat-label">ثانیه</div>
+            </div>
+        </div>
+
+        <div id="jwtDecoder" class="jwt-decoder" style="display: none;">
+            <div class="jwt-title">🔍 ساختار نمونه JWT:</div>
+            <div id="jwtParts"></div>
+        </div>
+
+        <div class="test-container" id="testResults">
+            <!-- تست‌ها اینجا نمایش داده می‌شوند -->
+        </div>
+
+        <div class="footer">
+            <p>Farsinglish - JWT Test Suite | برای SRS و مدیریت Session کاربران</p>
+        </div>
+    </div>
+
+    <script>
+        // ==================== JWT Utility Class ====================
+        class JWTManager {
+            constructor(secret = 'farsinglish-secret-key') {
+                this.secret = secret;
+                this.tokenRefreshInterval = null;
+            }
+
+            // تولید JWT
+            generateToken(userId, userData = {}, expiresInHours = 24) {
+                const header = {
+                    alg: 'HS256',
+                    typ: 'JWT'
+                };
+                
+                const now = Math.floor(Date.now() / 1000);
+                const payload = {
+                    sub: userId,
+                    iat: now,
+                    exp: now + (expiresInHours * 3600),
+                    role: userData.role || 'user',
+                    level: userData.level || 1,
+                    xp: userData.xp || 0,
+                    ...userData
+                };
+                
+                // در واقعیت اینجا signature تولید می‌شود
+                const headerBase64 = btoa(JSON.stringify(header));
+                const payloadBase64 = btoa(JSON.stringify(payload));
+                const signature = this._generateSignature(headerBase64, payloadBase64);
+                
+                return `${headerBase64}.${payloadBase64}.${signature}`;
+            }
+
+            _generateSignature(header, payload) {
+                // شبیه‌سازی signature (در واقعیت با secret امضا می‌شود)
+                const data = header + '.' + payload + this.secret;
+                let hash = 0;
+                for (let i = 0; i < data.length; i++) {
+                    hash = ((hash << 5) - hash) + data.charCodeAt(i);
+                    hash = hash & hash;
+                }
+                return Math.abs(hash).toString(36) + 'sig';
+            }
+
+            // Parse و اعتبارسنجی JWT
+            parseToken(token) {
+                try {
+                    const parts = token.split('.');
+                    if (parts.length !== 3) {
+                        return { valid: false, error: 'فرمت توکن نامعتبر' };
+                    }
+
+                    const [headerBase64, payloadBase64, signature] = parts;
+                    
+                    // بررسی signature
+                    const expectedSignature = this._generateSignature(headerBase64, payloadBase64);
+                    if (signature !== expectedSignature) {
+                        return { valid: false, error: 'امضا نامعتبر' };
+                    }
+
+                    const header = JSON.parse(atob(headerBase64));
+                    const payload = JSON.parse(atob(payloadBase64));
+                    
+                    // بررسی انقضا
+                    const now = Math.floor(Date.now() / 1000);
+                    if (payload.exp < now) {
+                        return { 
+                            valid: false, 
+                            error: 'توکن منقضی شده',
+                            payload,
+                            expired: true 
+                        };
+                    }
+
+                    return {
+                        valid: true,
+                        header,
+                        payload,
+                        signature
+                    };
+
+                } catch (error) {
+                    return { valid: false, error: error.message };
+                }
+            }
+
+            // بررسی اعتبار توکن
+            isTokenValid(token) {
+                const result = this.parseToken(token);
+                return result.valid === true;
+            }
+
+            // بررسی انقضای توکن
+            isTokenExpired(token) {
+                const result = this.parseToken(token);
+                return result.expired === true;
+            }
+
+            // زمان باقی‌مانده تا انقضا (ثانیه)
+            getTimeToExpiry(token) {
+                const result = this.parseToken(token);
+                if (!result.valid || !result.payload) return 0;
+                
+                const now = Math.floor(Date.now() / 1000);
+                return Math.max(0, result.payload.exp - now);
+            }
+
+            // تمدید توکن
+            refreshToken(oldToken, newExpiryHours = 24) {
+                const result = this.parseToken(oldToken);
+                if (!result.valid) {
+                    throw new Error('توکن قدیمی نامعتبر است');
+                }
+
+                return this.generateToken(
+                    result.payload.sub,
+                    result.payload,
+                    newExpiryHours
+                );
+            }
+
+            // ایجاد Refresh Token
+            generateRefreshToken(userId) {
+                const randomBytes = new Uint8Array(32);
+                crypto.getRandomValues(randomBytes);
+                const token = Array.from(randomBytes)
+                    .map(b => b.toString(16).padStart(2, '0'))
+                    .join('');
+                
+                return {
+                    token: `rf_${userId}_${token}`,
+                    expiresAt: Date.now() + (30 * 24 * 3600 * 1000) // 30 روز
+                };
+            }
+
+            // شروع تمدید خودکار
+            startAutoRefresh(token, callback, thresholdMinutes = 5) {
+                this.stopAutoRefresh();
+                
+                const timeToExpiry = this.getTimeToExpiry(token);
+                const refreshTime = Math.max(0, timeToExpiry - (thresholdMinutes * 60)) * 1000;
+                
+                if (refreshTime > 0) {
+                    this.tokenRefreshInterval = setTimeout(() => {
+                        try {
+                            const newToken = this.refreshToken(token);
+                            callback(newToken);
+                            this.startAutoRefresh(newToken, callback, thresholdMinutes);
+                        } catch (error) {
+                            console.error('خطا در تمدید خودکار:', error);
+                        }
+                    }, refreshTime);
+                }
+            }
+
+            // توقف تمدید خودکار
+            stopAutoRefresh() {
+                if (this.tokenRefreshInterval) {
+                    clearTimeout(this.tokenRefreshInterval);
+                    this.tokenRefreshInterval = null;
+                }
+            }
+
+            // استخراج اطلاعات کاربر از توکن
+            getUserFromToken(token) {
+                const result = this.parseToken(token);
+                if (!result.valid) return null;
+                
+                return {
+                    id: result.payload.sub,
+                    role: result.payload.role,
+                    level: result.payload.level,
+                    xp: result.payload.xp,
+                    issuedAt: new Date(result.payload.iat * 1000),
+                    expiresAt: new Date(result.payload.exp * 1000)
+                };
+            }
+        }
+
+        // ==================== Test Suite ====================
+        const tests = [
+            // دسته ۱: تولید توکن
+            {
+                category: 'تولید توکن',
+                name: 'تولید JToken معتبر',
+                description: 'توکن باید با ساختار سه‌بخشی تولید شود',
+                fn: async () => {
+                    const jwt = new JWTManager();
+                    const token = jwt.generateToken('user-123', { level: 5, xp: 1000 });
+                    
+                    const parts = token.split('.');
+                    if (parts.length !== 3) {
+                        return `توکن باید ۳ بخش داشته باشد، اما ${parts.length} بخش دارد`;
+                    }
+                    
+                    try {
+                        JSON.parse(atob(parts[0])); // header
+                        JSON.parse(atob(parts[1])); // payload
+                    } catch (e) {
+                        return `بخش‌های توکن JSON معتبر نیستند: ${e.message}`;
+                    }
+                    
+                    if (parts[2].length < 10) {
+                        return `امضا خیلی کوتاه است: ${parts[2]}`;
+                    }
+                    
+                    return true;
+                }
+            },
+            {
+                category: 'تولید توکن',
+                name: 'Payload شامل داده کاربر',
+                description: 'توکن باید شامل تمام داده‌های کاربر باشد',
+                fn: async () => {
+                    const jwt = new JWTManager();
+                    const userData = {
+                        level: 7,
+                        xp: 2500,
+                        role: 'premium',
+                        name: 'علی'
+                    };
+                    
+                    const token = jwt.generateToken('user-456', userData);
+                    const result = jwt.parseToken(token);
+                    
+                    if (!result.valid) {
+                        return `توکن نامعتبر: ${result.error}`;
+                    }
+                    
+                    const checks = [
+                        result.payload.sub === 'user-456',
+                        result.payload.level === 7,
+                        result.payload.xp === 2500,
+                        result.payload.role === 'premium',
+                        result.payload.name === 'علی',
+                        result.payload.iat > 0,
+                        result.payload.exp > result.payload.iat
+                    ];
+                    
+                    if (!checks.every(c => c)) {
+                        return 'داده‌های کاربر در payload به درستی ذخیره نشده‌اند';
+                    }
+                    
+                    return true;
+                }
+            },
+            
+            // دسته ۲: اعتبارسنجی
+            {
+                category: 'اعتبارسنجی',
+                name: 'اعتبارسنجی توکن معتبر',
+                description: 'توکن معتبر باید به درستی اعتبارسنجی شود',
+                fn: async () => {
+                    const jwt = new JWTManager();
+                    const token = jwt.generateToken('user-789');
+                    
+                    if (!jwt.isTokenValid(token)) {
+                        return 'توکن معتبر به عنوان نامعتبر شناسایی شد';
+                    }
+                    
+                    const parsed = jwt.parseToken(token);
+                    if (!parsed.valid) {
+                        return `اعتبارسنجی ناموفق: ${parsed.error}`;
+                    }
+                    
+                    return true;
+                }
+            },
+            {
+                category: 'اعتبارسنجی',
+                name: 'تشخیص توکن نامعتبر',
+                description: 'توکن‌های دستکاری شده باید رد شوند',
+                fn: async () => {
+                    const jwt = new JWTManager();
+                    const validToken = jwt.generateToken('user-999');
+                    
+                    // توکن دستکاری شده
+                    const parts = validToken.split('.');
+                    const tamperedToken = parts[0] + '.' + parts[1] + '.tampered-signature';
+                    
+                    if (jwt.isTokenValid(tamperedToken)) {
+                        return 'توکن دستکاری شده به عنوان معتبر پذیرفته شد';
+                    }
+                    
+                    // توکن با فرمت نادرست
+                    if (jwt.isTokenValid('not.a.jwt.token')) {
+                        return 'توکن با فرمت نادرست پذیرفته شد';
+                    }
+                    
+                    // توکن خالی
+                    if (jwt.isTokenValid('')) {
+                        return 'توکن خالی پذیرفته شد';
+                    }
+                    
+                    return true;
+                }
+            },
+            {
+                category: 'اعتبارسنجی',
+                name: 'تشخیص انقضای توکن',
+                description: 'توکن‌های منقضی شده باید تشخیص داده شوند',
+                fn: async () => {
+                    const jwt = new JWTManager();
+                    
+                    // توکن منقضی شده
+                    const expiredToken = jwt.generateToken('user-exp', {}, -1); // منقضی در گذشته
+                    
+                    if (jwt.isTokenValid(expiredToken)) {
+                        return 'توکن منقضی شده به عنوان معتبر شناسایی شد';
+                    }
+                    
+                    if (!jwt.isTokenExpired(expiredToken)) {
+                        return 'توکن منقضی شده تشخیص داده نشد';
+                    }
+                    
+                    // توکن معتبر نباید منقضی شده باشد
+                    const validToken = jwt.generateToken('user-valid', {}, 24);
+                    if (jwt.isTokenExpired(validToken)) {
+                        return 'توکن معتبر به عنوان منقضی شده شناسایی شد';
+                    }
+                    
+                    return true;
+                }
+            },
+            
+            // دسته ۳: مدیریت توکن
+            {
+                category: 'مدیریت توکن',
+                name: 'تمدید توکن',
+                description: 'توکن قدیمی باید قابل تمدید باشد',
+                fn: async () => {
+                    const jwt = new JWTManager();
+                    const oldToken = jwt.generateToken('user-old', { level: 3 }, 1); // 1 ساعت
+                    
+                    const newToken = jwt.refreshToken(oldToken, 24); // 24 ساعت
+                    
+                    if (!jwt.isTokenValid(newToken)) {
+                        return 'توکن جدید نامعتبر است';
+                    }
+                    
+                    const oldUser = jwt.getUserFromToken(oldToken);
+                    const newUser = jwt.getUserFromToken(newToken);
+                    
+                    if (oldUser.id !== newUser.id) {
+                        return `شناسه کاربر تغییر کرده: ${oldUser.id} → ${newUser.id}`;
+                    }
+                    
+                    if (oldUser.level !== newUser.level) {
+                        return `سطح کاربر تغییر کرده: ${oldUser.level} → ${newUser.level}`;
+                    }
+                    
+                    // زمان انقضای جدید باید بیشتر باشد
+                    if (newUser.expiresAt <= oldUser.expiresAt) {
+                        return 'زمان انقضا تمدید نشده است';
+                    }
+                    
+                    return true;
+                }
+            },
+            {
+                category: 'مدیریت توکن',
+                name: 'تولید Refresh Token',
+                description: 'Refresh Token باید امن و منحصر به فرد باشد',
+                fn: async () => {
+                    const jwt = new JWTManager();
+                    const userId = 'user-777';
+                    
+                    const rt1 = jwt.generateRefreshToken(userId);
+                    const rt2 = jwt.generateRefreshToken(userId);
+                    
+                    // Refresh Token باید منحصر به فرد باشد
+                    if (rt1.token === rt2.token) {
+                        return 'Refresh Token‌های یکسان تولید شده‌اند';
+                    }
+                    
+                    // ساختار باید درست باشد
+                    if (!rt1.token.startsWith('rf_')) {
+                        return `پیشوند نادرست: ${rt1.token}`;
+                    }
+                    
+                    if (!rt1.token.includes(userId)) {
+                        return `شناسه کاربر در توکن نیست: ${rt1.token}`;
+                    }
+                    
+                    if (rt1.token.length < 50) {
+                        return `توکن خیلی کوتاه: ${rt1.token.length} کاراکتر`;
+                    }
+                    
+                    // زمان انقضا باید در آینده باشد
+                    if (rt1.expiresAt <= Date.now()) {
+                        return 'زمان انقضا در گذشته است';
+                    }
+                    
+                    return true;
+                }
+            },
+            
+            // دسته ۴: زمان‌بندی
+            {
+                category: 'زمان‌بندی',
+                name: 'محاسبه زمان باقی‌مانده',
+                description: 'زمان باقی‌مانده تا انقضا باید دقیق محاسبه شود',
+                fn: async () => {
+                    const jwt = new JWTManager();
+                    const token = jwt.generateToken('user-time', {}, 2); // 2 ساعت
+                    
+                    const timeToExpiry = jwt.getTimeToExpiry(token);
+                    
+                    // باید بین 7190 تا 7200 ثانیه باشد (۲ ساعت منفی چند ثانیه)
+                    if (timeToExpiry < 7100 || timeToExpiry > 7200) {
+                        return `زمان باقی‌مانده نامعتبر: ${timeToExpiry} ثانیه (مورد انتظار: ~7200)`;
+                    }
+                    
+                    // برای توکن منقضی شده باید ۰ باشد
+                    const expiredToken = jwt.generateToken('user-expired', {}, -1);
+                    const expiredTime = jwt.getTimeToExpiry(expiredToken);
+                    if (expiredTime !== 0) {
+                        return `زمان باقی‌مانده برای توکن منقضی شده: ${expiredTime} (مورد انتظار: 0)`;
+                    }
+                    
+                    return true;
+                }
+            },
+            {
+                category: 'زمان‌بندی',
+                name: 'استخراج اطلاعات کاربر',
+                description: 'اطلاعات کاربر باید از توکن قابل استخراج باشد',
+                fn: async () => {
+                    const jwt = new JWTManager();
+                    const issueTime = Math.floor(Date.now() / 1000);
+                    const token = jwt.generateToken('user-info', { level: 10, xp: 5000, role: 'admin' });
+                    
+                    const user = jwt.getUserFromToken(token);
+                    
+                    if (!user) {
+                        return 'کاربر از توکن استخراج نشد';
+                    }
+                    
+                    const checks = [
+                        user.id === 'user-info',
+                        user.level === 10,
+                        user.xp === 5000,
+                        user.role === 'admin',
+                        user.issuedAt instanceof Date,
+                        user.expiresAt instanceof Date,
+                        user.expiresAt > user.issuedAt,
+                        Math.abs(user.issuedAt.getTime() / 1000 - issueTime) < 2 // حداکثر ۲ ثانیه اختلاف
+                    ];
+                    
+                    if (!checks.every(c => c)) {
+                        return 'اطلاعات کاربر به درستی استخراج نشد';
+                    }
+                    
+                    return true;
+                }
+            },
+            
+            // دسته ۵: امنیت
+            {
+                category: 'امنیت',
+                name: 'امنیت در برابر تغییرات',
+                description: 'تغییر کوچک در توکن باید آن را نامعتبر کند',
+                fn: async () => {
+                    const jwt = new JWTManager();
+                    const token = jwt.generateToken('user-secure');
+                    
+                    // تغییر یک کاراکتر در payload
+                    const parts = token.split('.');
+                    const payload = JSON.parse(atob(parts[1]));
+                    payload.sub = 'hacker'; // تغییر شناسه کاربر
+                    const tamperedPayload = btoa(JSON.stringify(payload));
+                    const tamperedToken = parts[0] + '.' + tamperedPayload + '.' + parts[2];
+                    
+                    if (jwt.isTokenValid(tamperedToken)) {
+                        return 'توکن تغییر یافته پذیرفته شد (امنیت پایین)';
+                    }
+                    
+                    // تغییر signature
+                    const anotherTampered = parts[0] + '.' + parts[1] + '.fake-signature-123';
+                    if (jwt.isTokenValid(anotherTampered)) {
+                        return 'توکن با signature جعلی پذیرفته شد';
+                    }
+                    
+                    return true;
+                }
+            }
+        ];
+
+        // ==================== Test Runner ====================
+        let testResults = [];
+        let startTime = null;
+
+        function updateStats() {
+            const passed = testResults.filter(r => r && r.success).length;
+            const failed = testResults.filter(r => r && !r.success).length;
+            
+            document.getElementById('passedTests').textContent = passed;
+            document.getElementById('failedTests').textContent = failed;
+            
+            if (startTime) {
+                const duration = ((Date.now() - startTime) / 1000).toFixed(1);
+                document.getElementById('duration').textContent = duration;
+            }
+        }
+
+        function createTestElement(test, index, result = null) {
+            const container = document.getElementById('testResults');
+            
+            // اگر دسته‌بندی هنوز ساخته نشده
+            let categoryDiv = document.querySelector(`[data-category="${test.category}"]`);
+            if (!categoryDiv) {
+                categoryDiv = document.createElement('div');
+                categoryDiv.className = 'test-category';
+                categoryDiv.setAttribute('data-category', test.category);
+                
+                const title = document.createElement('div');
+                title.className = 'category-title';
+                title.textContent = test.category;
+                categoryDiv.appendChild(title);
+                
+                container.appendChild(categoryDiv);
+            }
+            
+            // ایجاد المان تست
+            const testDiv = document.createElement('div');
+            testDiv.className = 'test-item';
+            testDiv.id = `test-${index}`;
+            
+            const nameSpan = document.createElement('span');
+            nameSpan.className = 'test-name';
+            nameSpan.textContent = test.name;
+            
+            const statusSpan = document.createElement('span');
+            statusSpan.className = `test-status ${result ? (result.success ? 'status-pass' : 'status-fail') : 'status-pending'}`;
+            statusSpan.textContent = result ? (result.success ? '✅' : '❌') : '⏳';
+            
+            const detailsBtn = document.createElement('button');
+            detailsBtn.className = 'details-btn';
+            detailsBtn.textContent = 'جزئیات';
+            detailsBtn.onclick = () => {
+                testDiv.classList.toggle('expanded');
+            };
+            
+            testDiv.appendChild(nameSpan);
+            testDiv.appendChild(detailsBtn);
+            testDiv.appendChild(statusSpan);
+            
+            // جزئیات تست
+            if (result) {
+                const detailsDiv = document.createElement('div');
+                detailsDiv.className = 'test-details';
+                
+                let detailsText = `${test.description}\n\n`;
+                detailsText += `زمان اجرا: ${result.duration || 0}ms\n`;
+                
+                if (result.success) {
+                    detailsText += '\n✅ تست موفقیت‌آمیز بود';
+                } else {
+                    detailsText += `\n❌ تست ناموفق\n`;
+                    if (result.error) {
+                        detailsText += `خطا: ${result.error.message}\n`;
+                    } else if (result.message) {
+                        detailsText += `پیام: ${result.message}`;
+                    }
+                }
+                
+                detailsDiv.textContent = detailsText;
+                testDiv.appendChild(detailsDiv);
+            }
+            
+            // اضافه کردن به دسته‌بندی
+            categoryDiv.appendChild(testDiv);
+            
+            return testDiv;
+        }
+
+        async function runTest(test, index) {
+            const testElement = createTestElement(test, index);
+            const startTime = Date.now();
+            
+            try {
+                const result = await test.fn();
+                const duration = Date.now() - startTime;
+                
+                const testResult = {
+                    success: result === true,
+                    duration,
+                    message: result === true ? undefined : result,
+                    test: test.name
+                };
+                
+                testResults[index] = testResult;
+                createTestElement(test, index, testResult);
+                testElement.remove();
+                
+                return testResult;
+                
+            } catch (error) {
+                const duration = Date.now() - startTime;
+                const testResult = {
+                    success: false,
+                    duration,
+                    error: error,
+                    test: test.name
+                };
+                
+                testResults[index] = testResult;
+                createTestElement(test, index, testResult);
+                testElement.remove();
+                
+                return testResult;
+            }
+        }
+
+        async function runAllTests() {
+            startTime = Date.now();
+            testResults = new Array(tests.length);
+            
+            document.getElementById('testResults').innerHTML = '';
+            
+            for (let i = 0; i < tests.length; i++) {
+                await runTest(tests[i], i);
+                updateStats();
+                await new Promise(resolve => setTimeout(resolve, 100));
+            }
+            
+            const passed = testResults.filter(r => r && r.success).length;
+            const total = tests.length;
+            
+            if (passed === total) {
+                console.log(`🎉 همه ${total} تست JWT موفق بودند!`);
+            } else {
+                console.log(`⚠️ ${passed} از ${total} تست موفق بودند`);
+            }
+        }
+
+        function decodeSampleJWT() {
+            const jwt = new JWTManager();
+            const token = jwt.generateToken('sample-user', { 
+                level: 5, 
+                xp: 1200, 
+                role: 'user',
+                name: 'نمونه کاربر'
+            });
+            
+            const decoder = document.getElementById('jwtDecoder');
+            const partsDiv = document.getElementById('jwtParts');
+            
+            const parts = token.split('.');
+            const header = JSON.parse(atob(parts[0]));
+            const payload = JSON.parse(atob(parts[1]));
+            
+            partsDiv.innerHTML = `
+                <div class="jwt-part"><strong>Header:</strong> ${JSON.stringify(header, null, 2)}</div>
+                <div class="jwt-part"><strong>Payload:</strong> ${JSON.stringify(payload, null, 2)}</div>
+                <div class="jwt-part"><strong>Signature:</strong> ${parts[2]}</div>
+                <div class="jwt-part"><strong>کل توکن:</strong> ${token}</div>
+            `;
+            
+            decoder.style.display = 'block';
+        }
+
+        // اجرای خودکار
+        setTimeout(() => {
+            console.log('تست‌های JWT آماده اجرا هستند...');
+        }, 500);
+    </script>
+</body>
+</html>
