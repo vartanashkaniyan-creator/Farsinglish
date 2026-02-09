@@ -1,0 +1,1001 @@
+<!DOCTYPE html>
+<html lang="fa">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>تست نهایی State Manager - Farsinglish</title>
+    <style>
+        :root {
+            --primary: #667eea;
+            --secondary: #764ba2;
+            --success: #48bb78;
+            --danger: #f56565;
+            --warning: #ed8936;
+            --info: #4299e1;
+            --light: #f7fafc;
+            --dark: #2d3748;
+            --gray: #718096;
+            --border: #e2e8f0;
+        }
+        
+        * { 
+            margin: 0; 
+            padding: 0; 
+            box-sizing: border-box; 
+        }
+        
+        body {
+            font-family: 'Vazirmatn', 'Segoe UI', Tahoma, Geneva, sans-serif;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            min-height: 100vh;
+            padding: 20px;
+            color: var(--dark);
+            line-height: 1.6;
+        }
+        
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            animation: fadeIn 0.5s ease;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            border-bottom: 2px solid var(--border);
+            padding-bottom: 20px;
+        }
+        
+        h1 {
+            color: var(--dark);
+            font-size: 28px;
+            margin-bottom: 8px;
+        }
+        
+        .subtitle {
+            color: var(--gray);
+            font-size: 16px;
+        }
+        
+        .badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: bold;
+            margin-left: 10px;
+        }
+        
+        .badge-primary { background: #ebf8ff; color: #2b6cb0; }
+        .badge-success { background: #c6f6d5; color: #22543d; }
+        .badge-danger { background: #fed7d7; color: #742a2a; }
+        .badge-warning { background: #feebc8; color: #744210; }
+        
+        .test-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
+            gap: 15px;
+            margin: 25px 0;
+        }
+        
+        @media (max-width: 768px) {
+            .test-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        .test-card {
+            background: var(--light);
+            border-radius: 12px;
+            padding: 20px;
+            border: 1px solid var(--border);
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .test-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+        }
+        
+        .test-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 5px;
+            height: 100%;
+        }
+        
+        .test-card.passing::before { background: var(--success); }
+        .test-card.failing::before { background: var(--danger); }
+        .test-card.running::before { background: var(--warning); }
+        
+        .test-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+        
+        .test-title {
+            font-weight: 700;
+            font-size: 16px;
+            color: var(--dark);
+            flex-grow: 1;
+        }
+        
+        .test-icon {
+            font-size: 20px;
+            margin-left: 10px;
+        }
+        
+        .test-details {
+            background: white;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 12px;
+            margin-top: 10px;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            color: var(--dark);
+            white-space: pre-wrap;
+            display: none;
+            animation: slideDown 0.3s ease;
+        }
+        
+        @keyframes slideDown {
+            from { opacity: 0; max-height: 0; }
+            to { opacity: 1; max-height: 500px; }
+        }
+        
+        .test-card.expanded .test-details {
+            display: block;
+        }
+        
+        .test-toggle {
+            background: none;
+            border: none;
+            color: var(--info);
+            cursor: pointer;
+            font-size: 12px;
+            padding: 2px 8px;
+            border-radius: 4px;
+            transition: all 0.2s;
+        }
+        
+        .test-toggle:hover {
+            background: var(--border);
+        }
+        
+        .stats-container {
+            display: flex;
+            justify-content: space-around;
+            margin: 30px 0;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+        
+        .stat-box {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            text-align: center;
+            min-width: 150px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+            border: 1px solid var(--border);
+            transition: all 0.3s;
+        }
+        
+        .stat-box:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+        }
+        
+        .stat-value {
+            font-size: 36px;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        
+        .stat-label {
+            font-size: 14px;
+            color: var(--gray);
+        }
+        
+        .stat-passed .stat-value { color: var(--success); }
+        .stat-failed .stat-value { color: var(--danger); }
+        .stat-total .stat-value { color: var(--info); }
+        .stat-duration .stat-value { color: var(--warning); }
+        
+        .controls {
+            text-align: center;
+            margin: 30px 0;
+        }
+        
+        .btn {
+            background: var(--info);
+            color: white;
+            border: none;
+            padding: 12px 28px;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin: 0 8px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+        
+        .btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 8px 20px rgba(66, 153, 225, 0.3);
+        }
+        
+        .btn:active {
+            transform: scale(0.98);
+        }
+        
+        .btn-success { background: var(--success); }
+        .btn-danger { background: var(--danger); }
+        .btn-warning { background: var(--warning); }
+        
+        .progress-container {
+            margin: 25px 0;
+        }
+        
+        .progress-bar {
+            height: 8px;
+            background: var(--border);
+            border-radius: 4px;
+            overflow: hidden;
+            margin-bottom: 10px;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--success), var(--info));
+            border-radius: 4px;
+            transition: width 0.5s ease;
+            width: 0%;
+        }
+        
+        .progress-text {
+            display: flex;
+            justify-content: space-between;
+            font-size: 14px;
+            color: var(--gray);
+        }
+        
+        .summary {
+            background: #f0fff4;
+            padding: 20px;
+            border-radius: 12px;
+            border-right: 4px solid var(--success);
+            margin-top: 30px;
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0% { border-right-color: var(--success); }
+            50% { border-right-color: var(--info); }
+            100% { border-right-color: var(--success); }
+        }
+        
+        .summary-title {
+            color: var(--dark);
+            font-weight: bold;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .summary-content {
+            color: var(--dark);
+            line-height: 1.8;
+            font-size: 15px;
+        }
+        
+        .console {
+            background: #1a202c;
+            color: #cbd5e0;
+            border-radius: 8px;
+            padding: 15px;
+            margin-top: 20px;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+        
+        .console-line {
+            margin-bottom: 5px;
+            padding: 2px 0;
+            border-bottom: 1px solid #2d3748;
+        }
+        
+        .console-timestamp {
+            color: #718096;
+            font-size: 11px;
+        }
+        
+        .console-message {
+            color: #cbd5e0;
+        }
+        
+        .console-error { color: #fc8181; }
+        .console-warning { color: #f6ad55; }
+        .console-info { color: #90cdf4; }
+        .console-success { color: #9ae6b4; }
+        
+        .footer {
+            text-align: center;
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid var(--border);
+            color: var(--gray);
+            font-size: 14px;
+        }
+    </style>
+    <link href="https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn@v33.003/Vazirmatn-font-face.css" rel="stylesheet">
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🧪 تست نهایی State Manager</h1>
+            <p class="subtitle">همه ۸ تست باید با موفقیت اجرا شوند</p>
+            <span class="badge badge-primary">Immutability فعال</span>
+            <span class="badge badge-warning">Deep Clone تضمین شده</span>
+            <span class="badge badge-success">Middleware Chain</span>
+        </div>
+
+        <div class="progress-container">
+            <div class="progress-bar">
+                <div class="progress-fill" id="progressFill"></div>
+            </div>
+            <div class="progress-text">
+                <span>پیشرفت تست‌ها</span>
+                <span id="progressPercent">0%</span>
+            </div>
+        </div>
+
+        <div class="stats-container">
+            <div class="stat-box stat-passed">
+                <div class="stat-value" id="passedCount">0</div>
+                <div class="stat-label">موفق</div>
+            </div>
+            <div class="stat-box stat-failed">
+                <div class="stat-value" id="failedCount">0</div>
+                <div class="stat-label">ناموفق</div>
+            </div>
+            <div class="stat-box stat-total">
+                <div class="stat-value" id="totalCount">8</div>
+                <div class="stat-label">کل تست‌ها</div>
+            </div>
+            <div class="stat-box stat-duration">
+                <div class="stat-value" id="duration">0</div>
+                <div class="stat-label">ثانیه</div>
+            </div>
+        </div>
+
+        <div class="controls">
+            <button class="btn btn-success" onclick="runAllTests()">
+                <span>▶️</span> اجرای همه تست‌ها
+            </button>
+            <button class="btn btn-warning" onclick="runTestsStepByStep()">
+                <span>⏯️</span> اجرای مرحله‌ای
+            </button>
+            <button class="btn btn-danger" onclick="resetAllTests()">
+                <span>🔄</span> بازنشانی
+            </button>
+        </div>
+
+        <div id="testContainer" class="test-grid"></div>
+
+        <div class="console">
+            <div id="consoleOutput"></div>
+        </div>
+
+        <div class="summary">
+            <div class="summary-title">
+                <span>📋 خلاصه اصلاحات انجام شده</span>
+            </div>
+            <div class="summary-content">
+                1. <strong>رفع کامل Immutability:</strong> هیچ‌گونه تغییر مستقیم روی state اصلی<br>
+                2. <strong>اصلاح Listener Notification:</strong> ارسال state قدیم و جدید به درستی<br>
+                3. <strong>Deep Clone بهبود یافته:</strong> پشتیبانی از آرایه‌ها و آبجکت‌های تو در تو<br>
+                4. <strong>Singleton Pattern تضمین شده:</strong> فقط یک instance از State Manager<br>
+                5. <strong>Middleware Chain درست:</strong> اجرای ترتیبی middleware‌ها
+            </div>
+        </div>
+
+        <div class="footer">
+            <p>Farsinglish Project - State Manager Test Suite | طراحی شده برای اجرا در مرورگر موبایل</p>
+            <p>⏱️ زمان اجرای آخرین تست: <span id="lastRunTime">-</span></p>
+        </div>
+    </div>
+
+    <script>
+        // ==================== State Manager (نسخه نهایی) ====================
+        class StateManager {
+            constructor(initialState = {}) {
+                if (StateManager._instance) {
+                    return StateManager._instance;
+                }
+                
+                this._state = this._deepClone(initialState);
+                this._middlewares = [];
+                this._listeners = [];
+                StateManager._instance = this;
+                
+                return this;
+            }
+
+            _deepClone(obj) {
+                if (obj === null || typeof obj !== 'object') return obj;
+                if (obj instanceof Date) return new Date(obj.getTime());
+                if (obj instanceof RegExp) return new RegExp(obj);
+                if (Array.isArray(obj)) return obj.map(item => this._deepClone(item));
+                
+                const cloned = {};
+                for (const key in obj) {
+                    if (obj.hasOwnProperty(key)) {
+                        cloned[key] = this._deepClone(obj[key]);
+                    }
+                }
+                return cloned;
+            }
+
+            getState() {
+                return this._deepClone(this._state);
+            }
+
+            dispatch(action) {
+                const middlewares = [...this._middlewares];
+                const listeners = [...this._listeners];
+                const oldState = this._deepClone(this._state);
+                let currentState = this._deepClone(this._state);
+                let currentAction = action;
+                
+                const executeMiddleware = (index) => {
+                    if (index >= middlewares.length) {
+                        // اعمال تغییرات نهایی
+                        currentState = this._applyReducer(currentState, currentAction);
+                        this._state = currentState;
+                        
+                        // اطلاع به listeners
+                        listeners.forEach(listener => {
+                            try {
+                                listener(this._deepClone(this._state), oldState);
+                            } catch (error) {
+                                console.error('خطا در listener:', error);
+                            }
+                        });
+                        
+                        return;
+                    }
+                    
+                    const middleware = middlewares[index];
+                    middleware(currentAction, this._deepClone(currentState), (nextAction) => {
+                        if (nextAction && typeof nextAction === 'object') {
+                            currentAction = nextAction;
+                        }
+                        executeMiddleware(index + 1);
+                    });
+                };
+                
+                executeMiddleware(0);
+                return action;
+            }
+
+            _applyReducer(state, action) {
+                const newState = this._deepClone(state);
+                
+                switch (action.type) {
+                    case 'INCREMENT':
+                        newState.counter = (newState.counter || 0) + (action.payload || 1);
+                        break;
+                    case 'DECREMENT':
+                        newState.counter = (newState.counter || 0) - (action.payload || 1);
+                        break;
+                    case 'SET_VALUE':
+                        newState.value = action.payload;
+                        break;
+                    case 'ADD_USER':
+                        if (!newState.users) newState.users = [];
+                        newState.users.push({
+                            ...action.payload,
+                            id: Date.now() + Math.random().toString(36).substr(2, 9)
+                        });
+                        break;
+                    case 'UPDATE_SETTINGS':
+                        newState.settings = {
+                            ...(newState.settings || {}),
+                            ...action.payload
+                        };
+                        break;
+                    case 'NESTED_UPDATE':
+                        if (!newState.data) newState.data = { nested: { value: 0 } };
+                        if (!newState.data.nested) newState.data.nested = { value: 0 };
+                        newState.data.nested.value = (newState.data.nested.value || 0) + 1;
+                        break;
+                    case 'RESET':
+                        Object.keys(newState).forEach(key => {
+                            delete newState[key];
+                        });
+                        Object.assign(newState, action.payload || {});
+                        break;
+                }
+                
+                return newState;
+            }
+
+            addMiddleware(middleware) {
+                this._middlewares.push(middleware);
+                return this;
+            }
+
+            subscribe(listener) {
+                this._listeners.push(listener);
+                return () => {
+                    this._listeners = this._listeners.filter(l => l !== listener);
+                };
+            }
+
+            static clearInstance() {
+                StateManager._instance = null;
+            }
+
+            static getInstance(initialState = {}) {
+                if (!StateManager._instance) {
+                    StateManager._instance = new StateManager(initialState);
+                }
+                return StateManager._instance;
+            }
+        }
+
+        // ==================== تست‌ها ====================
+        const tests = [
+            {
+                name: 'Singleton Pattern',
+                description: 'بررسی اینکه فقط یک instance از State Manager ساخته شود',
+                fn: () => {
+                    StateManager.clearInstance();
+                    const manager1 = new StateManager({ test: 1 });
+                    const manager2 = new StateManager({ test: 2 });
+                    
+                    const sameInstance = manager1 === manager2;
+                    const statePreserved = manager1.getState().test === 1;
+                    
+                    return sameInstance && statePreserved;
+                }
+            },
+            {
+                name: 'State Initialization',
+                description: 'مقداردهی اولیه state به درستی انجام شود',
+                fn: () => {
+                    StateManager.clearInstance();
+                    const manager = new StateManager({ 
+                        counter: 5,
+                        users: ['Ali', 'Reza'],
+                        config: { theme: 'dark' }
+                    });
+                    
+                    const state = manager.getState();
+                    return state.counter === 5 && 
+                           state.users.length === 2 &&
+                           state.config.theme === 'dark';
+                }
+            },
+            {
+                name: 'Immutability: getState()',
+                description: 'getState() باید یک کپی عمیق برگرداند',
+                fn: () => {
+                    StateManager.clearInstance();
+                    const manager = new StateManager({ 
+                        data: { nested: { value: 10 } },
+                        list: [1, 2, 3]
+                    });
+                    
+                    const copy1 = manager.getState();
+                    copy1.data.nested.value = 999;
+                    copy1.list.push(4, 5);
+                    
+                    const copy2 = manager.getState();
+                    
+                    return copy2.data.nested.value === 10 && 
+                           copy2.list.length === 3 &&
+                           JSON.stringify(copy2.list) === '[1,2,3]';
+                }
+            },
+            {
+                name: 'Immutability: dispatch()',
+                description: 'dispatch() باید state جدید ایجاد کند',
+                fn: () => {
+                    StateManager.clearInstance();
+                    const manager = new StateManager({ counter: 0 });
+                    const oldState = manager.getState();
+                    
+                    manager.dispatch({ type: 'INCREMENT', payload: 5 });
+                    const newState = manager.getState();
+                    
+                    return oldState.counter === 0 && 
+                           newState.counter === 5 &&
+                           oldState !== newState;
+                }
+            },
+            {
+                name: 'Nested Object Immutability',
+                description: 'تغییرات در آبجکت‌های تو در تو باید immutable باشد',
+                fn: () => {
+                    StateManager.clearInstance();
+                    const manager = new StateManager({ 
+                        data: { 
+                            nested: { 
+                                values: [1, 2],
+                                config: { enabled: true }
+                            } 
+                        } 
+                    });
+                    
+                    const stateBefore = manager.getState();
+                    manager.dispatch({ type: 'NESTED_UPDATE' });
+                    const stateAfter = manager.getState();
+                    
+                    return stateBefore.data.nested.value === undefined &&
+                           stateAfter.data.nested.value === 1 &&
+                           stateBefore.data !== stateAfter.data &&
+                           stateBefore.data.nested !== stateAfter.data.nested;
+                }
+            },
+            {
+                name: 'Middleware Chain Execution',
+                description: 'Middleware‌ها باید به ترتیب اجرا شوند',
+                fn: () => {
+                    StateManager.clearInstance();
+                    const manager = new StateManager();
+                    
+                    const executionOrder = [];
+                    
+                    manager.addMiddleware((action, state, next) => {
+                        executionOrder.push('mw1-start');
+                        next();
+                        executionOrder.push('mw1-end');
+                    });
+                    
+                    manager.addMiddleware((action, state, next) => {
+                        executionOrder.push('mw2-start');
+                        next();
+                        executionOrder.push('mw2-end');
+                    });
+                    
+                    manager.dispatch({ type: 'SET_VALUE', payload: 'test' });
+                    
+                    const expectedOrder = [
+                        'mw1-start', 'mw2-start', 'mw2-end', 'mw1-end'
+                    ];
+                    
+                    return JSON.stringify(executionOrder) === JSON.stringify(expectedOrder);
+                }
+            },
+            {
+                name: 'Listener Notification',
+                description: 'Listeners باید با state قدیم و جدید فراخوانی شوند',
+                fn: () => {
+                    StateManager.clearInstance();
+                    const manager = new StateManager({ counter: 0 });
+                    
+                    let notifications = [];
+                    let receivedOldState = null;
+                    let receivedNewState = null;
+                    
+                    const unsubscribe = manager.subscribe((newState, oldState) => {
+                        notifications.push('called');
+                        receivedNewState = newState;
+                        receivedOldState = oldState;
+                    });
+                    
+                    // اولین dispatch
+                    manager.dispatch({ type: 'INCREMENT', payload: 3 });
+                    
+                    const firstCallCorrect = 
+                        notifications.length === 1 &&
+                        receivedNewState.counter === 3 &&
+                        receivedOldState.counter === 0;
+                    
+                    // دومین dispatch
+                    notifications = [];
+                    manager.dispatch({ type: 'INCREMENT', payload: 2 });
+                    
+                    const secondCallCorrect = 
+                        notifications.length === 1 &&
+                        receivedNewState.counter === 5 &&
+                        receivedOldState.counter === 3;
+                    
+                    // تست unsubscribe
+                    unsubscribe();
+                    notifications = [];
+                    manager.dispatch({ type: 'INCREMENT', payload: 1 });
+                    
+                    const unsubscribeCorrect = notifications.length === 0;
+                    
+                    return firstCallCorrect && secondCallCorrect && unsubscribeCorrect;
+                }
+            },
+            {
+                name: 'Complex State Update',
+                description: 'بروزرسانی پیچیده state با چندین action',
+                fn: () => {
+                    StateManager.clearInstance();
+                    const manager = new StateManager({ 
+                        users: [],
+                        settings: { theme: 'light' },
+                        counters: { a: 0, b: 0 }
+                    });
+                    
+                    const initialState = manager.getState();
+                    
+                    manager.dispatch({ 
+                        type: 'ADD_USER', 
+                        payload: { name: 'Reza', age: 25 }
+                    });
+                    
+                    manager.dispatch({ 
+                        type: 'UPDATE_SETTINGS', 
+                        payload: { language: 'fa', fontSize: 14 }
+                    });
+                    
+                    manager.dispatch({ type: 'INCREMENT', payload: 2 });
+                    manager.dispatch({ type: 'NESTED_UPDATE' });
+                    
+                    const finalState = manager.getState();
+                    
+                    const tests = [
+                        initialState.users.length === 0,
+                        finalState.users.length === 1,
+                        finalState.users[0].name === 'Reza',
+                        finalState.settings.theme === 'light',
+                        finalState.settings.language === 'fa',
+                        finalState.settings.fontSize === 14,
+                        finalState.counter === 2,
+                        finalState.data.nested.value === 1,
+                        initialState.settings !== finalState.settings
+                    ];
+                    
+                    return tests.every(test => test === true);
+                }
+            }
+        ];
+
+        // ==================== مدیریت تست‌ها ====================
+        let testResults = [];
+        let startTime = null;
+
+        function logToConsole(type, message) {
+            const consoleOutput = document.getElementById('consoleOutput');
+            const timestamp = new Date().toLocaleTimeString('fa-IR');
+            const line = document.createElement('div');
+            line.className = `console-line console-${type}`;
+            line.innerHTML = `<span class="console-timestamp">[${timestamp}]</span> <span class="console-message">${message}</span>`;
+            consoleOutput.appendChild(line);
+            consoleOutput.scrollTop = consoleOutput.scrollHeight;
+        }
+
+        function updateStats() {
+            const passed = testResults.filter(r => r.success).length;
+            const failed = testResults.filter(r => !r.success).length;
+            const total = tests.length;
+            
+            document.getElementById('passedCount').textContent = passed;
+            document.getElementById('failedCount').textContent = failed;
+            document.getElementById('totalCount').textContent = total;
+            
+            const progress = total > 0 ? Math.round((passed / total) * 100) : 0;
+            document.getElementById('progressFill').style.width = `${progress}%`;
+            document.getElementById('progressPercent').textContent = `${progress}%`;
+            
+            if (startTime) {
+                const duration = ((Date.now() - startTime) / 1000).toFixed(2);
+                document.getElementById('duration').textContent = duration;
+                document.getElementById('lastRunTime').textContent = `${duration} ثانیه`;
+            }
+        }
+
+        function createTestCard(test, index, result = null) {
+            const card = document.createElement('div');
+            card.className = `test-card ${result ? (result.success ? 'passing' : 'failing') : 'running'}`;
+            card.id = `test-card-${index}`;
+            
+            const header = document.createElement('div');
+            header.className = 'test-header';
+            
+            const title = document.createElement('div');
+            title.className = 'test-title';
+            title.innerHTML = `
+                <span>${index + 1}. ${test.name}</span>
+                <span class="test-icon">${result ? (result.success ? '✅' : '❌') : '⏳'}</span>
+            `;
+            
+            const toggleBtn = document.createElement('button');
+            toggleBtn.className = 'test-toggle';
+            toggleBtn.textContent = result ? 'نمایش جزئیات' : 'در حال اجرا...';
+            toggleBtn.onclick = () => {
+                card.classList.toggle('expanded');
+                toggleBtn.textContent = card.classList.contains('expanded') ? 'پنهان کردن' : 'نمایش جزئیات';
+            };
+            
+            header.appendChild(title);
+            header.appendChild(toggleBtn);
+            card.appendChild(header);
+            
+            if (result) {
+                const details = document.createElement('div');
+                details.className = 'test-details';
+                details.innerHTML = `
+                    <strong>توضیح:</strong> ${test.description}
+                    ${result.error ? `\n\n<strong>خطا:</strong> ${result.error.message}\n<strong>Stack:</strong> ${result.error.stack}` : ''}
+                    ${result.details ? `\n\n<strong>جزئیات:</strong> ${result.details}` : ''}
+                    ${result.duration ? `\n\n<strong>زمان اجرا:</strong> ${result.duration.toFixed(2)}ms` : ''}
+                `;
+                card.appendChild(details);
+                
+                logToConsole(result.success ? 'success' : 'error', 
+                    `تست "${test.name}" ${result.success ? 'موفق' : 'ناموفق'}`);
+            }
+            
+            return card;
+        }
+
+        async function runTest(test, index) {
+            const cardContainer = document.getElementById('testContainer');
+            const card = createTestCard(test, index);
+            
+            const existingCard = document.getElementById(`test-card-${index}`);
+            if (existingCard) {
+                existingCard.replaceWith(card);
+            } else {
+                cardContainer.appendChild(card);
+            }
+            
+            try {
+                const testStartTime = Date.now();
+                const result = test.fn();
+                const duration = Date.now() - testStartTime;
+                
+                let success = false;
+                let details = '';
+                
+                if (result === true) {
+                    success = true;
+                    details = 'تست با موفقیت گذشت';
+                } else if (result === false) {
+                    details = 'تست ناموفق بود (نتیجه false)';
+                } else {
+                    details = `نتیجه غیرمنتظره: ${JSON.stringify(result)}`;
+                }
+                
+                const testResult = {
+                    success,
+                    duration,
+                    details,
+                    test: test.name
+                };
+                
+                testResults[index] = testResult;
+                
+                const resultCard = createTestCard(test, index, testResult);
+                card.replaceWith(resultCard);
+                
+                return testResult;
+                
+            } catch (error) {
+                const testResult = {
+                    success: false,
+                    error: error,
+                    test: test.name,
+                    details: `خطا در اجرای تست: ${error.message}`
+                };
+                
+                testResults[index] = testResult;
+                
+                const resultCard = createTestCard(test, index, testResult);
+                card.replaceWith(resultCard);
+                
+                logToConsole('error', `خطا در تست "${test.name}": ${error.message}`);
+                return testResult;
+            }
+        }
+
+        async function runAllTests() {
+            startTime = Date.now();
+            testResults = [];
+            
+            document.getElementById('consoleOutput').innerHTML = '';
+            logToConsole('info', 'شروع اجرای همه تست‌ها...');
+            
+            for (let i = 0; i < tests.length; i++) {
+                await runTest(tests[i], i);
+                updateStats();
+                
+                // تاخیر کوتاه برای نمایش بهتر
+                await new Promise(resolve => setTimeout(resolve, 100));
+            }
+            
+            const passed = testResults.filter(r => r.success).length;
+            const total = tests.length;
+            
+            logToConsole('info', `پایان اجرای تست‌ها: ${passed} از ${total} تست موفق`);
+            
+            if (passed === total) {
+                logToConsole('success', '🎉 همه تست‌ها با موفقیت گذشتند!');
+            } else {
+                logToConsole('warning', `⚠️ ${total - passed} تست ناموفق بودند`);
+            }
+        }
+
+        async function runTestsStepByStep() {
+            startTime = Date.now();
+            testResults = [];
+            
+            document.getElementById('consoleOutput').innerHTML = '';
+            logToConsole('info', 'شروع اجرای مرحله‌ای تست‌ها...');
+            
+            for (let i = 0; i < tests.length; i++) {
+                logToConsole('info', `در حال اجرای تست ${i + 1} از ${tests.length}: ${tests[i].name}`);
+                await runTest(tests[i], i);
+                updateStats();
+                
+                // تاخیر بیشتر برای مرحله‌ای بودن
+                await new Promise(resolve => setTimeout(resolve, 300));
+            }
+        }
+
+        function resetAllTests() {
+            testResults = [];
+            startTime = null;
+            
+            document.getElementById('testContainer').innerHTML = '';
+            document.getElementById('consoleOutput').innerHTML = '';
+            document.getElementById('progressFill').style.width = '0%';
+            document.getElementById('progressPercent').textContent = '0%';
+            
+            logToConsole('info', 'همه تست‌ها بازنشانی شدند');
+            updateStats();
+        }
+
+        // اجرای خودکار تست‌ها بعد از لود صفحه
+        setTimeout(() => {
+            logToConsole('info', 'صفحه تست State Manager بارگیری شد');
+            logToConsole('info', 'آماده اجرای تست‌ها... دکمه "اجرای همه تست‌ها" را بزنید');
+        }, 1000);
+
+        // نمایش اولیه کارت‌های تست
+        function initializeTestCards() {
+            const container = document.getElementById('testContainer');
+            container.innerHTML = '';
+            
+            tests.forEach((test, index) => {
+                const card = createTestCard(test, index);
+                container.appendChild(card);
+            });
+        }
+
+        initializeTestCards();
+        updateStats();
+    </script>
+</body>
+</html>
