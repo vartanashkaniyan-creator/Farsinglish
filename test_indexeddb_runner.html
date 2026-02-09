@@ -1,0 +1,1312 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🧪 تسترونر IndexedDB - Farsinglish</title>
+    <style>
+        :root {
+            --success: #00b894;
+            --error: #d63031;
+            --warning: #fdcb6e;
+            --info: #74b9ff;
+            --dark: #2d3436;
+            --light: #f9f9f9;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Vazirmatn', 'Segoe UI', Tahoma, sans-serif;
+            background: linear-gradient(135deg, #1a237e, #4a148c);
+            color: #fff;
+            min-height: 100vh;
+            padding: 20px;
+            line-height: 1.8;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 25px;
+            padding: 30px;
+            box-shadow: 0 25px 60px rgba(0, 0, 0, 0.4);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .container::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 300px;
+            height: 300px;
+            background: radial-gradient(circle, rgba(120, 119, 198, 0.1) 0%, transparent 70%);
+        }
+        
+        h1 {
+            text-align: center;
+            margin-bottom: 10px;
+            color: #4fc3f7;
+            font-size: 2.8rem;
+            text-shadow: 0 2px 15px rgba(79, 195, 247, 0.3);
+            position: relative;
+            z-index: 1;
+        }
+        
+        .subtitle {
+            text-align: center;
+            color: #bbdefb;
+            margin-bottom: 40px;
+            font-size: 1.2rem;
+            opacity: 0.9;
+            position: relative;
+            z-index: 1;
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 25px;
+            margin: 40px 0;
+            position: relative;
+            z-index: 1;
+        }
+        
+        .stat-box {
+            background: rgba(255, 255, 255, 0.08);
+            padding: 30px;
+            border-radius: 20px;
+            text-align: center;
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            transition: all 0.4s;
+            backdrop-filter: blur(10px);
+        }
+        
+        .stat-box:hover {
+            transform: translateY(-8px);
+            border-color: var(--info);
+            box-shadow: 0 15px 40px rgba(0, 168, 255, 0.2);
+        }
+        
+        .stat-value {
+            font-size: 3.5rem;
+            font-weight: bold;
+            margin-bottom: 10px;
+            font-family: 'Courier New', monospace;
+        }
+        
+        .stat-label {
+            font-size: 1.1rem;
+            color: #bbdefb;
+            font-weight: 500;
+        }
+        
+        .controls {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            justify-content: center;
+            margin: 40px 0;
+            position: relative;
+            z-index: 1;
+        }
+        
+        .btn {
+            padding: 22px 45px;
+            border: none;
+            border-radius: 60px;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 15px;
+            min-width: 250px;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+            transform: translateX(-100%);
+        }
+        
+        .btn:hover::before {
+            animation: shine 0.8s;
+        }
+        
+        @keyframes shine {
+            to { transform: translateX(100%); }
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #00e676, #00c853);
+            color: white;
+        }
+        
+        .btn-secondary {
+            background: linear-gradient(135deg, #2979ff, #2962ff);
+            color: white;
+        }
+        
+        .btn-danger {
+            background: linear-gradient(135deg, #ff5252, #d50000);
+            color: white;
+        }
+        
+        .btn-warning {
+            background: linear-gradient(135deg, #ffd740, #ffab00);
+            color: var(--dark);
+        }
+        
+        .btn:hover {
+            transform: translateY(-5px) scale(1.03);
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.4);
+        }
+        
+        .btn:active {
+            transform: translateY(-2px) scale(1.01);
+        }
+        
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none !important;
+        }
+        
+        .btn-icon {
+            font-size: 24px;
+        }
+        
+        .test-sections {
+            margin-top: 50px;
+            position: relative;
+            z-index: 1;
+        }
+        
+        .test-section {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 20px;
+            padding: 30px;
+            margin-bottom: 30px;
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            transition: all 0.3s;
+        }
+        
+        .test-section:hover {
+            border-color: rgba(79, 195, 247, 0.3);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+        }
+        
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .section-title {
+            font-size: 1.8rem;
+            color: #4fc3f7;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        
+        .section-icon {
+            font-size: 2rem;
+        }
+        
+        .test-items {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        
+        .test-item {
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 15px;
+            padding: 25px;
+            border-right: 5px solid var(--warning);
+            transition: all 0.3s;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .test-item::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 100%;
+            height: 3px;
+            background: var(--info);
+            transform: translateX(-100%);
+            transition: transform 0.5s;
+        }
+        
+        .test-item.running::before {
+            transform: translateX(0);
+            background: var(--info);
+        }
+        
+        .test-item.passed {
+            border-right-color: var(--success);
+            background: rgba(0, 184, 148, 0.1);
+        }
+        
+        .test-item.failed {
+            border-right-color: var(--error);
+            background: rgba(214, 48, 49, 0.1);
+        }
+        
+        .test-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        
+        .test-name {
+            font-size: 1.3rem;
+            font-weight: bold;
+            color: #fff;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        
+        .test-time {
+            font-size: 0.95rem;
+            color: #bbdefb;
+            background: rgba(255, 255, 255, 0.1);
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-family: 'Courier New', monospace;
+        }
+        
+        .test-desc {
+            color: #bbdefb;
+            font-size: 1rem;
+            margin-bottom: 20px;
+            line-height: 1.7;
+        }
+        
+        .test-result {
+            font-family: 'Courier New', monospace;
+            padding: 20px;
+            background: rgba(0, 0, 0, 0.4);
+            border-radius: 12px;
+            border-right: 3px solid rgba(255, 255, 255, 0.2);
+            white-space: pre-wrap;
+            word-break: break-all;
+            font-size: 0.95rem;
+            line-height: 1.6;
+        }
+        
+        .result-success {
+            color: var(--success);
+            border-color: var(--success);
+        }
+        
+        .result-error {
+            color: var(--error);
+            border-color: var(--error);
+        }
+        
+        .log-container {
+            background: rgba(0, 0, 0, 0.4);
+            border-radius: 20px;
+            padding: 25px;
+            margin-top: 50px;
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            position: relative;
+            z-index: 1;
+            max-height: 500px;
+            overflow-y: auto;
+        }
+        
+        .log-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .log-title {
+            font-size: 1.5rem;
+            color: #4fc3f7;
+            font-weight: bold;
+        }
+        
+        .log-entries {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        
+        .log-entry {
+            padding: 15px;
+            border-radius: 12px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.95rem;
+            border-right: 4px solid transparent;
+            animation: slideIn 0.3s ease-out;
+            background: rgba(255, 255, 255, 0.05);
+        }
+        
+        @keyframes slideIn {
+            from { transform: translateX(20px); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+        
+        .log-entry.info { border-color: var(--info); color: #bbdefb; }
+        .log-entry.success { border-color: var(--success); color: #a7ffeb; }
+        .log-entry.error { border-color: var(--error); color: #ffccbc; }
+        .log-entry.warning { border-color: var(--warning); color: #fff9c4; }
+        
+        .spinner {
+            width: 24px;
+            height: 24px;
+            border: 3px solid rgba(255,255,255,0.3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 1s linear infinite;
+            display: inline-block;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 4px;
+            margin: 20px 0;
+            overflow: hidden;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--success), var(--info));
+            border-radius: 4px;
+            transition: width 0.5s ease-out;
+            width: 0%;
+        }
+        
+        @media (max-width: 768px) {
+            .container { padding: 20px; }
+            .stats-grid { grid-template-columns: 1fr; }
+            .btn { min-width: 100%; margin-bottom: 15px; }
+            h1 { font-size: 2.2rem; }
+            .section-header { flex-direction: column; align-items: flex-start; gap: 15px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧪 تسترونر حرفه‌ای IndexedDB</h1>
+        <div class="subtitle">
+            ۸ تست جامع برای بررسی عملکرد کامل IndexedDB Wrapper - طراحی شده برای موبایل و دسکتاپ
+        </div>
+        
+        <div class="stats-grid">
+            <div class="stat-box">
+                <div class="stat-value" id="totalTests">0</div>
+                <div class="stat-label">کل تست‌ها</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-value" id="passedTests" style="color:#00e676">0</div>
+                <div class="stat-label">موفق</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-value" id="failedTests" style="color:#ff5252">0</div>
+                <div class="stat-label">ناموفق</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-value" id="timeTaken" style="color:#ffd740">0s</div>
+                <div class="stat-label">زمان اجرا</div>
+            </div>
+        </div>
+        
+        <div class="progress-bar">
+            <div class="progress-fill" id="progressFill"></div>
+        </div>
+        
+        <div class="controls">
+            <button class="btn btn-primary" onclick="runAllTests()" id="runAllBtn">
+                <span class="btn-icon">▶</span> اجرای کامل تست‌ها
+            </button>
+            <button class="btn btn-secondary" onclick="runBasicTests()" id="basicBtn">
+                <span class="btn-icon">🔧</span> تست‌های پایه
+            </button>
+            <button class="btn btn-danger" onclick="clearAllData()" id="clearBtn">
+                <span class="btn-icon">🗑️</span> پاک‌سازی دیتابیس
+            </button>
+            <button class="btn btn-warning" onclick="exportResults()" id="exportBtn">
+                <span class="btn-icon">📤</span> خروجی نتایج
+            </button>
+        </div>
+        
+        <div id="testSections" class="test-sections">
+            <!-- تست‌ها اینجا نمایش داده می‌شوند -->
+        </div>
+        
+        <div class="log-container">
+            <div class="log-header">
+                <div class="log-title">📝 لاگ اجرای تست‌ها</div>
+                <button onclick="clearLog()" style="background:rgba(255,255,255,0.1);color:#bbdefb;border:none;padding:10px 20px;border-radius:20px;cursor:pointer;">
+                    پاک‌سازی لاگ
+                </button>
+            </div>
+            <div class="log-entries" id="logOutput"></div>
+        </div>
+    </div>
+
+    <script>
+        // ==================== سیستم لاگ‌گیری پیشرفته ====================
+        class Logger {
+            constructor() {
+                this.logOutput = document.getElementById('logOutput');
+                this.logCount = 0;
+            }
+            
+            add(type, message) {
+                this.logCount++;
+                const entry = document.createElement('div');
+                entry.className = `log-entry ${type}`;
+                
+                const time = new Date().toLocaleTimeString('fa-IR', {
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    second: '2-digit'
+                });
+                
+                const icon = {
+                    'info': '🔵',
+                    'success': '✅',
+                    'error': '❌',
+                    'warning': '⚠️'
+                }[type];
+                
+                entry.textContent = `${icon} [${time}] ${message}`;
+                this.logOutput.appendChild(entry);
+                this.logOutput.scrollTop = this.logOutput.scrollHeight;
+            }
+            
+            info(message) { this.add('info', message); }
+            success(message) { this.add('success', message); }
+            error(message) { this.add('error', message); }
+            warning(message) { this.add('warning', message); }
+            
+            clear() {
+                this.logOutput.innerHTML = '';
+                this.info('لاگ‌ها پاک شدند - آماده برای اجرای جدید');
+            }
+        }
+
+        // ==================== کد اصلی IndexedDBWrapper (همان فایل اول) ====================
+        class IndexedDBWrapper {
+            constructor() {
+                if (IndexedDBWrapper.instance) {
+                    return IndexedDBWrapper.instance;
+                }
+                
+                this.db = null;
+                this.dbName = 'farsinglish_test_db';
+                this.dbVersion = 2;
+                IndexedDBWrapper.instance = this;
+                logger.info('کلاس IndexedDBWrapper ایجاد شد');
+            }
+
+            async connect(schemaConfig = null) {
+                return new Promise((resolve, reject) => {
+                    if (this.db) {
+                        logger.info('استفاده از اتصال موجود');
+                        resolve(this.db);
+                        return;
+                    }
+
+                    const request = indexedDB.open(this.dbName, this.dbVersion);
+
+                    request.onerror = (event) => {
+                        logger.error(`خطا در اتصال: ${event.target.error}`);
+                        reject(new Error(`اتصال ناموفق: ${event.target.error}`));
+                    };
+
+                    request.onsuccess = (event) => {
+                        this.db = event.target.result;
+                        logger.success('اتصال به IndexedDB برقرار شد');
+                        resolve(this.db);
+                    };
+
+                    request.onupgradeneeded = (event) => {
+                        const db = event.target.result;
+                        logger.info(`بروزرسانی دیتابیس به نسخه ${this.dbVersion}`);
+                        
+                        if (schemaConfig) {
+                            Object.entries(schemaConfig).forEach(([tableName, config]) => {
+                                if (!db.objectStoreNames.contains(tableName)) {
+                                    const store = db.createObjectStore(tableName, {
+                                        keyPath: config.keyPath || 'id',
+                                        autoIncrement: config.autoIncrement || false
+                                    });
+
+                                    if (config.indexes && Array.isArray(config.indexes)) {
+                                        config.indexes.forEach(indexConfig => {
+                                            store.createIndex(
+                                                indexConfig.name,
+                                                indexConfig.keyPath,
+                                                indexConfig.options || {}
+                                            );
+                                            logger.info(`ایجاد ایندکس ${indexConfig.name} برای جدول ${tableName}`);
+                                        });
+                                    }
+                                    logger.success(`جدول ${tableName} ایجاد شد`);
+                                }
+                            });
+                        }
+                    };
+                });
+            }
+
+            getConnection() { return this.db; }
+            isConnected() { return !!this.db; }
+
+            async disconnect() {
+                return new Promise((resolve) => {
+                    if (this.db) {
+                        this.db.close();
+                        this.db = null;
+                        logger.info('اتصال IndexedDB بسته شد');
+                    }
+                    resolve();
+                });
+            }
+
+            async deleteDatabase() {
+                await this.disconnect();
+                return new Promise((resolve, reject) => {
+                    const request = indexedDB.deleteDatabase(this.dbName);
+                    
+                    request.onerror = (event) => {
+                        logger.error(`خطا در حذف دیتابیس: ${event.target.error}`);
+                        reject(new Error(`حذف ناموفق: ${event.target.error}`));
+                    };
+                    
+                    request.onsuccess = () => {
+                        logger.success('دیتابیس با موفقیت حذف شد');
+                        resolve();
+                    };
+                });
+            }
+
+            startTransaction(storeName, mode = 'readonly') {
+                if (!this.db) {
+                    throw new Error('اتصال پایگاه داده برقرار نیست');
+                }
+                
+                if (!this.db.objectStoreNames.contains(storeName)) {
+                    throw new Error(`جدول ${storeName} وجود ندارد`);
+                }
+
+                return this.db.transaction(storeName, mode);
+            }
+
+            async executeInTransaction(operation, storeName, mode = 'readwrite') {
+                return new Promise((resolve, reject) => {
+                    const transaction = this.startTransaction(storeName, mode);
+                    const store = transaction.objectStore(storeName);
+                    
+                    transaction.oncomplete = () => {
+                        logger.info(`تراکنش ${storeName} تکمیل شد`);
+                        resolve();
+                    };
+                    
+                    transaction.onerror = (event) => {
+                        logger.error(`خطا در تراکنش ${storeName}: ${event.target.error}`);
+                        reject(event.target.error);
+                    };
+                    
+                    operation(store, transaction);
+                });
+            }
+        }
+
+        // ==================== تسترونر اصلی ====================
+        class IndexedDBTester {
+            constructor() {
+                this.logger = logger;
+                this.stats = {
+                    total: 0,
+                    passed: 0,
+                    failed: 0,
+                    startTime: null,
+                    currentTest: 0,
+                    totalTests: 8
+                };
+                this.dbWrapper = null;
+            }
+            
+            init() {
+                this.dbWrapper = new IndexedDBWrapper();
+                window.dbWrapper = this.dbWrapper; // برای دسترسی از کنسول
+            }
+            
+            updateStats() {
+                document.getElementById('totalTests').textContent = this.stats.total;
+                document.getElementById('passedTests').textContent = this.stats.passed;
+                document.getElementById('failedTests').textContent = this.stats.failed;
+                
+                if (this.stats.startTime) {
+                    const duration = (Date.now() - this.stats.startTime) / 1000;
+                    document.getElementById('timeTaken').textContent = duration.toFixed(2) + 's';
+                }
+                
+                // آپدیت progress bar
+                const progress = (this.stats.currentTest / this.stats.totalTests) * 100;
+                document.getElementById('progressFill').style.width = `${progress}%`;
+            }
+            
+            createTestSection(title, icon) {
+                const section = document.createElement('div');
+                section.className = 'test-section';
+                section.innerHTML = `
+                    <div class="section-header">
+                        <div class="section-title">
+                            <span class="section-icon">${icon}</span>
+                            ${title}
+                        </div>
+                        <div class="test-time">در حال آماده‌سازی...</div>
+                    </div>
+                    <div class="test-items" id="${title.replace(/\s+/g, '-')}"></div>
+                `;
+                return section;
+            }
+            
+            createTestElement(name, description, sectionId) {
+                const testItem = document.createElement('div');
+                testItem.className = 'test-item';
+                
+                const time = new Date().toLocaleTimeString('fa-IR', {
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    second: '2-digit'
+                });
+                
+                testItem.innerHTML = `
+                    <div class="test-header">
+                        <div class="test-name">
+                            <span>📋</span> ${name}
+                        </div>
+                        <div class="test-time">${time}</div>
+                    </div>
+                    <div class="test-desc">${description}</div>
+                    <div class="test-result">در انتظار اجرا...</div>
+                `;
+                
+                document.getElementById(sectionId).appendChild(testItem);
+                return testItem;
+            }
+            
+            async runTest(testFn, name, description, sectionTitle) {
+                this.stats.total++;
+                this.stats.currentTest++;
+                this.updateStats();
+                
+                const sectionId = sectionTitle.replace(/\s+/g, '-');
+                const testElement = this.createTestElement(name, description, sectionId);
+                
+                testElement.classList.add('running');
+                
+                try {
+                    const startTime = Date.now();
+                    const result = await testFn();
+                    const duration = Date.now() - startTime;
+                    
+                    if (result.success) {
+                        this.stats.passed++;
+                        testElement.classList.remove('running');
+                        testElement.classList.add('passed');
+                        testElement.querySelector('.test-result').innerHTML = 
+                            `<span style="color:#00e676">✅ موفق</span> | زمان: ${duration}ms` + 
+                            (result.message ? `<br><small>${result.message}</small>` : '');
+                        this.logger.success(`${name}: موفق (${duration}ms)`);
+                    } else {
+                        this.stats.failed++;
+                        testElement.classList.remove('running');
+                        testElement.classList.add('failed');
+                        testElement.querySelector('.test-result').innerHTML = 
+                            `<span style="color:#ff5252">❌ ناموفق</span> | زمان: ${duration}ms` +
+                            (result.message ? `<br><small>${result.message}</small>` : '');
+                        this.logger.error(`${name}: ناموفق`);
+                    }
+                } catch (error) {
+                    this.stats.failed++;
+                    testElement.classList.remove('running');
+                    testElement.classList.add('failed');
+                    testElement.querySelector('.test-result').innerHTML = 
+                        `<span style="color:#ff5252">💥 خطا</span><br><small>${error.message}</small>`;
+                    this.logger.error(`${name}: خطا - ${error.message}`);
+                }
+                
+                this.updateStats();
+                await new Promise(resolve => setTimeout(resolve, 300));
+            }
+            
+            // ==================== تست‌های اصلی ====================
+            
+            async testSingletonPattern() {
+                const instance1 = new IndexedDBWrapper();
+                const instance2 = new IndexedDBWrapper();
+                
+                return {
+                    success: instance1 === instance2,
+                    message: `هر دو instance ${instance1 === instance2 ? 'یکسان هستند ✅' : 'متفاوت هستند ❌'}`
+                };
+            }
+            
+            async testConnectionEstablishment() {
+                const schemaConfig = {
+                    users: {
+                        keyPath: 'id',
+                        autoIncrement: true,
+                        indexes: [
+                            { name: 'email_idx', keyPath: 'email', options: { unique: true } },
+                            { name: 'createdAt_idx', keyPath: 'createdAt' }
+                        ]
+                    },
+                    lessons: {
+                        keyPath: 'lessonId',
+                        indexes: [
+                            { name: 'level_idx', keyPath: 'level' },
+                            { name: 'isCompleted_idx', keyPath: 'isCompleted' },
+                            { name: 'nextReview_idx', keyPath: 'nextReviewDate' }
+                        ]
+                    },
+                    progress: {
+                        keyPath: ['userId', 'lessonId'],
+                        indexes: [
+                            { name: 'userId_idx', keyPath: 'userId' },
+                            { name: 'lessonId_idx', keyPath: 'lessonId' },
+                            { name: 'lastReview_idx', keyPath: 'lastReviewDate' }
+                        ]
+                    }
+                };
+                
+                await this.dbWrapper.connect(schemaConfig);
+                const isConnected = this.dbWrapper.isConnected();
+                const tables = this.dbWrapper.getConnection()?.objectStoreNames;
+                
+                return {
+                    success: isConnected && tables && tables.contains('users') && tables.contains('lessons'),
+                    message: `اتصال ${isConnected ? 'برقرار شد' : 'برقرار نشد'} | جداول: ${tables ? Array.from(tables).join(', ') : 'ندارد'}`
+                };
+            }
+            
+            async testCRUDOperations() {
+                try {
+                    // CREATE
+                    await this.dbWrapper.executeInTransaction((store) => {
+                        store.add({ 
+                            id: 1, 
+                            name: 'امیرحسین', 
+                            email: 'amir@farsinglish.com',
+                            level: 1,
+                            xp: 100,
+                            createdAt: new Date().toISOString()
+                        });
+                    }, 'users', 'readwrite');
+                    
+                    // READ
+                    let user = null;
+                    await this.dbWrapper.executeInTransaction((store) => {
+                        const request = store.get(1);
+                        request.onsuccess = () => user = request.result;
+                    }, 'users', 'readonly');
+                    
+                    // UPDATE
+                    await this.dbWrapper.executeInTransaction((store) => {
+                        store.put({ 
+                            ...user, 
+                            name: 'امیرحسین محمدی',
+                            xp: 150,
+                            updatedAt: new Date().toISOString()
+                        });
+                    }, 'users', 'readwrite');
+                    
+                    // DELETE
+                    await this.dbWrapper.executeInTransaction((store) => {
+                        store.delete(1);
+                    }, 'users', 'readwrite');
+                    
+                    // Verify DELETE
+                    let deletedUser = null;
+                    await this.dbWrapper.executeInTransaction((store) => {
+                        const request = store.get(1);
+                        request.onsuccess = () => deletedUser = request.result;
+                    }, 'users', 'readonly');
+                    
+                    return {
+                        success: user && user.name === 'امیرحسین' && deletedUser === undefined,
+                        message: 'عملیات CRUD کامل: ایجاد → خواندن → به‌روزرسانی → حذف'
+                    };
+                } catch (error) {
+                    return {
+                        success: false,
+                        message: `خطا در CRUD: ${error.message}`
+                    };
+                }
+            }
+            
+            async testTransactionManagement() {
+                try {
+                    // تراکنش‌های موازی
+                    await Promise.all([
+                        this.dbWrapper.executeInTransaction((store) => {
+                            for (let i = 1; i <= 3; i++) {
+                                store.add({
+                                    lessonId: i,
+                                    title: `درس تست ${i}`,
+                                    level: Math.ceil(i / 2),
+                                    isCompleted: false,
+                                    nextReviewDate: new Date(Date.now() + i * 86400000).toISOString()
+                                });
+                            }
+                        }, 'lessons', 'readwrite'),
+                        
+                        this.dbWrapper.executeInTransaction((store) => {
+                            store.add({
+                                userId: 'test_user',
+                                lessonId: 1,
+                                progress: 0.5,
+                                lastReviewDate: new Date().toISOString(),
+                                nextReviewDate: new Date(Date.now() + 86400000).toISOString()
+                            });
+                        }, 'progress', 'readwrite')
+                    ]);
+                    
+                    // شمارش رکوردها
+                    let lessonCount = 0;
+                    let progressCount = 0;
+                    
+                    await this.dbWrapper.executeInTransaction((store) => {
+                        const request = store.count();
+                        request.onsuccess = () => lessonCount = request.result;
+                    }, 'lessons', 'readonly');
+                    
+                    await this.dbWrapper.executeInTransaction((store) => {
+                        const request = store.count();
+                        request.onsuccess = () => progressCount = request.result;
+                    }, 'progress', 'readonly');
+                    
+                    return {
+                        success: lessonCount >= 3 && progressCount >= 1,
+                        message: `تراکنش‌های موازی موفق: ${lessonCount} درس، ${progressCount} پیشرفت`
+                    };
+                } catch (error) {
+                    return {
+                        success: false,
+                        message: `خطا در تراکنش: ${error.message}`
+                    };
+                }
+            }
+            
+            async testErrorHandling() {
+                try {
+                    // تست خطا: جدول وجود ندارد
+                    await this.dbWrapper.executeInTransaction(() => {}, 'nonexistent_table', 'readonly');
+                    return {
+                        success: false,
+                        message: 'باید خطا می‌داد اما نداد!'
+                    };
+                } catch (error) {
+                    const hasErrorMessage = error.message && 
+                        (error.message.includes('وجود ندارد') || 
+                         error.message.includes('not found') || 
+                         error.message.includes('object store'));
+                    
+                    return {
+                        success: hasErrorMessage,
+                        message: `خطا به درستی گرفته شد: ${error.message.substring(0, 100)}...`
+                    };
+                }
+            }
+            
+            async testConcurrentAccess() {
+                try {
+                    const concurrentOperations = 5;
+                    const promises = [];
+                    
+                    for (let i = 0; i < concurrentOperations; i++) {
+                        promises.push(
+                            this.dbWrapper.executeInTransaction((store) => {
+                                store.add({
+                                    id: `concurrent_${Date.now()}_${i}`,
+                                    name: `کاربر همزمان ${i}`,
+                                    email: `concurrent${i}@test.com`,
+                                    timestamp: new Date().toISOString()
+                                });
+                            }, 'users', 'readwrite')
+                        );
+                    }
+                    
+                    await Promise.all(promises);
+                    
+                    // بررسی تعداد رکوردها
+                    let userCount = 0;
+                    await this.dbWrapper.executeInTransaction((store) => {
+                        const request = store.count();
+                        request.onsuccess = () => userCount = request.result;
+                    }, 'users', 'readonly');
+                    
+                    return {
+                        success: userCount >= concurrentOperations,
+                        message: `${concurrentOperations} عملیات همزمان اجرا شد | کاربران: ${userCount}`
+                    };
+                } catch (error) {
+                    return {
+                        success: false,
+                        message: `خطا در دسترسی همزمان: ${error.message}`
+                    };
+                }
+            }
+            
+            async testDisconnectReconnect() {
+                try {
+                    const initialConnection = this.dbWrapper.getConnection();
+                    
+                    // قطع اتصال
+                    await this.dbWrapper.disconnect();
+                    const isDisconnected = !this.dbWrapper.isConnected();
+                    
+                    // اتصال مجدد
+                    await this.dbWrapper.connect();
+                    const isReconnected = this.dbWrapper.isConnected();
+                    const newConnection = this.dbWrapper.getConnection();
+                    
+                    return {
+                        success: isDisconnected && isReconnected && initialConnection !== newConnection,
+                        message: 'قطع و وصل اتصال با موفقیت انجام شد'
+                    };
+                } catch (error) {
+                    return {
+                        success: false,
+                        message: `خطا در قطع/وصل: ${error.message}`
+                    };
+                }
+            }
+            
+            async testDatabaseCleanup() {
+                try {
+                    // شمارش قبل از پاک‌سازی
+                    let usersBefore = 0, lessonsBefore = 0;
+                    
+                    await this.dbWrapper.executeInTransaction((store) => {
+                        const request = store.count();
+                        request.onsuccess = () => usersBefore = request.result;
+                    }, 'users', 'readonly');
+                    
+                    await this.dbWrapper.executeInTransaction((store) => {
+                        const request = store.count();
+                        request.onsuccess = () => lessonsBefore = request.result;
+                    }, 'lessons', 'readonly');
+                    
+                    // پاک‌سازی جداول
+                    await this.dbWrapper.executeInTransaction((store) => {
+                        store.clear();
+                    }, 'users', 'readwrite');
+                    
+                    await this.dbWrapper.executeInTransaction((store) => {
+                        store.clear();
+                    }, 'lessons', 'readwrite');
+                    
+                    // شمارش بعد از پاک‌سازی
+                    let usersAfter = 0, lessonsAfter = 0;
+                    
+                    await this.dbWrapper.executeInTransaction((store) => {
+                        const request = store.count();
+                        request.onsuccess = () => usersAfter = request.result;
+                    }, 'users', 'readonly');
+                    
+                    await this.dbWrapper.executeInTransaction((store) => {
+                        const request = store.count();
+                        request.onsuccess = () => lessonsAfter = request.result;
+                    }, 'lessons', 'readonly');
+                    
+                    return {
+                        success: usersAfter === 0 && lessonsAfter === 0,
+                        message: `پاک‌سازی کامل: کاربران (${usersBefore} → ${usersAfter}) | دروس (${lessonsBefore} → ${lessonsAfter})`
+                    };
+                } catch (error) {
+                    return {
+                        success: false,
+                        message: `خطا در پاک‌سازی: ${error.message}`
+                    };
+                }
+            }
+            
+            // ==================== اجرای تست‌ها ====================
+            
+            async runAllTests() {
+                // ریست کردن همه چیز
+                this.stats = {
+                    total: 0,
+                    passed: 0,
+                    failed: 0,
+                    startTime: Date.now(),
+                    currentTest: 0,
+                    totalTests: 8
+                };
+                this.updateStats();
+                document.getElementById('testSections').innerHTML = '';
+                logger.clear();
+                
+                // غیرفعال کردن دکمه‌ها
+                document.getElementById('runAllBtn').disabled = true;
+                document.getElementById('runAllBtn').innerHTML = '<span class="spinner"></span> در حال اجرای تست‌ها...';
+                
+                // ایجاد بخش‌های تست
+                const sections = [
+                    { title: 'الگوهای طراحی', icon: '🎯' },
+                    { title: 'اتصال و اسکیما', icon: '🔗' },
+                    { title: 'عملیات داده', icon: '💾' },
+                    { title: 'مدیریت پیشرفته', icon: '⚡' }
+                ];
+                
+                sections.forEach(section => {
+                    document.getElementById('testSections').appendChild(
+                        this.createTestSection(section.title, section.icon)
+                    );
+                });
+                
+                logger.info('شروع اجرای ۸ تست جامع IndexedDB...');
+                
+                // اجرای تست‌ها
+                const testSuite = [
+                    { 
+                        fn: () => this.testSingletonPattern(), 
+                        name: 'الگوی Singleton', 
+                        desc: 'بررسی وجود تنها یک instance در کل برنامه',
+                        section: 'الگوهای طراحی'
+                    },
+                    { 
+                        fn: () => this.testConnectionEstablishment(), 
+                        name: 'اتصال و ایجاد جداول', 
+                        desc: 'برقراری اتصال و ایجاد جداول با ایندکس‌ها',
+                        section: 'اتصال و اسکیما'
+                    },
+                    { 
+                        fn: () => this.testCRUDOperations(), 
+                        name: 'عملیات CRUD', 
+                        desc: 'ایجاد، خواندن، به‌روزرسانی و حذف داده',
+                        section: 'عملیات داده'
+                    },
+                    { 
+                        fn: () => this.testTransactionManagement(), 
+                        name: 'مدیریت تراکنش', 
+                        desc: 'تراکنش‌های موازی و اتمیک',
+                        section: 'مدیریت پیشرفته'
+                    },
+                    { 
+                        fn: () => this.testErrorHandling(), 
+                        name: 'مدیریت خطا', 
+                        desc: 'برخورد صحیح با خطاهای دیتابیس',
+                        section: 'مدیریت پیشرفته'
+                    },
+                    { 
+                        fn: () => this.testConcurrentAccess(), 
+                        name: 'دسترسی همزمان', 
+                        desc: 'پشتیبانی از درخواست‌های موازی',
+                        section: 'مدیریت پیشرفته'
+                    },
+                    { 
+                        fn: () => this.testDisconnectReconnect(), 
+                        name: 'قطع و وصل اتصال', 
+                        desc: 'مدیریت داینامیک اتصال دیتابیس',
+                        section: 'اتصال و اسکیما'
+                    },
+                    { 
+                        fn: () => this.testDatabaseCleanup(), 
+                        name: 'پاک‌سازی دیتابیس', 
+                        desc: 'خالی کردن جداول و مدیریت حافظه',
+                        section: 'عملیات داده'
+                    }
+                ];
+                
+                for (const test of testSuite) {
+                    await this.runTest(test.fn, test.name, test.desc, test.section);
+                }
+                
+                // محاسبه نتایج نهایی
+                const duration = (Date.now() - this.stats.startTime) / 1000;
+                const successRate = Math.round((this.stats.passed / this.stats.total) * 100);
+                const progressFill = document.getElementById('progressFill');
+                
+                if (successRate === 100) {
+                    progressFill.style.background = 'linear-gradient(90deg, #00e676, #00c853)';
+                    logger.success(`🎉 عالی! تمام تست‌ها موفق: ${this.stats.passed}/${this.stats.total} (${successRate}%) در ${duration.toFixed(2)} ثانیه`);
+                } else if (successRate >= 80) {
+                    progressFill.style.background = 'linear-gradient(90deg, #ffd740, #ffab00)';
+                    logger.warning(`✅ خوب: ${this.stats.passed}/${this.stats.total} موفق (${successRate}%) در ${duration.toFixed(2)} ثانیه`);
+                } else {
+                    progressFill.style.background = 'linear-gradient(90deg, #ff5252, #d50000)';
+                    logger.error(`⚠️ نیاز به بهبود: ${this.stats.passed}/${this.stats.total} موفق (${successRate}%) در ${duration.toFixed(2)} ثانیه`);
+                }
+                
+                // فعال کردن دکمه‌ها
+                document.getElementById('runAllBtn').disabled = false;
+                document.getElementById('runAllBtn').innerHTML = '<span class="btn-icon">🔄</span> اجرای مجدد تست‌ها';
+                
+                progressFill.style.width = '100%';
+                
+                return { successRate, duration, stats: this.stats };
+            }
+            
+            async runBasicTests() {
+                document.getElementById('runAllBtn').disabled = true;
+                document.getElementById('basicBtn').disabled = true;
+                document.getElementById('basicBtn').innerHTML = '<span class="spinner"></span> در حال اجرا...';
+                
+                const basicTests = [
+                    { fn: () => this.testSingletonPattern(), name: 'الگوی Singleton' },
+                    { fn: () => this.testConnectionEstablishment(), name: 'اتصال' },
+                    { fn: () => this.testCRUDOperations(), name: 'عملیات CRUD' }
+                ];
+                
+                logger.info('شروع تست‌های پایه...');
+                
+                for (const test of basicTests) {
+                    this.stats.total++;
+                    this.stats.currentTest++;
+                    this.updateStats();
+                    
+                    try {
+                        const result = await test.fn();
+                        if (result.success) {
+                            this.stats.passed++;
+                            logger.success(`${test.name}: موفق`);
+                        } else {
+                            this.stats.failed++;
+                            logger.error(`${test.name}: ناموفق`);
+                        }
+                    } catch (error) {
+                        this.stats.failed++;
+                        logger.error(`${test.name}: خطا - ${error.message}`);
+                    }
+                    
+                    this.updateStats();
+                    await new Promise(resolve => setTimeout(resolve, 500));
+                }
+                
+                document.getElementById('basicBtn').disabled = false;
+                document.getElementById('basicBtn').innerHTML = '<span class="btn-icon">🔧</span> تست‌های پایه';
+                document.getElementById('runAllBtn').disabled = false;
+                
+                logger.info(`تست‌های پایه کامل: ${this.stats.passed}/${this.stats.total} موفق`);
+            }
+            
+            async clearAllData() {
+                try {
+                    document.getElementById('clearBtn').disabled = true;
+                    document.getElementById('clearBtn').innerHTML = '<span class="spinner"></span> در حال پاک‌سازی...';
+                    
+                    await this.dbWrapper.deleteDatabase();
+                    
+                    // ریست کردن آمار
+                    this.stats = { total: 0, passed: 0, failed: 0, startTime: null, currentTest: 0, totalTests: 8 };
+                    this.updateStats();
+                    document.getElementById('progressFill').style.width = '0%';
+                    
+                    document.getElementById('clearBtn').disabled = false;
+                    document.getElementById('clearBtn').innerHTML = '<span class="btn-icon">🗑️</span> پاک‌سازی دیتابیس';
+                    
+                    logger.success('✅ تمام داده‌های دیتابیس پاک شدند');
+                } catch (error) {
+                    logger.error(`❌ خطا در پاک‌سازی: ${error.message}`);
+                    document.getElementById('clearBtn').disabled = false;
+                    document.getElementById('clearBtn').innerHTML = '<span class="btn-icon">🗑️</span> پاک‌سازی دیتابیس';
+                }
+            }
+        }
+
+        // ==================== راه‌اندازی ====================
+        const logger = new Logger();
+        const tester = new IndexedDBTester();
+        
+        document.addEventListener('DOMContentLoaded', () => {
+            logger.info('🚀 تسترونر IndexedDB بارگذاری شد');
+            logger.info('برای شروع تست‌ها، دکمه "اجرای کامل تست‌ها" را فشار دهید');
+            
+            tester.init();
+            window.tester = tester; // برای دسترسی از کنسول
+            
+            console.log('🔥 تسترونر آماده است!');
+            console.log('دسترسی‌ها:');
+            console.log('- window.tester (مدیریت تست)');
+            console.log('- window.dbWrapper (دسترسی به IndexedDB)');
+        });
+
+        // ==================== توابع جهانی ====================
+        async function runAllTests() {
+            await tester.runAllTests();
+        }
+        
+        async function runBasicTests() {
+            await tester.runBasicTests();
+        }
+        
+        async function clearAllData() {
+            await tester.clearAllData();
+        }
+        
+        function clearLog() {
+            logger.clear();
+        }
+        
+        function exportResults() {
+            const results = {
+                date: new Date().toISOString(),
+                stats: tester.stats,
+                successRate: Math.round((tester.stats.passed / tester.stats.total) * 100) || 0
+            };
+            
+            const blob = new Blob([JSON.stringify(results, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `indexeddb-test-results-${Date.now()}.json`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            
+            logger.success('نتایج تست‌ها با فرمت JSON ذخیره شد');
+        }
+    </script>
+</body>
+</html>
