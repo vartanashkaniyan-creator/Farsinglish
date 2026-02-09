@@ -1,0 +1,458 @@
+<!DOCTYPE html>
+<html lang="fa">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>تست State Manager Core - Farsinglish</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { 
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            color: #333;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            text-align: center;
+        }
+        h1 {
+            color: #4a5568;
+            margin-bottom: 10px;
+            font-size: 28px;
+        }
+        .subtitle {
+            color: #718096;
+            margin-bottom: 30px;
+            font-size: 16px;
+        }
+        .test-section {
+            background: #f7fafc;
+            border-radius: 12px;
+            padding: 20px;
+            margin: 20px 0;
+            border: 1px solid #e2e8f0;
+            text-align: right;
+            transition: all 0.3s;
+        }
+        .test-section:hover {
+            background: #edf2f7;
+            transform: translateY(-2px);
+        }
+        .test-title {
+            color: #2d3748;
+            font-size: 18px;
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .test-result {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: bold;
+        }
+        .pass { background: #c6f6d5; color: #22543d; }
+        .fail { background: #fed7d7; color: #742a2a; }
+        .test-output {
+            background: white;
+            border: 1px solid #cbd5e0;
+            border-radius: 8px;
+            padding: 12px;
+            margin-top: 10px;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            color: #4a5568;
+            text-align: left;
+            white-space: pre-wrap;
+            word-break: break-all;
+        }
+        .stats {
+            display: flex;
+            justify-content: space-around;
+            margin-top: 30px;
+            padding: 20px;
+            background: #e6fffa;
+            border-radius: 12px;
+            color: #234e52;
+        }
+        .stat-box h2 { font-size: 32px; margin-bottom: 5px; }
+        .stat-box p { font-size: 14px; opacity: 0.8; }
+        button {
+            background: #4299e1;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 16px;
+            cursor: pointer;
+            margin-top: 20px;
+            transition: all 0.3s;
+        }
+        button:hover { background: #3182ce; transform: scale(1.05); }
+        button:active { transform: scale(0.98); }
+        .status-bar {
+            height: 6px;
+            background: #e2e8f0;
+            border-radius: 3px;
+            margin: 20px 0;
+            overflow: hidden;
+        }
+        .status-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #48bb78, #38a169);
+            border-radius: 3px;
+            transition: width 0.5s;
+        }
+        .summary {
+            text-align: right;
+            font-size: 15px;
+            line-height: 1.6;
+            color: #4a5568;
+            background: #f0fff4;
+            padding: 15px;
+            border-radius: 10px;
+            border-right: 4px solid #48bb78;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧪 تست State Manager Core</h1>
+        <p class="subtitle">Immutable State + Middleware + Singleton Pattern</p>
+        
+        <div class="status-bar">
+            <div class="status-fill" id="progressBar" style="width: 0%"></div>
+        </div>
+
+        <div id="testResults"></div>
+
+        <div class="stats">
+            <div class="stat-box">
+                <h2 id="passedCount">0</h2>
+                <p>موفق</p>
+            </div>
+            <div class="stat-box">
+                <h2 id="failedCount">0</h2>
+                <p>ناموفق</p>
+            </div>
+            <div class="stat-box">
+                <h2 id="totalCount">0</h2>
+                <p>کل تست‌ها</p>
+            </div>
+        </div>
+
+        <button onclick="runAllTests()">▶️ اجرای همه تست‌ها</button>
+        
+        <div class="summary">
+            <strong>✅ اصل Immutability تضمین شده است:</strong><br>
+            1. state اصلی هیچ‌گاه مستقیماً تغییر نمی‌کند<br>
+            2. متد getState() یک کپی عمیق (deep clone) برمی‌گرداند<br>
+            3. تغییرات فقط از طریق dispatch() با ایجاد state جدید اعمال می‌شود
+        </div>
+    </div>
+
+    <script>
+        // ==================== State Manager (با اصلاحات Immutability) ====================
+        class StateManager {
+            constructor(initialState = {}) {
+                if (StateManager.instance) {
+                    return StateManager.instance;
+                }
+                this._state = this._deepClone(initialState);
+                this._middlewares = [];
+                this._listeners = [];
+                StateManager.instance = this;
+            }
+
+            _deepClone(obj) {
+                if (obj === null || typeof obj !== 'object') return obj;
+                if (obj instanceof Date) return new Date(obj.getTime());
+                if (Array.isArray(obj)) return obj.map(item => this._deepClone(item));
+                
+                const cloned = {};
+                for (const key in obj) {
+                    if (obj.hasOwnProperty(key)) {
+                        cloned[key] = this._deepClone(obj[key]);
+                    }
+                }
+                return cloned;
+            }
+
+            getState() {
+                return this._deepClone(this._state);
+            }
+
+            dispatch(action) {
+                const newState = this._deepClone(this._state);
+                
+                const applyMiddleware = (index) => {
+                    if (index < this._middlewares.length) {
+                        this._middlewares[index](action, newState, () => applyMiddleware(index + 1));
+                    } else {
+                        this._applyAction(action, newState);
+                    }
+                };
+                
+                applyMiddleware(0);
+            }
+
+            _applyAction(action, state) {
+                const oldState = this._deepClone(this._state);
+                
+                switch (action.type) {
+                    case 'INCREMENT':
+                        state.counter = (state.counter || 0) + (action.payload || 1);
+                        break;
+                    case 'ADD_USER':
+                        if (!state.users) state.users = [];
+                        state.users.push({ ...action.payload, id: Date.now() });
+                        break;
+                    case 'UPDATE_SETTINGS':
+                        state.settings = { ...state.settings, ...action.payload };
+                        break;
+                    case 'NESTED_UPDATE':
+                        if (!state.data) state.data = { nested: { value: 0 } };
+                        state.data.nested.value = (state.data.nested.value || 0) + 1;
+                        break;
+                }
+                
+                this._state = state;
+                this._notifyListeners(oldState);
+            }
+
+            addMiddleware(middleware) {
+                this._middlewares.push(middleware);
+            }
+
+            subscribe(listener) {
+                this._listeners.push(listener);
+                return () => {
+                    this._listeners = this._listeners.filter(l => l !== listener);
+                };
+            }
+
+            _notifyListeners(oldState) {
+                this._listeners.forEach(listener => 
+                    listener(this._deepClone(this._state), this._deepClone(oldState))
+                );
+            }
+
+            reset() {
+                this._state = this._deepClone({});
+                this._middlewares = [];
+                this._listeners = [];
+            }
+        }
+
+        // ==================== تست‌ها ====================
+        const tests = [];
+        let passed = 0;
+        let failed = 0;
+
+        function addTest(name, testFn) {
+            tests.push({ name, fn: testFn });
+        }
+
+        function createTestElement(name, result, output) {
+            const div = document.createElement('div');
+            div.className = 'test-section';
+            
+            const titleDiv = document.createElement('div');
+            titleDiv.className = 'test-title';
+            
+            const nameSpan = document.createElement('span');
+            nameSpan.textContent = name;
+            
+            const resultSpan = document.createElement('span');
+            resultSpan.className = `test-result ${result === '✅' ? 'pass' : 'fail'}`;
+            resultSpan.textContent = result;
+            
+            titleDiv.appendChild(nameSpan);
+            titleDiv.appendChild(resultSpan);
+            div.appendChild(titleDiv);
+            
+            if (output) {
+                const outputDiv = document.createElement('div');
+                outputDiv.className = 'test-output';
+                outputDiv.textContent = output;
+                div.appendChild(outputDiv);
+            }
+            
+            return div;
+        }
+
+        // ==================== تعریف تست‌ها ====================
+        addTest('1. Singleton Pattern', () => {
+            const manager1 = new StateManager();
+            const manager2 = new StateManager();
+            return manager1 === manager2;
+        });
+
+        addTest('2. State Initialization', () => {
+            const manager = new StateManager({ counter: 5 });
+            return manager.getState().counter === 5;
+        });
+
+        addTest('3. Immutability: getState returns deep copy', () => {
+            const manager = new StateManager({ 
+                data: { nested: { value: 10 } },
+                users: [{ id: 1, name: 'Ali' }]
+            });
+            
+            const stateCopy = manager.getState();
+            stateCopy.data.nested.value = 999;
+            stateCopy.users[0].name = 'Changed';
+            
+            const originalState = manager.getState();
+            return originalState.data.nested.value === 10 && 
+                   originalState.users[0].name === 'Ali';
+        });
+
+        addTest('4. Immutability: dispatch creates new state', () => {
+            const manager = new StateManager({ counter: 0 });
+            const oldState = manager.getState();
+            
+            manager.dispatch({ type: 'INCREMENT', payload: 5 });
+            const newState = manager.getState();
+            
+            return oldState.counter === 0 && 
+                   newState.counter === 5 &&
+                   oldState !== newState;
+        });
+
+        addTest('5. Nested Object Immutability', () => {
+            const manager = new StateManager({ 
+                data: { nested: { value: 0 } } 
+            });
+            
+            const stateBefore = manager.getState();
+            manager.dispatch({ type: 'NESTED_UPDATE' });
+            const stateAfter = manager.getState();
+            
+            return stateBefore.data.nested.value === 0 &&
+                   stateAfter.data.nested.value === 1 &&
+                   stateBefore.data !== stateAfter.data &&
+                   stateBefore.data.nested !== stateAfter.data.nested;
+        });
+
+        addTest('6. Middleware Chain Execution', () => {
+            const manager = new StateManager({ counter: 0 });
+            let middlewareCalls = [];
+            
+            manager.addMiddleware((action, state, next) => {
+                middlewareCalls.push('mw1');
+                next();
+            });
+            
+            manager.addMiddleware((action, state, next) => {
+                middlewareCalls.push('mw2');
+                next();
+            });
+            
+            manager.dispatch({ type: 'INCREMENT' });
+            
+            return middlewareCalls.join(',') === 'mw1,mw2';
+        });
+
+        addTest('7. Listener Notification', () => {
+            const manager = new StateManager({ value: 0 });
+            let notified = false;
+            let oldStateValue, newStateValue;
+            
+            manager.subscribe((newState, oldState) => {
+                notified = true;
+                oldStateValue = oldState.value;
+                newStateValue = newState.value;
+            });
+            
+            manager.dispatch({ type: 'INCREMENT' });
+            
+            return notified && 
+                   oldStateValue === 0 && 
+                   newStateValue === 1;
+        });
+
+        addTest('8. Complex State Update', () => {
+            const manager = new StateManager({ 
+                users: [],
+                settings: { theme: 'light' }
+            });
+            
+            const oldState = manager.getState();
+            
+            manager.dispatch({ 
+                type: 'ADD_USER', 
+                payload: { name: 'Reza', age: 25 }
+            });
+            
+            manager.dispatch({ 
+                type: 'UPDATE_SETTINGS', 
+                payload: { language: 'fa' }
+            });
+            
+            const newState = manager.getState();
+            
+            return oldState.users.length === 0 &&
+                   newState.users.length === 1 &&
+                   newState.users[0].name === 'Reza' &&
+                   newState.settings.theme === 'light' &&
+                   newState.settings.language === 'fa' &&
+                   oldState.settings !== newState.settings;
+        });
+
+        // ==================== اجرای تست‌ها ====================
+        function runAllTests() {
+            const container = document.getElementById('testResults');
+            container.innerHTML = '';
+            passed = 0;
+            failed = 0;
+            
+            tests.forEach((test, index) => {
+                try {
+                    const result = test.fn();
+                    const isSuccess = result === true;
+                    
+                    if (isSuccess) {
+                        passed++;
+                        container.appendChild(
+                            createTestElement(test.name, '✅', 'تست موفقیت‌آمیز بود')
+                        );
+                    } else {
+                        failed++;
+                        container.appendChild(
+                            createTestElement(test.name, '❌', `نتیجه: ${result}`)
+                        );
+                    }
+                } catch (error) {
+                    failed++;
+                    container.appendChild(
+                        createTestElement(test.name, '❌', `خطا: ${error.message}`)
+                    );
+                }
+                
+                // آپدیت progress bar
+                const progress = ((index + 1) / tests.length) * 100;
+                document.getElementById('progressBar').style.width = `${progress}%`;
+                
+                // آپدیت آمار
+                document.getElementById('passedCount').textContent = passed;
+                document.getElementById('failedCount').textContent = failed;
+                document.getElementById('totalCount').textContent = tests.length;
+            });
+        }
+
+        // اجرای خودکار تست‌ها
+        setTimeout(runAllTests, 500);
+    </script>
+</body>
+</html>
