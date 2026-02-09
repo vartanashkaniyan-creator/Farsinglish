@@ -1,0 +1,1233 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>📊 اسکیما نسخه ۱ - Farsinglish</title>
+    <style>
+        :root {
+            --primary: #3498db;
+            --secondary: #2ecc71;
+            --danger: #e74c3c;
+            --warning: #f39c12;
+            --dark: #2c3e50;
+            --light: #ecf0f1;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Vazirmatn', 'Segoe UI', Tahoma, sans-serif;
+            background: linear-gradient(135deg, #1a2980, #26d0ce);
+            color: #fff;
+            min-height: 100vh;
+            padding: 20px;
+            line-height: 1.8;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 25px;
+            padding: 35px;
+            box-shadow: 0 25px 60px rgba(0, 0, 0, 0.3);
+            color: var(--dark);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .container::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(52, 152, 219, 0.1) 0%, transparent 70%);
+            z-index: 0;
+        }
+        
+        h1 {
+            text-align: center;
+            margin-bottom: 10px;
+            color: var(--dark);
+            font-size: 2.8rem;
+            position: relative;
+            z-index: 1;
+        }
+        
+        .subtitle {
+            text-align: center;
+            color: #7f8c8d;
+            margin-bottom: 40px;
+            font-size: 1.2rem;
+            position: relative;
+            z-index: 1;
+        }
+        
+        .schema-overview {
+            background: var(--light);
+            border-radius: 20px;
+            padding: 30px;
+            margin: 30px 0;
+            border-right: 8px solid var(--primary);
+            position: relative;
+            z-index: 1;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        }
+        
+        .overview-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+            padding-bottom: 20px;
+            border-bottom: 3px solid rgba(52, 152, 219, 0.3);
+        }
+        
+        .version-badge {
+            background: var(--primary);
+            color: white;
+            padding: 10px 25px;
+            border-radius: 50px;
+            font-weight: bold;
+            font-size: 1.2rem;
+            box-shadow: 0 5px 15px rgba(52, 152, 219, 0.3);
+        }
+        
+        .schema-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin: 30px 0;
+        }
+        
+        .stat-card {
+            background: white;
+            padding: 25px;
+            border-radius: 15px;
+            text-align: center;
+            border-top: 6px solid var(--secondary);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.08);
+            transition: all 0.3s;
+        }
+        
+        .stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.15);
+        }
+        
+        .stat-value {
+            font-size: 3rem;
+            font-weight: bold;
+            color: var(--dark);
+            margin-bottom: 10px;
+        }
+        
+        .stat-label {
+            color: #7f8c8d;
+            font-size: 1.1rem;
+        }
+        
+        .table-section {
+            margin: 40px 0;
+            position: relative;
+            z-index: 1;
+        }
+        
+        .table-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+            padding-bottom: 15px;
+            border-bottom: 3px solid var(--warning);
+        }
+        
+        .table-title {
+            font-size: 1.8rem;
+            color: var(--dark);
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        
+        .table-icon {
+            font-size: 2rem;
+        }
+        
+        .table-card {
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            margin-bottom: 30px;
+            border: 2px solid rgba(52, 152, 219, 0.2);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+            transition: all 0.3s;
+        }
+        
+        .table-card:hover {
+            border-color: var(--primary);
+            box-shadow: 0 15px 40px rgba(52, 152, 219, 0.15);
+        }
+        
+        .table-structure {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 25px;
+            margin-top: 25px;
+        }
+        
+        .column-card {
+            background: var(--light);
+            padding: 25px;
+            border-radius: 15px;
+            border-right: 5px solid var(--secondary);
+        }
+        
+        .column-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid rgba(0, 0, 0, 0.1);
+        }
+        
+        .column-name {
+            font-weight: bold;
+            font-size: 1.2rem;
+            color: var(--dark);
+            font-family: 'Courier New', monospace;
+        }
+        
+        .column-type {
+            background: var(--primary);
+            color: white;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+        }
+        
+        .column-props {
+            list-style: none;
+            margin-top: 15px;
+        }
+        
+        .column-prop {
+            padding: 8px 0;
+            color: #7f8c8d;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .prop-icon {
+            color: var(--secondary);
+        }
+        
+        .index-section {
+            margin-top: 30px;
+            padding-top: 25px;
+            border-top: 2px solid rgba(0, 0, 0, 0.1);
+        }
+        
+        .index-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+        
+        .index-card {
+            background: rgba(52, 152, 219, 0.1);
+            padding: 20px;
+            border-radius: 12px;
+            border: 1px solid rgba(52, 152, 219, 0.3);
+        }
+        
+        .relationship-diagram {
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            margin: 40px 0;
+            border: 3px solid var(--warning);
+            position: relative;
+            z-index: 1;
+        }
+        
+        .diagram-title {
+            text-align: center;
+            font-size: 1.8rem;
+            color: var(--dark);
+            margin-bottom: 30px;
+        }
+        
+        .diagram-nodes {
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 40px;
+        }
+        
+        .node {
+            background: var(--light);
+            padding: 25px;
+            border-radius: 15px;
+            text-align: center;
+            min-width: 200px;
+            border: 3px solid var(--primary);
+            position: relative;
+        }
+        
+        .node::after {
+            content: '↔';
+            position: absolute;
+            right: -40px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 2rem;
+            color: var(--primary);
+        }
+        
+        .node:last-child::after {
+            display: none;
+        }
+        
+        .node-title {
+            font-weight: bold;
+            font-size: 1.3rem;
+            color: var(--dark);
+            margin-bottom: 10px;
+        }
+        
+        .node-desc {
+            color: #7f8c8d;
+            font-size: 0.9rem;
+        }
+        
+        .code-section {
+            background: #2c3e50;
+            border-radius: 20px;
+            padding: 30px;
+            margin: 40px 0;
+            position: relative;
+            z-index: 1;
+        }
+        
+        .code-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .code-title {
+            font-size: 1.5rem;
+            color: #ecf0f1;
+        }
+        
+        pre {
+            font-family: 'Courier New', monospace;
+            font-size: 1rem;
+            line-height: 1.6;
+            overflow-x: auto;
+            background: rgba(0, 0, 0, 0.3);
+            padding: 25px;
+            border-radius: 15px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .keyword {
+            color: #ff9ff3;
+        }
+        
+        .string {
+            color: #1dd1a1;
+        }
+        
+        .number {
+            color: #feca57;
+        }
+        
+        .function {
+            color: #54a0ff;
+        }
+        
+        .comment {
+            color: #576574;
+            font-style: italic;
+        }
+        
+        .controls {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            justify-content: center;
+            margin: 40px 0;
+            position: relative;
+            z-index: 1;
+        }
+        
+        .btn {
+            padding: 20px 40px;
+            border: none;
+            border-radius: 50px;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 15px;
+            min-width: 250px;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary), #2980b9);
+            color: white;
+        }
+        
+        .btn-secondary {
+            background: linear-gradient(135deg, var(--secondary), #27ae60);
+            color: white;
+        }
+        
+        .btn:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.3);
+        }
+        
+        .btn-icon {
+            font-size: 24px;
+        }
+        
+        @media (max-width: 768px) {
+            .container { padding: 20px; }
+            .schema-stats { grid-template-columns: 1fr; }
+            .table-structure { grid-template-columns: 1fr; }
+            .diagram-nodes { flex-direction: column; }
+            .node::after { 
+                right: 50%; 
+                top: auto; 
+                bottom: -40px; 
+                transform: translateX(50%) rotate(90deg); 
+            }
+            .btn { min-width: 100%; margin-bottom: 15px; }
+            h1 { font-size: 2.2rem; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📊 اسکیما نسخه ۱</h1>
+        <div class="subtitle">
+            ساختار کامل پایگاه داده Farsinglish - بهینه‌شده برای سیستم SRS و تجربه کاربری
+        </div>
+        
+        <div class="schema-overview">
+            <div class="overview-header">
+                <h2 style="color: var(--dark);">طرح کلی پایگاه داده</h2>
+                <div class="version-badge">نسخه ۱.۰</div>
+            </div>
+            
+            <div style="color: #7f8c8d; line-height: 1.8; margin-bottom: 25px;">
+                <p>این اسکیما برای اپلیکیشن آموزش زبان انگلیسی Farsinglish طراحی شده است. ویژگی‌های کلیدی:</p>
+                <ul style="margin-right: 20px; margin-top: 10px;">
+                    <li>بهینه‌سازی برای سیستم مرور هوشمند (SRS)</li>
+                    <li>مدیریت پیشرفت کاربر و روند یادگیری</li>
+                    <li>پشتیبانی از چند زبانه بودن</li>
+                    <li>ایندکس‌های سریع برای جستجوی پیشرفته</li>
+                    <li>اعتبارسنجی داده‌ها در سطح دیتابیس</li>
+                </ul>
+            </div>
+            
+            <div class="schema-stats">
+                <div class="stat-card">
+                    <div class="stat-value">۳</div>
+                    <div class="stat-label">جدول اصلی</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value">۱۵</div>
+                    <div class="stat-label">فیلد کلیدی</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value">۱۲</div>
+                    <div class="stat-label">ایندکس بهینه</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value">۸</div>
+                    <div class="stat-label">رابطه داده‌ای</div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- جدول users -->
+        <div class="table-section">
+            <div class="table-header">
+                <div class="table-title">
+                    <span class="table-icon">👤</span>
+                    جدول کاربران (users)
+                </div>
+                <div style="color: var(--primary); font-weight: bold; font-family: 'Courier New', monospace;">
+                    PRIMARY KEY: id
+                </div>
+            </div>
+            
+            <div class="table-card">
+                <div style="color: #7f8c8d; margin-bottom: 20px; line-height: 1.7;">
+                    ذخیره اطلاعات کاربران، پیشرفت کلی و تنظیمات شخصی
+                </div>
+                
+                <div class="table-structure">
+                    <div class="column-card">
+                        <div class="column-header">
+                            <div class="column-name">id</div>
+                            <div class="column-type">String</div>
+                        </div>
+                        <ul class="column-props">
+                            <li class="column-prop"><span class="prop-icon">🔑</span> کلید اصلی</li>
+                            <li class="column-prop"><span class="prop-icon">⭐</span> منحصربه‌فرد</li>
+                            <li class="column-prop"><span class="prop-icon">📏</span> طول: 36 کاراکتر (UUID)</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="column-card">
+                        <div class="column-header">
+                            <div class="column-name">email</div>
+                            <div class="column-type">String</div>
+                        </div>
+                        <ul class="column-props">
+                            <li class="column-prop"><span class="prop-icon">✉️</span> آدرس ایمیل</li>
+                            <li class="column-prop"><span class="prop-icon">⭐</span> منحصربه‌فرد</li>
+                            <li class="column-prop"><span class="prop-icon">✓</span> الزامی</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="column-card">
+                        <div class="column-header">
+                            <div class="column-name">username</div>
+                            <div class="column-type">String</div>
+                        </div>
+                        <ul class="column-props">
+                            <li class="column-prop"><span class="prop-icon">👤</span> نام نمایشی</li>
+                            <li class="column-prop"><span class="prop-icon">📏</span> حداکثر 50 کاراکتر</li>
+                            <li class="column-prop"><span class="prop-icon">✓</span> الزامی</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="column-card">
+                        <div class="column-header">
+                            <div class="column-name">level</div>
+                            <div class="column-type">Integer</div>
+                        </div>
+                        <ul class="column-props">
+                            <li class="column-prop"><span class="prop-icon">📈</span> سطح کاربر</li>
+                            <li class="column-prop"><span class="prop-icon">🔢</span> ۱ تا ۱۰۰</li>
+                            <li class="column-prop"><span class="prop-icon">💯</span> پیش‌فرض: ۱</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="column-card">
+                        <div class="column-header">
+                            <div class="column-name">xp</div>
+                            <div class="column-type">Integer</div>
+                        </div>
+                        <ul class="column-props">
+                            <li class="column-prop"><span class="prop-icon">⭐</span> امتیاز تجربه</li>
+                            <li class="column-prop"><span class="prop-icon">🔢</span> ۰ تا ۱۰۰۰۰۰</li>
+                            <li class="column-prop"><span class="prop-icon">💯</span> پیش‌فرض: ۰</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="column-card">
+                        <div class="column-header">
+                            <div class="column-name">streakDays</div>
+                            <div class="column-type">Integer</div>
+                        </div>
+                        <ul class="column-props">
+                            <li class="column-prop"><span class="prop-icon">🔥</span> روزهای متوالی</li>
+                            <li class="column-prop"><span class="prop-icon">🔢</span> ۰ تا ۳۶۵</li>
+                            <li class="column-prop"><span class="prop-icon">💯</span> پیش‌فرض: ۰</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="column-card">
+                        <div class="column-header">
+                            <div class="column-name">preferences</div>
+                            <div class="column-type">Object</div>
+                        </div>
+                        <ul class="column-props">
+                            <li class="column-prop"><span class="prop-icon">⚙️</span> تنظیمات کاربر</li>
+                            <li class="column-prop"><span class="prop-icon">🎯</span> شامل: dailyGoal, notifications, theme</li>
+                            <li class="column-prop"><span class="prop-icon">💯</span> پیش‌فرض: {}</li>
+                        </ul>
+                    </div>
+                </div>
+                
+                <div class="index-section">
+                    <h3 style="color: var(--dark); margin-bottom: 15px;">🎯 ایندکس‌های جدول کاربران</h3>
+                    <div class="index-grid">
+                        <div class="index-card">
+                            <strong>email_idx</strong><br>
+                            <small>فیلد: email</small><br>
+                            <small>نوع: UNIQUE</small>
+                        </div>
+                        <div class="index-card">
+                            <strong>level_idx</strong><br>
+                            <small>فیلد: level</small><br>
+                            <small>نوع: RANGE</small>
+                        </div>
+                        <div class="index-card">
+                            <strong>xp_idx</strong><br>
+                            <small>فیلد: xp</small><br>
+                            <small>نوع: DESCENDING</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- جدول lessons -->
+        <div class="table-section">
+            <div class="table-header">
+                <div class="table-title">
+                    <span class="table-icon">📚</span>
+                    جدول دروس (lessons)
+                </div>
+                <div style="color: var(--primary); font-weight: bold; font-family: 'Courier New', monospace;">
+                    PRIMARY KEY: lessonId
+                </div>
+            </div>
+            
+            <div class="table-card">
+                <div style="color: #7f8c8d; margin-bottom: 20px; line-height: 1.7;">
+                    محتوای آموزشی، سطوح و اطلاعات SRS برای هر درس
+                </div>
+                
+                <div class="table-structure">
+                    <div class="column-card">
+                        <div class="column-header">
+                            <div class="column-name">lessonId</div>
+                            <div class="column-type">String</div>
+                        </div>
+                        <ul class="column-props">
+                            <li class="column-prop"><span class="prop-icon">🔑</span> کلید اصلی</li>
+                            <li class="column-prop"><span class="prop-icon">📏</span> فرمت: level_chapter_lesson</li>
+                            <li class="column-prop"><span class="prop-icon">⭐</span> منحصربه‌فرد</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="column-card">
+                        <div class="column-header">
+                            <div class="column-name">title</div>
+                            <div class="column-type">String</div>
+                        </div>
+                        <ul class="column-props">
+                            <li class="column-prop"><span class="prop-icon">🏷️</span> عنوان درس</li>
+                            <li class="column-prop"><span class="prop-icon">📏</span> حداکثر 200 کاراکتر</li>
+                            <li class="column-prop"><span class="prop-icon">✓</span> الزامی</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="column-card">
+                        <div class="column-header">
+                            <div class="column-name">level</div>
+                            <div class="column-type">Integer</div>
+                        </div>
+                        <ul class="column-props">
+                            <li class="column-prop"><span class="prop-icon">📊</span> سطح دشواری</li>
+                            <li class="column-prop"><span class="prop-icon">🔢</span> ۱ تا ۱۰</li>
+                            <li class="column-prop"><span class="prop-icon">✓</span> الزامی</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="column-card">
+                        <div class="column-header">
+                            <div class="column-name">content</div>
+                            <div class="column-type">Object</div>
+                        </div>
+                        <ul class="column-props">
+                            <li class="column-prop"><span class="prop-icon">📝</span> محتوای درس</li>
+                            <li class="column-prop"><span class="prop-icon">🎯</span> شامل: text, examples, exercises</li>
+                            <li class="column-prop"><span class="prop-icon">✓</span> الزامی</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="column-card">
+                        <div class="column-header">
+                            <div class="column-name">vocabulary</div>
+                            <div class="column-type">Array</div>
+                        </div>
+                        <ul class="column-props">
+                            <li class="column-prop"><span class="prop-icon">📖</span> واژگان درس</li>
+                            <li class="column-prop"><span class="prop-icon">🔤</span> لیست کلمات و معانی</li>
+                            <li class="column-prop"><span class="prop-icon">💯</span> پیش‌فرض: []</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="column-card">
+                        <div class="column-header">
+                            <div class="column-name">isLocked</div>
+                            <div class="column-type">Boolean</div>
+                        </div>
+                        <ul class="column-props">
+                            <li class="column-prop"><span class="prop-icon">🔒</span> وضعیت قفل</li>
+                            <li class="column-prop"><span class="prop-icon">💯</span> پیش‌فرض: true</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="column-card">
+                        <div class="column-header">
+                            <div class="column-name">prerequisites</div>
+                            <div class="column-type">Array</div>
+                        </div>
+                        <ul class="column-props">
+                            <li class="column-prop"><span class="prop-icon">⏮️</span> پیش‌نیازها</li>
+                            <li class="column-prop"><span class="prop-icon">🔗</span> لیست lessonIdهای موردنیاز</li>
+                            <li class="column-prop"><span class="prop-icon">💯</span> پیش‌فرض: []</li>
+                        </ul>
+                    </div>
+                </div>
+                
+                <div class="index-section">
+                    <h3 style="color: var(--dark); margin-bottom: 15px;">🎯 ایندکس‌های جدول دروس</h3>
+                    <div class="index-grid">
+                        <div class="index-card">
+                            <strong>level_idx</strong><br>
+                            <small>فیلد: level</small><br>
+                            <small>نوع: COMPOUND</small>
+                        </div>
+                        <div class="index-card">
+                            <strong>isLocked_idx</strong><br>
+                            <small>فیلد: isLocked</small><br>
+                            <small>نوع: BOOLEAN</small>
+                        </div>
+                        <div class="index-card">
+                            <strong>prerequisites_idx</strong><br>
+                            <small>فیلد: prerequisites</small><br>
+                            <small>نوع: ARRAY_CONTAINS</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- جدول progress -->
+        <div class="table-section">
+            <div class="table-header">
+                <div class="table-title">
+                    <span class="table-icon">📈</span>
+                    جدول پیشرفت (progress)
+                </div>
+                <div style="color: var(--primary); font-weight: bold; font-family: 'Courier New', monospace;">
+                    PRIMARY KEY: [userId, lessonId]
+                </div>
+            </div>
+            
+            <div class="table-card">
+                <div style="color: #7f8c8d; margin-bottom: 20px; line-height: 1.7;">
+                    ردیابی پیشرفت کاربران در هر درس با پارامترهای SRS
+                </div>
+                
+                <div class="table-structure">
+                    <div class="column-card">
+                        <div class="column-header">
+                            <div class="column-name">userId</div>
+                            <div class="column-type">String</div>
+                        </div>
+                        <ul class="column-props">
+                            <li class="column-prop"><span class="prop-icon">🔑</span> بخشی از کلید اصلی</li>
+                            <li class="column-prop"><span class="prop-icon">🔗</span> رابطه با users.id</li>
+                            <li class="column-prop"><span class="prop-icon">✓</span> الزامی</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="column-card">
+                        <div class="column-header">
+                            <div class="column-name">lessonId</div>
+                            <div class="column-type">String</div>
+                        </div>
+                        <ul class="column-props">
+                            <li class="column-prop"><span class="prop-icon">🔑</span> بخشی از کلید اصلی</li>
+                            <li class="column-prop"><span class="prop-icon">🔗</span> رابطه با lessons.lessonId</li>
+                            <li class="column-prop"><span class="prop-icon">✓</span> الزامی</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="column-card">
+                        <div class="column-header">
+                            <div class="column-name">status</div>
+                            <div class="column-type">String</div>
+                        </div>
+                        <ul class="column-props">
+                            <li class="column-prop"><span class="prop-icon">🏷️</span> وضعیت درس</li>
+                            <li class="column-prop"><span class="prop-icon">🎯</span> مقادیر: 'not_started', 'in_progress', 'completed', 'review'</li>
+                            <li class="column-prop"><span class="prop-icon">💯</span> پیش‌فرض: 'not_started'</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="column-card">
+                        <div class="column-header">
+                            <div class="column-name">srsData</div>
+                            <div class="column-type">Object</div>
+                        </div>
+                        <ul class="column-props">
+                            <li class="column-prop"><span class="prop-icon">🧠</span> داده‌های SRS</li>
+                            <li class="column-prop"><span class="prop-icon">🎯</span> شامل: easeFactor, interval, repetitions, nextReview</li>
+                            <li class="column-prop"><span class="prop-icon">💯</span> پیش‌فرض: SRS_DEFAULTS</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="column-card">
+                        <div class="column-header">
+                            <div class="column-name">lastReviewDate</div>
+                            <div class="column-type">Date</div>
+                        </div>
+                        <ul class="column-props">
+                            <li class="column-prop"><span class="prop-icon">📅</span> آخرین مرور</li>
+                            <li class="column-prop"><span class="prop-icon">💯</span> پیش‌فرض: null</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="column-card">
+                        <div class="column-header">
+                            <div class="column-name">nextReviewDate</div>
+                            <div class="column-type">Date</div>
+                        </div>
+                        <ul class="column-props">
+                            <li class="column-prop"><span class="prop-icon">📅</span> مرور بعدی</li>
+                            <li class="column-prop"><span class="prop-icon">🧠</span> محاسبه توسط SRS</li>
+                            <li class="column-prop"><span class="prop-icon">💯</span> پیش‌فرض: null</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="column-card">
+                        <div class="column-header">
+                            <div class="column-name">score</div>
+                            <div class="column-type">Number</div>
+                        </div>
+                        <ul class="column-props">
+                            <li class="column-prop"><span class="prop-icon">⭐</span> امتیاز کسب شده</li>
+                            <li class="column-prop"><span class="prop-icon">🔢</span> ۰ تا ۱۰۰</li>
+                            <li class="column-prop"><span class="prop-icon">💯</span> پیش‌فرض: ۰</li>
+                        </ul>
+                    </div>
+                </div>
+                
+                <div class="index-section">
+                    <h3 style="color: var(--dark); margin-bottom: 15px;">🎯 ایندکس‌های جدول پیشرفت</h3>
+                    <div class="index-grid">
+                        <div class="index-card">
+                            <strong>userId_idx</strong><br>
+                            <small>فیلد: userId</small><br>
+                            <small>نوع: FOREIGN KEY</small>
+                        </div>
+                        <div class="index-card">
+                            <strong>lessonId_idx</strong><br>
+                            <small>فیلد: lessonId</small><br>
+                            <small>نوع: FOREIGN KEY</small>
+                        </div>
+                        <div class="index-card">
+                            <strong>status_idx</strong><br>
+                            <small>فیلد: status</small><br>
+                            <small>نوع: ENUM</small>
+                        </div>
+                        <div class="index-card">
+                            <strong>nextReview_idx</strong><br>
+                            <small>فیلد: nextReviewDate</small><br>
+                            <small>نوع: DATE_RANGE</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- رابطه‌ها -->
+        <div class="relationship-diagram">
+            <div class="diagram-title">🔄 روابط بین جداول</div>
+            <div class="diagram-nodes">
+                <div class="node">
+                    <div class="node-title">👤 کاربران</div>
+                    <div class="node-desc">۱ به چند</div>
+                </div>
+                <div class="node">
+                    <div class="node-title">📈 پیشرفت</div>
+                    <div class="node-desc">رابطه میانی</div>
+                </div>
+                <div class="node">
+                    <div class="node-title">📚 دروس</div>
+                    <div class="node-desc">چند به چند</div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- کد اسکیما -->
+        <div class="code-section">
+            <div class="code-header">
+                <div class="code-title">📜 کد کامل اسکیما نسخه ۱</div>
+                <div style="color: #ecf0f1; font-family: 'Courier New', monospace;">JavaScript</div>
+            </div>
+            
+            <pre><code><span class="keyword">// core/db/schema_v1.js</span>
+<span class="comment">/**
+ * اسکیما نسخه ۱ - پایگاه داده Farsinglish
+ * شامل: کاربران، دروس، پیشرفت + ایندکس‌های بهینه
+ */</span>
+
+<span class="keyword">const</span> <span class="function">SCHEMA_V1</span> = {
+    <span class="string">"users"</span>: {
+        <span class="comment">// ساختار جدول کاربران</span>
+        keyPath: <span class="string">"id"</span>,
+        autoIncrement: <span class="keyword">false</span>,
+        indexes: [
+            {
+                name: <span class="string">"email_idx"</span>,
+                keyPath: <span class="string">"email"</span>,
+                options: { unique: <span class="keyword">true</span> }
+            },
+            {
+                name: <span class="string">"level_idx"</span>,
+                keyPath: <span class="string">"level"</span>,
+                options: { }
+            },
+            {
+                name: <span class="string">"xp_idx"</span>,
+                keyPath: <span class="string">"xp"</span>,
+                options: { }
+            }
+        ]
+    },
+    
+    <span class="string">"lessons"</span>: {
+        <span class="comment">// ساختار جدول دروس</span>
+        keyPath: <span class="string">"lessonId"</span>,
+        autoIncrement: <span class="keyword">false</span>,
+        indexes: [
+            {
+                name: <span class="string">"level_idx"</span>,
+                keyPath: <span class="string">"level"</span>,
+                options: { }
+            },
+            {
+                name: <span class="string">"isLocked_idx"</span>,
+                keyPath: <span class="string">"isLocked"</span>,
+                options: { }
+            },
+            {
+                name: <span class="string">"prerequisites_idx"</span>,
+                keyPath: <span class="string">"prerequisites"</span>,
+                options: { multiEntry: <span class="keyword">true</span> }
+            }
+        ]
+    },
+    
+    <span class="string">"progress"</span>: {
+        <span class="comment">// ساختار جدول پیشرفت (رابطه many-to-many)</span>
+        keyPath: [<span class="string">"userId"</span>, <span class="string">"lessonId"</span>],
+        autoIncrement: <span class="keyword">false</span>,
+        indexes: [
+            {
+                name: <span class="string">"userId_idx"</span>,
+                keyPath: <span class="string">"userId"</span>,
+                options: { }
+            },
+            {
+                name: <span class="string">"lessonId_idx"</span>,
+                keyPath: <span class="string">"lessonId"</span>,
+                options: { }
+            },
+            {
+                name: <span class="string">"status_idx"</span>,
+                keyPath: <span class="string">"status"</span>,
+                options: { }
+            },
+            {
+                name: <span class="string">"nextReview_idx"</span>,
+                keyPath: <span class="string">"nextReviewDate"</span>,
+                options: { }
+            }
+        ]
+    }
+};
+
+<span class="comment">// تنظیمات پیش‌فرض SRS (Spaced Repetition System)</span>
+<span class="keyword">const</span> <span class="function">SRS_DEFAULTS</span> = {
+    easeFactor: <span class="number">2.5</span>,
+    interval: <span class="number">1</span>,
+    repetitions: <span class="number">0</span>,
+    nextReview: <span class="keyword">null</span>
+};
+
+<span class="comment">// توابع اعتبارسنجی</span>
+<span class="keyword">const</span> <span class="function">SchemaValidators</span> = {
+    <span class="function">validateUser</span>(userData) {
+        <span class="keyword">const</span> errors = [];
+        
+        <span class="keyword">if</span> (!userData.id || userData.id.length !== <span class="number">36</span>) {
+            errors.push(<span class="string">"شناسه کاربر نامعتبر است (باید ۳۶ کاراکتر باشد)"</span>);
+        }
+        
+        <span class="keyword">const</span> emailRegex = <span class="keyword">/^[^\s@]+@[^\s@]+\.[^\s@]+$/</span>;
+        <span class="keyword">if</span> (!emailRegex.test(userData.email)) {
+            errors.push(<span class="string">"فرمت ایمیل نامعتبر است"</span>);
+        }
+        
+        <span class="keyword">if</span> (userData.level &lt; <span class="number">1</span> || userData.level &gt; <span class="number">100</span>) {
+            errors.push(<span class="string">"سطح کاربر باید بین ۱ تا ۱۰۰ باشد"</span>);
+        }
+        
+        <span class="keyword">return</span> {
+            isValid: errors.length === <span class="number">0</span>,
+            errors
+        };
+    },
+    
+    <span class="function">validateLesson</span>(lessonData) {
+        <span class="keyword">const</span> errors = [];
+        
+        <span class="keyword">const</span> lessonIdRegex = <span class="keyword">/^\d+_\d+_\d+$/</span>;
+        <span class="keyword">if</span> (!lessonIdRegex.test(lessonData.lessonId)) {
+            errors.push(<span class="string">"شناسه درس باید فرمت level_chapter_lesson باشد"</span>);
+        }
+        
+        <span class="keyword">if</span> (lessonData.level &lt; <span class="number">1</span> || lessonData.level &gt; <span class="number">10</span>) {
+            errors.push(<span class="string">"سطح درس باید بین ۱ تا ۱۰ باشد"</span>);
+        }
+        
+        <span class="keyword">if</span> (!lessonData.content || !lessonData.content.text) {
+            errors.push(<span class="string">"درس باید محتوای متنی داشته باشد"</span>);
+        }
+        
+        <span class="keyword">return</span> {
+            isValid: errors.length === <span class="number">0</span>,
+            errors
+        };
+    },
+    
+    <span class="function">validateProgress</span>(progressData) {
+        <span class="keyword">const</span> errors = [];
+        <span class="keyword">const</span> validStatuses = [<span class="string">'not_started'</span>, <span class="string">'in_progress'</span>, <span class="string">'completed'</span>, <span class="string">'review'</span>];
+        
+        <span class="keyword">if</span> (!progressData.userId || !progressData.lessonId) {
+            errors.push(<span class="string">"شناسه کاربر و درس الزامی است"</span>);
+        }
+        
+        <span class="keyword">if</span> (!validStatuses.includes(progressData.status)) {
+            errors.push(<span class="string">`وضعیت باید یکی از این موارد باشد: ${validStatuses.join(', ')}`</span>);
+        }
+        
+        <span class="keyword">if</span> (progressData.score &lt; <span class="number">0</span> || progressData.score &gt; <span class="number">100</span>) {
+            errors.push(<span class="string">"امتیاز باید بین ۰ تا ۱۰۰ باشد"</span>);
+        }
+        
+        <span class="keyword">return</span> {
+            isValid: errors.length === <span class="number">0</span>,
+            errors
+        };
+    }
+};
+
+<span class="comment">// اکسپورت برای استفاده در پروژه</span>
+<span class="keyword">if</span> (<span class="keyword">typeof</span> window !== <span class="string">'undefined'</span>) {
+    window.SCHEMA_V1 = SCHEMA_V1;
+    window.SRS_DEFAULTS = SRS_DEFAULTS;
+    window.SchemaValidators = SchemaValidators;
+}</code></pre>
+        </div>
+        
+        <div class="controls">
+            <a href="test_schema_v1.html" class="btn btn-primary">
+                <span class="btn-icon">🧪</span> اجرای تسترونر اسکیما
+            </a>
+            <button onclick="loadSchemaInMemory()" class="btn btn-secondary">
+                <span class="btn-icon">⚡</span> بارگذاری در حافظه
+            </button>
+        </div>
+    </div>
+    
+    <script>
+        // ==================== کد واقعی اسکیما ====================
+        const SCHEMA_V1 = {
+            "users": {
+                keyPath: "id",
+                autoIncrement: false,
+                indexes: [
+                    {
+                        name: "email_idx",
+                        keyPath: "email",
+                        options: { unique: true }
+                    },
+                    {
+                        name: "level_idx",
+                        keyPath: "level",
+                        options: { }
+                    },
+                    {
+                        name: "xp_idx",
+                        keyPath: "xp",
+                        options: { }
+                    }
+                ]
+            },
+            
+            "lessons": {
+                keyPath: "lessonId",
+                autoIncrement: false,
+                indexes: [
+                    {
+                        name: "level_idx",
+                        keyPath: "level",
+                        options: { }
+                    },
+                    {
+                        name: "isLocked_idx",
+                        keyPath: "isLocked",
+                        options: { }
+                    },
+                    {
+                        name: "prerequisites_idx",
+                        keyPath: "prerequisites",
+                        options: { multiEntry: true }
+                    }
+                ]
+            },
+            
+            "progress": {
+                keyPath: ["userId", "lessonId"],
+                autoIncrement: false,
+                indexes: [
+                    {
+                        name: "userId_idx",
+                        keyPath: "userId",
+                        options: { }
+                    },
+                    {
+                        name: "lessonId_idx",
+                        keyPath: "lessonId",
+                        options: { }
+                    },
+                    {
+                        name: "status_idx",
+                        keyPath: "status",
+                        options: { }
+                    },
+                    {
+                        name: "nextReview_idx",
+                        keyPath: "nextReviewDate",
+                        options: { }
+                    }
+                ]
+            }
+        };
+
+        const SRS_DEFAULTS = {
+            easeFactor: 2.5,
+            interval: 1,
+            repetitions: 0,
+            nextReview: null
+        };
+
+        const SchemaValidators = {
+            validateUser(userData) {
+                const errors = [];
+                
+                if (!userData.id || userData.id.length !== 36) {
+                    errors.push("شناسه کاربر نامعتبر است (باید ۳۶ کاراکتر باشد)");
+                }
+                
+                const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+                if (!emailRegex.test(userData.email)) {
+                    errors.push("فرمت ایمیل نامعتبر است");
+                }
+                
+                if (userData.level < 1 || userData.level > 100) {
+                    errors.push("سطح کاربر باید بین ۱ تا ۱۰۰ باشد");
+                }
+                
+                return {
+                    isValid: errors.length === 0,
+                    errors
+                };
+            },
+            
+            validateLesson(lessonData) {
+                const errors = [];
+                
+                const lessonIdRegex = /^\d+_\d+_\d+$/;
+                if (!lessonIdRegex.test(lessonData.lessonId)) {
+                    errors.push("شناسه درس باید فرمت level_chapter_lesson باشد");
+                }
+                
+                if (lessonData.level < 1 || lessonData.level > 10) {
+                    errors.push("سطح درس باید بین ۱ تا ۱۰ باشد");
+                }
+                
+                if (!lessonData.content || !lessonData.content.text) {
+                    errors.push("درس باید محتوای متنی داشته باشد");
+                }
+                
+                return {
+                    isValid: errors.length === 0,
+                    errors
+                };
+            },
+            
+            validateProgress(progressData) {
+                const errors = [];
+                const validStatuses = ['not_started', 'in_progress', 'completed', 'review'];
+                
+                if (!progressData.userId || !progressData.lessonId) {
+                    errors.push("شناسه کاربر و درس الزامی است");
+                }
+                
+                if (!validStatuses.includes(progressData.status)) {
+                    errors.push(`وضعیت باید یکی از این موارد باشد: ${validStatuses.join(', ')}`);
+                }
+                
+                if (progressData.score < 0 || progressData.score > 100) {
+                    errors.push("امتیاز باید بین ۰ تا ۱۰۰ باشد");
+                }
+                
+                return {
+                    isValid: errors.length === 0,
+                    errors
+                };
+            }
+        };
+
+        if (typeof window !== 'undefined') {
+            window.SCHEMA_V1 = SCHEMA_V1;
+            window.SRS_DEFAULTS = SRS_DEFAULTS;
+            window.SchemaValidators = SchemaValidators;
+        }
+
+        // ==================== توابع کمکی ====================
+        function loadSchemaInMemory() {
+            console.log('📊 اسکیما در حافظه بارگذاری شد:');
+            console.log('- window.SCHEMA_V1');
+            console.log('- window.SRS_DEFAULTS');
+            console.log('- window.SchemaValidators');
+            
+            alert('✅ اسکیما نسخه ۱ با موفقیت در حافظه بارگذاری شد!\n\n' +
+                  'برای بررسی، کنسول مرورگر را باز کنید (F12)');
+        }
+        
+        console.log('🔥 اسکیما نسخه ۱ آماده است!');
+        console.log('🔧 دسترسی‌ها:');
+        console.log('- SCHEMA_V1: ساختار کامل جداول');
+        console.log('- SRS_DEFAULTS: تنظیمات پیش‌فرض سیستم مرور هوشمند');
+        console.log('- SchemaValidators: توابع اعتبارسنجی داده');
+    </script>
+</body>
+                                                                                             </html>
