@@ -2,100 +2,472 @@
 <html lang="fa" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <title>تست IndexedDB Wrapper</title>
+    <title>تست IndexedDB Wrapper - Farsinglish</title>
     <style>
-        body { font-family: Tahoma; padding: 20px; background: #f5f5f5; }
-        .test { background: white; padding: 15px; margin: 10px 0; border-right: 5px solid #4CAF50; }
-        .fail { border-right-color: #f44336; }
-        .success { color: #4CAF50; }
-        .error { color: #f44336; }
-        button { padding: 10px 20px; margin: 5px; }
+        body { 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            padding: 20px; 
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+        h1 {
+            text-align: center;
+            color: #2d3436;
+            margin-bottom: 10px;
+            font-size: 2.2rem;
+        }
+        .subtitle {
+            text-align: center;
+            color: #636e72;
+            margin-bottom: 30px;
+            font-size: 1.1rem;
+        }
+        .test {
+            background: white;
+            padding: 20px;
+            margin: 15px 0;
+            border-radius: 12px;
+            border-right: 6px solid #4CAF50;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+            transition: transform 0.3s;
+        }
+        .test:hover {
+            transform: translateY(-3px);
+        }
+        .fail {
+            border-right-color: #e74c3c;
+        }
+        .pending {
+            border-right-color: #f39c12;
+        }
+        .success {
+            color: #27ae60;
+            font-weight: bold;
+        }
+        .error {
+            color: #e74c3c;
+            font-weight: bold;
+        }
+        .warning {
+            color: #f39c12;
+        }
+        button {
+            padding: 14px 28px;
+            margin: 8px;
+            border: none;
+            border-radius: 50px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+        #runTests {
+            background: linear-gradient(135deg, #00b09b, #96c93d);
+            color: white;
+        }
+        #clearDB {
+            background: linear-gradient(135deg, #ff7e5f, #feb47b);
+            color: white;
+        }
+        button:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 7px 20px rgba(0,0,0,0.2);
+        }
+        button:active {
+            transform: translateY(-1px);
+        }
+        .controls {
+            text-align: center;
+            margin: 30px 0;
+        }
+        .details {
+            font-size: 0.9rem;
+            color: #636e72;
+            margin-top: 8px;
+            padding: 10px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+        }
+        .stats {
+            display: flex;
+            justify-content: space-around;
+            margin: 25px 0;
+            padding: 20px;
+            background: linear-gradient(135deg, #74b9ff, #0984e3);
+            border-radius: 15px;
+            color: white;
+            text-align: center;
+        }
+        .stat-item {
+            flex: 1;
+        }
+        .stat-value {
+            font-size: 2.5rem;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        .stat-label {
+            font-size: 0.9rem;
+            opacity: 0.9;
+        }
+        .loading {
+            text-align: center;
+            padding: 20px;
+            color: #636e72;
+        }
+        .loading::after {
+            content: '...';
+            animation: dots 1.5s infinite;
+        }
+        @keyframes dots {
+            0%, 20% { content: '.'; }
+            40% { content: '..'; }
+            60%, 100% { content: '...'; }
+        }
+        .time {
+            font-size: 0.85rem;
+            color: #636e72;
+            float: left;
+        }
     </style>
 </head>
 <body>
-    <h1>🧪 تست IndexedDB Wrapper</h1>
-    <div id="results"></div>
-    <button onclick="runTests()">اجرای تست‌ها</button>
-    <button onclick="clearDB()">پاک‌سازی دیتابیس</button>
+    <div class="container">
+        <h1>🧪 تست IndexedDB Wrapper</h1>
+        <div class="subtitle">بررسی هسته ذخیره‌سازی پروژه Farsinglish</div>
+        
+        <div class="stats">
+            <div class="stat-item">
+                <div class="stat-value" id="totalTests">0</div>
+                <div class="stat-label">کل تست‌ها</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value" id="passedTests" style="color:#55efc4">0</div>
+                <div class="stat-label">موفق</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value" id="failedTests" style="color:#ff7675">0</div>
+                <div class="stat-label">ناموفق</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value" id="duration">0s</div>
+                <div class="stat-label">زمان</div>
+            </div>
+        </div>
+        
+        <div class="controls">
+            <button id="runTests" onclick="runTests()">
+                <span>▶</span> اجرای کامل تست‌ها
+            </button>
+            <button id="clearDB" onclick="clearDB()">
+                <span>🗑️</span> پاک‌سازی دیتابیس
+            </button>
+        </div>
+        
+        <div id="results">
+            <div class="loading" id="loadingStatus">
+                در حال بارگذاری فایل‌ها...
+            </div>
+        </div>
+    </div>
 
     <script>
-        // بارگذاری فایل اصلی
-        const script = document.createElement('script');
-        script.src = 'core/db/indexeddb-wrapper.js';
-        document.head.appendChild(script);
-
-        script.onload = () => {
-            console.log('✅ فایل اصلی بارگذاری شد');
-            document.getElementById('results').innerHTML += 
-                '<div class="test success">فایل indexeddb-wrapper.js بارگذاری شد</div>';
+        // ==================== تنظیمات ====================
+        const CONFIG = {
+            DB_NAME: 'farsinglish_test_db',
+            DB_VERSION: 1,
+            STORES: {
+                users: { keyPath: 'id' },
+                lessons: { keyPath: 'lessonId' },
+                progress: { keyPath: 'userId' }
+            }
         };
-
-        async function runTests() {
-            const results = document.getElementById('results');
-            results.innerHTML = '';
+        
+        // ==================== متغیرهای جهانی ====================
+        let testResults = {
+            total: 0,
+            passed: 0,
+            failed: 0,
+            startTime: null
+        };
+        
+        // ==================== ابزارهای کمکی ====================
+        function updateStats() {
+            document.getElementById('totalTests').textContent = testResults.total;
+            document.getElementById('passedTests').textContent = testResults.passed;
+            document.getElementById('failedTests').textContent = testResults.failed;
             
-            try {
-                // تست ۱: ایجاد instance
-                const db1 = IndexedDBWrapper.getInstance();
-                const db2 = IndexedDBWrapper.getInstance();
-                const isSingleton = db1 === db2;
-                addTest('Singleton Pattern', isSingleton, 
-                    'هر دو instance باید یکسان باشند');
-                
-                // تست ۲: اتصال به دیتابیس
-                await db1.connect('testDB', 1, {
-                    'users': { keyPath: 'id' },
-                    'lessons': { keyPath: 'lessonId' }
-                });
-                addTest('اتصال به دیتابیس', db1.isConnected(), 
-                    'اتصال باید موفقیت‌آمیز باشد');
-                
-                // تست ۳: عملیات CRUD
-                const testUser = { id: 1, name: 'تست کاربر' };
-                await db1.add('users', testUser);
-                const retrieved = await db1.get('users', 1);
-                addTest('افزودن و بازیابی', retrieved?.name === 'تست کاربر', 
-                    `بازیابی شده: ${retrieved?.name}`);
-                
-                // تست ۴: آپدیت
-                await db1.update('users', { ...testUser, name: 'کاربر ویرایش شده' });
-                const updated = await db1.get('users', 1);
-                addTest('به‌روزرسانی', updated?.name === 'کاربر ویرایش شده',
-                    `مقدار جدید: ${updated?.name}`);
-                
-                // تست ۵: حذف
-                await db1.delete('users', 1);
-                const deleted = await db1.get('users', 1);
-                addTest('حذف رکورد', deleted === undefined, 
-                    'رکورد باید حذف شده باشد');
-                
-                // تست ۶: خطاگیری
-                try {
-                    await db1.get('table_not_exist', 1);
-                    addTest('مدیریت خطا', false, 'باید خطا می‌داد');
-                } catch (e) {
-                    addTest('مدیریت خطا', true, `خطا گرفته شد: ${e.message}`);
-                }
-                
-            } catch (error) {
-                addTest('خطای کلی', false, error.message);
+            if (testResults.startTime) {
+                const duration = (Date.now() - testResults.startTime) / 1000;
+                document.getElementById('duration').textContent = duration.toFixed(1) + 's';
             }
         }
         
-        function addTest(name, passed, details) {
-            const div = document.createElement('div');
-            div.className = `test ${passed ? '' : 'fail'}`;
-            div.innerHTML = `<strong>${passed ? '✅' : '❌'} ${name}</strong><br>
-                            <small>${details}</small>`;
-            document.getElementById('results').appendChild(div);
+        function addTestResult(name, passed, details = '') {
+            testResults.total++;
+            if (passed) testResults.passed++; else testResults.failed++;
+            
+            const resultDiv = document.createElement('div');
+            resultDiv.className = `test ${passed ? '' : 'fail'}`;
+            
+            const time = new Date().toLocaleTimeString('fa-IR', { 
+                hour: '2-digit', 
+                minute: '2-digit',
+                second: '2-digit'
+            });
+            
+            resultDiv.innerHTML = `
+                <div>
+                    <strong>${passed ? '✅' : '❌'} ${name}</strong>
+                    <span class="time">${time}</span>
+                </div>
+                ${details ? `<div class="details">${details}</div>` : ''}
+            `;
+            
+            document.getElementById('results').appendChild(resultDiv);
+            updateStats();
+            return resultDiv;
+        }
+        
+        function showMessage(type, text) {
+            const msg = document.createElement('div');
+            msg.className = `test ${type}`;
+            msg.innerHTML = `<strong>${text}</strong>`;
+            document.getElementById('results').appendChild(msg);
+        }
+        
+        // ==================== بارگذاری فایل اصلی ====================
+        const scriptsToLoad = [
+            '../core/db/indexeddb-wrapper.js'
+        ];
+        
+        let loadedScripts = 0;
+        
+        function loadScript(src) {
+            return new Promise((resolve, reject) => {
+                const script = document.createElement('script');
+                script.src = src;
+                script.onload = () => {
+                    console.log(`✅ بارگذاری شد: ${src}`);
+                    loadedScripts++;
+                    resolve();
+                };
+                script.onerror = () => {
+                    console.error(`❌ خطا در بارگذاری: ${src}`);
+                    reject(new Error(`خطا در بارگذاری ${src}`));
+                };
+                document.head.appendChild(script);
+            });
+        }
+        
+        async function loadAllScripts() {
+            try {
+                for (const src of scriptsToLoad) {
+                    await loadScript(src);
+                }
+                document.getElementById('loadingStatus').remove();
+                showMessage('success', '✅ تمام فایل‌ها با موفقیت بارگذاری شدند');
+            } catch (error) {
+                document.getElementById('loadingStatus').remove();
+                showMessage('error', `❌ خطا در بارگذاری: ${error.message}`);
+                throw error;
+            }
+        }
+        
+        // ==================== تست‌ها ====================
+        async function runTests() {
+            // پاک‌سازی نتایج قبلی
+            document.getElementById('results').innerHTML = '';
+            testResults = { total: 0, passed: 0, failed: 0, startTime: Date.now() };
+            updateStats();
+            
+            try {
+                // تست ۱: Singleton Pattern
+                const db1 = IndexedDBWrapper.getInstance();
+                const db2 = IndexedDBWrapper.getInstance();
+                const isSingleton = db1 === db2;
+                addTestResult(
+                    'الگوی Singleton',
+                    isSingleton,
+                    `db1 === db2: ${isSingleton}`
+                );
+                
+                // تست ۲: اتصال به دیتابیس
+                try {
+                    await db1.connect(CONFIG.DB_NAME, CONFIG.DB_VERSION, CONFIG.STORES);
+                    addTestResult(
+                        'اتصال به دیتابیس',
+                        true,
+                        `دیتابیس: ${CONFIG.DB_NAME} (ورژن ${CONFIG.DB_VERSION})`
+                    );
+                } catch (error) {
+                    addTestResult(
+                        'اتصال به دیتابیس',
+                        false,
+                        `خطا: ${error.message}`
+                    );
+                    throw error;
+                }
+                
+                // تست ۳: افزودن داده
+                const testUser = { 
+                    id: Date.now(), 
+                    name: 'کاربر تست',
+                    email: 'test@farsinglish.com',
+                    level: 1,
+                    xp: 0,
+                    createdAt: new Date().toISOString()
+                };
+                
+                await db1.add('users', testUser);
+                const retrievedUser = await db1.get('users', testUser.id);
+                const addPassed = retrievedUser && retrievedUser.name === testUser.name;
+                
+                addTestResult(
+                    'افزودن داده (Add)',
+                    addPassed,
+                    `شناسه: ${testUser.id}<br>نام: ${retrievedUser?.name || 'یافت نشد'}`
+                );
+                
+                // تست ۴: به‌روزرسانی داده
+                if (addPassed) {
+                    const updatedUser = { ...retrievedUser, level: 2, xp: 100 };
+                    await db1.update('users', updatedUser);
+                    const afterUpdate = await db1.get('users', testUser.id);
+                    const updatePassed = afterUpdate && afterUpdate.level === 2;
+                    
+                    addTestResult(
+                        'به‌روزرسانی داده (Update)',
+                        updatePassed,
+                        `سطح: ${afterUpdate?.level || 'نامشخص'} | XP: ${afterUpdate?.xp || 0}`
+                    );
+                }
+                
+                // تست ۵: حذف داده
+                await db1.delete('users', testUser.id);
+                const afterDelete = await db1.get('users', testUser.id);
+                const deletePassed = afterDelete === undefined;
+                
+                addTestResult(
+                    'حذف داده (Delete)',
+                    deletePassed,
+                    deletePassed ? 'داده با موفقیت حذف شد' : 'داده هنوز موجود است'
+                );
+                
+                // تست ۶: عملیات Batch (چندتایی)
+                const testLessons = [
+                    { lessonId: 'lesson_1', title: 'درس اول', difficulty: 'easy', order: 1 },
+                    { lessonId: 'lesson_2', title: 'درس دوم', difficulty: 'medium', order: 2 },
+                    { lessonId: 'lesson_3', title: 'درس سوم', difficulty: 'hard', order: 3 }
+                ];
+                
+                await Promise.all(
+                    testLessons.map(lesson => db1.add('lessons', lesson))
+                );
+                
+                const allLessons = await db1.getAll('lessons');
+                const batchPassed = allLessons.length === 3;
+                
+                addTestResult(
+                    'عملیات Batch (چندتایی)',
+                    batchPassed,
+                    `${allLessons.length} درس ذخیره شد`
+                );
+                
+                // تست ۷: پاک‌سازی جدول
+                await db1.clearStore('lessons');
+                const afterClear = await db1.getAll('lessons');
+                const clearPassed = afterClear.length === 0;
+                
+                addTestResult(
+                    'پاک‌سازی جدول (Clear Store)',
+                    clearPassed,
+                    clearPassed ? 'جدول خالی شد' : `هنوز ${afterClear.length} رکورد موجود است`
+                );
+                
+                // تست ۸: مدیریت خطا (جدول ناموجود)
+                try {
+                    await db1.get('non_existent_table', 1);
+                    addTestResult(
+                        'مدیریت خطا',
+                        false,
+                        'باید خطا می‌داد اما نداد!'
+                    );
+                } catch (error) {
+                    addTestResult(
+                        'مدیریت خطا',
+                        true,
+                        `خطا به درستی گرفته شد: ${error.message}`
+                    );
+                }
+                
+                // تست ۹: وضعیت اتصال
+                const isConnected = db1.isConnected();
+                addTestResult(
+                    'وضعیت اتصال',
+                    isConnected,
+                    isConnected ? 'دیتابیس متصل است' : 'دیتابیس قطع است'
+                );
+                
+                // جمع‌بندی
+                const successRate = Math.round((testResults.passed / testResults.total) * 100);
+                showMessage(
+                    successRate === 100 ? 'success' : successRate > 70 ? 'warning' : 'error',
+                    `🎯 جمع‌بندی: ${testResults.passed} از ${testResults.total} تست موفق (${successRate}%)`
+                );
+                
+            } catch (error) {
+                addTestResult(
+                    'خطای کلی تست‌ها',
+                    false,
+                    `خطا: ${error.message}<br><small>${error.stack}</small>`
+                );
+                showMessage('error', '❌ تست‌ها با خطا متوقف شدند');
+            }
         }
         
         async function clearDB() {
-            const db = IndexedDBWrapper.getInstance();
-            await db.clearDatabase();
-            document.getElementById('results').innerHTML += 
-                '<div class="test">🗑️ دیتابیس پاک شد</div>';
+            try {
+                const db = IndexedDBWrapper.getInstance();
+                if (db.isConnected()) {
+                    await db.clearDatabase();
+                    showMessage('success', '✅ دیتابیس با موفقیت پاک‌سازی شد');
+                } else {
+                    showMessage('warning', '⚠️ ابتدا دیتابیس را متصل کنید');
+                }
+            } catch (error) {
+                showMessage('error', `❌ خطا در پاک‌سازی: ${error.message}`);
+            }
         }
+        
+        // ==================== شروع خودکار ====================
+        window.addEventListener('DOMContentLoaded', () => {
+            // بارگذاری فایل‌ها به صورت خودکار
+            loadAllScripts().catch(() => {
+                // اگر فایل اصلی وجود نداشت، پیام مناسب نمایش بده
+                setTimeout(() => {
+                    if (loadedScripts === 0) {
+                        document.getElementById('loadingStatus').innerHTML = 
+                            '⚠️ فایل اصلی یافت نشد. مطمئن شوید مسیر فایل‌ها درست است:<br>' +
+                            '<code>../core/db/indexeddb-wrapper.js</code>';
+                    }
+                }, 3000);
+            });
+        });
     </script>
 </body>
 </html>
