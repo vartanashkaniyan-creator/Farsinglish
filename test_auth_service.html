@@ -1,0 +1,1729 @@
+<!DOCTYPE html>
+<html lang="fa">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>تست Auth Service - Farsinglish</title>
+    <style>
+        :root {
+            --primary: #4f46e5;
+            --secondary: #7c3aed;
+            --success: #10b981;
+            --danger: #ef4444;
+            --warning: #f59e0b;
+            --info: #3b82f6;
+            --light: #f8fafc;
+            --dark: #1e293b;
+            --gray: #64748b;
+            --border: #e2e8f0;
+        }
+        
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            font-family: 'Vazirmatn', system-ui, -apple-system, sans-serif;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            min-height: 100vh;
+            padding: 20px;
+            color: var(--dark);
+            line-height: 1.6;
+        }
+        
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid var(--border);
+        }
+        
+        h1 {
+            color: var(--dark);
+            font-size: 28px;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 15px;
+        }
+        
+        .subtitle {
+            color: var(--gray);
+            font-size: 16px;
+            margin-bottom: 15px;
+        }
+        
+        .badges {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-top: 15px;
+        }
+        
+        .badge {
+            padding: 6px 15px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: bold;
+        }
+        
+        .badge-jwt { background: #dbeafe; color: #1e40af; }
+        .badge-token { background: #f0f9ff; color: #0c4a6e; }
+        .badge-crypto { background: #fef3c7; color: #92400e; }
+        .badge-validation { background: #dcfce7; color: #166534; }
+        
+        .test-section {
+            margin: 25px 0;
+        }
+        
+        .test-category {
+            background: var(--light);
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+            border: 1px solid var(--border);
+        }
+        
+        .category-title {
+            font-size: 18px;
+            font-weight: bold;
+            color: var(--dark);
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid var(--border);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .test-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 15px;
+        }
+        
+        @media (max-width: 768px) {
+            .test-list {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        .test-item {
+            background: white;
+            border-radius: 10px;
+            padding: 15px;
+            border: 1px solid var(--border);
+            transition: all 0.3s;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .test-item:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+        }
+        
+        .test-item::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 4px;
+            height: 100%;
+        }
+        
+        .test-item.passing::before { background: var(--success); }
+        .test-item.failing::before { background: var(--danger); }
+        .test-item.pending::before { background: var(--warning); }
+        
+        .test-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        
+        .test-name {
+            font-weight: 600;
+            color: var(--dark);
+            flex-grow: 1;
+        }
+        
+        .test-status {
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: bold;
+            margin-right: 10px;
+        }
+        
+        .status-pass { background: var(--success); color: white; }
+        .status-fail { background: var(--danger); color: white; }
+        .status-pending { background: var(--warning); color: white; }
+        
+        .test-description {
+            font-size: 13px;
+            color: var(--gray);
+            margin-bottom: 10px;
+            line-height: 1.5;
+        }
+        
+        .test-details {
+            background: var(--light);
+            border-radius: 8px;
+            padding: 10px;
+            margin-top: 10px;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            color: var(--dark);
+            display: none;
+            white-space: pre-wrap;
+            animation: slideDown 0.3s;
+        }
+        
+        @keyframes slideDown {
+            from { opacity: 0; max-height: 0; }
+            to { opacity: 1; max-height: 500px; }
+        }
+        
+        .test-item.expanded .test-details {
+            display: block;
+        }
+        
+        .toggle-details {
+            background: none;
+            border: none;
+            color: var(--info);
+            font-size: 12px;
+            cursor: pointer;
+            padding: 4px 8px;
+            border-radius: 4px;
+            margin-top: 8px;
+            transition: all 0.2s;
+        }
+        
+        .toggle-details:hover {
+            background: var(--border);
+        }
+        
+        .controls {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin: 30px 0;
+            flex-wrap: wrap;
+        }
+        
+        .btn {
+            padding: 12px 28px;
+            border-radius: 10px;
+            border: none;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            min-width: 180px;
+        }
+        
+        .btn-primary { 
+            background: var(--primary); 
+            color: white; 
+        }
+        
+        .btn-success { 
+            background: var(--success); 
+            color: white; 
+        }
+        
+        .btn-warning { 
+            background: var(--warning); 
+            color: white; 
+        }
+        
+        .btn-danger { 
+            background: var(--danger); 
+            color: white; 
+        }
+        
+        .btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 8px 20px rgba(0,0,0,0.2);
+        }
+        
+        .btn:active {
+            transform: scale(0.98);
+        }
+        
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 15px;
+            margin: 30px 0;
+        }
+        
+        @media (max-width: 768px) {
+            .stats {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+        
+        .stat-card {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            text-align: center;
+            border: 1px solid var(--border);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+        }
+        
+        .stat-value {
+            font-size: 32px;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        
+        .stat-label {
+            font-size: 14px;
+            color: var(--gray);
+        }
+        
+        .stat-passed .stat-value { color: var(--success); }
+        .stat-failed .stat-value { color: var(--danger); }
+        .stat-total .stat-value { color: var(--primary); }
+        .stat-duration .stat-value { color: var(--warning); }
+        
+        .progress-container {
+            margin: 25px 0;
+        }
+        
+        .progress-bar {
+            height: 8px;
+            background: var(--border);
+            border-radius: 4px;
+            overflow: hidden;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--success), var(--info));
+            border-radius: 4px;
+            transition: width 0.5s;
+            width: 0%;
+        }
+        
+        .progress-text {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 8px;
+            font-size: 14px;
+            color: var(--gray);
+        }
+        
+        .mock-api {
+            background: #1e293b;
+            color: #e2e8f0;
+            border-radius: 12px;
+            padding: 20px;
+            margin: 25px 0;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+        }
+        
+        .mock-title {
+            color: #94a3b8;
+            margin-bottom: 10px;
+            font-weight: bold;
+        }
+        
+        .mock-endpoint {
+            color: #60a5fa;
+            margin: 5px 0;
+        }
+        
+        .mock-response {
+            color: #34d399;
+            margin: 5px 0;
+        }
+        
+        .summary {
+            background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+            border-radius: 12px;
+            padding: 25px;
+            margin-top: 30px;
+            border-left: 4px solid var(--info);
+        }
+        
+        .summary-title {
+            font-size: 18px;
+            font-weight: bold;
+            color: var(--dark);
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .summary-content {
+            color: var(--dark);
+            line-height: 1.8;
+        }
+        
+        .footer {
+            text-align: center;
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid var(--border);
+            color: var(--gray);
+            font-size: 14px;
+        }
+        
+        .console {
+            background: #0f172a;
+            color: #cbd5e0;
+            border-radius: 12px;
+            padding: 15px;
+            margin-top: 20px;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+        
+        .console-line {
+            padding: 5px 0;
+            border-bottom: 1px solid #334155;
+            font-family: 'Vazirmatn', monospace;
+        }
+        
+        .console-timestamp {
+            color: #64748b;
+            font-size: 11px;
+            margin-left: 10px;
+        }
+        
+        .console-success { color: #34d399; }
+        .console-error { color: #f87171; }
+        .console-warning { color: #fbbf24; }
+        .console-info { color: #60a5fa; }
+    </style>
+    <link href="https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn@v33.003/Vazirmatn-font-face.css" rel="stylesheet">
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>
+                <span>🔐</span>
+                تست Auth Service
+            </h1>
+            <p class="subtitle">سرویس احراز هویت با JWT، Hash، و Validation پیشرفته</p>
+            
+            <div class="badges">
+                <span class="badge badge-jwt">JWT Token</span>
+                <span class="badge badge-token">Refresh Token</span>
+                <span class="badge badge-crypto">Password Hash</span>
+                <span class="badge badge-validation">Input Validation</span>
+            </div>
+        </div>
+
+        <div class="stats">
+            <div class="stat-card stat-total">
+                <div class="stat-value" id="totalTests">18</div>
+                <div class="stat-label">کل تست‌ها</div>
+            </div>
+            <div class="stat-card stat-passed">
+                <div class="stat-value" id="passedTests">0</div>
+                <div class="stat-label">موفق</div>
+            </div>
+            <div class="stat-card stat-failed">
+                <div class="stat-value" id="failedTests">0</div>
+                <div class="stat-label">ناموفق</div>
+            </div>
+            <div class="stat-card stat-duration">
+                <div class="stat-value" id="duration">0.00</div>
+                <div class="stat-label">ثانیه</div>
+            </div>
+        </div>
+
+        <div class="progress-container">
+            <div class="progress-bar">
+                <div class="progress-fill" id="progressFill"></div>
+            </div>
+            <div class="progress-text">
+                <span>پیشرفت تست‌ها</span>
+                <span id="progressPercent">0%</span>
+            </div>
+        </div>
+
+        <div class="controls">
+            <button class="btn btn-primary" onclick="runAllTests()">
+                <span>🚀</span> اجرای همه تست‌ها
+            </button>
+            <button class="btn btn-success" onclick="runCategoryTests('validation')">
+                <span>✅</span> تست‌های Validation
+            </button>
+            <button class="btn btn-warning" onclick="runCategoryTests('security')">
+                <span>🔒</span> تست‌های امنیتی
+            </button>
+            <button class="btn btn-danger" onclick="resetTests()">
+                <span>🔄</span> بازنشانی
+            </button>
+        </div>
+
+        <div class="mock-api">
+            <div class="mock-title">🎭 Mock API Endpoints:</div>
+            <div class="mock-endpoint">POST /api/auth/login → { token, user }</div>
+            <div class="mock-endpoint">POST /api/auth/register → { success, userId }</div>
+            <div class="mock-endpoint">POST /api/auth/refresh → { newToken }</div>
+            <div class="mock-response">✅ همه درخواست‌ها به صورت Mock پاسخ داده می‌شوند</div>
+        </div>
+
+        <div id="testResults">
+            <!-- تست‌ها اینجا نمایش داده می‌شوند -->
+        </div>
+
+        <div class="console">
+            <div id="consoleOutput">
+                <div class="console-line console-info">
+                    سیستم تست Auth Service آماده است 
+                    <span class="console-timestamp">[آماده]</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="summary">
+            <div class="summary-title">
+                <span>📋 ویژگی‌های تست شده</span>
+            </div>
+            <div class="summary-content">
+                1. <strong>اعتبارسنجی ورودی‌ها:</strong> ایمیل، رمز عبور، نام کاربری<br>
+                2. <strong>امنیت:</strong> Hash کردن رمز عبور، JWT签名، Refresh Token<br>
+                3. <strong>مدیریت Token:</strong> ذخیره‌سازی، اعتبارسنجی، تمدید<br>
+                4. <strong>خطاها:</strong> پاسخ‌های مناسب برای ورودی نامعتبر<br>
+                5. <strong>پایداری:</strong> عملکرد در حالت Offline و Online
+            </div>
+        </div>
+
+        <div class="footer">
+            <p>Farsinglish Project - Authentication Test Suite</p>
+            <p>⏱️ آخرین اجرا: <span id="lastRunTime">هنوز اجرا نشده</span></p>
+        </div>
+    </div>
+
+    <script>
+        // ==================== Mock Storage (شبیه‌سازی localStorage و IndexedDB) ====================
+        class MockStorage {
+            constructor() {
+                this.data = new Map();
+                this.listeners = new Map();
+            }
+
+            setItem(key, value) {
+                const oldValue = this.data.get(key);
+                this.data.set(key, value);
+                this._notifyListeners(key, value, oldValue);
+                return Promise.resolve();
+            }
+
+            getItem(key) {
+                return Promise.resolve(this.data.get(key) || null);
+            }
+
+            removeItem(key) {
+                const oldValue = this.data.get(key);
+                this.data.delete(key);
+                this._notifyListeners(key, null, oldValue);
+                return Promise.resolve();
+            }
+
+            clear() {
+                this.data.clear();
+                return Promise.resolve();
+            }
+
+            addListener(key, callback) {
+                if (!this.listeners.has(key)) {
+                    this.listeners.set(key, new Set());
+                }
+                this.listeners.get(key).add(callback);
+                return () => this.listeners.get(key).delete(callback);
+            }
+
+            _notifyListeners(key, newValue, oldValue) {
+                const listeners = this.listeners.get(key);
+                if (listeners) {
+                    listeners.forEach(callback => callback(newValue, oldValue));
+                }
+            }
+        }
+
+        // ==================== Auth Service (نسخه کامل) ====================
+        class AuthService {
+            constructor(storage = new MockStorage()) {
+                this.storage = storage;
+                this.currentUser = null;
+                this.isOnline = true;
+                this.apiBaseUrl = 'https://api.farsinglish.com';
+                this.tokenRefreshInterval = null;
+                
+                // رویدادها
+                this.events = {
+                    LOGIN: 'auth:login',
+                    LOGOUT: 'auth:logout',
+                    TOKEN_EXPIRED: 'auth:token-expired',
+                    ERROR: 'auth:error'
+                };
+                
+                this.listeners = new Map();
+            }
+
+            // ==================== Utility Functions ====================
+            _validateEmail(email) {
+                if (!email || typeof email !== 'string') return false;
+                const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+                return emailRegex.test(email.trim());
+            }
+
+            _validatePassword(password) {
+                if (!password || typeof password !== 'string') return false;
+                if (password.length < 8) return false;
+                if (!/[A-Z]/.test(password)) return false;
+                if (!/[a-z]/.test(password)) return false;
+                if (!/[0-9]/.test(password)) return false;
+                return true;
+            }
+
+            _validateUsername(username) {
+                if (!username || typeof username !== 'string') return false;
+                if (username.length < 3 || username.length > 30) return false;
+                const usernameRegex = /^[a-zA-Z0-9_.-]+$/;
+                return usernameRegex.test(username);
+            }
+
+            async _hashPassword(password) {
+                // شبیه‌سازی Hash کردن (در واقعیت از bcrypt استفاده می‌شود)
+                const encoder = new TextEncoder();
+                const data = encoder.encode(password + 'farsinglish-salt');
+                const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+                const hashArray = Array.from(new Uint8Array(hashBuffer));
+                return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+            }
+
+            _generateToken(userId, expiresInHours = 24) {
+                // شبیه‌سازی JWT (در واقعیت از کتابخانه‌ای مثل jsonwebtoken استفاده می‌شود)
+                const header = btoa(JSON.stringify({ alg: 'HS256', typ: 'JWT' }));
+                const payload = btoa(JSON.stringify({
+                    sub: userId,
+                    iat: Math.floor(Date.now() / 1000),
+                    exp: Math.floor(Date.now() / 1000) + (expiresInHours * 3600),
+                    role: 'user'
+                }));
+                const signature = 'mock-signature-' + Date.now();
+                return `${header}.${payload}.${signature}`;
+            }
+
+            _parseToken(token) {
+                try {
+                    const parts = token.split('.');
+                    if (parts.length !== 3) return null;
+                    const payload = JSON.parse(atob(parts[1]));
+                    return payload;
+                } catch (error) {
+                    return null;
+                }
+            }
+
+            _isTokenValid(token) {
+                const payload = this._parseToken(token);
+                if (!payload) return false;
+                const now = Math.floor(Date.now() / 1000);
+                return payload.exp > now;
+            }
+
+            // ==================== API Methods ====================
+            async _mockApiCall(endpoint, method = 'GET', data = null) {
+                if (!this.isOnline) {
+                    throw new Error('اتصال اینترنت برقرار نیست');
+                }
+
+                // شبیه‌سازی تاخیر شبکه
+                await new Promise(resolve => setTimeout(resolve, 100 + Math.random() * 200));
+
+                // Mock responses
+                switch (endpoint) {
+                    case '/auth/login':
+                        if (data?.email === 'test@example.com' && data?.password === 'Password123!') {
+                            return {
+                                success: true,
+                                token: this._generateToken('user-123'),
+                                refreshToken: 'refresh-' + Date.now(),
+                                user: {
+                                    id: 'user-123',
+                                    email: data.email,
+                                    name: 'کاربر تست',
+                                    level: 1,
+                                    xp: 0
+                                }
+                            };
+                        }
+                        throw new Error('ایمیل یا رمز عبور نادرست است');
+
+                    case '/auth/register':
+                        if (!this._validateEmail(data?.email)) {
+                            throw new Error('ایمیل نامعتبر است');
+                        }
+                        if (!this._validatePassword(data?.password)) {
+                            throw new Error('رمز عبور باید حداقل ۸ کاراکتر و شامل حروف بزرگ، کوچک و اعداد باشد');
+                        }
+                        return {
+                            success: true,
+                            userId: 'user-' + Date.now(),
+                            message: 'ثبت‌نام موفقیت‌آمیز بود'
+                        };
+
+                    case '/auth/refresh':
+                        if (data?.refreshToken?.startsWith('refresh-')) {
+                            return {
+                                success: true,
+                                token: this._generateToken('user-123', 1) // 1 ساعت اعتبار
+                            };
+                        }
+                        throw new Error('Refresh token نامعتبر است');
+
+                    default:
+                        throw new Error('Endpoint یافت نشد');
+                }
+            }
+
+            // ==================== Public Methods ====================
+            async register(userData) {
+                try {
+                    // اعتبارسنجی
+                    if (!this._validateEmail(userData.email)) {
+                        throw new Error('ایمیل نامعتبر است');
+                    }
+                    if (!this._validatePassword(userData.password)) {
+                        throw new Error('رمز عبور ضعیف است');
+                    }
+                    if (!this._validateUsername(userData.username)) {
+                        throw new Error('نام کاربری نامعتبر است');
+                    }
+
+                    // Hash کردن رمز عبور
+                    const hashedPassword = await this._hashPassword(userData.password);
+
+                    // ارسال به API
+                    const response = await this._mockApiCall('/auth/register', 'POST', {
+                        ...userData,
+                        password: hashedPassword
+                    });
+
+                    this._emit(this.events.LOGIN, { user: userData });
+                    return response;
+
+                } catch (error) {
+                    this._emit(this.events.ERROR, { error: error.message });
+                    throw error;
+                }
+            }
+
+            async login(email, password) {
+                try {
+                    // اعتبارسنجی اولیه
+                    if (!this._validateEmail(email)) {
+                        throw new Error('فرمت ایمیل نامعتبر است');
+                    }
+                    if (!password || password.length < 1) {
+                        throw new Error('رمز عبور الزامی است');
+                    }
+
+                    // Hash کردن برای ارسال
+                    const hashedPassword = await this._hashPassword(password);
+
+                    // درخواست به API
+                    const response = await this._mockApiCall('/auth/login', 'POST', {
+                        email,
+                        password: hashedPassword
+                    });
+
+                    // ذخیره‌سازی Token
+                    await this.storage.setItem('auth_token', response.token);
+                    await this.storage.setItem('refresh_token', response.refreshToken);
+                    await this.storage.setItem('user_data', JSON.stringify(response.user));
+
+                    this.currentUser = response.user;
+                    this._startTokenRefresh();
+                    this._emit(this.events.LOGIN, { user: response.user });
+
+                    return response;
+
+                } catch (error) {
+                    this._emit(this.events.ERROR, { error: error.message });
+                    throw error;
+                }
+            }
+
+            async logout() {
+                try {
+                    // حذف Token‌ها
+                    await this.storage.removeItem('auth_token');
+                    await this.storage.removeItem('refresh_token');
+                    await this.storage.removeItem('user_data');
+
+                    // متوقف کردن تمدید خودکار
+                    this._stopTokenRefresh();
+
+                    this.currentUser = null;
+                    this._emit(this.events.LOGOUT);
+
+                    return { success: true };
+
+                } catch (error) {
+                    this._emit(this.events.ERROR, { error: error.message });
+                    throw error;
+                }
+            }
+
+            async refreshToken() {
+                try {
+                    const refreshToken = await this.storage.getItem('refresh_token');
+                    if (!refreshToken) {
+                        throw new Error('Refresh token یافت نشد');
+                    }
+
+                    const response = await this._mockApiCall('/auth/refresh', 'POST', {
+                        refreshToken
+                    });
+
+                    await this.storage.setItem('auth_token', response.token);
+                    return response;
+
+                } catch (error) {
+                    this._emit(this.events.TOKEN_EXPIRED);
+                    throw error;
+                }
+            }
+
+            async getCurrentUser() {
+                if (this.currentUser) {
+                    return this.currentUser;
+                }
+
+                try {
+                    const userData = await this.storage.getItem('user_data');
+                    const token = await this.storage.getItem('auth_token');
+
+                    if (userData && token && this._isTokenValid(token)) {
+                        this.currentUser = JSON.parse(userData);
+                        return this.currentUser;
+                    }
+
+                    // اگر Token منقضی شده
+                    if (token && !this._isTokenValid(token)) {
+                        await this.refreshToken();
+                        return await this.getCurrentUser();
+                    }
+
+                    return null;
+
+                } catch (error) {
+                    return null;
+                }
+            }
+
+            isAuthenticated() {
+                return this.currentUser !== null;
+            }
+
+            // ==================== Event Management ====================
+            on(event, callback) {
+                if (!this.listeners.has(event)) {
+                    this.listeners.set(event, new Set());
+                }
+                this.listeners.get(event).add(callback);
+                return () => this.listeners.get(event).delete(callback);
+            }
+
+            _emit(event, data = {}) {
+                const listeners = this.listeners.get(event);
+                if (listeners) {
+                    listeners.forEach(callback => callback(data));
+                }
+            }
+
+            // ==================== Token Refresh ====================
+            _startTokenRefresh() {
+                this._stopTokenRefresh();
+                // تمدید هر 55 دقیقه (5 دقیقه قبل از انقضا)
+                this.tokenRefreshInterval = setInterval(async () => {
+                    try {
+                        await this.refreshToken();
+                    } catch (error) {
+                        console.warn('خطا در تمدید Token:', error);
+                    }
+                }, 55 * 60 * 1000);
+            }
+
+            _stopTokenRefresh() {
+                if (this.tokenRefreshInterval) {
+                    clearInterval(this.tokenRefreshInterval);
+                    this.tokenRefreshInterval = null;
+                }
+            }
+
+            // ==================== Test Helpers ====================
+            setOnlineStatus(online) {
+                this.isOnline = online;
+            }
+
+            clearStorage() {
+                return this.storage.clear();
+            }
+        }
+
+        // ==================== Test Suite ====================
+        const testSuites = {
+            validation: [
+                {
+                    name: 'اعتبارسنجی ایمیل',
+                    description: 'ایمیل‌های معتبر و نامعتبر باید به درستی تشخیص داده شوند',
+                    category: 'validation',
+                    fn: async () => {
+                        const auth = new AuthService();
+                        
+                        const validEmails = [
+                            'test@example.com',
+                            'user.name@domain.co',
+                            'user+tag@example.org'
+                        ];
+                        
+                        const invalidEmails = [
+                            null,
+                            '',
+                            'invalid-email',
+                            '@example.com',
+                            'test@.com',
+                            'test@com.'
+                        ];
+                        
+                        // تست ایمیل‌های معتبر
+                        for (const email of validEmails) {
+                            if (!auth._validateEmail(email)) {
+                                return `ایمیل معتبر شناسایی نشد: ${email}`;
+                            }
+                        }
+                        
+                        // تست ایمیل‌های نامعتبر
+                        for (const email of invalidEmails) {
+                            if (auth._validateEmail(email)) {
+                                return `ایمیل نامعتبر به عنوان معتبر شناسایی شد: ${email}`;
+                            }
+                        }
+                        
+                        return true;
+                    }
+                },
+                {
+                    name: 'اعتبارسنجی رمز عبور',
+                    description: 'رمز عبور باید حداقل ۸ کاراکتر و شامل حروف بزرگ، کوچک و اعداد باشد',
+                    category: 'validation',
+                    fn: async () => {
+                        const auth = new AuthService();
+                        
+                        const validPasswords = [
+                            'Password123',
+                            'SecurePass456',
+                            'Test@Pass789'
+                        ];
+                        
+                        const invalidPasswords = [
+                            null,
+                            '',
+                            'short',
+                            'nocapital123',
+                            'NOLOWERCASE123',
+                            'NoNumbersHere',
+                            '12345678' // فقط اعداد
+                        ];
+                        
+                        for (const pass of validPasswords) {
+                            if (!auth._validatePassword(pass)) {
+                                return `رمز عبور معتبر شناسایی نشد: ${pass}`;
+                            }
+                        }
+                        
+                        for (const pass of invalidPasswords) {
+                            if (auth._validatePassword(pass)) {
+                                return `رمز عبور نامعتبر به عنوان معتبر شناسایی شد: ${pass}`;
+                            }
+                        }
+                        
+                        return true;
+                    }
+                },
+                {
+                    name: 'اعتبارسنجی نام کاربری',
+                    description: 'نام کاربری باید بین ۳ تا ۳۰ کاراکتر و فقط شامل حروف، اعداد و ._- باشد',
+                    category: 'validation',
+                    fn: async () => {
+                        const auth = new AuthService();
+                        
+                        const validUsernames = [
+                            'user123',
+                            'test_user',
+                            'user.name',
+                            'user-name',
+                            'usr'
+                        ];
+                        
+                        const invalidUsernames = [
+                            null,
+                            '',
+                            'ab', // خیلی کوتاه
+                            'a'.repeat(31), // خیلی طولانی
+                            'user@name', // کاراکتر غیرمجاز
+                            'user name', // فاصله
+                            'user#tag'
+                        ];
+                        
+                        for (const username of validUsernames) {
+                            if (!auth._validateUsername(username)) {
+                                return `نام کاربری معتبر شناسایی نشد: ${username}`;
+                            }
+                        }
+                        
+                        for (const username of invalidUsernames) {
+                            if (auth._validateUsername(username)) {
+                                return `نام کاربری نامعتبر به عنوان معتبر شناسایی شد: ${username}`;
+                            }
+                        }
+                        
+                        return true;
+                    }
+                }
+            ],
+            security: [
+                {
+                    name: 'Hash کردن رمز عبور',
+                    description: 'رمز عبور باید به صورت امن Hash شود',
+                    category: 'security',
+                    fn: async () => {
+                        const auth = new AuthService();
+                        
+                        const password = 'MySecurePassword123';
+                        const hash1 = await auth._hashPassword(password);
+                        const hash2 = await auth._hashPassword(password);
+                        
+                        // Hash یکسان برای رمز عبور یکسان
+                        if (hash1 !== hash2) {
+                            return 'Hash یکسان برای رمز عبور یکسان تولید نشد';
+                        }
+                        
+                        // Hash متفاوت برای رمز عبور متفاوت
+                        const hash3 = await auth._hashPassword('DifferentPassword456');
+                        if (hash1 === hash3) {
+                            return 'Hash یکسان برای رمز عبور متفاوت تولید شد';
+                        }
+                        
+                        // طول Hash (SHA-256 باید 64 کاراکتر hex باشد)
+                        if (hash1.length !== 64) {
+                            return `طول Hash نامعتبر: ${hash1.length} (مورد انتظار: 64)`;
+                        }
+                        
+                        // فرمت hex
+                        const hexRegex = /^[0-9a-f]{64}$/;
+                        if (!hexRegex.test(hash1)) {
+                            return 'فرمت Hash نامعتبر است';
+                        }
+                        
+                        return true;
+                    }
+                },
+                {
+                    name: 'JWT Token Generation',
+                    description: 'توکن JWT باید به درستی تولید و parse شود',
+                    category: 'security',
+                    fn: async () => {
+                        const auth = new AuthService();
+                        const userId = 'user-test-123';
+                        
+                        // تولید توکن
+                        const token = auth._generateToken(userId);
+                        
+                        // بررسی ساختار
+                        const parts = token.split('.');
+                        if (parts.length !== 3) {
+                            return `فرمت توکن نامعتبر. بخش‌ها: ${parts.length}`;
+                        }
+                        
+                        // Parse توکن
+                        const payload = auth._parseToken(token);
+                        if (!payload) {
+                            return 'خطا در parse کردن توکن';
+                        }
+                        
+                        // بررسی payload
+                        if (payload.sub !== userId) {
+                            return `شناسه کاربر نادرست. مورد انتظار: ${userId}, دریافت: ${payload.sub}`;
+                        }
+                        
+                        if (!payload.iat || !payload.exp) {
+                            return 'زمان‌های iat یا exp وجود ندارند';
+                        }
+                        
+                        if (payload.role !== 'user') {
+                            return `نقش نادرست. مورد انتظار: user, دریافت: ${payload.role}`;
+                        }
+                        
+                        // اعتبارسنجی توکن
+                        if (!auth._isTokenValid(token)) {
+                            return 'توکن معتبر شناسایی نشد';
+                        }
+                        
+                        // توکن منقضی شده (شبیه‌سازی)
+                        const expiredToken = auth._generateToken(userId, -1); // انقضا در گذشته
+                        if (auth._isTokenValid(expiredToken)) {
+                            return 'توکن منقضی شده به عنوان معتبر شناسایی شد';
+                        }
+                        
+                        // توکن نامعتبر
+                        if (auth._isTokenValid('invalid.token.here')) {
+                            return 'توکن نامعتبر به عنوان معتبر شناسایی شد';
+                        }
+                        
+                        return true;
+                    }
+                },
+                {
+                    name: 'توکن‌های یکسان نباشند',
+                    description: 'هر بار login باید توکن جدید تولید کند',
+                    category: 'security',
+                    fn: async () => {
+                        const auth = new AuthService();
+                        const storage = new MockStorage();
+                        auth.storage = storage;
+                        
+                        // Login اول
+                        await auth.login('test@example.com', 'Password123!');
+                        const token1 = await storage.getItem('auth_token');
+                        
+                        // Logout
+                        await auth.logout();
+                        
+                        // Login دوم
+                        await auth.login('test@example.com', 'Password123!');
+                        const token2 = await storage.getItem('auth_token');
+                        
+                        // توکن‌ها نباید یکسان باشند
+                        if (token1 === token2) {
+                            return 'توکن‌های مختلف login یکسان هستند (امنیت پایین)';
+                        }
+                        
+                        return true;
+                    }
+                }
+            ],
+            authFlow: [
+                {
+                    name: 'ثبت‌نام موفق',
+                    description: 'کاربر جدید باید بتواند ثبت‌نام کند',
+                    category: 'authFlow',
+                    fn: async () => {
+                        const auth = new AuthService();
+                        
+                        const result = await auth.register({
+                            email: 'newuser@example.com',
+                            password: 'SecurePass123',
+                            username: 'newuser'
+                        });
+                        
+                        if (!result.success) {
+                            return `ثبت‌نام ناموفق: ${result.message || 'Unknown error'}`;
+                        }
+                        
+                        if (!result.userId || !result.userId.startsWith('user-')) {
+                            return `شناسه کاربر نامعتبر: ${result.userId}`;
+                        }
+                        
+                        return true;
+                    }
+                },
+                {
+                    name: 'ثبت‌نام با ایمیل نامعتبر',
+                    description: 'ثبت‌نام با ایمیل نامعتبر باید خطا دهد',
+                    category: 'authFlow',
+                    fn: async () => {
+                        const auth = new AuthService();
+                        
+                        try {
+                            await auth.register({
+                                email: 'invalid-email',
+                                password: 'SecurePass123',
+                                username: 'testuser'
+                            });
+                            return 'ثبت‌نام با ایمیل نامعتبر باید خطا دهد';
+                        } catch (error) {
+                            if (!error.message.includes('ایمیل')) {
+                                return `خطای نامنتظره: ${error.message}`;
+                            }
+                            return true;
+                        }
+                    }
+                },
+                {
+                    name: 'لاگین موفق',
+                    description: 'کاربر موجود باید بتواند وارد شود',
+                    category: 'authFlow',
+                    fn: async () => {
+                        const auth = new AuthService();
+                        const storage = new MockStorage();
+                        auth.storage = storage;
+                        
+                        const result = await auth.login('test@example.com', 'Password123!');
+                        
+                        if (!result.success) {
+                            return `لاگین ناموفق: ${result.message || 'Unknown error'}`;
+                        }
+                        
+                        if (!result.token) {
+                            return 'توکن در پاسخ وجود ندارد';
+                        }
+                        
+                        if (!result.user) {
+                            return 'اطلاعات کاربر در پاسخ وجود ندارد';
+                        }
+                        
+                        // بررسی ذخیره‌سازی
+                        const storedToken = await storage.getItem('auth_token');
+                        const storedUser = await storage.getItem('user_data');
+                        
+                        if (storedToken !== result.token) {
+                            return 'توکن در storage ذخیره نشده';
+                        }
+                        
+                        if (!storedUser) {
+                            return 'اطلاعات کاربر در storage ذخیره نشده';
+                        }
+                        
+                        // بررسی وضعیت کاربر
+                        const currentUser = await auth.getCurrentUser();
+                        if (!currentUser || currentUser.email !== 'test@example.com') {
+                            return 'کاربر جاری به درستی تنظیم نشده';
+                        }
+                        
+                        if (!auth.isAuthenticated()) {
+                            return 'وضعیت authenticated به درستی تنظیم نشده';
+                        }
+                        
+                        return true;
+                    }
+                },
+                {
+                    name: 'لاگین با رمز عبور نادرست',
+                    description: 'لاگین با رمز عبور نادرست باید خطا دهد',
+                    category: 'authFlow',
+                    fn: async () => {
+                        const auth = new AuthService();
+                        
+                        try {
+                            await auth.login('test@example.com', 'WrongPassword!');
+                            return 'لاگین با رمز عبور نادرست باید خطا دهد';
+                        } catch (error) {
+                            if (!error.message.includes('ایمیل یا رمز عبور')) {
+                                return `خطای نامنتظره: ${error.message}`;
+                            }
+                            return true;
+                        }
+                    }
+                },
+                {
+                    name: 'لاگاوت کامل',
+                    description: 'لاگاوت باید تمام داده‌ها را پاک کند',
+                    category: 'authFlow',
+                    fn: async () => {
+                        const auth = new AuthService();
+                        const storage = new MockStorage();
+                        auth.storage = storage;
+                        
+                        // اول لاگین کنیم
+                        await auth.login('test@example.com', 'Password123!');
+                        
+                        // بررسی لاگین موفق
+                        if (!auth.isAuthenticated()) {
+                            return 'کاربر باید لاگین باشد';
+                        }
+                        
+                        // لاگاوت
+                        await auth.logout();
+                        
+                        // بررسی پاک شدن داده‌ها
+                        const token = await storage.getItem('auth_token');
+                        const userData = await storage.getItem('user_data');
+                        
+                        if (token !== null) {
+                            return 'توکن بعد از لاگاوت پاک نشده';
+                        }
+                        
+                        if (userData !== null) {
+                            return 'اطلاعات کاربر بعد از لاگاوت پاک نشده';
+                        }
+                        
+                        if (auth.isAuthenticated()) {
+                            return 'وضعیت authenticated بعد از لاگاوت true است';
+                        }
+                        
+                        if (auth.currentUser !== null) {
+                            return 'currentUser بعد از لاگاوت null نیست';
+                        }
+                        
+                        return true;
+                    }
+                },
+                {
+                    name: 'ذخیره‌سازی آفلاین',
+                    description: 'کاربر باید بعد از بسته شدن صفحه هم لاگین بماند',
+                    category: 'authFlow',
+                    fn: async () => {
+                        const storage = new MockStorage();
+                        
+                        // Auth instance اول
+                        const auth1 = new AuthService(storage);
+                        await auth1.login('test@example.com', 'Password123!');
+                        
+                        // شبیه‌سازی بسته شدن صفحه (ایجاد instance جدید)
+                        const auth2 = new AuthService(storage);
+                        
+                        // کاربر باید لاگین باشد
+                        const user = await auth2.getCurrentUser();
+                        if (!user || user.email !== 'test@example.com') {
+                            return 'کاربر بعد از ایجاد instance جدید لاگین نیست';
+                        }
+                        
+                        if (!auth2.isAuthenticated()) {
+                            return 'وضعیت authenticated بعد از ایجاد instance جدید false است';
+                        }
+                        
+                        return true;
+                    }
+                }
+            ],
+            tokenManagement: [
+                {
+                    name: 'تمدید خودکار توکن',
+                    description: 'سیستم باید به صورت خودکار توکن را تمدید کند',
+                    category: 'tokenManagement',
+                    fn: async () => {
+                        const auth = new AuthService();
+                        const storage = new MockStorage();
+                        auth.storage = storage;
+                        
+                        let refreshCalled = false;
+                        
+                        // Mock کردن تابع refreshToken
+                        const originalRefresh = auth.refreshToken.bind(auth);
+                        auth.refreshToken = async () => {
+                            refreshCalled = true;
+                            return { success: true, token: 'new-token-' + Date.now() };
+                        };
+                        
+                        // لاگین
+                        await auth.login('test@example.com', 'Password123!');
+                        
+                        // ذخیره زمان شروع
+                        const startTime = Date.now();
+                        
+                        // صبر برای تمدید (در واقعیت 55 دقیقه، اما برای تست کمتر)
+                        return new Promise((resolve) => {
+                            setTimeout(() => {
+                                if (!refreshCalled) {
+                                    resolve('تمدید خودکار توکن انجام نشد');
+                                } else {
+                                    resolve(true);
+                                }
+                            }, 100);
+                        });
+                    }
+                },
+                {
+                    name: 'دریافت کاربر از storage',
+                    description: 'بازیابی اطلاعات کاربر از storage',
+                    category: 'tokenManagement',
+                    fn: async () => {
+                        const storage = new MockStorage();
+                        
+                        // ذخیره داده‌های کاربر
+                        const mockUser = {
+                            id: 'test-user-123',
+                            email: 'test@example.com',
+                            name: 'کاربر تست'
+                        };
+                        
+                        await storage.setItem('user_data', JSON.stringify(mockUser));
+                        await storage.setItem('auth_token', 'valid.jwt.token');
+                        
+                        // ایجاد Auth instance جدید
+                        const auth = new AuthService(storage);
+                        
+                        // دریافت کاربر
+                        const user = await auth.getCurrentUser();
+                        
+                        if (!user) {
+                            return 'کاربر بازیابی نشد';
+                        }
+                        
+                        if (user.id !== mockUser.id) {
+                            return `شناسه کاربر نادرست. مورد انتظار: ${mockUser.id}, دریافت: ${user.id}`;
+                        }
+                        
+                        if (user.email !== mockUser.email) {
+                            return `ایمیل کاربر نادرست. مورد انتظار: ${mockUser.email}, دریافت: ${user.email}`;
+                        }
+                        
+                        return true;
+                    }
+                },
+                {
+                    name: 'مدیریت حالت آفلاین',
+                    description: 'عملکرد صحیح در حالت آفلاین',
+                    category: 'tokenManagement',
+                    fn: async () => {
+                        const auth = new AuthService();
+                        
+                        // حالت آفلاین
+                        auth.setOnlineStatus(false);
+                        
+                        try {
+                            await auth.login('test@example.com', 'Password123!');
+                            return 'لاگین در حالت آفلاین باید خطا دهد';
+                        } catch (error) {
+                            if (!error.message.includes('اتصال اینترنت')) {
+                                return `خطای نامنتظره در حالت آفلاین: ${error.message}`;
+                            }
+                            
+                            // بازگشت به حالت آنلاین
+                            auth.setOnlineStatus(true);
+                            
+                            // حالا باید کار کند
+                            try {
+                                await auth.login('test@example.com', 'Password123!');
+                                return true;
+                            } catch (loginError) {
+                                return `لاگین در حالت آنلاین ناموفق: ${loginError.message}`;
+                            }
+                        }
+                    }
+                }
+            ],
+            events: [
+                {
+                    name: 'رویدادهای auth',
+                    description: 'رویدادهای login، logout و error باید فراخوانی شوند',
+                    category: 'events',
+                    fn: async () => {
+                        const auth = new AuthService();
+                        const storage = new MockStorage();
+                        auth.storage = storage;
+                        
+                        let loginEventCalled = false;
+                        let logoutEventCalled = false;
+                        let errorEventCalled = false;
+                        
+                        // ثبت listeners
+                        auth.on(auth.events.LOGIN, () => {
+                            loginEventCalled = true;
+                        });
+                        
+                        auth.on(auth.events.LOGOUT, () => {
+                            logoutEventCalled = true;
+                        });
+                        
+                        auth.on(auth.events.ERROR, () => {
+                            errorEventCalled = true;
+                        });
+                        
+                        // تست لاگین موفق
+                        await auth.login('test@example.com', 'Password123!');
+                        
+                        if (!loginEventCalled) {
+                            return 'رویداد LOGIN فراخوانی نشد';
+                        }
+                        
+                        // تست لاگاوت
+                        await auth.logout();
+                        
+                        if (!logoutEventCalled) {
+                            return 'رویداد LOGOUT فراخوانی نشد';
+                        }
+                        
+                        // تست خطا (لاگین با رمز عبور نادرست)
+                        try {
+                            await auth.login('test@example.com', 'WrongPassword');
+                        } catch (error) {
+                            // خطا انتظار می‌رود
+                        }
+                        
+                        if (!errorEventCalled) {
+                            return 'رویداد ERROR فراخوانی نشد';
+                        }
+                        
+                        return true;
+                    }
+                }
+            ]
+        };
+
+        // ==================== Test Runner ====================
+        let allTests = [];
+        Object.values(testSuites).forEach(suite => {
+            allTests = allTests.concat(suite);
+        });
+
+        let testResults = [];
+        let startTime = null;
+
+        function logToConsole(type, message) {
+            const consoleOutput = document.getElementById('consoleOutput');
+            const timestamp = new Date().toLocaleTimeString('fa-IR');
+            const line = document.createElement('div');
+            line.className = `console-line console-${type}`;
+            line.innerHTML = `${message} <span class="console-timestamp">[${timestamp}]</span>`;
+            consoleOutput.appendChild(line);
+            consoleOutput.scrollTop = consoleOutput.scrollHeight;
+        }
+
+        function updateStats() {
+            const passed = testResults.filter(r => r && r.success).length;
+            const failed = testResults.filter(r => r && !r.success).length;
+            const total = allTests.length;
+            
+            document.getElementById('passedTests').textContent = passed;
+            document.getElementById('failedTests').textContent = failed;
+            document.getElementById('totalTests').textContent = total;
+            
+            const progress = total > 0 ? Math.round((passed / total) * 100) : 0;
+            document.getElementById('progressFill').style.width = `${progress}%`;
+            document.getElementById('progressPercent').textContent = `${progress}%`;
+            
+            if (startTime) {
+                const duration = ((Date.now() - startTime) / 1000).toFixed(2);
+                document.getElementById('duration').textContent = duration;
+                document.getElementById('lastRunTime').textContent = `${duration} ثانیه پیش`;
+            }
+        }
+
+        function createTestElement(test, index, result = null) {
+            const testItem = document.createElement('div');
+            testItem.className = `test-item ${result ? (result.success ? 'passing' : 'failing') : 'pending'}`;
+            testItem.id = `test-${index}`;
+            
+            const header = document.createElement('div');
+            header.className = 'test-header';
+            
+            const name = document.createElement('div');
+            name.className = 'test-name';
+            name.textContent = `${index + 1}. ${test.name}`;
+            
+            const status = document.createElement('div');
+            status.className = `test-status ${result ? (result.success ? 'status-pass' : 'status-fail') : 'status-pending'}`;
+            status.textContent = result ? (result.success ? '✅' : '❌') : '⏳';
+            
+            header.appendChild(name);
+            header.appendChild(status);
+            testItem.appendChild(header);
+            
+            const description = document.createElement('div');
+            description.className = 'test-description';
+            description.textContent = test.description;
+            testItem.appendChild(description);
+            
+            if (result) {
+                const toggleBtn = document.createElement('button');
+                toggleBtn.className = 'toggle-details';
+                toggleBtn.textContent = 'نمایش جزئیات';
+                toggleBtn.onclick = () => {
+                    testItem.classList.toggle('expanded');
+                    toggleBtn.textContent = testItem.classList.contains('expanded') ? 'پنهان کردن' : 'نمایش جزئیات';
+                };
+                testItem.appendChild(toggleBtn);
+                
+                const details = document.createElement('div');
+                details.className = 'test-details';
+                
+                let detailsText = `دسته: ${test.category}\n`;
+                detailsText += `زمان اجرا: ${result.duration || 0}ms\n`;
+                
+                if (result.success) {
+                    detailsText += '\n✅ تست با موفقیت گذشت';
+                } else {
+                    detailsText += `\n❌ تست ناموفق\n`;
+                    if (result.error) {
+                        detailsText += `خطا: ${result.error.message}\n`;
+                        if (result.error.stack) {
+                            detailsText += `Stack Trace:\n${result.error.stack}`;
+                        }
+                    } else if (result.message) {
+                        detailsText += `پیام: ${result.message}`;
+                    }
+                }
+                
+                details.textContent = detailsText;
+                testItem.appendChild(details);
+            }
+            
+            return testItem;
+        }
+
+        function renderTestCategories() {
+            const container = document.getElementById('testResults');
+            container.innerHTML = '';
+            
+            Object.entries(testSuites).forEach(([category, tests]) => {
+                const categoryDiv = document.createElement('div');
+                categoryDiv.className = 'test-category';
+                
+                const title = document.createElement('div');
+                title.className = 'category-title';
+                
+                // آیکون بر اساس دسته
+                let icon = '📋';
+                if (category === 'security') icon = '🔒';
+                if (category === 'authFlow') icon = '🔄';
+                if (category === 'tokenManagement') icon = '🔄';
+                if (category === 'events') icon = '🔔';
+                
+                title.innerHTML = `${icon} ${getCategoryName(category)} (${tests.length} تست)`;
+                categoryDiv.appendChild(title);
+                
+                const testList = document.createElement('div');
+                testList.className = 'test-list';
+                
+                tests.forEach((test, index) => {
+                    const globalIndex = allTests.findIndex(t => t === test);
+                    const result = testResults[globalIndex];
+                    testList.appendChild(createTestElement(test, globalIndex, result));
+                });
+                
+                categoryDiv.appendChild(testList);
+                container.appendChild(categoryDiv);
+            });
+        }
+
+        function getCategoryName(category) {
+            const names = {
+                validation: 'اعتبارسنجی',
+                security: 'امنیت',
+                authFlow: 'جریان احراز هویت',
+                tokenManagement: 'مدیریت توکن',
+                events: 'رویدادها'
+            };
+            return names[category] || category;
+        }
+
+        async function runTest(test, index) {
+            const startTime = Date.now();
+            
+            try {
+                const result = await test.fn();
+                const duration = Date.now() - startTime;
+                
+                if (result === true) {
+                    testResults[index] = {
+                        success: true,
+                        duration,
+                        test: test.name
+                    };
+                    logToConsole('success', `✅ "${test.name}" - موفق (${duration}ms)`);
+                } else {
+                    testResults[index] = {
+                        success: false,
+                        duration,
+                        message: result,
+                        test: test.name
+                    };
+                    logToConsole('error', `❌ "${test.name}" - ناموفق: ${result}`);
+                }
+            } catch (error) {
+                const duration = Date.now() - startTime;
+                testResults[index] = {
+                    success: false,
+                    duration,
+                    error: error,
+                    test: test.name
+                };
+                logToConsole('error', `❌ "${test.name}" - خطا: ${error.message}`);
+            }
+            
+            renderTestCategories();
+            updateStats();
+            
+            return testResults[index];
+        }
+
+        async function runAllTests() {
+            startTime = Date.now();
+            testResults = new Array(allTests.length);
+            
+            logToConsole('info', '🚀 شروع اجرای همه تست‌ها...');
+            
+            for (let i = 0; i < allTests.length; i++) {
+                await runTest(allTests[i], i);
+                await new Promise(resolve => setTimeout(resolve, 50)); // تاخیر کوچک
+            }
+            
+            const passed = testResults.filter(r => r && r.success).length;
+            const total = allTests.length;
+            
+            logToConsole('info', `📊 پایان اجرای تست‌ها: ${passed} از ${total} تست موفق`);
+            
+            if (passed === total) {
+                logToConsole('success', '🎉 همه تست‌های Auth Service با موفقیت گذشتند!');
+            } else {
+                logToConsole('warning', `⚠️ ${total - passed} تست ناموفق بودند`);
+            }
+        }
+
+        async function runCategoryTests(category) {
+            startTime = Date.now();
+            
+            logToConsole('info', `🏃 شروع اجرای تست‌های ${getCategoryName(category)}...`);
+            
+            const categoryTests = testSuites[category] || [];
+            for (const test of categoryTests) {
+                const index = allTests.findIndex(t => t === test);
+                if (index !== -1) {
+                    await runTest(test, index);
+                    await new Promise(resolve => setTimeout(resolve, 50));
+                }
+            }
+            
+            logToConsole('info', `✅ اجرای تست‌های ${getCategoryName(category)} کامل شد`);
+        }
+
+        function resetTests() {
+            testResults = new Array(allTests.length);
+            startTime = null;
+            
+            logToConsole('info', '🔄 همه تست‌ها بازنشانی شدند');
+            renderTestCategories();
+            updateStats();
+        }
+
+        // مقداردهی اولیه
+        renderTestCategories();
+        updateStats();
+        logToConsole('info', 'سیستم تست Auth Service بارگیری شد. برای شروع دکمه "اجرای همه تست‌ها" را بزنید.');
+    </script>
+</body>
+  </html>
