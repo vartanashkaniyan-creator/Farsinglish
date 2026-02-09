@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="fa">
+<head>
+    <meta charset="UTF-8">
+    <title>تست Auth - Farsinglish</title>
+    <style>
+        body { font-family: system-ui; padding: 20px; background: #f0f2f5; }
+        .container { max-width: 800px; margin: auto; background: white; padding: 20px; border-radius: 10px; }
+        .test { margin: 10px 0; padding: 10px; border: 1px solid #ddd; border-radius: 5px; }
+        .pass { background: #d4edda; border-color: #c3e6cb; }
+        .fail { background: #f8d7da; border-color: #f5c6cb; }
+        .running { background: #fff3cd; border-color: #ffeaa7; }
+        button { padding: 10px 20px; background: #007bff; color: white; border: none; border-radius: 5px; cursor: pointer; }
+        button:hover { background: #0056b3; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔐 تست Auth Service</h1>
+        <button onclick="runTests()">اجرای تست‌ها</button>
+        <div id="results"></div>
+    </div>
+
+    <script>
+        class MockStorage {
+            constructor() { this.data = {}; }
+            setItem(k, v) { this.data[k] = v; return Promise.resolve(); }
+            getItem(k) { return Promise.resolve(this.data[k] || null); }
+            removeItem(k) { delete this.data[k]; return Promise.resolve(); }
+            clear() { this.data = {}; return Promise.resolve(); }
+        }
+
+        class AuthService {
+            constructor() {
+                this.storage = new MockStorage();
+                this.isOnline = true;
+            }
+
+            _validateUsername(username) {
+                if (!username || typeof username !== 'string') return false;
+                if (username.length < 3 || username.length > 40) return false;
+                return /^[a-zA-Z0-9_.-]+$/.test(username);
+            }
+
+            async _hashPassword(password) {
+                const encoder = new TextEncoder();
+                const data = encoder.encode(password);
+                const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+                const hashArray = Array.from(new Uint8Array(hashBuffer));
+                return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+            }
+
+            _validateEmail(email) {
+                return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email || '');
+            }
+
+            _validatePassword(password) {
+                if (!password || password.length < 8) return false;
+                return /[A-Z]/.test(password) && /[a-z]/.test(password) && /[0-9]/.test(password);
+            }
+        }
+
+        const tests = [
+            {
+                name: 'نام کاربری ۳-۴۰ کاراکتر',
+                fn: async () => {
+                    const auth = new AuthService();
+                    if (!auth._validateUsername('ali')) return 'ali (3 char) failed';
+                    if (!auth._validateUsername('a'.repeat(40))) return '40 chars failed';
+                    if (auth._validateUsername('ab')) return '2 chars passed';
+                    if (auth._validateUsername('a'.repeat(41))) return '41 chars passed';
+                    if (auth._validateUsername('user@name')) return 'special char passed';
+                    return true;
+                }
+            },
+            {
+                name: 'Hash کردن رمز عبور',
+                fn: async () => {
+                    const auth = new AuthService();
+                    const pwd = 'Test123!';
+                    const h1 = await auth._hashPassword(pwd);
+                    const h2 = await auth._hashPassword(pwd);
+                    if (h1 !== h2) return 'Hashes differ for same password';
+                    if (h1.length !== 64) return `Hash length ${h1.length}, expected 64`;
+                    if (!/^[0-9a-f]{64}$/.test(h1)) return 'Invalid hash format';
+                    return true;
+                }
+            },
+            {
+                name: 'اعتبارسنجی ایمیل',
+                fn: async () => {
+                    const auth = new AuthService();
+                    if (!auth._validateEmail('test@example.com')) return 'Valid email failed';
+                    if (auth._validateEmail('invalid')) return 'Invalid email passed';
+                    if (auth._validateEmail('@example.com')) return 'No local part passed';
+                    return true;
+                }
+            },
+            {
+                name: 'اعتبارسنجی رمز عبور',
+                fn: async () => {
+                    const auth = new AuthService();
+                    if (!auth._validatePassword('Password123')) return 'Valid password failed';
+                    if (auth._validatePassword('short')) return 'Short password passed';
+                    if (auth._validatePassword('nocapital123')) return 'No capital passed';
+                    if (auth._validatePassword('NOLOWERCASE123')) return 'No lowercase passed';
+                    return true;
+                }
+            }
+        ];
+
+        async function runTests() {
+            const resultsDiv = document.getElementById('results');
+            resultsDiv.innerHTML = '';
+            
+            for (const test of tests) {
+                const div = document.createElement('div');
+                div.className = 'test running';
+                div.textContent = `⏳ در حال اجرای: ${test.name}`;
+                resultsDiv.appendChild(div);
+                
+                try {
+                    const result = await test.fn();
+                    div.className = result === true ? 'test pass' : 'test fail';
+                    div.textContent = `${result === true ? '✅' : '❌'} ${test.name}: ${result === true ? 'موفق' : result}`;
+                } catch (error) {
+                    div.className = 'test fail';
+                    div.textContent = `❌ ${test.name}: خطا - ${error.message}`;
+                }
+            }
+        }
+    </script>
+</body>
+</html>
