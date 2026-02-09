@@ -251,8 +251,9 @@
         }
         
         // ==================== بارگذاری فایل اصلی ====================
+        // ** اصلاح شده: تغییر از ../ به ./
         const scriptsToLoad = [
-            '../core/db/indexeddb-wrapper.js'
+            './core/db/indexeddb-wrapper.js'  // ✅ مسیر اصلاح شده
         ];
         
         let loadedScripts = 0;
@@ -462,8 +463,10 @@
                 setTimeout(() => {
                     if (loadedScripts === 0) {
                         document.getElementById('loadingStatus').innerHTML = 
-                            '⚠️ فایل اصلی یافت نشد. مطمئن شوید مسیر فایل‌ها درست است:<br>' +
-                            '<code>../core/db/indexeddb-wrapper.js</code>';
+                            '⚠️ فایل اصلی یافت نشد. مطمئن شوید:<br>' +
+                            '۱. فایل <code>indexeddb-wrapper.js</code> در <code>./core/db/</code> وجود دارد<br>' +
+                            '۲. ساختار پوشه‌ها درست است:<br>' +
+                            '<pre>پروژه/<br>├── core/db/indexeddb-wrapper.js<br>└── test-indexeddb-wrapper.html</pre>';
                     }
                 }, 3000);
             });
