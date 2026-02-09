@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <title>تست IndexedDB Wrapper</title>
+    <style>
+        body { font-family: Tahoma; padding: 20px; background: #f5f5f5; }
+        .test { background: white; padding: 15px; margin: 10px 0; border-right: 5px solid #4CAF50; }
+        .fail { border-right-color: #f44336; }
+        .success { color: #4CAF50; }
+        .error { color: #f44336; }
+        button { padding: 10px 20px; margin: 5px; }
+    </style>
+</head>
+<body>
+    <h1>🧪 تست IndexedDB Wrapper</h1>
+    <div id="results"></div>
+    <button onclick="runTests()">اجرای تست‌ها</button>
+    <button onclick="clearDB()">پاک‌سازی دیتابیس</button>
+
+    <script>
+        // بارگذاری فایل اصلی
+        const script = document.createElement('script');
+        script.src = 'core/db/indexeddb-wrapper.js';
+        document.head.appendChild(script);
+
+        script.onload = () => {
+            console.log('✅ فایل اصلی بارگذاری شد');
+            document.getElementById('results').innerHTML += 
+                '<div class="test success">فایل indexeddb-wrapper.js بارگذاری شد</div>';
+        };
+
+        async function runTests() {
+            const results = document.getElementById('results');
+            results.innerHTML = '';
+            
+            try {
+                // تست ۱: ایجاد instance
+                const db1 = IndexedDBWrapper.getInstance();
+                const db2 = IndexedDBWrapper.getInstance();
+                const isSingleton = db1 === db2;
+                addTest('Singleton Pattern', isSingleton, 
+                    'هر دو instance باید یکسان باشند');
+                
+                // تست ۲: اتصال به دیتابیس
+                await db1.connect('testDB', 1, {
+                    'users': { keyPath: 'id' },
+                    'lessons': { keyPath: 'lessonId' }
+                });
+                addTest('اتصال به دیتابیس', db1.isConnected(), 
+                    'اتصال باید موفقیت‌آمیز باشد');
+                
+                // تست ۳: عملیات CRUD
+                const testUser = { id: 1, name: 'تست کاربر' };
+                await db1.add('users', testUser);
+                const retrieved = await db1.get('users', 1);
+                addTest('افزودن و بازیابی', retrieved?.name === 'تست کاربر', 
+                    `بازیابی شده: ${retrieved?.name}`);
+                
+                // تست ۴: آپدیت
+                await db1.update('users', { ...testUser, name: 'کاربر ویرایش شده' });
+                const updated = await db1.get('users', 1);
+                addTest('به‌روزرسانی', updated?.name === 'کاربر ویرایش شده',
+                    `مقدار جدید: ${updated?.name}`);
+                
+                // تست ۵: حذف
+                await db1.delete('users', 1);
+                const deleted = await db1.get('users', 1);
+                addTest('حذف رکورد', deleted === undefined, 
+                    'رکورد باید حذف شده باشد');
+                
+                // تست ۶: خطاگیری
+                try {
+                    await db1.get('table_not_exist', 1);
+                    addTest('مدیریت خطا', false, 'باید خطا می‌داد');
+                } catch (e) {
+                    addTest('مدیریت خطا', true, `خطا گرفته شد: ${e.message}`);
+                }
+                
+            } catch (error) {
+                addTest('خطای کلی', false, error.message);
+            }
+        }
+        
+        function addTest(name, passed, details) {
+            const div = document.createElement('div');
+            div.className = `test ${passed ? '' : 'fail'}`;
+            div.innerHTML = `<strong>${passed ? '✅' : '❌'} ${name}</strong><br>
+                            <small>${details}</small>`;
+            document.getElementById('results').appendChild(div);
+        }
+        
+        async function clearDB() {
+            const db = IndexedDBWrapper.getInstance();
+            await db.clearDatabase();
+            document.getElementById('results').innerHTML += 
+                '<div class="test">🗑️ دیتابیس پاک شد</div>';
+        }
+    </script>
+</body>
+</html>
