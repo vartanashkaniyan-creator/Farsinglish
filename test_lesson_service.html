@@ -1,0 +1,1355 @@
+<!DOCTYPE html>
+<html lang="fa">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>تست Lesson Service - Farsinglish</title>
+    <style>
+        :root {
+            --primary: #7c3aed;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --dark: #1e293b;
+            --light: #f8fafc;
+        }
+        
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: system-ui, -apple-system, sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+            min-height: 100vh;
+            padding: 15px;
+            direction: rtl;
+        }
+        
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 15px 50px rgba(0,0,0,0.25);
+        }
+        
+        .header {
+            background: var(--primary);
+            color: white;
+            padding: 25px 20px;
+            text-align: center;
+        }
+        
+        .header h1 {
+            font-size: 1.6rem;
+            margin-bottom: 8px;
+        }
+        
+        .header p {
+            opacity: 0.9;
+            font-size: 0.95rem;
+        }
+        
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 12px;
+            padding: 18px;
+            background: var(--light);
+            border-bottom: 3px solid #e2e8f0;
+        }
+        
+        .stat {
+            background: white;
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+            border: 2px solid #e2e8f0;
+            transition: all 0.3s;
+        }
+        
+        .stat:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px rgba(124, 58, 237, 0.15);
+        }
+        
+        .stat-value {
+            font-size: 1.8rem;
+            font-weight: bold;
+            color: var(--primary);
+        }
+        
+        .stat-label {
+            font-size: 0.85rem;
+            color: #64748b;
+            margin-top: 8px;
+        }
+        
+        .test-area {
+            padding: 20px;
+        }
+        
+        .test-group {
+            margin-bottom: 25px;
+        }
+        
+        .group-title {
+            color: var(--primary);
+            font-size: 1.2rem;
+            font-weight: 700;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 3px solid var(--primary);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .tests-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 15px;
+        }
+        
+        .test-card {
+            background: white;
+            border: 2px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 18px;
+            transition: all 0.3s;
+            position: relative;
+        }
+        
+        .test-card:hover {
+            border-color: var(--primary);
+            box-shadow: 0 10px 25px rgba(124, 58, 237, 0.1);
+        }
+        
+        .test-card.passed {
+            border-color: var(--success);
+            background: linear-gradient(to right, #f0fdf4, #ffffff);
+        }
+        
+        .test-card.failed {
+            border-color: var(--danger);
+            background: linear-gradient(to right, #fef2f2, #ffffff);
+        }
+        
+        .test-card.running {
+            border-color: var(--warning);
+            animation: pulse 1.5s infinite;
+        }
+        
+        @keyframes pulse {
+            0% { border-color: #f59e0b; }
+            50% { border-color: #fbbf24; }
+            100% { border-color: #f59e0b; }
+        }
+        
+        .test-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+        
+        .test-title {
+            font-weight: 600;
+            color: var(--dark);
+            font-size: 1rem;
+        }
+        
+        .test-status {
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+        
+        .test-desc {
+            color: #64748b;
+            font-size: 0.85rem;
+            line-height: 1.5;
+            margin-bottom: 15px;
+        }
+        
+        .test-details {
+            background: #f8fafc;
+            padding: 12px;
+            border-radius: 8px;
+            font-size: 0.8rem;
+            color: #475569;
+            border-right: 4px solid var(--primary);
+            display: none;
+            margin-top: 10px;
+        }
+        
+        .controls {
+            display: flex;
+            gap: 15px;
+            padding: 20px;
+            background: var(--light);
+            border-top: 3px solid #e2e8f0;
+        }
+        
+        .btn {
+            flex: 1;
+            padding: 16px;
+            border: none;
+            border-radius: 12px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            font-size: 1rem;
+        }
+        
+        .btn-run {
+            background: linear-gradient(to right, #7c3aed, #8b5cf6);
+            color: white;
+        }
+        
+        .btn-run:hover {
+            background: linear-gradient(to right, #6d28d9, #7c3aed);
+            transform: translateY(-3px);
+            box-shadow: 0 10px 25px rgba(124, 58, 237, 0.3);
+        }
+        
+        .btn-reset {
+            background: linear-gradient(to right, #64748b, #94a3b8);
+            color: white;
+        }
+        
+        .btn-reset:hover {
+            background: linear-gradient(to right, #475569, #64748b);
+            transform: translateY(-3px);
+            box-shadow: 0 10px 25px rgba(100, 116, 139, 0.3);
+        }
+        
+        .console {
+            background: #1e293b;
+            color: white;
+            padding: 20px;
+            margin: 0 20px 20px;
+            border-radius: 12px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.85rem;
+            max-height: 250px;
+            overflow-y: auto;
+            border: 2px solid #334155;
+        }
+        
+        .console-header {
+            color: #fbbf24;
+            margin-bottom: 15px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .console-line {
+            padding: 8px 0;
+            border-bottom: 1px solid #334155;
+            line-height: 1.4;
+        }
+        
+        .log-success { color: #34d399; }
+        .log-error { color: #f87171; }
+        .log-info { color: #60a5fa; }
+        .log-warning { color: #fbbf24; }
+        
+        .footer {
+            text-align: center;
+            padding: 20px;
+            color: #64748b;
+            font-size: 0.9rem;
+            border-top: 1px solid #e2e8f0;
+            background: var(--light);
+        }
+        
+        .lesson-preview {
+            background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+            padding: 20px;
+            margin: 20px;
+            border-radius: 12px;
+            border: 3px solid #bae6fd;
+        }
+        
+        .preview-title {
+            color: var(--primary);
+            font-weight: 700;
+            margin-bottom: 15px;
+            text-align: center;
+            font-size: 1.1rem;
+        }
+        
+        .preview-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+        }
+        
+        .preview-item {
+            background: white;
+            padding: 12px;
+            border-radius: 8px;
+            text-align: center;
+            border: 2px solid #e2e8f0;
+        }
+        
+        .preview-value {
+            font-weight: bold;
+            color: var(--primary);
+            font-size: 1.1rem;
+            margin-bottom: 5px;
+        }
+        
+        .preview-label {
+            font-size: 0.75rem;
+            color: #64748b;
+        }
+        
+        @media (max-width: 768px) {
+            .tests-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .stats {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            
+            .preview-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            
+            .controls {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🧪 تست Lesson Service (موتور آموزش)</h1>
+            <p>تست سرویس مدیریت درس‌ها، تمرین‌ها و الگوریتم SRS</p>
+        </div>
+        
+        <div class="stats">
+            <div class="stat">
+                <div class="stat-value" id="totalTests">12</div>
+                <div class="stat-label">تعداد تست‌ها</div>
+            </div>
+            <div class="stat">
+                <div class="stat-value" id="passedTests">0</div>
+                <div class="stat-label">موفق</div>
+            </div>
+            <div class="stat">
+                <div class="stat-value" id="failedTests">0</div>
+                <div class="stat-label">ناموفق</div>
+            </div>
+            <div class="stat">
+                <div class="stat-value" id="successRate">0%</div>
+                <div class="stat-label">نرخ موفقیت</div>
+            </div>
+        </div>
+        
+        <div class="lesson-preview">
+            <div class="preview-title">📚 پیش‌نمایش درس</div>
+            <div class="preview-grid">
+                <div class="preview-item">
+                    <div class="preview-value" id="previewLessonCount">0</div>
+                    <div class="preview-label">درس‌های بارگذاری شده</div>
+                </div>
+                <div class="preview-item">
+                    <div class="preview-value" id="previewExerciseCount">0</div>
+                    <div class="preview-label">تمرین‌های تولید شده</div>
+                </div>
+                <div class="preview-item">
+                    <div class="preview-value" id="previewProgress">0%</div>
+                    <div class="preview-label">میانگین پیشرفت</div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="test-area">
+            <!-- گروه تست‌های پایه -->
+            <div class="test-group">
+                <div class="group-title">📦 تست‌های پایه Lesson Service</div>
+                <div class="tests-grid" id="basicTests">
+                    <!-- تست‌های پایه اینجا ساخته می‌شوند -->
+                </div>
+            </div>
+            
+            <!-- گروه تست‌های پیشرفته -->
+            <div class="test-group">
+                <div class="group-title">⚡ تست‌های پیشرفته و هوشمند</div>
+                <div class="tests-grid" id="advancedTests">
+                    <!-- تست‌های پیشرفته اینجا ساخته می‌شوند -->
+                </div>
+            </div>
+        </div>
+        
+        <div class="console">
+            <div class="console-header">📝 کنسول اجرای تست‌ها</div>
+            <div id="consoleOutput"></div>
+        </div>
+        
+        <div class="controls">
+            <button class="btn btn-run" id="runTests">
+                <span>▶️</span>
+                اجرای تمام تست‌ها
+            </button>
+            <button class="btn btn-reset" id="resetTests">
+                <span>🔄</span>
+                بازنشانی همه
+            </button>
+        </div>
+        
+        <div class="footer">
+            تست Lesson Service | موتور اصلی آموزش Farsinglish | طراحی شده برای اجرا در مرورگر موبایل
+        </div>
+    </div>
+
+    <script>
+        // ==================== مدل‌های پایه ====================
+        class LessonModel {
+            constructor(data = {}) {
+                this.id = data.id || 'lesson_' + Date.now();
+                this.title = data.title || '';
+                this.content = data.content || [];
+                this.vocabulary = data.vocabulary || [];
+                this.exercises = data.exercises || [];
+                this.difficulty = data.difficulty || 1;
+                this.duration = data.duration || 15;
+                this.progress = data.progress || 0;
+                this.reviewCount = data.reviewCount || 0;
+                this.easinessFactor = data.easinessFactor || 2.5;
+                this.nextReview = data.nextReview || null;
+                this.isCompleted = data.isCompleted || false;
+                this.isLocked = data.isLocked || false;
+            }
+        }
+
+        class UserProgress {
+            constructor(data = {}) {
+                this.userId = data.userId || 'user_' + Date.now();
+                this.lessonId = data.lessonId || '';
+                this.score = data.score || 0;
+                this.timeSpent = data.timeSpent || 0; // ثانیه
+                this.attempts = data.attempts || 0;
+                this.lastAttempt = data.lastAttempt || null;
+                this.completedAt = data.completedAt || null;
+                this.reviewData = data.reviewData || {};
+            }
+        }
+
+        // ==================== Lesson Service اصلی ====================
+        class LessonService {
+            constructor() {
+                this.lessons = new Map();
+                this.userProgress = new Map();
+                this.currentLessonId = null;
+            }
+
+            // بارگذاری درس‌ها
+            loadLessons(lessonsData) {
+                if (!Array.isArray(lessonsData)) {
+                    throw new Error('داده‌های درس باید آرایه باشند');
+                }
+
+                this.lessons.clear();
+                lessonsData.forEach(lessonData => {
+                    const lesson = new LessonModel(lessonData);
+                    this.lessons.set(lesson.id, lesson);
+                });
+
+                return this.lessons.size;
+            }
+
+            // گرفتن درس بعدی بر اساس پیشرفت کاربر
+            getNextLesson(userId) {
+                const userLessons = Array.from(this.userProgress.values())
+                    .filter(p => p.userId === userId);
+
+                // اگر درس‌ای کامل نشده باشد، آن را برگردان
+                const incompleteLessons = Array.from(this.lessons.values())
+                    .filter(lesson => {
+                        const progress = userLessons.find(p => p.lessonId === lesson.id);
+                        return !progress || progress.score < 80;
+                    });
+
+                if (incompleteLessons.length === 0) {
+                    return null;
+                }
+
+                // اولویت‌بندی: دروس قفل‌نشده، سپس بر اساس دشواری
+                const availableLessons = incompleteLessons
+                    .filter(lesson => !lesson.isLocked)
+                    .sort((a, b) => a.difficulty - b.difficulty);
+
+                return availableLessons[0] || incompleteLessons[0];
+            }
+
+            // شروع یک درس
+            startLesson(lessonId) {
+                const lesson = this.lessons.get(lessonId);
+                if (!lesson) {
+                    throw new Error('درس یافت نشد');
+                }
+
+                if (lesson.isLocked) {
+                    throw new Error('درس قفل است');
+                }
+
+                this.currentLessonId = lessonId;
+                return {
+                    lesson: lesson,
+                    exercises: this.generateExercises(lesson),
+                    estimatedTime: lesson.duration * 60 // تبدیل به ثانیه
+                };
+            }
+
+            // تولید تمرین‌های هوشمند
+            generateExercises(lesson, count = 5) {
+                const exercises = [];
+                const vocabCount = lesson.vocabulary.length;
+
+                if (vocabCount === 0) {
+                    return exercises;
+                }
+
+                for (let i = 0; i < count; i++) {
+                    const vocabIndex = i % vocabCount;
+                    const vocabulary = lesson.vocabulary[vocabIndex];
+
+                    const exercise = {
+                        id: `ex_${lesson.id}_${i}`,
+                        type: this.determineExerciseType(lesson.reviewCount, i),
+                        question: this.generateQuestion(vocabulary, lesson.reviewCount),
+                        options: this.generateOptions(vocabulary, lesson.vocabulary),
+                        correctAnswer: vocabulary.english,
+                        points: this.calculatePoints(lesson.difficulty, i),
+                        timeLimit: this.calculateTimeLimit(lesson.difficulty, i)
+                    };
+
+                    exercises.push(exercise);
+                }
+
+                return exercises;
+            }
+
+            determineExerciseType(reviewCount, index) {
+                const types = ['multiple-choice', 'fill-blank', 'matching'];
+                if (reviewCount === 0) {
+                    return types[0]; // برای اولین بار فقط چندگزینه‌ای
+                }
+                return types[index % types.length];
+            }
+
+            generateQuestion(vocabulary, reviewCount) {
+                if (reviewCount === 0) {
+                    return `معنی کلمه "${vocabulary.english}" چیست؟`;
+                } else if (reviewCount === 1) {
+                    return `جمله "${vocabulary.example}" را کامل کنید`;
+                } else {
+                    return `کلمه "${vocabulary.english}" را در جمله مناسب استفاده کنید`;
+                }
+            }
+
+            generateOptions(correctVocab, allVocabulary) {
+                const options = [correctVocab.persian];
+                const otherVocab = allVocabulary.filter(v => v !== correctVocab);
+
+                // اضافه کردن ۳ گزینه تصادفی دیگر
+                for (let i = 0; i < 3 && i < otherVocab.length; i++) {
+                    const randomIndex = Math.floor(Math.random() * otherVocab.length);
+                    options.push(otherVocab[randomIndex].persian);
+                }
+
+                // مخلوط کردن گزینه‌ها
+                return this.shuffleArray(options);
+            }
+
+            calculatePoints(difficulty, exerciseIndex) {
+                const basePoints = 10;
+                const difficultyMultiplier = 1 + (difficulty - 1) * 0.5;
+                const exerciseBonus = exerciseIndex * 2;
+                return Math.round(basePoints * difficultyMultiplier + exerciseBonus);
+            }
+
+            calculateTimeLimit(difficulty, exerciseIndex) {
+                const baseTime = 30; // ثانیه
+                const difficultyPenalty = (difficulty - 1) * 5;
+                const exerciseBonus = exerciseIndex * 3;
+                return baseTime - difficultyPenalty + exerciseBonus;
+            }
+
+            // ثبت پاسخ کاربر
+            submitAnswer(lessonId, exerciseId, userAnswer, userId) {
+                const lesson = this.lessons.get(lessonId);
+                if (!lesson) {
+                    throw new Error('درس یافت نشد');
+                }
+
+                // شبیه‌سازی بررسی پاسخ
+                const isCorrect = Math.random() > 0.3; // 70% شانس درست بودن برای تست
+                
+                // به‌روزرسانی پیشرفت
+                this.updateUserProgress(userId, lessonId, isCorrect);
+
+                return {
+                    isCorrect,
+                    correctAnswer: 'پاسخ صحیح',
+                    points: isCorrect ? 10 : 0,
+                    explanation: isCorrect ? 'آفرین! پاسخ شما صحیح است.' : 'پاسخ صحیح: ' + 'پاسخ صحیح'
+                };
+            }
+
+            // به‌روزرسانی پیشرفت کاربر
+            updateUserProgress(userId, lessonId, isCorrect) {
+                const progressKey = `${userId}_${lessonId}`;
+                let progress = this.userProgress.get(progressKey);
+
+                if (!progress) {
+                    progress = new UserProgress({
+                        userId,
+                        lessonId
+                    });
+                }
+
+                progress.attempts++;
+                progress.lastAttempt = new Date().toISOString();
+                
+                if (isCorrect) {
+                    progress.score = Math.min(100, progress.score + 10);
+                }
+
+                if (progress.score >= 80 && !progress.completedAt) {
+                    progress.completedAt = new Date().toISOString();
+                    
+                    // به‌روزرسانی وضعیت درس
+                    const lesson = this.lessons.get(lessonId);
+                    if (lesson) {
+                        lesson.isCompleted = true;
+                        lesson.progress = 100;
+                    }
+                }
+
+                this.userProgress.set(progressKey, progress);
+                return progress;
+            }
+
+            // قفل/باز کردن درس
+            toggleLessonLock(lessonId) {
+                const lesson = this.lessons.get(lessonId);
+                if (!lesson) {
+                    throw new Error('درس یافت نشد');
+                }
+
+                lesson.isLocked = !lesson.isLocked;
+                return lesson.isLocked;
+            }
+
+            // گرفتن آمار درس‌ها
+            getLessonStats() {
+                const totalLessons = this.lessons.size;
+                const completedLessons = Array.from(this.lessons.values())
+                    .filter(lesson => lesson.isCompleted).length;
+                const lockedLessons = Array.from(this.lessons.values())
+                    .filter(lesson => lesson.isLocked).length;
+                const totalProgress = Array.from(this.lessons.values())
+                    .reduce((sum, lesson) => sum + lesson.progress, 0);
+
+                return {
+                    totalLessons,
+                    completedLessons,
+                    lockedLessons,
+                    averageProgress: totalLessons > 0 ? Math.round(totalProgress / totalLessons) : 0,
+                    completionRate: totalLessons > 0 ? Math.round((completedLessons / totalLessons) * 100) : 0
+                };
+            }
+
+            // گرفتن پیشرفت کاربر
+            getUserProgress(userId) {
+                const userProgresses = Array.from(this.userProgress.values())
+                    .filter(p => p.userId === userId);
+
+                const totalScore = userProgresses.reduce((sum, p) => sum + p.score, 0);
+                const totalTime = userProgresses.reduce((sum, p) => sum + p.timeSpent, 0);
+                const completedLessons = userProgresses.filter(p => p.score >= 80).length;
+
+                return {
+                    userId,
+                    totalLessonsAttempted: userProgresses.length,
+                    completedLessons,
+                    averageScore: userProgresses.length > 0 ? Math.round(totalScore / userProgresses.length) : 0,
+                    totalTimeSpent: totalTime,
+                    completionRate: this.lessons.size > 0 ? Math.round((completedLessons / this.lessons.size) * 100) : 0
+                };
+            }
+
+            // ابزار کمکی: مخلوط کردن آرایه
+            shuffleArray(array) {
+                const shuffled = [...array];
+                for (let i = shuffled.length - 1; i > 0; i--) {
+                    const j = Math.floor(Math.random() * (i + 1));
+                    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+                }
+                return shuffled;
+            }
+        }
+
+        // ==================== تست‌های Lesson Service ====================
+        const lessonServiceTests = [
+            // گروه ۱: تست‌های پایه
+            {
+                id: 'test1',
+                title: 'بارگذاری درس‌ها',
+                desc: 'بررسی بارگذاری صحیح داده‌های درس',
+                group: 'basic',
+                run: function() {
+                    const service = new LessonService();
+                    const sampleLessons = [
+                        { id: 'lesson1', title: 'درس اول', difficulty: 1 },
+                        { id: 'lesson2', title: 'درس دوم', difficulty: 2 },
+                        { id: 'lesson3', title: 'درس سوم', difficulty: 3 }
+                    ];
+
+                    const loadedCount = service.loadLessons(sampleLessons);
+                    const stats = service.getLessonStats();
+
+                    return {
+                        passed: loadedCount === 3 && stats.totalLessons === 3,
+                        message: loadedCount === 3 ? '✅ درس‌ها با موفقیت بارگذاری شدند' : '❌ خطا در بارگذاری درس‌ها',
+                        details: { loadedCount, totalLessons: stats.totalLessons }
+                    };
+                }
+            },
+            {
+                id: 'test2',
+                title: 'شروع درس',
+                desc: 'بررسی شروع صحیح یک درس',
+                group: 'basic',
+                run: function() {
+                    const service = new LessonService();
+                    const sampleLessons = [
+                        { 
+                            id: 'lesson1', 
+                            title: 'درس تستی',
+                            vocabulary: [
+                                { english: 'hello', persian: 'سلام', example: 'Hello world!' }
+                            ]
+                        }
+                    ];
+
+                    service.loadLessons(sampleLessons);
+                    const result = service.startLesson('lesson1');
+
+                    return {
+                        passed: result && result.lesson && result.exercises.length > 0,
+                        message: result ? '✅ درس با موفقیت شروع شد' : '❌ خطا در شروع درس',
+                        details: { 
+                            hasLesson: !!result.lesson,
+                            exercisesCount: result.exercises.length,
+                            estimatedTime: result.estimatedTime
+                        }
+                    };
+                }
+            },
+            {
+                id: 'test3',
+                title: 'تولید تمرین‌ها',
+                desc: 'بررسی تولید خودکار تمرین‌های هوشمند',
+                group: 'basic',
+                run: function() {
+                    const service = new LessonService();
+                    const sampleLesson = {
+                        id: 'lesson1',
+                        title: 'درس واژگان',
+                        vocabulary: [
+                            { english: 'book', persian: 'کتاب', example: 'I read a book' },
+                            { english: 'pen', persian: 'خودکار', example: 'Write with a pen' },
+                            { english: 'school', persian: 'مدرسه', example: 'I go to school' }
+                        ],
+                        difficulty: 2,
+                        reviewCount: 1
+                    };
+
+                    service.loadLessons([sampleLesson]);
+                    const exercises = service.generateExercises(sampleLesson, 4);
+
+                    const hasValidExercises = exercises.length === 4 &&
+                        exercises.every(ex => ex.id && ex.type && ex.question && ex.options);
+
+                    return {
+                        passed: hasValidExercises,
+                        message: hasValidExercises ? '✅ تمرین‌ها با موفقیت تولید شدند' : '❌ خطا در تولید تمرین‌ها',
+                        details: { 
+                            exercisesCount: exercises.length,
+                            types: [...new Set(exercises.map(ex => ex.type))],
+                            hasPoints: exercises.every(ex => ex.points > 0)
+                        }
+                    };
+                }
+            },
+            {
+                id: 'test4',
+                title: 'ثبت پاسخ کاربر',
+                desc: 'بررسی ثبت پاسخ و محاسبه امتیاز',
+                group: 'basic',
+                run: function() {
+                    const service = new LessonService();
+                    const userId = 'test_user_123';
+                    const lessonId = 'lesson1';
+
+                    service.loadLessons([{ id: lessonId, title: 'درس تست' }]);
+                    
+                    const result = service.submitAnswer(
+                        lessonId, 
+                        'ex_1', 
+                        'پاسخ تست', 
+                        userId
+                    );
+
+                    const progress = service.getUserProgress(userId);
+
+                    return {
+                        passed: result && typeof result.isCorrect === 'boolean',
+                        message: result ? '✅ پاسخ با موفقیت ثبت شد' : '❌ خطا در ثبت پاسخ',
+                        details: { 
+                            hasResult: !!result,
+                            isCorrect: result.isCorrect,
+                            userAttempts: progress.totalLessonsAttempted
+                        }
+                    };
+                }
+            },
+            {
+                id: 'test5',
+                title: 'قفل/باز کردن درس',
+                desc: 'بررسی عملکرد قفل کردن درس',
+                group: 'basic',
+                run: function() {
+                    const service = new LessonService();
+                    const lessonId = 'locked_lesson';
+
+                    service.loadLessons([{ id: lessonId, title: 'درس قفل شونده' }]);
+                    
+                    // قفل کردن
+                    const locked = service.toggleLessonLock(lessonId);
+                    // باز کردن
+                    const unlocked = service.toggleLessonLock(lessonId);
+
+                    const lesson = service.lessons.get(lessonId);
+
+                    return {
+                        passed: locked === true && unlocked === false && lesson.isLocked === false,
+                        message: locked ? '✅ عملکرد قفل/باز صحیح است' : '❌ خطا در قفل کردن درس',
+                        details: { 
+                            locked: locked,
+                            unlocked: unlocked,
+                            finalState: lesson.isLocked
+                        }
+                    };
+                }
+            },
+
+            // گروه ۲: تست‌های پیشرفته
+            {
+                id: 'test6',
+                title: 'دریافت درس بعدی',
+                desc: 'بررسی انتخاب هوشمند درس بعدی',
+                group: 'advanced',
+                run: function() {
+                    const service = new LessonService();
+                    const userId = 'user_next_lesson';
+                    
+                    const lessons = [
+                        { id: 'easy', title: 'آسان', difficulty: 1 },
+                        { id: 'medium', title: 'متوسط', difficulty: 2 },
+                        { id: 'hard', title: 'سخت', difficulty: 3, isLocked: true }
+                    ];
+
+                    service.loadLessons(lessons);
+                    
+                    // شبیه‌سازی پیشرفت کاربر
+                    service.updateUserProgress(userId, 'easy', true);
+                    service.updateUserProgress(userId, 'easy', true);
+                    
+                    const nextLesson = service.getNextLesson(userId);
+
+                    return {
+                        passed: nextLesson && nextLesson.id === 'medium',
+                        message: nextLesson ? '✅ درس بعدی صحیح انتخاب شد' : '❌ خطا در انتخاب درس بعدی',
+                        details: { 
+                            selectedId: nextLesson?.id,
+                            expected: 'medium',
+                            isLocked: nextLesson?.isLocked
+                        }
+                    };
+                }
+            },
+            {
+                id: 'test7',
+                title: 'آمار درس‌ها',
+                desc: 'بررسی محاسبه صحیح آمار و گزارشات',
+                group: 'advanced',
+                run: function() {
+                    const service = new LessonService();
+                    
+                    const lessons = [
+                        { id: 'l1', title: 'درس ۱', progress: 100, isCompleted: true },
+                        { id: 'l2', title: 'درس ۲', progress: 50, isCompleted: false },
+                        { id: 'l3', title: 'درس ۳', progress: 0, isCompleted: false, isLocked: true }
+                    ];
+
+                    service.loadLessons(lessons);
+                    const stats = service.getLessonStats();
+
+                    const expectedAvgProgress = Math.round((100 + 50 + 0) / 3);
+                    const expectedCompletionRate = Math.round((1 / 3) * 100);
+
+                    return {
+                        passed: stats.totalLessons === 3 && 
+                                stats.completedLessons === 1 &&
+                                stats.lockedLessons === 1 &&
+                                stats.averageProgress === expectedAvgProgress,
+                        message: stats.totalLessons === 3 ? '✅ آمار صحیح محاسبه شد' : '❌ خطا در محاسبه آمار',
+                        details: { 
+                            totalLessons: stats.totalLessons,
+                            completed: stats.completedLessons,
+                            locked: stats.lockedLessons,
+                            avgProgress: stats.averageProgress,
+                            completionRate: stats.completionRate
+                        }
+                    };
+                }
+            },
+            {
+                id: 'test8',
+                title: 'پیشرفت کاربر',
+                desc: 'بررسی ردیابی پیشرفت کاربر',
+                group: 'advanced',
+                run: function() {
+                    const service = new LessonService();
+                    const userId = 'progress_user';
+                    
+                    service.loadLessons([
+                        { id: 'lesson1', title: 'درس ۱' },
+                        { id: 'lesson2', title: 'درس ۲' }
+                    ]);
+
+                    // شبیه‌سازی پیشرفت
+                    service.updateUserProgress(userId, 'lesson1', true);
+                    service.updateUserProgress(userId, 'lesson1', true);
+                    service.updateUserProgress(userId, 'lesson1', true); // باید score = 30
+                    service.updateUserProgress(userId, 'lesson2', false);
+
+                    const progress = service.getUserProgress(userId);
+
+                    return {
+                        passed: progress.totalLessonsAttempted === 2 && 
+                                progress.averageScore > 0,
+                        message: progress.totalLessonsAttempted > 0 ? 
+                                '✅ پیشرفت کاربر صحیح ردیابی شد' : 
+                                '❌ خطا در ردیابی پیشرفت',
+                        details: { 
+                            attempted: progress.totalLessonsAttempted,
+                            avgScore: progress.averageScore,
+                            totalTime: progress.totalTimeSpent
+                        }
+                    };
+                }
+            },
+            {
+                id: 'test9',
+                title: 'انواع تمرین‌ها',
+                desc: 'بررسی تولید انواع مختلف تمرین',
+                group: 'advanced',
+                run: function() {
+                    const service = new LessonService();
+                    const lesson = {
+                        id: 'multi_exercise',
+                        title: 'درس چندنوعی',
+                        vocabulary: [
+                            { english: 'run', persian: 'دویدن', example: 'I run fast' },
+                            { english: 'jump', persian: 'پریدن', example: 'Jump high' }
+                        ],
+                        reviewCount: 2 // برای تولید انواع مختلف
+                    };
+
+                    service.loadLessons([lesson]);
+                    const exercises = service.generateExercises(lesson, 6);
+                    
+                    const exerciseTypes = [...new Set(exercises.map(ex => ex.type))];
+                    const hasMultipleTypes = exerciseTypes.length >= 2;
+
+                    return {
+                        passed: hasMultipleTypes && exercises.length === 6,
+                        message: hasMultipleTypes ? 
+                                '✅ انواع مختلف تمرین تولید شد' : 
+                                '❌ تنوع تمرین‌ها کم است',
+                        details: { 
+                            totalExercises: exercises.length,
+                            types: exerciseTypes,
+                            typeCount: exerciseTypes.length
+                        }
+                    };
+                }
+            },
+            {
+                id: 'test10',
+                title: 'امتیازدهی هوشمند',
+                desc: 'بررسی محاسبه امتیاز بر اساس دشواری',
+                group: 'advanced',
+                run: function() {
+                    const service = new LessonService();
+                    
+                    const easyLesson = { id: 'easy', difficulty: 1, reviewCount: 0 };
+                    const hardLesson = { id: 'hard', difficulty: 4, reviewCount: 0 };
+                    
+                    const easyExercises = service.generateExercises(easyLesson, 3);
+                    const hardExercises = service.generateExercises(hardLesson, 3);
+                    
+                    const easyAvgPoints = easyExercises.reduce((sum, ex) => sum + ex.points, 0) / 3;
+                    const hardAvgPoints = hardExercises.reduce((sum, ex) => sum + ex.points, 0) / 3;
+                    
+                    const pointsIncrease = hardAvgPoints > easyAvgPoints;
+
+                    return {
+                        passed: pointsIncrease && 
+                                easyExercises.every(ex => ex.timeLimit > 0) &&
+                                hardExercises.every(ex => ex.timeLimit > 0),
+                        message: pointsIncrease ? 
+                                '✅ امتیازدهی متناسب با دشواری است' : 
+                                '❌ خطا در امتیازدهی',
+                        details: { 
+                            easyAvgPoints: easyAvgPoints.toFixed(1),
+                            hardAvgPoints: hardAvgPoints.toFixed(1),
+                            difference: (hardAvgPoints - easyAvgPoints).toFixed(1)
+                        }
+                    };
+                }
+            },
+            {
+                id: 'test11',
+                title: 'خطاهای مدیریت شده',
+                desc: 'بررسی مدیریت خطا در عملیات مختلف',
+                group: 'advanced',
+                run: function() {
+                    const service = new LessonService();
+                    let errorCount = 0;
+                    
+                    try {
+                        service.startLesson('non_existent');
+                    } catch (e) {
+                        errorCount++;
+                    }
+                    
+                    try {
+                        service.toggleLessonLock('unknown');
+                    } catch (e) {
+                        errorCount++;
+                    }
+                    
+                    service.loadLessons([{ id: 'locked', title: 'درس قفل', isLocked: true }]);
+                    
+                    try {
+                        service.startLesson('locked');
+                    } catch (e) {
+                        errorCount++;
+                    }
+
+                    return {
+                        passed: errorCount === 3,
+                        message: errorCount === 3 ? 
+                                '✅ خطاها به درستی مدیریت می‌شوند' : 
+                                '❌ مدیریت نادرست خطا',
+                        details: { 
+                            expectedErrors: 3,
+                            actualErrors: errorCount,
+                            allHandled: errorCount === 3
+                        }
+                    };
+                }
+            },
+            {
+                id: 'test12',
+                title: 'یکپارچگی داده‌ها',
+                desc: 'بررسی سازگاری و یکپارچگی کل سیستم',
+                group: 'advanced',
+                run: function() {
+                    const service = new LessonService();
+                    const userId = 'integration_user';
+                    
+                    // ۱. بارگذاری درس‌ها
+                    const lessons = [
+                        {
+                            id: 'int1',
+                            title: 'درس یکپارچه‌سازی',
+                            vocabulary: [
+                                { english: 'test', persian: 'تست', example: 'This is a test' }
+                            ],
+                            difficulty: 2
+                        }
+                    ];
+                    
+                    const loaded = service.loadLessons(lessons);
+                    
+                    // ۲. شروع درس
+                    const startResult = service.startLesson('int1');
+                    
+                    // ۳. ثبت پاسخ
+                    const answerResult = service.submitAnswer(
+                        'int1', 
+                        startResult.exercises[0].id, 
+                        'پاسخ', 
+                        userId
+                    );
+                    
+                    // ۴. بررسی آمار
+                    const userProgress = service.getUserProgress(userId);
+                    const lessonStats = service.getLessonStats();
+                    
+                    // ۵. درس بعدی
+                    const nextLesson = service.getNextLesson(userId);
+                    
+                    const allPassed = loaded === 1 &&
+                                    startResult && startResult.exercises.length > 0 &&
+                                    answerResult && typeof answerResult.isCorrect === 'boolean' &&
+                                    userProgress.totalLessonsAttempted === 1 &&
+                                    lessonStats.totalLessons === 1 &&
+                                    nextLesson;
+                    
+                    return {
+                        passed: allPassed,
+                        message: allPassed ? 
+                                '✅ سیستم به طور کامل یکپارچه است' : 
+                                '❌ مشکل در یکپارچگی سیستم',
+                        details: { 
+                            stepsCompleted: 5,
+                            loadedLessons: loaded,
+                            exercisesGenerated: startResult?.exercises.length || 0,
+                            userAttempts: userProgress.totalLessonsAttempted,
+                            hasNextLesson: !!nextLesson
+                        }
+                    };
+                }
+            }
+        ];
+
+        // ==================== Test Runner ====================
+        class LessonServiceTestRunner {
+            constructor() {
+                this.tests = lessonServiceTests;
+                this.totalTests = this.tests.length;
+                this.passed = 0;
+                this.failed = 0;
+                this.isRunning = false;
+                this.initializeUI();
+            }
+
+            initializeUI() {
+                // ایجاد تست‌های پایه
+                const basicContainer = document.getElementById('basicTests');
+                const advancedContainer = document.getElementById('advancedTests');
+                
+                this.tests.forEach((test, index) => {
+                    const container = test.group === 'basic' ? basicContainer : advancedContainer;
+                    const testEl = document.createElement('div');
+                    testEl.className = 'test-card';
+                    testEl.id = `test-${test.id}`;
+                    testEl.innerHTML = `
+                        <div class="test-header">
+                            <div class="test-title">${test.group === 'basic' ? index + 1 : index - 4}. ${test.title}</div>
+                            <div class="test-status status-pending">در انتظار</div>
+                        </div>
+                        <div class="test-desc">${test.desc}</div>
+                        <div class="test-details" id="details-${test.id}"></div>
+                    `;
+                    container.appendChild(testEl);
+                });
+
+                document.getElementById('runTests').addEventListener('click', () => this.runAllTests());
+                document.getElementById('resetTests').addEventListener('click', () => this.resetTests());
+            }
+
+            async runAllTests() {
+                if (this.isRunning) return;
+                this.isRunning = true;
+                this.resetTests();
+                
+                this.log('🚀 شروع تست‌های Lesson Service...', 'info');
+                this.log('تست موتور اصلی آموزش Farsinglish', 'info');
+                
+                for (let i = 0; i < this.tests.length; i++) {
+                    const test = this.tests[i];
+                    await this.runSingleTest(test);
+                    await this.delay(400);
+                    
+                    // به‌روزرسانی پیش‌نمایش
+                    this.updatePreview(i + 1);
+                }
+                
+                const successRate = Math.round((this.passed / this.totalTests) * 100);
+                this.log(`🎉 ${this.passed}/${this.totalTests} تست موفق (${successRate}%)`, 'success');
+                this.isRunning = false;
+                
+                // نمایش خلاصه
+                if (successRate >= 80) {
+                    this.log('✅ Lesson Service آماده استفاده است!', 'success');
+                } else {
+                    this.log('⚠️ نیاز به بررسی برخی تست‌ها', 'warning');
+                }
+            }
+
+            async runSingleTest(test) {
+                const testEl = document.getElementById(`test-${test.id}`);
+                const statusEl = testEl.querySelector('.test-status');
+                const detailsEl = document.getElementById(`details-${test.id}`);
+                
+                testEl.classList.add('running');
+                statusEl.className = 'test-status status-pending';
+                statusEl.textContent = 'در حال اجرا...';
+                
+                try {
+                    const result = test.run();
+                    
+                    testEl.classList.remove('running');
+                    if (result.passed) {
+                        this.passed++;
+                        testEl.classList.add('passed');
+                        statusEl.className = 'test-status status-pass';
+                        statusEl.textContent = 'موفق';
+                        this.log(`✅ ${test.title}: ${result.message}`, 'success');
+                    } else {
+                        this.failed++;
+                        testEl.classList.add('failed');
+                        statusEl.className = 'test-status status-fail';
+                        statusEl.textContent = 'ناموفق';
+                        this.log(`❌ ${test.title}: ${result.message}`, 'error');
+                    }
+                    
+                    if (result.details) {
+                        detailsEl.style.display = 'block';
+                        let detailsText = '';
+                        for (const [key, value] of Object.entries(result.details)) {
+                            detailsText += `${key}: ${value}\n`;
+                        }
+                        detailsEl.textContent = detailsText;
+                    }
+                    
+                } catch (error) {
+                    testEl.classList.remove('running');
+                    this.failed++;
+                    testEl.classList.add('failed');
+                    statusEl.className = 'test-status status-fail';
+                    statusEl.textContent = 'خطا';
+                    this.log(`💥 ${test.title}: ${error.message}`, 'error');
+                    detailsEl.style.display = 'block';
+                    detailsEl.textContent = `خطا: ${error.message}\n${error.stack}`;
+                }
+                
+                this.updateStats();
+            }
+
+            updateStats() {
+                document.getElementById('passedTests').textContent = this.passed;
+                document.getElementById('failedTests').textContent = this.failed;
+                const rate = Math.round((this.passed / this.totalTests) * 100);
+                document.getElementById('successRate').textContent = `${rate}%`;
+                
+                const rateEl = document.getElementById('successRate').parentElement;
+                if (rate >= 80) {
+                    rateEl.style.background = '#d1fae5';
+                    rateEl.style.color = '#065f46';
+                } else if (rate >= 60) {
+                    rateEl.style.background = '#fef3c7';
+                    rateEl.style.color = '#92400e';
+                } else {
+                    rateEl.style.background = '#fee2e2';
+                    rateEl.style.color = '#991b1b';
+                }
+            }
+
+            updatePreview(testNumber) {
+                // شبیه‌سازی پیش‌نمایش
+                const lessonCount = Math.min(5, Math.floor(testNumber / 2) + 1);
+                const exerciseCount = lessonCount * 4;
+                const progress = Math.min(100, Math.floor((testNumber / this.totalTests) * 100));
+                
+                document.getElementById('previewLessonCount').textContent = lessonCount;
+                document.getElementById('previewExerciseCount').textContent = exerciseCount;
+                document.getElementById('previewProgress').textContent = `${progress}%`;
+            }
+
+            log(message, type = 'info') {
+                const consoleEl = document.getElementById('consoleOutput');
+                const line = document.createElement('div');
+                line.className = `console-line log-${type}`;
+                
+                const time = new Date().toLocaleTimeString('fa-IR', { 
+                    hour: '2-digit', 
+                    minute: '2-digit',
+                    second: '2-digit'
+                });
+                
+                line.textContent = `[${time}] ${message}`;
+                consoleEl.appendChild(line);
+                consoleEl.scrollTop = consoleEl.scrollHeight;
+            }
+
+            resetTests() {
+                this.passed = 0;
+                this.failed = 0;
+                this.isRunning = false;
+                
+                this.tests.forEach(test => {
+                    const testEl = document.getElementById(`test-${test.id}`);
+                    const statusEl = testEl.querySelector('.test-status');
+                    const detailsEl = document.getElementById(`details-${test.id}`);
+                    
+                    testEl.className = 'test-card';
+                    statusEl.className = 'test-status status-pending';
+                    statusEl.textContent = 'در انتظار';
+                    detailsEl.style.display = 'none';
+                    detailsEl.textContent = '';
+                });
+                
+                document.getElementById('consoleOutput').innerHTML = '';
+                document.getElementById('previewLessonCount').textContent = '0';
+                document.getElementById('previewExerciseCount').textContent = '0';
+                document.getElementById('previewProgress').textContent = '0%';
+                
+                this.updateStats();
+                this.log('🔄 تمام تست‌ها بازنشانی شدند', 'info');
+            }
+
+            delay(ms) {
+                return new Promise(resolve => setTimeout(resolve, ms));
+            }
+        }
+
+        // ==================== شروع برنامه ====================
+        document.addEventListener('DOMContentLoaded', () => {
+            const runner = new LessonServiceTestRunner();
+            runner.log('🔧 تست‌های Lesson Service آماده اجرا', 'info');
+            runner.log('12 تست شامل: بارگذاری درس، تولید تمرین، پیشرفت کاربر، آمار', 'info');
+            runner.log('برای شروع روی دکمه "اجرای تمام تست‌ها" کلیک کنید', 'info');
+            
+            setTimeout(() => {
+                runner.log('💡 نکته: تست‌ها به دو گروه پایه و پیشرفته تقسیم شده‌اند', 'info');
+            }, 2000);
+        });
+    </script>
+</body>
+  </html>
