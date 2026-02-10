@@ -1,0 +1,468 @@
+<!DOCTYPE html>
+<html lang="fa">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>تست User Model (پیشرفته)</title>
+    <style>
+        body {
+            font-family: system-ui;
+            padding: 20px;
+            direction: rtl;
+            background: #f0f9ff;
+            margin: 0;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #1e40af;
+            text-align: center;
+            margin-bottom: 5px;
+        }
+        .subtitle {
+            text-align: center;
+            color: #64748b;
+            margin-bottom: 20px;
+        }
+        .stats {
+            display: flex;
+            justify-content: space-around;
+            margin: 20px 0;
+            text-align: center;
+        }
+        .stat-box {
+            background: #f8fafc;
+            padding: 15px;
+            border-radius: 8px;
+            min-width: 100px;
+        }
+        .stat-value {
+            font-size: 24px;
+            font-weight: bold;
+            color: #1e40af;
+        }
+        .stat-label {
+            font-size: 12px;
+            color: #64748b;
+            margin-top: 5px;
+        }
+        .test-card {
+            background: white;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 15px;
+            margin: 10px 0;
+            transition: all 0.3s;
+        }
+        .test-card.passed {
+            border-color: #10b981;
+            background: #f0fdf4;
+        }
+        .test-card.failed {
+            border-color: #ef4444;
+            background: #fef2f2;
+        }
+        .test-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        .test-title {
+            font-weight: 600;
+            color: #1e293b;
+        }
+        .test-status {
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+        .status-pending {
+            background: #fef3c7;
+            color: #92400e;
+        }
+        .status-pass {
+            background: #d1fae5;
+            color: #065f46;
+        }
+        .status-fail {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+        .test-desc {
+            color: #64748b;
+            font-size: 14px;
+            margin-bottom: 10px;
+        }
+        .controls {
+            display: flex;
+            gap: 10px;
+            margin: 20px 0;
+        }
+        button {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            background: #3b82f6;
+            color: white;
+        }
+        button:hover {
+            background: #2563eb;
+        }
+        .console {
+            background: #1e293b;
+            color: white;
+            padding: 15px;
+            border-radius: 8px;
+            font-family: monospace;
+            font-size: 13px;
+            max-height: 200px;
+            overflow-y: auto;
+            margin-top: 20px;
+        }
+        .log-success { color: #34d399; }
+        .log-error { color: #f87171; }
+        .log-info { color: #60a5fa; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧪 تست User Model (پیشرفته)</h1>
+        <div class="subtitle">فایل ۲ از ۲ - تست‌های پیشرفته XP و کلون</div>
+        
+        <div class="stats">
+            <div class="stat-box">
+                <div class="stat-value" id="totalTests">5</div>
+                <div class="stat-label">تعداد تست‌ها</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-value" id="passedTests">0</div>
+                <div class="stat-label">موفق</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-value" id="failedTests">0</div>
+                <div class="stat-label">ناموفق</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-value" id="successRate">0%</div>
+                <div class="stat-label">موفقیت</div>
+            </div>
+        </div>
+        
+        <div id="testsContainer"></div>
+        
+        <div class="controls">
+            <button id="runTests">اجرای تمام تست‌ها</button>
+            <button id="resetTests">بازنشانی</button>
+        </div>
+        
+        <div class="console">
+            <div>📝 کنسول تست‌ها:</div>
+            <div id="consoleOutput"></div>
+        </div>
+    </div>
+
+    <script>
+        // ==================== User Model ساده ====================
+        class SimpleUserModel {
+            constructor(data = {}) {
+                this.username = data.username || '';
+                this.level = data.level || 1;
+                this.xp = data.xp || 0;
+                this.achievements = data.achievements || [];
+            }
+
+            static getRequiredXP(level) {
+                return Math.floor(100 * Math.pow(level, 1.5));
+            }
+
+            addXP(amount) {
+                if (amount <= 0) return false;
+
+                const oldLevel = this.level;
+                this.xp += amount;
+
+                while (this.xp >= SimpleUserModel.getRequiredXP(this.level)) {
+                    this.xp -= SimpleUserModel.getRequiredXP(this.level);
+                    this.level++;
+                }
+
+                return {
+                    oldLevel,
+                    newLevel: this.level,
+                    leveledUp: this.level > oldLevel,
+                    xpAdded: amount
+                };
+            }
+
+            clone() {
+                return new SimpleUserModel({
+                    username: this.username,
+                    level: this.level,
+                    xp: this.xp,
+                    achievements: [...this.achievements]
+                });
+            }
+
+            validate() {
+                if (!this.username || this.username.length < 3) {
+                    return { isValid: false, error: 'نام کاربری کوتاه' };
+                }
+                if (this.level < 1) {
+                    return { isValid: false, error: 'سطح نامعتبر' };
+                }
+                return { isValid: true };
+            }
+        }
+
+        // ==================== ۵ تست اصلی ====================
+        const tests = [
+            {
+                id: 1,
+                title: 'ارتقا چند سطح',
+                desc: 'بررسی ارتقا ۳ سطح متوالی',
+                run: () => {
+                    const user = new SimpleUserModel();
+                    let levelUps = 0;
+                    
+                    for (let i = 1; i <= 3; i++) {
+                        const result = user.addXP(SimpleUserModel.getRequiredXP(i));
+                        if (result.leveledUp) levelUps++;
+                    }
+
+                    return {
+                        passed: user.level === 4 && levelUps === 3,
+                        message: user.level === 4 ? '✅ ارتقا چند سطحی صحیح' : '❌ خطا در ارتقا',
+                        details: `سطح نهایی: ${user.level} (انتظار: ۴)`
+                    };
+                }
+            },
+            {
+                id: 2,
+                title: 'دستاوردهای خودکار',
+                desc: 'بررسی کسب دستاورد سطح ۵',
+                run: () => {
+                    const user = new SimpleUserModel();
+                    user.achievements = [];
+                    
+                    for (let i = 1; i <= 5; i++) {
+                        user.addXP(SimpleUserModel.getRequiredXP(i));
+                    }
+
+                    const hasAchievement = user.level >= 5;
+
+                    return {
+                        passed: hasAchievement,
+                        message: hasAchievement ? '✅ دستاورد سطح ۵ کسب شد' : '❌ دستاورد کسب نشد',
+                        details: `سطح: ${user.level}`
+                    };
+                }
+            },
+            {
+                id: 3,
+                title: 'اعتبارسنجی',
+                desc: 'بررسی اعتبارسنجی داده‌ها',
+                run: () => {
+                    const valid = new SimpleUserModel({ username: 'user123' });
+                    const invalid = new SimpleUserModel({ username: 'ab' });
+
+                    const validResult = valid.validate();
+                    const invalidResult = invalid.validate();
+
+                    return {
+                        passed: validResult.isValid && !invalidResult.isValid,
+                        message: validResult.isValid ? '✅ اعتبارسنجی صحیح' : '❌ خطا در اعتبارسنجی',
+                        details: `معتبر: ${validResult.isValid}, نامعتبر: ${!invalidResult.isValid}`
+                    };
+                }
+            },
+            {
+                id: 4,
+                title: 'کلون کردن (ساده)',
+                desc: 'بررسی کلون کردن مستقل',
+                run: () => {
+                    const original = new SimpleUserModel({
+                        username: 'user1',
+                        level: 3,
+                        xp: 80
+                    });
+
+                    const clone = original.clone();
+                    
+                    clone.username = 'user2';
+                    clone.addXP(30);
+
+                    const originalCorrect = 
+                        original.username === 'user1' && 
+                        original.xp === 80;
+                    
+                    const cloneCorrect = 
+                        clone.username === 'user2' && 
+                        clone.xp === 110;
+
+                    return {
+                        passed: originalCorrect && cloneCorrect,
+                        message: originalCorrect ? '✅ کلون موفق' : '❌ خطا در کلون',
+                        details: `اصلی: ${original.xp} XP, کلون: ${clone.xp} XP`
+                    };
+                }
+            },
+            {
+                id: 5,
+                title: 'یکپارچگی سیستم',
+                desc: 'بررسی عملکرد کلی',
+                run: () => {
+                    const user = new SimpleUserModel({ username: 'test' });
+                    
+                    const xpResult = user.addXP(75);
+                    const validation = user.validate();
+
+                    const allPassed = 
+                        xpResult.xpAdded === 75 &&
+                        validation.isValid &&
+                        user.level >= 1;
+
+                    return {
+                        passed: allPassed,
+                        message: allPassed ? '✅ سیستم یکپارچه است' : '❌ مشکل در یکپارچگی',
+                        details: `سطح: ${user.level}, XP: ${user.xp}`
+                    };
+                }
+            }
+        ];
+
+        // ==================== Test Runner ساده ====================
+        class SimpleTestRunner {
+            constructor() {
+                this.passed = 0;
+                this.failed = 0;
+                this.initialize();
+            }
+
+            initialize() {
+                // ایجاد تست‌ها در صفحه
+                const container = document.getElementById('testsContainer');
+                tests.forEach(test => {
+                    const card = document.createElement('div');
+                    card.className = 'test-card';
+                    card.id = `test-${test.id}`;
+                    card.innerHTML = `
+                        <div class="test-header">
+                            <div class="test-title">${test.id}. ${test.title}</div>
+                            <div class="test-status status-pending">در انتظار</div>
+                        </div>
+                        <div class="test-desc">${test.desc}</div>
+                    `;
+                    container.appendChild(card);
+                });
+
+                document.getElementById('runTests').addEventListener('click', () => this.runAll());
+                document.getElementById('resetTests').addEventListener('click', () => this.reset());
+            }
+
+            async runAll() {
+                this.reset();
+                this.log('شروع تست‌ها...', 'info');
+                
+                for (const test of tests) {
+                    await this.runTest(test);
+                    await this.delay(300);
+                }
+                
+                const rate = Math.round((this.passed / tests.length) * 100);
+                this.log(`پایان تست‌ها: ${this.passed}/${tests.length} موفق (${rate}%)`, 
+                        rate >= 80 ? 'success' : 'error');
+            }
+
+            async runTest(test) {
+                const card = document.getElementById(`test-${test.id}`);
+                const status = card.querySelector('.test-status');
+                
+                card.className = 'test-card';
+                status.className = 'test-status status-pending';
+                status.textContent = 'در حال اجرا...';
+                
+                try {
+                    const result = test.run();
+                    
+                    if (result.passed) {
+                        this.passed++;
+                        card.classList.add('passed');
+                        status.className = 'test-status status-pass';
+                        status.textContent = 'موفق';
+                        this.log(`✅ ${test.title}: ${result.message}`, 'success');
+                    } else {
+                        this.failed++;
+                        card.classList.add('failed');
+                        status.className = 'test-status status-fail';
+                        status.textContent = 'ناموفق';
+                        this.log(`❌ ${test.title}: ${result.message}`, 'error');
+                    }
+                    
+                } catch (error) {
+                    this.failed++;
+                    card.classList.add('failed');
+                    status.className = 'test-status status-fail';
+                    status.textContent = 'خطا';
+                    this.log(`💥 ${test.title}: ${error.message}`, 'error');
+                }
+                
+                this.updateStats();
+            }
+
+            updateStats() {
+                document.getElementById('passedTests').textContent = this.passed;
+                document.getElementById('failedTests').textContent = this.failed;
+                const rate = Math.round((this.passed / tests.length) * 100);
+                document.getElementById('successRate').textContent = `${rate}%`;
+            }
+
+            log(message, type = 'info') {
+                const consoleEl = document.getElementById('consoleOutput');
+                const line = document.createElement('div');
+                line.className = `log-${type}`;
+                line.textContent = `[${new Date().toLocaleTimeString('fa-IR')}] ${message}`;
+                consoleEl.appendChild(line);
+                consoleEl.scrollTop = consoleEl.scrollHeight;
+            }
+
+            reset() {
+                this.passed = 0;
+                this.failed = 0;
+                
+                tests.forEach(test => {
+                    const card = document.getElementById(`test-${test.id}`);
+                    const status = card.querySelector('.test-status');
+                    
+                    card.className = 'test-card';
+                    status.className = 'test-status status-pending';
+                    status.textContent = 'در انتظار';
+                });
+                
+                document.getElementById('consoleOutput').innerHTML = '';
+                this.updateStats();
+                this.log('تست‌ها بازنشانی شدند', 'info');
+            }
+
+            delay(ms) {
+                return new Promise(resolve => setTimeout(resolve, ms));
+            }
+        }
+
+        // شروع برنامه
+        document.addEventListener('DOMContentLoaded', () => {
+            new SimpleTestRunner();
+        });
+    </script>
+</body>
+</html>
