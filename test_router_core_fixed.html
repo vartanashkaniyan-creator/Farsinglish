@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+<html lang="fa">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Farsinglish - تست هسته مسیریابی (اصلاح‌شده)</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { 
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+            background: linear-gradient(135deg, #0d47a1 0%, #1976d2 100%);
+            color: #e3f2fd;
+            min-height: 100vh;
+            padding: 15px;
+        }
+        .container { 
+            max-width: 800px; 
+            margin: 0 auto;
+            background: rgba(25, 35, 70, 0.95);
+            border-radius: 12px;
+            padding: 18px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6);
+            border: 1px solid rgba(100, 150, 255, 0.4);
+        }
+        h1 { 
+            text-align: center; 
+            margin-bottom: 20px;
+            font-size: 1.6rem;
+            color: #82b1ff;
+        }
+        .test-section { 
+            margin: 15px 0;
+            padding: 14px;
+            background: rgba(40, 45, 80, 0.9);
+            border-radius: 8px;
+            border-left: 4px solid #4fc3f7;
+        }
+        .test-header { 
+            display: flex; 
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        .test-title { 
+            font-size: 0.95rem; 
+            font-weight: 600;
+            color: #bb86fc;
+        }
+        .test-result { 
+            padding: 4px 10px;
+            border-radius: 10px;
+            font-size: 0.8rem;
+            font-weight: bold;
+        }
+        .pass { background: #4caf50; }
+        .fail { background: #f44336; }
+        .details { 
+            margin-top: 8px;
+            padding: 10px;
+            background: rgba(0, 0, 30, 0.7);
+            border-radius: 6px;
+            font-family: monospace;
+            font-size: 0.8rem;
+            color: #a5d6a7;
+        }
+        .summary {
+            margin-top: 20px;
+            padding: 15px;
+            background: rgba(40, 45, 80, 0.9);
+            border-radius: 8px;
+            text-align: center;
+            font-size: 0.95rem;
+        }
+        button {
+            background: #2962ff;
+            color: white;
+            border: none;
+            padding: 8px 18px;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            cursor: pointer;
+            margin: 5px;
+        }
+        .controls { text-align: center; margin-top: 15px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧭 تست هسته مسیریابی (اصلاح‌شده)</h1>
+        
+        <div id="test-results"></div>
+        
+        <div class="summary">
+            <p id="summary-text">در حال آماده‌سازی...</p>
+        </div>
+        
+        <div class="controls">
+            <button onclick="runAllTests()">▶️ اجرای تست‌ها</button>
+            <button onclick="clearTests()">🗑️ پاک کردن</button>
+        </div>
+    </div>
+
+    <script>
+        // ==================== Router Core FIXED ====================
+        class RouterCoreFixed {
+            constructor() {
+                this.routes = new Map();
+                this.currentRoute = '/';
+                this.history = [];
+                this.isAuthenticated = false;
+                this.userRole = 'guest';
+                
+                // مهم: اول مسیر 404 رو اضافه کن
+                this.routes.set('/404', {
+                    name: 'صفحه یافت نشد',
+                    requiresAuth: false,
+                    roles: ['guest', 'user', 'admin']
+                });
+                
+                // سپس بقیه مسیرها
+                this.routes.set('/', {
+                    name: 'خانه',
+                    requiresAuth: false,
+                    roles: ['guest', 'user', 'admin']
+                });
+                
+                this.routes.set('/login', {
+                    name: 'ورود',
+                    requiresAuth: false,
+                    roles: ['guest']
+                });
+                
+                this.routes.set('/dashboard', {
+                    name: 'داشبورد',
+                    requiresAuth: true,
+                    roles: ['user', 'admin']
+                });
+                
+                this.routes.set('/admin', {
+                    name: 'مدیریت',
+                    requiresAuth: true,
+                    roles: ['admin']
+                });
+            }
+            
+            async navigate(toPath, options = {}) {
+                console.log(`🔍 درخواست مسیریابی به: ${toPath}`);
+                
+                // 1. اول بررسی کن مسیر وجود داره
+                if (!this.routes.has(toPath)) {
+                    console.log(`❌ مسیر ${toPath} یافت نشد → ریدایرکت به 404`);
+                    this.currentRoute = '/404';
+                    return false;
+                }
+                
+                const to = this.routes.get(toPath);
+                
+                // 2. Guard مهمان (باید قبل از احراز چک شه)
+                if ((toPath === '/login') && this.isAuthenticated) {
+                    console.log('🚫 کاربر لاگین کرده، نمی‌تواند به لاگین برود');
+                    this.currentRoute = '/dashboard';
+                    return false;
+                }
+                
+                // 3. Guard احراز هویت
+                if (to.requiresAuth && !this.isAuthenticated) {
+                    console.log('🔐 نیاز به احراز هویت → ریدایرکت به لاگین');
+                    this.currentRoute = '/login';
+                    return false;
+                }
+                
+                // 4. Guard نقش کاربر
+                if (to.roles && !to.roles.includes(this.userRole)) {
+                    console.log(`⛔ نقش ${this.userRole} مجاز نیست`);
+                    this.currentRoute = '/';
+                    return false;
+                }
+                
+                // 5. انجام مسیریابی موفق
+                const previous = this.currentRoute;
+                this.currentRoute = toPath;
+                
+                // فقط اگر replace نبود و مسیر تغییر کرده، به history اضافه کن
+                if (!options.replace && previous !== toPath) {
+                    this.history.push(previous);
+                    console.log(`📝 اضافه به تاریخچه: ${previous}`);
+                }
+                
+                console.log(`✅ مسیریابی موفق: ${previous} → ${toPath}`);
+                return true;
+            }
+            
+            goBack() {
+                if (this.history.length > 0) {
+                    const previous = this.history.pop();
+                    console.log(`↩️ بازگشت به: ${previous}`);
+                    this.currentRoute = previous;
+                    return true;
+                }
+                console.log('⚠️ تاریخچه‌ای برای بازگشت وجود ندارد');
+                return false;
+            }
+            
+            setAuth(authenticated, role = 'user') {
+                this.isAuthenticated = authenticated;
+                this.userRole = role;
+                console.log(`👤 وضعیت احراز: ${authenticated ? 'لاگین' : 'لاگ‌اوت'} | نقش: ${role}`);
+            }
+            
+            addRoute(path, config) {
+                if (this.routes.has(path)) {
+                    console.log(`⚠️ مسیر ${path} قبلاً وجود دارد`);
+                    return false;
+                }
+                this.routes.set(path, config);
+                console.log(`➕ مسیر جدید: ${path}`);
+                return true;
+            }
+        }
+
+        // ==================== تست‌های اصلاح‌شده ====================
+        const coreTestsFixed = [
+            {
+                id: 1,
+                title: "مسیریابی ساده به صفحه اصلی",
+                run: async () => {
+                    const router = new RouterCoreFixed();
+                    const result = await router.navigate('/');
+                    return result && router.currentRoute === '/';
+                }
+            },
+            {
+                id: 2,
+                title: "Guard احراز - دسترسی به داشبورد بدون لاگین",
+                run: async () => {
+                    const router = new RouterCoreFixed();
+                    router.setAuth(false, 'guest'); // لاگین نیست
+                    const result = await router.navigate('/dashboard');
+                    // باید false برگردونه و به /login ریدایرکت بشه
+                    return !result && router.currentRoute === '/login';
+                }
+            },
+            {
+                id: 3,
+                title: "Guard احراز - دسترسی به داشبورد با لاگین",
+                run: async () => {
+                    const router = new RouterCoreFixed();
+                    router.setAuth(true, 'user'); // لاگین شده
+                    const result = await router.navigate('/dashboard');
+                    return result && router.currentRoute === '/dashboard';
+                }
+            },
+            {
+                id: 4,
+                title: "Guard نقش - کاربر عادی به ادمین دسترسی ندارد",
+                run: async () => {
+                    const router = new RouterCoreFixed();
+                    router.setAuth(true, 'user'); // نقش user
+                    const result = await router.navigate('/admin');
+                    // باید false برگردونه و به / ریدایرکت بشه
+                    return !result && router.currentRoute === '/';
+                }
+            },
+            {
+                id: 5,
+                title: "تاریخچه مسیریابی و قابلیت بازگشت",
+                run: async () => {
+                    const router = new RouterCoreFixed();
+                    router.setAuth(true, 'user');
+                    
+                    // به داشبورد برو (به تاریخچه اضافه می‌شود)
+                    await router.navigate('/dashboard');
+                    const historyCount1 = router.history.length; // باید 1 باشد
+                    
+                    // به خانه برگرد (باز هم اضافه می‌شود)
+                    await router.navigate('/');
+                    const historyCount2 = router.history.length; // باید 2 باشد
+                    
+                    // یک بار برگشت
+                    const back1 = router.goBack();
+                    const currentAfterBack1 = router.currentRoute; // باید '/dashboard' باشد
+                    
+                    // دوباره برگشت
+                    const back2 = router.goBack();
+                    const currentAfterBack2 = router.currentRoute; // باید '/' باشد
+                    
+                    return historyCount1 === 1 && 
+                           historyCount2 === 2 &&
+                           back1 && currentAfterBack1 === '/dashboard' &&
+                           back2 && currentAfterBack2 === '/';
+                }
+            },
+            {
+                id: 6,
+                title: "مدیریت مسیرهای ناموجود (404)",
+                run: async () => {
+                    const router = new RouterCoreFixed();
+                    const result = await router.navigate('/invalid-route-xyz');
+                    // باید false برگردونه و currentRoute بشه '/404'
+                    return !result && router.currentRoute === '/404';
+                }
+            },
+            {
+                id: 7,
+                title: "افزودن مسیر داینامیک و استخراج پارامترها",
+                run: async () => {
+                    const router = new RouterCoreFixed();
+                    
+                    // اضافه کردن مسیر با پارامتر
+                    const added = router.addRoute('/user/:userId', {
+                        name: 'پروفایل کاربر',
+                        requiresAuth: true,
+                        roles: ['user', 'admin']
+                    });
+                    
+                    // تست وجود مسیر
+                    const routeExists = router.routes.has('/user/:userId');
+                    
+                    // تست پارامترها
+                    const extractParams = (path) => {
+                        if (!path.includes(':')) return [];
+                        const params = [];
+                        const parts = path.split('/');
+                        parts.forEach(part => {
+                            if (part.startsWith(':')) {
+                                params.push(part.substring(1));
+                            }
+                        });
+                        return params;
+                    };
+                    
+                    const params = extractParams('/user/:userId');
+                    const hasUserId = params.includes('userId');
+                    
+                    return added && routeExists && hasUserId;
+                }
+            },
+            {
+                id: 8,
+                title: "مسیریابی با replace (بدون افزودن به تاریخچه)",
+                run: async () => {
+                    const router = new RouterCoreFixed();
+                    router.setAuth(true, 'user');
+                    
+                    // رفتن به داشبورد (اضافه به تاریخچه)
+                    await router.navigate('/dashboard');
+                    const historyAfterFirst = router.history.length; // باید 1 باشد
+                    
+                    // رفتن به خانه با replace (اضافه نمی‌شود)
+                    await router.navigate('/', { replace: true });
+                    const historyAfterReplace = router.history.length; // باید هنوز 1 باشد
+                    
+                    return historyAfterFirst === 1 && historyAfterReplace === 1;
+                }
+            }
+        ];
+
+        // ==================== اجرای تست‌ها ====================
+        let passedTests = 0;
+        let failedTests = 0;
+
+        async function runAllTests() {
+            passedTests = 0;
+            failedTests = 0;
+            const resultsDiv = document.getElementById('test-results');
+            resultsDiv.innerHTML = '';
+            
+            for (const test of coreTestsFixed) {
+                try {
+                    const result = await test.run();
+                    const testDiv = document.createElement('div');
+                    testDiv.className = 'test-section';
+                    
+                    const testResult = result ? 'pass' : 'fail';
+                    const resultText = result ? '✅ موفق' : '❌ ناموفق';
+                    
+                    if (result) passedTests++;
+                    else failedTests++;
+                    
+                    testDiv.innerHTML = `
+                        <div class="test-header">
+                            <div class="test-title">${test.id}. ${test.title}</div>
+                            <div class="test-result ${testResult}">${resultText}</div>
+                        </div>
+                        ${!result ? '<div class="details">تست ناموفق بود</div>' : ''}
+                    `;
+                    
+                    resultsDiv.appendChild(testDiv);
+                    
+                    // لاگ کنسول برای دیباگ
+                    console.log(`تست ${test.id}: ${result ? '✅' : '❌'}`);
+                    
+                } catch (error) {
+                    failedTests++;
+                    const testDiv = document.createElement('div');
+                    testDiv.className = 'test-section';
+                    testDiv.innerHTML = `
+                        <div class="test-header">
+                            <div class="test-title">${test.id}. ${test.title}</div>
+                            <div class="test-result fail">❌ خطا</div>
+                        </div>
+                        <div class="details">${error.message}</div>
+                    `;
+                    resultsDiv.appendChild(testDiv);
+                    console.error(`خطا در تست ${test.id}:`, error);
+                }
+                
+                updateSummary();
+            }
+        }
+
+        function clearTests() {
+            document.getElementById('test-results').innerHTML = '';
+            passedTests = failedTests = 0;
+            updateSummary();
+        }
+
+        function updateSummary() {
+            const summary = document.getElementById('summary-text');
+            const total = coreTestsFixed.length;
+            const percentage = total > 0 ? Math.round((passedTests / total) * 100) : 0;
+            
+            summary.textContent = 
+                `✅ ${passedTests} موفق | ❌ ${failedTests} ناموفق | 📊 ${percentage}% قبولی`;
+            
+            summary.style.color = percentage === 100 ? '#4caf50' : 
+                                 percentage >= 80 ? '#ff9800' : '#f44336';
+        }
+
+        // اجرای خودکار تست‌ها
+        window.onload = () => {
+            updateSummary();
+            console.log('🚀 شروع تست‌های مسیریابی...');
+            setTimeout(runAllTests, 500);
+        };
+    </script>
+</body>
+</html>
