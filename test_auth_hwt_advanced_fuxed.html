@@ -1,0 +1,574 @@
+<!DOCTYPE html>
+<html lang="fa">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Farsinglish - تست پیشرفته JWT (اصلاح‌شده)</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { 
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            color: white;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .container { 
+            max-width: 800px; 
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        h1 { 
+            text-align: center; 
+            margin-bottom: 30px;
+            font-size: 2rem;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+        .test-section { 
+            margin: 20px 0;
+            padding: 15px;
+            background: rgba(255, 255, 255, 0.08);
+            border-radius: 10px;
+            border-left: 4px solid #4CAF50;
+        }
+        .test-header { 
+            display: flex; 
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        .test-title { font-size: 1rem; font-weight: 600; }
+        .test-result { 
+            padding: 4px 10px;
+            border-radius: 15px;
+            font-size: 0.8rem;
+            font-weight: bold;
+        }
+        .pass { background: #4CAF50; }
+        .fail { background: #f44336; }
+        .details { 
+            margin-top: 8px;
+            padding: 10px;
+            background: rgba(0,0,0,0.2);
+            border-radius: 6px;
+            font-family: monospace;
+            font-size: 0.8rem;
+        }
+        .summary {
+            margin-top: 20px;
+            padding: 15px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 10px;
+            text-align: center;
+        }
+        button {
+            background: linear-gradient(45deg, #2196F3, #21CBF3);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            cursor: pointer;
+            margin: 5px;
+        }
+        .controls { text-align: center; margin-top: 15px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔐 تست JWT پیشرفته - اصلاح‌شده</h1>
+        <div id="test-results"></div>
+        <div class="summary">
+            <p id="summary-text">تعداد تست‌ها: ۱۲ | موفق: ۰ | ناموفق: ۰</p>
+        </div>
+        <div class="controls">
+            <button onclick="runAllTests()">🚀 اجرای تست‌ها</button>
+            <button onclick="clearTests()">🧹 پاک کردن</button>
+        </div>
+    </div>
+
+    <script>
+        // ==================== JWT Service (اصلاح‌شده) ====================
+        class JWTServiceFixed {
+            constructor() {
+                this.secretKey = 'farsinglish-secret-2025';
+                this.tokenHeader = { alg: 'HS256', typ: 'JWT' };
+            }
+
+            // اصلاح: پشتیبانی از یونیکد فارسی
+            base64UrlEncode(str) {
+                const utf8Bytes = new TextEncoder().encode(str);
+                let binary = '';
+                for (let i = 0; i < utf8Bytes.length; i++) {
+                    binary += String.fromCharCode(utf8Bytes[i]);
+                }
+                return btoa(binary)
+                    .replace(/\+/g, '-')
+                    .replace(/\//g, '_')
+                    .replace(/=+$/, '');
+            }
+
+            base64UrlDecode(str) {
+                str = str.replace(/-/g, '+').replace(/_/g, '/');
+                while (str.length % 4) str += '=';
+                const binary = atob(str);
+                const bytes = new Uint8Array(binary.length);
+                for (let i = 0; i < binary.length; i++) {
+                    bytes[i] = binary.charCodeAt(i);
+                }
+                return new TextDecoder().decode(bytes);
+            }
+
+            async createToken(payload, options = {}) {
+                const header = this.base64UrlEncode(JSON.stringify(this.tokenHeader));
+                
+                // اضافه کردن Claims ضروری
+                const payloadWithClaims = {
+                    ...payload,
+                    sub: payload.sub || payload.userId || 'anonymous',
+                    iat: Math.floor(Date.now() / 1000),
+                    exp: Math.floor(Date.now() / 1000) + (options.expiresIn || 3600),
+                    jti: this.generateJTI(),
+                    iss: 'farsinglish-auth',
+                    aud: 'farsinglish-app',
+                    version: '1.0'
+                };
+                
+                const encodedPayload = this.base64UrlEncode(JSON.stringify(payloadWithClaims));
+                const signature = await this.createSignature(`${header}.${encodedPayload}`);
+                return `${header}.${encodedPayload}.${signature}`;
+            }
+
+            async createSignature(data) {
+                const encoder = new TextEncoder();
+                const key = await crypto.subtle.importKey(
+                    'raw',
+                    encoder.encode(this.secretKey),
+                    { name: 'HMAC', hash: 'SHA-256' },
+                    false,
+                    ['sign']
+                );
+                const signature = await crypto.subtle.sign(
+                    'HMAC',
+                    key,
+                    encoder.encode(data)
+                );
+                const sigBytes = new Uint8Array(signature);
+                let binary = '';
+                for (let i = 0; i < sigBytes.length; i++) {
+                    binary += String.fromCharCode(sigBytes[i]);
+                }
+                return btoa(binary)
+                    .replace(/\+/g, '-')
+                    .replace(/\//g, '_')
+                    .replace(/=+$/, '');
+            }
+
+            async verifyToken(token) {
+                try {
+                    const parts = token.split('.');
+                    if (parts.length !== 3) {
+                        return { valid: false, error: 'فرمت توکن نامعتبر' };
+                    }
+                    
+                    const [header, payload, signature] = parts;
+                    const expectedSig = await this.createSignature(`${header}.${payload}`);
+                    
+                    // اعتبارسنجی امضا
+                    if (signature !== expectedSig) {
+                        return { valid: false, error: 'امضای توکن نامعتبر' };
+                    }
+                    
+                    const decodedPayload = JSON.parse(this.base64UrlDecode(payload));
+                    const now = Math.floor(Date.now() / 1000);
+                    
+                    // اعتبارسنجی زمان
+                    if (decodedPayload.exp && decodedPayload.exp <= now) {
+                        return { valid: false, error: 'توکن منقضی شده', expired: true };
+                    }
+                    
+                    if (decodedPayload.nbf && decodedPayload.nbf > now) {
+                        return { valid: false, error: 'توکن هنوز فعال نشده' };
+                    }
+                    
+                    // اعتبارسنجی Claims ضروری
+                    const requiredClaims = ['sub', 'iat', 'exp', 'jti', 'iss', 'aud'];
+                    const missingClaims = requiredClaims.filter(claim => !(claim in decodedPayload));
+                    if (missingClaims.length > 0) {
+                        return { valid: false, error: `Claims ضروری缺少: ${missingClaims.join(', ')}` };
+                    }
+                    
+                    return {
+                        valid: true,
+                        payload: decodedPayload,
+                        userId: decodedPayload.sub,
+                        expiresIn: decodedPayload.exp - now,
+                        remainingTime: decodedPayload.exp - now
+                    };
+                } catch (error) {
+                    return { valid: false, error: `خطا در اعتبارسنجی: ${error.message}` };
+                }
+            }
+
+            generateJTI() {
+                return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+                    const r = Math.random() * 16 | 0;
+                    const v = c === 'x' ? r : (r & 0x3 | 0x8);
+                    return v.toString(16);
+                });
+            }
+
+            // اصلاح: منطق Refresh صحیح
+            async refreshToken(oldToken, newExpiresIn = 3600) {
+                const verification = await this.verifyToken(oldToken);
+                
+                if (!verification.valid) {
+                    throw new Error(`توکن نامعتبر: ${verification.error}`);
+                }
+                
+                // فقط اگر کمتر از ۵ دقیقه مانده باشد refresh کنیم
+                if (verification.remainingTime > 300) {
+                    throw new Error('توکن هنوز منقضی نشده (بیش از ۵ دقیقه مانده)');
+                }
+                
+                // ایجاد توکن جدید با payload قدیم (بدون claims زمانی)
+                const { iat, exp, jti, ...oldPayload } = verification.payload;
+                const newPayload = {
+                    ...oldPayload,
+                    prevTokenId: jti // پیوند به توکن قبلی
+                };
+                
+                return this.createToken(newPayload, { expiresIn: newExpiresIn });
+            }
+
+            extractPayload(token) {
+                try {
+                    const parts = token.split('.');
+                    if (parts.length !== 3) return null;
+                    return JSON.parse(this.base64UrlDecode(parts[1]));
+                } catch (error) {
+                    console.error('خطا در استخراج payload:', error);
+                    return null;
+                }
+            }
+
+            validateAllClaims(payload) {
+                const requiredClaims = ['sub', 'iat', 'exp', 'jti', 'iss', 'aud'];
+                const missing = requiredClaims.filter(claim => !(claim in payload));
+                
+                if (missing.length > 0) {
+                    return { 
+                        valid: false, 
+                        missing,
+                        message: `Claims ضروری缺少: ${missing.join(', ')}`
+                    };
+                }
+                
+                // اعتبارسنجی انواع داده
+                const validations = [];
+                if (typeof payload.sub !== 'string') validations.push('sub باید رشته باشد');
+                if (typeof payload.iat !== 'number') validations.push('iat باید عدد باشد');
+                if (typeof payload.exp !== 'number') validations.push('exp باید عدد باشد');
+                if (payload.exp <= payload.iat) validations.push('exp باید بعد از iat باشد');
+                
+                if (validations.length > 0) {
+                    return { valid: false, errors: validations };
+                }
+                
+                return { valid: true, claims: payload };
+            }
+        }
+
+        // ==================== تست‌ها ====================
+        const tests = [
+            {
+                id: 1,
+                title: "تولید توکن با Claims کامل",
+                run: async (jwt) => {
+                    const payload = {
+                        sub: "user-12345",
+                        username: "testuser",
+                        role: "premium",
+                        customData: { level: 5, score: 100 }
+                    };
+                    const token = await jwt.createToken(payload, { expiresIn: 7200 });
+                    const verification = await jwt.verifyToken(token);
+                    
+                    return verification.valid && 
+                           verification.payload.sub === "user-12345" &&
+                           verification.payload.role === "premium" &&
+                           verification.payload.iss === "farsinglish-auth";
+                }
+            },
+            {
+                id: 2,
+                title: "توکن با کاراکترهای فارسی در Payload",
+                run: async (jwt) => {
+                    const payload = {
+                        sub: "user-farsi",
+                        name: "محمد رضایی",
+                        city: "تهران",
+                        bio: "برنامه‌نویس و علاقه‌مند به آموزش زبان انگلیسی"
+                    };
+                    const token = await jwt.createToken(payload);
+                    const verification = await jwt.verifyToken(token);
+                    
+                    return verification.valid && 
+                           verification.payload.name === "محمد رضایی" &&
+                           verification.payload.bio.includes("آموزش زبان") &&
+                           verification.payload.sub === "user-farsi";
+                }
+            },
+            {
+                id: 3,
+                title: "اعتبارسنجی Claims ضروری",
+                run: async (jwt) => {
+                    const payload = { sub: "test-claims" };
+                    const token = await jwt.createToken(payload);
+                    const verification = await jwt.verifyToken(token);
+                    
+                    const claimsCheck = jwt.validateAllClaims(verification.payload);
+                    
+                    return verification.valid && 
+                           claimsCheck.valid &&
+                           'sub' in verification.payload &&
+                           'iat' in verification.payload &&
+                           'exp' in verification.payload &&
+                           'jti' in verification.payload;
+                }
+            },
+            {
+                id: 4,
+                title: "Refresh توکن موفق",
+                run: async (jwt) => {
+                    // ایجاد توکن با زمان انقضای کوتاه
+                    const payload = { sub: "refresh-user", username: "refresh-test" };
+                    const token = await jwt.createToken(payload, { expiresIn: 10 });
+                    
+                    // صبر کردن تا نزدیک انقضا
+                    await new Promise(resolve => setTimeout(resolve, 100));
+                    
+                    try {
+                        const newToken = await jwt.refreshToken(token, 3600);
+                        const verification = await jwt.verifyToken(newToken);
+                        
+                        return verification.valid && 
+                               verification.payload.sub === "refresh-user" &&
+                               verification.payload.prevTokenId !== undefined;
+                    } catch (error) {
+                        console.error('خطا در refresh:', error);
+                        return false;
+                    }
+                }
+            },
+            {
+                id: 5,
+                title: "تشخیص توکن منقضی شده",
+                run: async (jwt) => {
+                    const payload = { sub: "expired-test" };
+                    // ایجاد توکن منقضی شده
+                    const expiredPayload = {
+                        ...payload,
+                        iat: Math.floor(Date.now() / 1000) - 7200,
+                        exp: Math.floor(Date.now() / 1000) - 3600
+                    };
+                    
+                    const header = jwt.base64UrlEncode(JSON.stringify(jwt.tokenHeader));
+                    const encodedPayload = jwt.base64UrlEncode(JSON.stringify(expiredPayload));
+                    const data = `${header}.${encodedPayload}`;
+                    const signature = await jwt.createSignature(data);
+                    const expiredToken = `${data}.${signature}`;
+                    
+                    const verification = await jwt.verifyToken(expiredToken);
+                    return !verification.valid && verification.expired === true;
+                }
+            },
+            {
+                id: 6,
+                title: "امضای نادرست توکن",
+                run: async (jwt) => {
+                    const payload = { sub: "sig-test" };
+                    const token = await jwt.createToken(payload);
+                    const tamperedToken = token.substring(0, token.length - 5) + "12345";
+                    const verification = await jwt.verifyToken(tamperedToken);
+                    return !verification.valid && verification.error.includes('امضای');
+                }
+            },
+            {
+                id: 7,
+                title: "توکن با Issuer و Audience صحیح",
+                run: async (jwt) => {
+                    const payload = { sub: "iss-aud-test" };
+                    const token = await jwt.createToken(payload);
+                    const verification = await jwt.verifyToken(token);
+                    
+                    return verification.valid && 
+                           verification.payload.iss === "farsinglish-auth" &&
+                           verification.payload.aud === "farsinglish-app";
+                }
+            },
+            {
+                id: 8,
+                title: "JTI یکتا برای هر توکن",
+                run: async (jwt) => {
+                    const payload1 = { sub: "jti-test-1" };
+                    const payload2 = { sub: "jti-test-2" };
+                    
+                    const token1 = await jwt.createToken(payload1);
+                    const token2 = await jwt.createToken(payload2);
+                    
+                    const payloadObj1 = jwt.extractPayload(token1);
+                    const payloadObj2 = jwt.extractPayload(token2);
+                    
+                    return payloadObj1 && payloadObj2 &&
+                           payloadObj1.jti && payloadObj2.jti &&
+                           payloadObj1.jti !== payloadObj2.jti;
+                }
+            },
+            {
+                id: 9,
+                title: "استخراج Payload بدون verify",
+                run: async (jwt) => {
+                    const payload = { 
+                        sub: "extract-test",
+                        data: { score: 95, level: 5, name: "تست" }
+                    };
+                    const token = await jwt.createToken(payload);
+                    const extracted = jwt.extractPayload(token);
+                    return extracted && 
+                           extracted.sub === "extract-test" &&
+                           extracted.data.name === "تست";
+                }
+            },
+            {
+                id: 10,
+                title: "عدم Refresh توکن معتبر",
+                run: async (jwt) => {
+                    const payload = { sub: "no-refresh" };
+                    const token = await jwt.createToken(payload, { expiresIn: 5000 });
+                    
+                    try {
+                        await jwt.refreshToken(token);
+                        return false; // باید خطا بدهد
+                    } catch (error) {
+                        return error.message.includes('توکن هنوز منقضی نشده');
+                    }
+                }
+            },
+            {
+                id: 11,
+                title: "توکن با Custom Claims پیچیده",
+                run: async (jwt) => {
+                    const payload = {
+                        sub: "custom-user",
+                        custom: {
+                            premium: true,
+                            features: ["vocab", "lessons", "speaking", "writing"],
+                            settings: { theme: "dark", language: "fa" }
+                        }
+                    };
+                    const token = await jwt.createToken(payload);
+                    const verification = await jwt.verifyToken(token);
+                    
+                    return verification.valid && 
+                           verification.payload.custom.premium === true &&
+                           verification.payload.custom.features.includes("speaking") &&
+                           verification.payload.custom.settings.language === "fa";
+                }
+            },
+            {
+                id: 12,
+                title: "اعتبارسنجی کامل Claims",
+                run: async (jwt) => {
+                    const payload = {
+                        sub: "full-validation",
+                        iat: Math.floor(Date.now() / 1000),
+                        exp: Math.floor(Date.now() / 1000) + 3600,
+                        jti: "test-jti-123",
+                        iss: "test-issuer",
+                        aud: "test-audience",
+                        extra: "data"
+                    };
+                    
+                    const validation = jwt.validateAllClaims(payload);
+                    return validation.valid && 
+                           validation.claims.sub === "full-validation";
+                }
+            }
+        ];
+
+        // ==================== اجرای تست‌ها ====================
+        const jwt = new JWTServiceFixed();
+        let passedTests = 0;
+        let failedTests = 0;
+
+        async function runAllTests() {
+            passedTests = 0;
+            failedTests = 0;
+            const resultsDiv = document.getElementById('test-results');
+            resultsDiv.innerHTML = '';
+            
+            for (const test of tests) {
+                try {
+                    const result = await test.run(jwt);
+                    const testDiv = document.createElement('div');
+                    testDiv.className = 'test-section';
+                    
+                    const testResult = result ? 'pass' : 'fail';
+                    const resultText = result ? '✅ موفق' : '❌ ناموفق';
+                    
+                    if (result) passedTests++;
+                    else failedTests++;
+                    
+                    testDiv.innerHTML = `
+                        <div class="test-header">
+                            <div class="test-title">${test.id}. ${test.title}</div>
+                            <div class="test-result ${testResult}">${resultText}</div>
+                        </div>
+                    `;
+                    
+                    resultsDiv.appendChild(testDiv);
+                } catch (error) {
+                    failedTests++;
+                    const testDiv = document.createElement('div');
+                    testDiv.className = 'test-section';
+                    testDiv.innerHTML = `
+                        <div class="test-header">
+                            <div class="test-title">${test.id}. ${test.title}</div>
+                            <div class="test-result fail">❌ خطا</div>
+                        </div>
+                        <div class="details">${error.message}</div>
+                    `;
+                    resultsDiv.appendChild(testDiv);
+                }
+                
+                updateSummary();
+            }
+        }
+
+        function clearTests() {
+            document.getElementById('test-results').innerHTML = '';
+            passedTests = failedTests = 0;
+            updateSummary();
+        }
+
+        function updateSummary() {
+            const summary = document.getElementById('summary-text');
+            summary.textContent = 
+                `تعداد تست‌ها: ${tests.length} | موفق: ${passedTests} | ناموفق: ${failedTests}`;
+        }
+
+        // اجرای خودکار تست‌ها
+        window.onload = () => {
+            updateSummary();
+            // اجرای تست‌ها با تأخیر برای نمایش بهتر
+            setTimeout(runAllTests, 500);
+        };
+    </script>
+</body>
+</html>
