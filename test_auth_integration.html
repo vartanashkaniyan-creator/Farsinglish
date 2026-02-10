@@ -140,13 +140,6 @@
             border: 1px solid rgba(197, 48, 48, 0.3);
         }
         
-        .connection-line {
-            position: absolute;
-            background: rgba(255, 255, 255, 0.2);
-            height: 2px;
-            transform-origin: left center;
-        }
-        
         .test-sections {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
@@ -347,12 +340,13 @@
             background: rgba(255, 255, 255, 0.05);
             border-radius: 10px;
             border: 1px solid rgba(255, 255, 255, 0.1);
-            animation: pulse 2s infinite;
+            transition: all 0.3s;
         }
         
-        @keyframes pulse {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.7; }
+        .flow-step.active {
+            background: rgba(49, 130, 206, 0.3);
+            border-color: rgba(49, 130, 206, 0.6);
+            box-shadow: 0 0 15px rgba(49, 130, 206, 0.3);
         }
         
         .step-number {
@@ -579,6 +573,7 @@
         
         .btn-full-test:hover {
             background: linear-gradient(45deg, #2c5282, #3b5bdb);
+            transform: scale(1.05);
         }
         
         .btn-clear {
@@ -588,6 +583,7 @@
         
         .btn-clear:hover {
             background: rgba(255, 255, 255, 0.2);
+            transform: scale(1.05);
         }
         
         footer {
@@ -597,6 +593,15 @@
             border-top: 1px solid rgba(255, 255, 255, 0.1);
             color: #718096;
             font-size: 0.9rem;
+        }
+        
+        .pulse-animation {
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
         }
         
         @media (max-width: 768px) {
@@ -1089,17 +1094,41 @@
         // تابع افزودن نتیجه
         function addResult(testId, success, message, data = null) {
             const resultsContainer = document.getElementById('resultsContainer');
-            const testDef = testDefinitions[testId];
+            const testDef = testDefinitions[testId] || { module: 'سیستم', name: testId };
             
             const resultItem = document.createElement('div');
             const now = new Date();
             const timeString = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}:${now.getSeconds().toString().padStart(2, '0')}`;
             
-            resultItem.className = `result-item ${success ? 'result-success' : 'result-error'}`;
+            let resultClass = 'result-info';
+            let icon = 'ℹ️';
+            
+            if (testId === 'system') {
+                if (message.includes('موفق')) {
+                    resultClass = 'result-success';
+                    icon = '✅';
+                } else if (message.includes('خطا')) {
+                    resultClass = 'result-error';
+                    icon = '❌';
+                }
+            } else {
+                resultClass = success ? 'result-success' : 'result-error';
+                icon = success ? '✅' : '❌';
+                
+                // آپدیت آمار فقط برای تست‌های واقعی
+                integrationTests.total++;
+                if (success) {
+                    integrationTests.passed++;
+                } else {
+                    integrationTests.failed++;
+                }
+            }
+            
+            resultItem.className = `result-item ${resultClass}`;
             resultItem.innerHTML = `
                 <div class="result-header">
                     <div class="result-module">
-                        <span>${success ? '✅' : '❌'}</span> ${testDef.module} - ${testDef.name}
+                        <span>${icon}</span> ${testDef.module} - ${testDef.name}
                     </div>
                     <div class="result-time">${timeString}</div>
                 </div>
@@ -1111,23 +1140,19 @@
             resultsContainer.scrollTop = resultsContainer.scrollHeight;
             
             // آپدیت آمار
-            integrationTests.total++;
-            if (success) {
-                integrationTests.passed++;
-            } else {
-                integrationTests.failed++;
+            if (testId !== 'system') {
+                integrationTests.coverage = Math.round((integrationTests.passed / Math.max(integrationTests.total, 1)) * 100);
+                integrationTests.results.push({
+                    testId,
+                    success,
+                    message,
+                    time: timeString
+                });
+                
+                updateStats();
+                updateIntegrationScore();
+                updateMonitorStats();
             }
-            
-            integrationTests.coverage = Math.round((integrationTests.passed / Math.max(integrationTests.total, 1)) * 100);
-            integrationTests.results.push({
-                testId,
-                success,
-                message,
-                time: timeString
-            });
-            
-            updateStats();
-            updateIntegrationScore();
         }
 
         // آپدیت آمار
@@ -1164,34 +1189,55 @@
             const testDef = testDefinitions[testId];
             if (!testDef) return;
             
-            // شبیه‌سازی تست
-            const success = Math.random() > 0.3; // 70% شانس موفقیت
-            const messages = {
-                success: [
-                    'عملکرد صحیح و هماهنگ بین ماژول‌ها',
-                    'داده‌ها با موفقیت منتقل و پردازش شدند',
-                    'همگام‌سازی بین کامپوننت‌ها برقرار است',
-                    'سیستم به درستی پاسخ داد'
-                ],
-                error: [
-                    'خطا در ارتباط بین ماژول‌ها',
-                    'داده‌ها به درستی منتقل نشدند',
-                    'همگام‌سازی با مشکل مواجه شد',
-                    'زمان پاسخگویی بیش از حد طولانی'
-                ]
-            };
+            // نمایش پیام در حال اجرا
+            const loadingResult = document.createElement('div');
+            loadingResult.className = 'result-item result-info';
+            loadingResult.innerHTML = `
+                <div class="result-header">
+                    <div class="result-module">
+                        <span>🔄</span> ${testDef.module} - ${testDef.name}
+                    </div>
+                    <div class="result-time">${new Date().toLocaleTimeString('fa-IR')}</div>
+                </div>
+                <div class="result-message">در حال اجرای تست... لطفا صبر کنید</div>
+            `;
+            document.getElementById('resultsContainer').appendChild(loadingResult);
+            document.getElementById('resultsContainer').scrollTop = document.getElementById('resultsContainer').scrollHeight;
             
-            const messageType = success ? 'success' : 'error';
-            const randomMessage = messages[messageType][Math.floor(Math.random() * messages[messageType].length)];
-            
-            const testData = success ? 
-                `زمان اجرا: ${(Math.random() * 100 + 50).toFixed(0)}ms | اندازه داده: ${Math.floor(Math.random() * 5000) + 1000} bytes` :
-                `کد خطا: ERR_${Math.floor(Math.random() * 1000)} | ماژول: ${testDef.module}`;
-            
-            addResult(testId, success, randomMessage, testData);
-            
-            // شبیه‌سازی فعالیت در نمودار جریان
-            simulateFlow(testId);
+            // شبیه‌سازی تست با تأخیر
+            setTimeout(() => {
+                // حذف پیام در حال اجرا
+                loadingResult.remove();
+                
+                const success = Math.random() > 0.3; // 70% شانس موفقیت
+                const messages = {
+                    success: [
+                        'عملکرد صحیح و هماهنگ بین ماژول‌ها',
+                        'داده‌ها با موفقیت منتقل و پردازش شدند',
+                        'همگام‌سازی بین کامپوننت‌ها برقرار است',
+                        'سیستم به درستی پاسخ داد'
+                    ],
+                    error: [
+                        'خطا در ارتباط بین ماژول‌ها',
+                        'داده‌ها به درستی منتقل نشدند',
+                        'همگام‌سازی با مشکل مواجه شد',
+                        'زمان پاسخگویی بیش از حد طولانی'
+                    ]
+                };
+                
+                const messageType = success ? 'success' : 'error';
+                const randomMessage = messages[messageType][Math.floor(Math.random() * messages[messageType].length)];
+                
+                const testData = success ? 
+                    `زمان اجرا: ${(Math.random() * 100 + 50).toFixed(0)}ms | اندازه داده: ${Math.floor(Math.random() * 5000) + 1000} bytes` :
+                    `کد خطا: ERR_${Math.floor(Math.random() * 1000)} | ماژول: ${testDef.module}`;
+                
+                addResult(testId, success, randomMessage, testData);
+                
+                // شبیه‌سازی فعالیت در نمودار جریان
+                simulateFlow(testId);
+                
+            }, 800 + Math.random() * 700); // تأخیر تصادفی بین 800-1500ms
         }
 
         // شبیه‌سازی تست
@@ -1199,46 +1245,93 @@
             const testDef = testDefinitions[testId];
             if (!testDef) return;
             
-            addResult(testId, true, `شبیه‌سازی تست ${testDef.name} - سیستم پاسخ مطلوب داد`, 
-                'نوع: شبیه‌سازی | وضعیت: موفق | زمان: 250ms');
+            // نمایش پیام شبیه‌سازی
+            const loadingResult = document.createElement('div');
+            loadingResult.className = 'result-item result-info';
+            loadingResult.innerHTML = `
+                <div class="result-header">
+                    <div class="result-module">
+                        <span>⚡</span> ${testDef.module} - ${testDef.name}
+                    </div>
+                    <div class="result-time">${new Date().toLocaleTimeString('fa-IR')}</div>
+                </div>
+                <div class="result-message">در حال شبیه‌سازی تست...</div>
+            `;
+            document.getElementById('resultsContainer').appendChild(loadingResult);
             
-            simulateFlow(testId);
+            setTimeout(() => {
+                loadingResult.remove();
+                addResult(testId, true, `شبیه‌سازی تست ${testDef.name} - سیستم پاسخ مطلوب داد`, 
+                    'نوع: شبیه‌سازی | وضعیت: موفق | زمان: 250ms');
+                
+                simulateFlow(testId);
+            }, 600);
         }
 
         // شبیه‌سازی جریان داده
         function simulateFlow(testId) {
             const steps = document.querySelectorAll('.flow-step');
-            steps.forEach(step => step.style.animation = 'none');
             
-            setTimeout(() => {
-                steps.forEach((step, index) => {
+            // ریست رنگ مراحل
+            steps.forEach(step => {
+                step.classList.remove('active');
+            });
+            
+            // فعال‌سازی مرحله به مرحله
+            steps.forEach((step, index) => {
+                setTimeout(() => {
+                    step.classList.add('active');
+                    
                     setTimeout(() => {
-                        step.style.background = 'rgba(49, 130, 206, 0.3)';
-                        step.style.borderColor = 'rgba(49, 130, 206, 0.6)';
-                        step.style.animation = 'pulse 2s infinite';
-                        
-                        setTimeout(() => {
-                            step.style.background = '';
-                            step.style.borderColor = '';
-                        }, 1000);
-                    }, index * 300);
-                });
-            }, 100);
+                        step.classList.remove('active');
+                    }, 500);
+                }, index * 300);
+            });
         }
 
         // اجرای تمام تست‌ها
         function runAllIntegrationTests() {
+            // ابتدا نتایج را پاک می‌کنیم
+            clearResults();
+            
+            // نمایش پیام شروع
             addResult('system', true, 'شروع تمام تست‌های یکپارچگی', 'تعداد تست‌ها: 12 | وضعیت: در حال اجرا');
             
             const testIds = Object.keys(testDefinitions);
-            testIds.forEach((testId, index) => {
-                setTimeout(() => runTest(testId), index * 800);
-            });
             
-            setTimeout(() => {
-                addResult('system', true, 'تکمیل تمام تست‌های یکپارچگی', 
-                    `نتایج: ${integrationTests.passed} موفق، ${integrationTests.failed} ناموفق`);
-            }, testIds.length * 800 + 500);
+            // اجرای تدریجی تست‌ها با تأخیر
+            testIds.forEach((testId, index) => {
+                setTimeout(() => {
+                    runTest(testId);
+                    
+                    // بعد از تست آخر، نتیجه نهایی را نمایش بده
+                    if (index === testIds.length - 1) {
+                        setTimeout(() => {
+                            addResult('system', true, 'تکمیل تمام تست‌های یکپارچگی', 
+                                `نتایج: ${integrationTests.passed} موفق، ${integrationTests.failed} ناموفق | پوشش: ${integrationTests.coverage}%`);
+                        }, 1500);
+                    }
+                }, index * 2000); // تأخیر 2 ثانیه بین تست‌ها
+            });
+        }
+
+        // آپدیت مانیتور
+        function updateMonitorStats() {
+            const successRate = integrationTests.total > 0 ? 
+                Math.round((integrationTests.passed / integrationTests.total) * 100) : 98;
+            
+            document.getElementById('successRate').textContent = `${successRate}%`;
+            document.getElementById('successFill').style.width = `${successRate}%`;
+            
+            // آپدیت زمان پاسخگویی (متناسب با تعداد تست‌ها)
+            const responseTime = 100 - (integrationTests.passed * 5) + Math.random() * 30;
+            document.getElementById('responseTime').textContent = `${Math.max(Math.round(responseTime), 20)}ms`;
+            document.getElementById('responseFill').style.width = `${Math.max(100 - responseTime, 10)}%`;
+            
+            // آپدیت اتصالات
+            const activeConnections = 5 - Math.floor(integrationTests.failed / 3);
+            document.getElementById('activeConnections').textContent = `${Math.max(activeConnections, 1)}/5`;
+            document.getElementById('connectionsFill').style.width = `${(activeConnections / 5) * 100}%`;
         }
 
         // پاک کردن نتایج
@@ -1267,6 +1360,7 @@
             integrationTests.coverage = 0;
             integrationTests.results = [];
             updateStats();
+            updateMonitorStats();
         }
 
         // ریست تمام تست‌ها
@@ -1279,12 +1373,15 @@
             document.getElementById('successRate').textContent = '98%';
             document.getElementById('memoryUsage').textContent = '24MB';
             
+            document.getElementById('connectionsFill').style.width = '100%';
+            document.getElementById('responseFill').style.width = '85%';
+            document.getElementById('successFill').style.width = '98%';
+            document.getElementById('memoryFill').style.width = '32%';
+            
             // ریست نمودار جریان
             const steps = document.querySelectorAll('.flow-step');
             steps.forEach(step => {
-                step.style.background = '';
-                step.style.borderColor = '';
-                step.style.animation = 'pulse 2s infinite';
+                step.classList.remove('active');
             });
             
             addResult('system', true, 'سیستم ریست شد', 'تمام تست‌ها و وضعیت‌ها به حالت اولیه بازگشتند');
@@ -1303,4 +1400,4 @@
         });
     </script>
 </body>
-</html>
+                                </html>
