@@ -1,0 +1,678 @@
+<!DOCTYPE html>
+<html lang="fa">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Farsinglish - تست پیشرفته مسیریابی</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { 
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+            background: linear-gradient(135deg, #311b92 0%, #4527a0 100%);
+            color: #ede7f6;
+            min-height: 100vh;
+            padding: 15px;
+        }
+        .container { 
+            max-width: 800px; 
+            margin: 0 auto;
+            background: rgba(40, 35, 80, 0.95);
+            border-radius: 12px;
+            padding: 18px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6);
+            border: 1px solid rgba(120, 144, 156, 0.3);
+        }
+        h1 { 
+            text-align: center; 
+            margin-bottom: 20px;
+            font-size: 1.6rem;
+            color: #b388ff;
+        }
+        .test-section { 
+            margin: 15px 0;
+            padding: 14px;
+            background: rgba(50, 45, 90, 0.9);
+            border-radius: 8px;
+            border-left: 4px solid #7c4dff;
+        }
+        .test-header { 
+            display: flex; 
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        .test-title { 
+            font-size: 0.95rem; 
+            font-weight: 600;
+            color: #ffab91;
+        }
+        .test-result { 
+            padding: 4px 10px;
+            border-radius: 10px;
+            font-size: 0.8rem;
+            font-weight: bold;
+        }
+        .pass { background: linear-gradient(45deg, #00e676, #00c853); }
+        .fail { background: linear-gradient(45deg, #ff5252, #d50000); }
+        .details { 
+            margin-top: 8px;
+            padding: 10px;
+            background: rgba(30, 25, 60, 0.8);
+            border-radius: 6px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.8rem;
+            color: #cfd8dc;
+        }
+        .summary {
+            margin-top: 20px;
+            padding: 15px;
+            background: rgba(50, 45, 90, 0.9);
+            border-radius: 8px;
+            text-align: center;
+            font-size: 0.95rem;
+        }
+        button {
+            background: linear-gradient(45deg, #6200ea, #7c4dff);
+            color: white;
+            border: none;
+            padding: 8px 18px;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            cursor: pointer;
+            margin: 5px;
+            transition: transform 0.2s;
+        }
+        button:hover { transform: translateY(-2px); }
+        .controls { text-align: center; margin-top: 15px; }
+        .simulation {
+            margin: 20px 0;
+            padding: 15px;
+            background: rgba(60, 55, 100, 0.9);
+            border-radius: 10px;
+            border: 1px dashed rgba(179, 136, 255, 0.4);
+        }
+        .sim-btn {
+            background: rgba(124, 77, 255, 0.2);
+            border: 1px solid #7c4dff;
+            color: #b388ff;
+            padding: 6px 12px;
+            border-radius: 6px;
+            margin: 3px;
+            cursor: pointer;
+            font-size: 0.8rem;
+        }
+        .route-display {
+            font-family: monospace;
+            background: rgba(0,0,0,0.3);
+            padding: 8px;
+            border-radius: 6px;
+            margin: 10px 0;
+            color: #ffd54f;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🚀 تست پیشرفته مسیریابی - ۶ تست</h1>
+        
+        <div class="simulation">
+            <h3>🎮 شبیه‌ساز تعاملی</h3>
+            <div id="sim-controls"></div>
+            <div class="route-display">
+                مسیر فعلی: <span id="current-route">/</span>
+            </div>
+            <div class="route-display">
+                وضعیت: <span id="user-status">مهمان</span>
+            </div>
+        </div>
+        
+        <div id="test-results"></div>
+        
+        <div class="summary">
+            <p id="summary-text">آماده اجرای تست‌های پیشرفته...</p>
+        </div>
+        
+        <div class="controls">
+            <button onclick="runAllTests()">🚀 اجرای تست‌ها</button>
+            <button onclick="runSimulation()">🎮 فعال‌سازی شبیه‌ساز</button>
+            <button onclick="clearTests()">🗑️ پاک کردن</button>
+        </div>
+    </div>
+
+    <script>
+        // ==================== Advanced Router ====================
+        class AdvancedRouter {
+            constructor() {
+                this.routes = new Map();
+                this.currentRoute = '/';
+                this.history = [];
+                this.isAuthenticated = false;
+                this.userRole = 'guest';
+                this.routeListeners = [];
+                this.maxHistory = 20;
+                
+                this.initRoutes();
+            }
+            
+            initRoutes() {
+                const routes = {
+                    '/': { name: 'خانه', auth: false, roles: ['guest', 'user', 'admin'] },
+                    '/login': { name: 'ورود', auth: false, roles: ['guest'] },
+                    '/register': { name: 'ثبت‌نام', auth: false, roles: ['guest'] },
+                    '/dashboard': { name: 'داشبورد', auth: true, roles: ['user', 'admin'] },
+                    '/lessons': { name: 'دروس', auth: true, roles: ['user', 'admin'] },
+                    '/profile': { name: 'پروفایل', auth: true, roles: ['user', 'admin'] },
+                    '/admin': { name: 'مدیریت', auth: true, roles: ['admin'] },
+                    '/premium': { name: 'ویژه', auth: true, roles: ['premium', 'admin'] },
+                    '/404': { name: 'یافت نشد', auth: false, roles: ['guest', 'user', 'admin'] }
+                };
+                
+                Object.entries(routes).forEach(([path, config]) => {
+                    this.routes.set(path, config);
+                });
+            }
+            
+            async navigate(toPath, options = {}) {
+                // اگر مسیر وجود نداشت
+                if (!this.routes.has(toPath)) {
+                    console.warn(`⛔ مسیر ${toPath} وجود ندارد`);
+                    this._changeRoute('/404', toPath, false);
+                    return false;
+                }
+                
+                const route = this.routes.get(toPath);
+                
+                // 1. بررسی Guard مهمان
+                if ((toPath === '/login' || toPath === '/register') && this.isAuthenticated) {
+                    console.log('🔒 کاربر لاگین کرده، نمی‌تواند به صفحه ورود برود');
+                    this._changeRoute('/dashboard', toPath, false);
+                    return false;
+                }
+                
+                // 2. بررسی احراز هویت
+                if (route.auth && !this.isAuthenticated) {
+                    console.log('🔐 نیاز به لاگین');
+                    this._changeRoute('/login', toPath, false);
+                    return false;
+                }
+                
+                // 3. بررسی نقش کاربر
+                if (route.roles && !route.roles.includes(this.userRole)) {
+                    console.log(`🚫 نقش ${this.userRole} مجاز نیست`);
+                    this._changeRoute('/', toPath, false);
+                    return false;
+                }
+                
+                // 4. مسیریابی موفق
+                return this._changeRoute(toPath, this.currentRoute, true, options);
+            }
+            
+            _changeRoute(newPath, fromPath, success, options = {}) {
+                const oldRoute = this.currentRoute;
+                this.currentRoute = newPath;
+                
+                // مدیریت تاریخچه
+                if (success && !options.replace && oldRoute !== newPath) {
+                    this.history.push(oldRoute);
+                    if (this.history.length > this.maxHistory) {
+                        this.history.shift();
+                    }
+                }
+                
+                // اطلاع‌رسانی به listeners
+                this._notifyListeners({
+                    from: fromPath,
+                    to: newPath,
+                    success,
+                    timestamp: Date.now(),
+                    userRole: this.userRole
+                });
+                
+                console.log(`📍 ${success ? '✅' : '❌'} ${fromPath} → ${newPath}`);
+                return success;
+            }
+            
+            // ========== قابلیت‌های پیشرفته ==========
+            
+            goBack(steps = 1) {
+                if (this.history.length === 0) return false;
+                
+                const targetIndex = Math.max(0, this.history.length - steps);
+                const targetRoute = this.history[targetIndex];
+                
+                // حذف از تاریخچه
+                this.history.splice(targetIndex, this.history.length - targetIndex);
+                
+                return this.navigate(targetRoute, { replace: true });
+            }
+            
+            goForward() {
+                // در این پیاده‌سازی ساده، forward وجود ندارد
+                // در واقعیت با separate forward stack پیاده‌سازی می‌شود
+                return false;
+            }
+            
+            addRoute(path, config) {
+                if (this.routes.has(path)) return false;
+                
+                this.routes.set(path, {
+                    name: 'مسیر جدید',
+                    auth: false,
+                    roles: ['guest', 'user', 'admin'],
+                    ...config
+                });
+                
+                this._notifyListeners({
+                    type: 'ROUTE_ADDED',
+                    path,
+                    timestamp: Date.now()
+                });
+                
+                return true;
+            }
+            
+            removeRoute(path) {
+                if (['/', '/404', '/login'].includes(path)) return false;
+                
+                const removed = this.routes.delete(path);
+                if (removed) {
+                    this._notifyListeners({
+                        type: 'ROUTE_REMOVED',
+                        path,
+                        timestamp: Date.now()
+                    });
+                }
+                
+                return removed;
+            }
+            
+            // ========== مدیریت Listeners ==========
+            
+            onRouteChange(callback) {
+                this.routeListeners.push(callback);
+                return () => {
+                    const index = this.routeListeners.indexOf(callback);
+                    if (index > -1) this.routeListeners.splice(index, 1);
+                };
+            }
+            
+            _notifyListeners(data) {
+                this.routeListeners.forEach(listener => {
+                    try {
+                        listener(data);
+                    } catch (error) {
+                        console.error('خطا در listener:', error);
+                    }
+                });
+            }
+            
+            // ========== Utility Methods ==========
+            
+            setAuth(authenticated, role = 'user') {
+                this.isAuthenticated = authenticated;
+                this.userRole = role;
+                console.log(`👤 وضعیت: ${authenticated ? 'لاگین' : 'لاگ‌اوت'} | نقش: ${role}`);
+            }
+            
+            getRouteInfo(path) {
+                return this.routes.get(path) || null;
+            }
+            
+            getHistory() {
+                return [...this.history];
+            }
+            
+            clearHistory() {
+                this.history = [];
+                return true;
+            }
+            
+            // ========== Route Parameters ==========
+            
+            parsePathWithParams(template, params) {
+                let path = template;
+                for (const [key, value] of Object.entries(params)) {
+                    path = path.replace(`:${key}`, encodeURIComponent(value));
+                }
+                return path;
+            }
+            
+            extractParams(template, actualPath) {
+                const params = {};
+                const templateParts = template.split('/');
+                const actualParts = actualPath.split('/');
+                
+                if (templateParts.length !== actualParts.length) return null;
+                
+                for (let i = 0; i < templateParts.length; i++) {
+                    if (templateParts[i].startsWith(':')) {
+                        const paramName = templateParts[i].substring(1);
+                        params[paramName] = decodeURIComponent(actualParts[i]);
+                    } else if (templateParts[i] !== actualParts[i]) {
+                        return null;
+                    }
+                }
+                
+                return params;
+            }
+        }
+
+        // ==================== تست‌های پیشرفته ====================
+        const advancedTests = [
+            {
+                id: 1,
+                title: "سیستم رویدادها (Event Listeners)",
+                run: async () => {
+                    return new Promise((resolve) => {
+                        const router = new AdvancedRouter();
+                        let eventReceived = false;
+                        
+                        const unsubscribe = router.onRouteChange((event) => {
+                            if (event.to === '/dashboard' && event.success) {
+                                eventReceived = true;
+                                unsubscribe();
+                                resolve(eventReceived);
+                            }
+                        });
+                        
+                        router.setAuth(true, 'user');
+                        router.navigate('/dashboard');
+                        
+                        setTimeout(() => resolve(false), 1000);
+                    });
+                }
+            },
+            {
+                id: 2,
+                title: "پارامترهای مسیر - استخراج و ساخت",
+                run: async () => {
+                    const router = new AdvancedRouter();
+                    
+                    // افزودن مسیر با پارامتر
+                    router.addRoute('/lesson/:lessonId', {
+                        name: 'درس',
+                        auth: true,
+                        roles: ['user', 'admin']
+                    });
+                    
+                    // ساخت مسیر با پارامتر
+                    const constructed = router.parsePathWithParams(
+                        '/lesson/:lessonId', 
+                        { lessonId: '123-فارسی' }
+                    );
+                    
+                    const isCorrect = constructed === '/lesson/123-%D9%81%D8%A7%D8%B1%D8%B3%DB%8C';
+                    
+                    // استخراج پارامترها
+                    const params = router.extractParams(
+                        '/lesson/:lessonId',
+                        '/lesson/123-%D9%81%D8%A7%D8%B1%D8%B3%DB%8C'
+                    );
+                    
+                    const hasParam = params && params.lessonId === '123-فارسی';
+                    
+                    return isCorrect && hasParam;
+                }
+            },
+            {
+                id: 3,
+                title: "تست عملکرد همزمان (Concurrent Navigation)",
+                run: async () => {
+                    const router = new AdvancedRouter();
+                    router.setAuth(true, 'user');
+                    
+                    // درخواست‌های همزمان
+                    const promises = [
+                        router.navigate('/dashboard'),
+                        router.navigate('/lessons'),
+                        router.navigate('/profile')
+                    ];
+                    
+                    const results = await Promise.all(promises);
+                    
+                    // فقط یکی باید موفق باشد (آخرین)
+                    const successCount = results.filter(r => r).length;
+                    const finalRoute = router.currentRoute;
+                    
+                    return successCount === 1 && finalRoute === '/profile';
+                }
+            },
+            {
+                id: 4,
+                title: "مدیریت خطا و بازیابی",
+                run: async () => {
+                    const router = new AdvancedRouter();
+                    router.setAuth(true, 'user');
+                    
+                    // یک مسیر نامعتبر
+                    await router.navigate('/invalid-route');
+                    const is404 = router.currentRoute === '/404';
+                    
+                    // بازیابی به مسیر معتبر
+                    await router.navigate('/dashboard');
+                    const recovered = router.currentRoute === '/dashboard';
+                    
+                    // تاریخچه باید صحیح باشد
+                    const historyValid = router.history.includes('/404');
+                    
+                    return is404 && recovered && historyValid;
+                }
+            },
+            {
+                id: 5,
+                title: "تست عملکرد با حجم زیاد",
+                run: async () => {
+                    const router = new AdvancedRouter();
+                    router.setAuth(true, 'user');
+                    
+                    const startTime = Date.now();
+                    const iterations = 50;
+                    
+                    // شبیه‌سازی تغییرات سریع مسیر
+                    for (let i = 0; i < iterations; i++) {
+                        await router.navigate('/dashboard');
+                        await router.navigate('/lessons');
+                    }
+                    
+                    const endTime = Date.now();
+                    const duration = endTime - startTime;
+                    
+                    // بررسی performance
+                    const isPerformant = duration < 2000; // کمتر از 2 ثانیه
+                    
+                    // بررسی memory (تاریخچه نباید بیش از حد بزرگ شود)
+                    const historySize = router.history.length;
+                    const historyValid = historySize <= router.maxHistory;
+                    
+                    return isPerformant && historyValid;
+                }
+            },
+            {
+                id: 6,
+                title: "حذف مسیر و مدیریت داینامیک",
+                run: async () => {
+                    const router = new AdvancedRouter();
+                    
+                    // افزودن مسیر داینامیک
+                    const added = router.addRoute('/custom/:id', {
+                        name: 'سفارشی',
+                        auth: false,
+                        roles: ['guest', 'user']
+                    });
+                    
+                    // بررسی وجود
+                    const exists = router.routes.has('/custom/:id');
+                    
+                    // حذف
+                    const removed = router.removeRoute('/custom/:id');
+                    
+                    // بررسی عدم وجود
+                    const notExists = !router.routes.has('/custom/:id');
+                    
+                    // تلاش برای حذف مسیر سیستمی
+                    const cannotRemoveSystem = !router.removeRoute('/');
+                    
+                    return added && exists && removed && notExists && cannotRemoveSystem;
+                }
+            }
+        ];
+
+        // ==================== اجرای تست‌ها ====================
+        let passedTests = 0;
+        let failedTests = 0;
+
+        async function runAllTests() {
+            passedTests = 0;
+            failedTests = 0;
+            const resultsDiv = document.getElementById('test-results');
+            resultsDiv.innerHTML = '';
+            
+            for (const test of advancedTests) {
+                try {
+                    const result = await test.run();
+                    const testDiv = document.createElement('div');
+                    testDiv.className = 'test-section';
+                    
+                    const testResult = result ? 'pass' : 'fail';
+                    const resultText = result ? '✅ موفق' : '❌ ناموفق';
+                    
+                    if (result) passedTests++;
+                    else failedTests++;
+                    
+                    testDiv.innerHTML = `
+                        <div class="test-header">
+                            <div class="test-title">${test.id}. ${test.title}</div>
+                            <div class="test-result ${testResult}">${resultText}</div>
+                        </div>
+                    `;
+                    
+                    resultsDiv.appendChild(testDiv);
+                    
+                } catch (error) {
+                    failedTests++;
+                    const testDiv = document.createElement('div');
+                    testDiv.className = 'test-section';
+                    testDiv.innerHTML = `
+                        <div class="test-header">
+                            <div class="test-title">${test.id}. ${test.title}</div>
+                            <div class="test-result fail">❌ خطا</div>
+                        </div>
+                        <div class="details">${error.message}</div>
+                    `;
+                    resultsDiv.appendChild(testDiv);
+                }
+                
+                updateSummary();
+            }
+        }
+
+        // ==================== شبیه‌ساز تعاملی ====================
+        function runSimulation() {
+            const router = new AdvancedRouter();
+            const controls = document.getElementById('sim-controls');
+            
+            controls.innerHTML = `
+                <div style="margin-bottom: 10px;">
+                    <button class="sim-btn" onclick="simLogin('user')">👤 ورود کاربر</button>
+                    <button class="sim-btn" onclick="simLogin('admin')">👑 ورود ادمین</button>
+                    <button class="sim-btn" onclick="simLogout()">🚪 خروج</button>
+                </div>
+                <div>
+                    <button class="sim-btn" onclick="simNavigate('/')">🏠 خانه</button>
+                    <button class="sim-btn" onclick="simNavigate('/login')">🔐 ورود</button>
+                    <button class="sim-btn" onclick="simNavigate('/dashboard')">📊 داشبورد</button>
+                    <button class="sim-btn" onclick="simNavigate('/lessons')">📚 دروس</button>
+                    <button class="sim-btn" onclick="simNavigate('/admin')">⚙️ مدیریت</button>
+                    <button class="sim-btn" onclick="simNavigate('/invalid')">❌ مسیر نامعتبر</button>
+                </div>
+                <div style="margin-top: 10px;">
+                    <button class="sim-btn" onclick="simGoBack()">↩️ بازگشت</button>
+                    <button class="sim-btn" onclick="simAddRoute()">➕ افزودن مسیر</button>
+                </div>
+            `;
+            
+            // ذخیره روتر در window برای دسترسی از توابع
+            window.simRouter = router;
+            
+            // listener برای به‌روزرسانی UI
+            router.onRouteChange((event) => {
+                updateSimulationUI();
+                console.log('رویداد مسیریابی:', event);
+            });
+            
+            updateSimulationUI();
+        }
+        
+        function simLogin(role) {
+            window.simRouter.setAuth(true, role);
+            updateSimulationUI();
+        }
+        
+        function simLogout() {
+            window.simRouter.setAuth(false, 'guest');
+            updateSimulationUI();
+        }
+        
+        async function simNavigate(path) {
+            await window.simRouter.navigate(path);
+            updateSimulationUI();
+        }
+        
+        function simGoBack() {
+            window.simRouter.goBack();
+            updateSimulationUI();
+        }
+        
+        function simAddRoute() {
+            const path = `/custom-${Date.now()}`;
+            window.simRouter.addRoute(path, {
+                name: 'مسیر سفارشی',
+                auth: false
+            });
+            console.log(`مسیر ${path} اضافه شد`);
+        }
+        
+        function updateSimulationUI() {
+            const router = window.simRouter;
+            if (!router) return;
+            
+            document.getElementById('current-route').textContent = router.currentRoute;
+            
+            const status = router.isAuthenticated 
+                ? `✅ لاگین (${router.userRole})` 
+                : '❌ مهمان';
+            document.getElementById('user-status').textContent = status;
+        }
+
+        function clearTests() {
+            document.getElementById('test-results').innerHTML = '';
+            passedTests = failedTests = 0;
+            updateSummary();
+        }
+
+        function updateSummary() {
+            const summary = document.getElementById('summary-text');
+            const total = advancedTests.length;
+            const percentage = total > 0 ? Math.round((passedTests / total) * 100) : 0;
+            
+            summary.innerHTML = `
+                <strong>نتیجه تست‌های پیشرفته:</strong><br>
+                ✅ ${passedTests} موفق | ❌ ${failedTests} ناموفق | 📊 ${percentage}% قبولی
+                ${percentage === 100 ? '🏆 عالی!' : percentage >= 80 ? '👍 خوب' : '⚠️ نیاز به بهبود'}
+            `;
+            
+            summary.style.color = percentage === 100 ? '#00e676' : 
+                                 percentage >= 80 ? '#ffd600' : '#ff5252';
+        }
+
+        // اجرای خودکار
+        window.onload = () => {
+            updateSummary();
+            setTimeout(() => {
+                runAllTests();
+                runSimulation();
+            }, 500);
+        };
+    </script>
+</body>
+</html>
