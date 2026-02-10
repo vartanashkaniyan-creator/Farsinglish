@@ -1,0 +1,839 @@
+<!DOCTYPE html>
+<html lang="fa">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>تست هسته SRS - Farsinglish</title>
+    <style>
+        :root {
+            --primary: #4f46e5;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --dark: #1e293b;
+            --light: #f8fafc;
+        }
+        
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: system-ui, -apple-system, sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 15px;
+            direction: rtl;
+        }
+        
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+        }
+        
+        .header {
+            background: var(--primary);
+            color: white;
+            padding: 20px;
+            text-align: center;
+        }
+        
+        .header h1 {
+            font-size: 1.5rem;
+            margin-bottom: 5px;
+        }
+        
+        .header p {
+            opacity: 0.9;
+            font-size: 0.9rem;
+        }
+        
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+            padding: 15px;
+            background: var(--light);
+            border-bottom: 2px solid #e2e8f0;
+        }
+        
+        .stat {
+            background: white;
+            padding: 12px;
+            border-radius: 8px;
+            text-align: center;
+            border: 1px solid #e2e8f0;
+        }
+        
+        .stat-value {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: var(--primary);
+        }
+        
+        .stat-label {
+            font-size: 0.8rem;
+            color: #64748b;
+            margin-top: 5px;
+        }
+        
+        .tests {
+            padding: 15px;
+        }
+        
+        .test-item {
+            background: white;
+            border: 2px solid #e2e8f0;
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 15px;
+            transition: all 0.3s;
+        }
+        
+        .test-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        
+        .test-title {
+            font-weight: 600;
+            color: var(--dark);
+        }
+        
+        .test-status {
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 500;
+        }
+        
+        .status-pending { background: #fef3c7; color: #92400e; }
+        .status-pass { background: #d1fae5; color: #065f46; }
+        .status-fail { background: #fee2e2; color: #991b1b; }
+        
+        .test-desc {
+            color: #64748b;
+            font-size: 0.85rem;
+            line-height: 1.5;
+            margin-bottom: 10px;
+        }
+        
+        .test-details {
+            background: #f8fafc;
+            padding: 10px;
+            border-radius: 6px;
+            margin-top: 10px;
+            font-size: 0.8rem;
+            color: #475569;
+            border-right: 3px solid var(--primary);
+            display: none;
+        }
+        
+        .controls {
+            display: flex;
+            gap: 10px;
+            padding: 15px;
+            background: var(--light);
+            border-top: 2px solid #e2e8f0;
+        }
+        
+        .btn {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+        
+        .btn-run {
+            background: var(--primary);
+            color: white;
+        }
+        
+        .btn-reset {
+            background: #94a3b8;
+            color: white;
+        }
+        
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+        
+        .console {
+            background: #1e293b;
+            color: white;
+            padding: 15px;
+            margin: 15px;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.8rem;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+        
+        .console-line {
+            padding: 5px 0;
+            border-bottom: 1px solid #334155;
+        }
+        
+        .log-success { color: #34d399; }
+        .log-error { color: #f87171; }
+        .log-info { color: #60a5fa; }
+        
+        .srs-demo {
+            background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+            padding: 15px;
+            margin: 15px;
+            border-radius: 10px;
+            border: 2px solid #bae6fd;
+        }
+        
+        .demo-title {
+            color: var(--primary);
+            font-weight: 600;
+            margin-bottom: 10px;
+            text-align: center;
+        }
+        
+        .demo-stats {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            margin-top: 10px;
+        }
+        
+        .demo-stat {
+            background: white;
+            padding: 8px;
+            border-radius: 6px;
+            text-align: center;
+            border: 1px solid #e2e8f0;
+        }
+        
+        .demo-value {
+            font-weight: bold;
+            color: var(--primary);
+        }
+        
+        .demo-label {
+            font-size: 0.7rem;
+            color: #64748b;
+        }
+        
+        .footer {
+            text-align: center;
+            padding: 15px;
+            color: #64748b;
+            font-size: 0.8rem;
+            border-top: 1px solid #e2e8f0;
+        }
+        
+        .ef-explanation {
+            background: #fffbeb;
+            border: 2px solid #fbbf24;
+            border-radius: 8px;
+            padding: 10px;
+            margin: 15px;
+            font-size: 0.85rem;
+            color: #92400e;
+        }
+        
+        .ef-formula {
+            font-family: 'Courier New', monospace;
+            background: #1e293b;
+            color: #fbbf24;
+            padding: 8px;
+            border-radius: 4px;
+            margin: 5px 0;
+            direction: ltr;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🧪 تست هسته الگوریتم SRS</h1>
+            <p>فاز اول: ۷ تست اولیه سیستم مرور هوشمند</p>
+        </div>
+        
+        <div class="stats">
+            <div class="stat">
+                <div class="stat-value" id="totalTests">7</div>
+                <div class="stat-label">تعداد تست‌ها</div>
+            </div>
+            <div class="stat">
+                <div class="stat-value" id="passedTests">0</div>
+                <div class="stat-label">موفق</div>
+            </div>
+            <div class="stat">
+                <div class="stat-value" id="failedTests">0</div>
+                <div class="stat-label">ناموفق</div>
+            </div>
+            <div class="stat">
+                <div class="stat-value" id="successRate">0%</div>
+                <div class="stat-label">موفقیت</div>
+            </div>
+        </div>
+        
+        <div class="ef-explanation">
+            <strong>📌 فرمول عامل سهولت (EF) - SM-2:</strong>
+            <div class="ef-formula">
+                EF_new = EF_old + (0.1 - (5 - کیفیت) × (0.08 + (5 - کیفیت) × 0.02))
+            </div>
+            <div style="margin-top: 5px;">
+                کیفیت: 0=بدترین، 5=بهترین | محدوده EF: 1.3 تا 2.5
+            </div>
+        </div>
+        
+        <div class="srs-demo">
+            <div class="demo-title">📊 شبیه‌سازی مرور هوشمند</div>
+            <div class="demo-stats">
+                <div class="demo-stat">
+                    <div class="demo-value" id="efDisplay">2.50</div>
+                    <div class="demo-label">عامل سهولت</div>
+                </div>
+                <div class="demo-stat">
+                    <div class="demo-value" id="intervalDisplay">0</div>
+                    <div class="demo-label">فاصله (روز)</div>
+                </div>
+                <div class="demo-stat">
+                    <div class="demo-value" id="reviewCount">0</div>
+                    <div class="demo-label">تعداد مرور</div>
+                </div>
+                <div class="demo-stat">
+                    <div class="demo-value" id="nextReview">-</div>
+                    <div class="demo-label">مرور بعدی</div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="tests" id="testsList">
+            <!-- تست‌ها اینجا ساخته می‌شوند -->
+        </div>
+        
+        <div class="console">
+            <div style="color: #fbbf24; margin-bottom: 10px;">📝 کنسول تست‌ها:</div>
+            <div id="consoleOutput"></div>
+        </div>
+        
+        <div class="controls">
+            <button class="btn btn-run" id="runTests">
+                <span>▶️</span>
+                اجرای تست‌ها
+            </button>
+            <button class="btn btn-reset" id="resetTests">
+                <span>🔄</span>
+                بازنشانی
+            </button>
+        </div>
+        
+        <div class="footer">
+            فایل ۱ از ۲ | تست هسته SRS | Farsinglish
+        </div>
+    </div>
+
+    <script>
+        // ==================== کلاس LessonModel با فرمول صحیح SM-2 ====================
+        class LessonModel {
+            constructor(data = {}) {
+                this.id = data.id || 'lesson_' + Date.now();
+                this.title = data.title || '';
+                this.progress = data.progress || 0;
+                this.reviewCount = data.reviewCount || 0;
+                this.easinessFactor = data.easinessFactor || 2.5;
+                this.reviewInterval = data.reviewInterval || 0;
+                this.nextReview = data.nextReview || null;
+                this.lastReviewed = data.lastReviewed || null;
+                this.isCompleted = data.isCompleted || false;
+            }
+
+            // الگوریتم SM-2 کامل
+            calculateNextReview(quality) {
+                if (quality < 0 || quality > 5) {
+                    throw new Error('کیفیت باید بین 0 تا 5 باشد');
+                }
+
+                // محاسبه فاصله مرور
+                if (this.reviewCount === 0) {
+                    this.reviewInterval = 1; // روز بعد
+                } else if (this.reviewCount === 1) {
+                    this.reviewInterval = 6; // 6 روز بعد
+                } else {
+                    // فرمول اصلی SM-2
+                    this.easinessFactor = this.calculateEF(this.easinessFactor, quality);
+                    this.reviewInterval = Math.round(this.reviewInterval * this.easinessFactor);
+                }
+
+                // محدود کردن فاصله به 1 تا 365 روز
+                this.reviewInterval = Math.max(1, Math.min(365, this.reviewInterval));
+                this.reviewCount++;
+                this.lastReviewed = new Date().toISOString();
+                
+                // محاسبه تاریخ مرور بعدی
+                const nextDate = new Date();
+                nextDate.setDate(nextDate.getDate() + this.reviewInterval);
+                this.nextReview = nextDate.toISOString();
+
+                return {
+                    interval: this.reviewInterval,
+                    ef: this.easinessFactor,
+                    nextReview: this.nextReview,
+                    reviewCount: this.reviewCount
+                };
+            }
+
+            // فرمول صحیح عامل سهولت (Easiness Factor)
+            calculateEF(currentEF, quality) {
+                const q = 5 - quality; // فاصله از بهترین کیفیت
+                const newEF = currentEF + (0.1 - q * (0.08 + q * 0.02));
+                
+                // محدود کردن به بازه 1.3 تا 2.5
+                return Math.max(1.3, Math.min(2.5, newEF));
+            }
+
+            needsReview() {
+                if (!this.nextReview) return true;
+                return new Date() >= new Date(this.nextReview);
+            }
+
+            getReviewPriority() {
+                if (!this.nextReview) return 999;
+                const now = new Date();
+                const reviewDate = new Date(this.nextReview);
+                const hours = (reviewDate - now) / (1000 * 60 * 60);
+                return hours <= 0 ? 0 : hours / (this.reviewCount + 1);
+            }
+
+            completeLesson(score) {
+                this.isCompleted = true;
+                this.progress = 100;
+                return score >= 80;
+            }
+
+            clone() {
+                return new LessonModel({
+                    id: this.id,
+                    title: this.title,
+                    progress: this.progress,
+                    reviewCount: this.reviewCount,
+                    easinessFactor: this.easinessFactor,
+                    reviewInterval: this.reviewInterval,
+                    nextReview: this.nextReview,
+                    lastReviewed: this.lastReviewed,
+                    isCompleted: this.isCompleted
+                });
+            }
+
+            validate() {
+                const errors = [];
+                if (!this.title || this.title.length < 3) errors.push('عنوان کوتاه');
+                if (this.progress < 0 || this.progress > 100) errors.push('پیشرفت نامعتبر');
+                if (this.easinessFactor < 1.3 || this.easinessFactor > 2.5) errors.push('EF نامعتبر');
+                return { isValid: errors.length === 0, errors };
+            }
+        }
+
+        // ==================== تست‌های SRS ====================
+        const tests = [
+            {
+                id: 'test1',
+                title: 'ساخت مدل درس',
+                desc: 'بررسی ایجاد صحیح مدل درس با داده‌های اولیه',
+                run: function() {
+                    const lesson = new LessonModel({ 
+                        title: 'درس تستی کامل',
+                        difficulty: 3
+                    });
+                    const valid = lesson.validate();
+                    return {
+                        passed: valid.isValid && lesson.id.startsWith('lesson_'),
+                        message: valid.isValid ? '✅ مدل درس با موفقیت ساخته شد' : '❌ خطا در ساخت مدل درس',
+                        details: { 
+                            id: lesson.id.substring(0, 15) + '...',
+                            title: lesson.title,
+                            isValid: valid.isValid 
+                        }
+                    };
+                }
+            },
+            {
+                id: 'test2',
+                title: 'اولین مرور SRS',
+                desc: 'محاسبه اولین مرور با کیفیت پاسخ 4 (خوب)',
+                run: function() {
+                    const lesson = new LessonModel();
+                    const result = lesson.calculateNextReview(4);
+                    
+                    return {
+                        passed: result.interval === 1 && 
+                                lesson.reviewCount === 1 && 
+                                lesson.nextReview !== null,
+                        message: result.interval === 1 ? 
+                                '✅ اولین مرور تنظیم شد (1 روز بعد)' : 
+                                '❌ خطا در محاسبه اولین مرور',
+                        details: { 
+                            interval: result.interval, 
+                            reviewCount: lesson.reviewCount,
+                            nextReview: new Date(result.nextReview).toLocaleDateString('fa-IR')
+                        }
+                    };
+                }
+            },
+            {
+                id: 'test3',
+                title: 'مرور دوم - کیفیت عالی',
+                desc: 'محاسبه مرور دوم با کیفیت 5 (عالی)',
+                run: function() {
+                    const lesson = new LessonModel();
+                    lesson.reviewCount = 1;
+                    lesson.reviewInterval = 1;
+                    lesson.easinessFactor = 2.5;
+                    
+                    const result = lesson.calculateNextReview(5);
+                    
+                    return {
+                        passed: result.interval === 6 && 
+                                lesson.reviewCount === 2 &&
+                                Math.abs(result.ef - 2.5) < 0.01,
+                        message: result.interval === 6 ? 
+                                '✅ مرور دوم صحیح محاسبه شد (6 روز)' : 
+                                '❌ خطا در محاسبه مرور دوم',
+                        details: { 
+                            interval: result.interval, 
+                            ef: result.ef.toFixed(3),
+                            efChange: (result.ef - 2.5).toFixed(3)
+                        }
+                    };
+                }
+            },
+            {
+                id: 'test4',
+                title: 'عامل سهولت - کیفیت پایین',
+                desc: 'بررسی کاهش EF با کیفیت پاسخ 2 (ضعیف)',
+                run: function() {
+                    const lesson = new LessonModel();
+                    const initialEF = 2.5;
+                    lesson.easinessFactor = initialEF;
+                    lesson.reviewCount = 2;
+                    lesson.reviewInterval = 6;
+                    
+                    const result = lesson.calculateNextReview(2);
+                    
+                    const efDecreased = result.ef < initialEF;
+                    const inRange = result.ef >= 1.3 && result.ef <= 2.5;
+                    
+                    return {
+                        passed: efDecreased && inRange,
+                        message: efDecreased ? 
+                                '✅ عامل سهولت کاهش یافت (صحیح)' : 
+                                '❌ عامل سهولت کاهش نیافت',
+                        details: { 
+                            oldEF: initialEF.toFixed(3),
+                            newEF: result.ef.toFixed(3),
+                            change: (result.ef - initialEF).toFixed(3),
+                            inRange: inRange
+                        }
+                    };
+                }
+            },
+            {
+                id: 'test5',
+                title: 'اولویت‌بندی مرور',
+                desc: 'محاسبه اولویت مرور درس بر اساس زمان',
+                run: function() {
+                    const lesson = new LessonModel();
+                    // تنظیم مرور برای فردا
+                    const tomorrow = new Date();
+                    tomorrow.setDate(tomorrow.getDate() + 1);
+                    lesson.nextReview = tomorrow.toISOString();
+                    lesson.reviewCount = 3;
+                    
+                    const priority = lesson.getReviewPriority();
+                    const isValidPriority = priority > 0 && priority < 50;
+                    
+                    return {
+                        passed: isValidPriority,
+                        message: isValidPriority ? 
+                                '✅ اولویت مرور صحیح محاسبه شد' : 
+                                '❌ خطا در محاسبه اولویت',
+                        details: { 
+                            priority: priority.toFixed(2),
+                            reviewCount: lesson.reviewCount,
+                            nextReview: new Date(lesson.nextReview).toLocaleDateString('fa-IR')
+                        }
+                    };
+                }
+            },
+            {
+                id: 'test6',
+                title: 'تشخیص نیاز به مرور',
+                desc: 'تشخیص صحیح نیاز به مرور بر اساس زمان',
+                run: function() {
+                    const lessonPast = new LessonModel();
+                    // مروری که زمان آن گذشته
+                    const pastDate = new Date();
+                    pastDate.setDate(pastDate.getDate() - 1);
+                    lessonPast.nextReview = pastDate.toISOString();
+                    
+                    const lessonFuture = new LessonModel();
+                    // مروری که زمان آن نرسیده
+                    const futureDate = new Date();
+                    futureDate.setDate(futureDate.getDate() + 1);
+                    lessonFuture.nextReview = futureDate.toISOString();
+                    
+                    const needsReviewPast = lessonPast.needsReview();
+                    const needsReviewFuture = lessonFuture.needsReview();
+                    
+                    return {
+                        passed: needsReviewPast && !needsReviewFuture,
+                        message: needsReviewPast && !needsReviewFuture ? 
+                                '✅ تشخیص نیاز به مرور صحیح است' : 
+                                '❌ تشخیص نادرست نیاز به مرور',
+                        details: { 
+                            pastReview: needsReviewPast,
+                            futureReview: needsReviewFuture,
+                            pastDate: new Date(pastDate).toLocaleDateString('fa-IR'),
+                            futureDate: new Date(futureDate).toLocaleDateString('fa-IR')
+                        }
+                    };
+                }
+            },
+            {
+                id: 'test7',
+                title: 'تکمیل درس و مرور',
+                desc: 'بررسی تکمیل شدن درس و تنظیم مرور اولیه',
+                run: function() {
+                    const lesson = new LessonModel();
+                    const shouldScheduleReview = lesson.completeLesson(85);
+                    
+                    return {
+                        passed: lesson.isCompleted && 
+                                lesson.progress === 100 && 
+                                shouldScheduleReview === true,
+                        message: lesson.isCompleted ? 
+                                '✅ درس تکمیل شد و مرور تنظیم گردید' : 
+                                '❌ خطا در تکمیل درس',
+                        details: { 
+                            completed: lesson.isCompleted,
+                            progress: lesson.progress,
+                            shouldReview: shouldScheduleReview
+                        }
+                    };
+                }
+            }
+        ];
+
+        // ==================== مدیریت تست‌ها ====================
+        class TestRunner {
+            constructor() {
+                this.totalTests = tests.length;
+                this.passed = 0;
+                this.failed = 0;
+                this.isRunning = false;
+                this.initializeUI();
+            }
+
+            initializeUI() {
+                const container = document.getElementById('testsList');
+                tests.forEach((test, index) => {
+                    const testEl = document.createElement('div');
+                    testEl.className = 'test-item';
+                    testEl.id = `test-${test.id}`;
+                    testEl.innerHTML = `
+                        <div class="test-header">
+                            <div class="test-title">${index + 1}. ${test.title}</div>
+                            <div class="test-status status-pending">در انتظار</div>
+                        </div>
+                        <div class="test-desc">${test.desc}</div>
+                        <div class="test-details" id="details-${test.id}"></div>
+                    `;
+                    container.appendChild(testEl);
+                });
+
+                document.getElementById('runTests').addEventListener('click', () => this.runAllTests());
+                document.getElementById('resetTests').addEventListener('click', () => this.resetTests());
+            }
+
+            async runAllTests() {
+                if (this.isRunning) return;
+                this.isRunning = true;
+                this.resetTests();
+                
+                this.log('🚀 شروع اجرای تست‌های هسته SRS با فرمول SM-2...', 'info');
+                this.log('فرمول: EF_new = EF_old + (0.1 - (5 - کیفیت) × (0.08 + (5 - کیفیت) × 0.02))', 'info');
+                
+                for (let i = 0; i < tests.length; i++) {
+                    const test = tests[i];
+                    await this.runSingleTest(test);
+                    await this.delay(350);
+                }
+                
+                const successRate = Math.round((this.passed / this.totalTests) * 100);
+                this.log(`🎉 ${this.passed}/${this.totalTests} تست موفق (${successRate}%)`, 'success');
+                this.isRunning = false;
+            }
+
+            async runSingleTest(test) {
+                const testEl = document.getElementById(`test-${test.id}`);
+                const statusEl = testEl.querySelector('.test-status');
+                const detailsEl = document.getElementById(`details-${test.id}`);
+                
+                statusEl.className = 'test-status status-pending';
+                statusEl.textContent = 'در حال اجرا...';
+                testEl.style.borderColor = '#f59e0b';
+                
+                try {
+                    const result = test.run();
+                    
+                    if (result.passed) {
+                        this.passed++;
+                        statusEl.className = 'test-status status-pass';
+                        statusEl.textContent = 'موفق';
+                        testEl.style.borderColor = '#10b981';
+                        this.log(`✅ ${test.title}: ${result.message}`, 'success');
+                    } else {
+                        this.failed++;
+                        statusEl.className = 'test-status status-fail';
+                        statusEl.textContent = 'ناموفق';
+                        testEl.style.borderColor = '#ef4444';
+                        this.log(`❌ ${test.title}: ${result.message}`, 'error');
+                    }
+                    
+                    if (result.details) {
+                        detailsEl.style.display = 'block';
+                        let detailsText = '';
+                        for (const [key, value] of Object.entries(result.details)) {
+                            detailsText += `${key}: ${value}\n`;
+                        }
+                        detailsEl.textContent = detailsText;
+                    }
+                    
+                    this.updateSRSDemo(result);
+                    
+                } catch (error) {
+                    this.failed++;
+                    statusEl.className = 'test-status status-fail';
+                    statusEl.textContent = 'خطا';
+                    testEl.style.borderColor = '#ef4444';
+                    this.log(`💥 ${test.title}: ${error.message}`, 'error');
+                    detailsEl.style.display = 'block';
+                    detailsEl.textContent = `خطا: ${error.message}`;
+                }
+                
+                this.updateStats();
+            }
+
+            updateStats() {
+                document.getElementById('passedTests').textContent = this.passed;
+                document.getElementById('failedTests').textContent = this.failed;
+                const rate = this.totalTests > 0 ? Math.round((this.passed / this.totalTests) * 100) : 0;
+                document.getElementById('successRate').textContent = `${rate}%`;
+                
+                const rateEl = document.getElementById('successRate').parentElement;
+                if (rate >= 80) {
+                    rateEl.style.background = '#d1fae5';
+                    rateEl.style.color = '#065f46';
+                } else if (rate >= 60) {
+                    rateEl.style.background = '#fef3c7';
+                    rateEl.style.color = '#92400e';
+                } else {
+                    rateEl.style.background = '#fee2e2';
+                    rateEl.style.color = '#991b1b';
+                }
+            }
+
+            updateSRSDemo(result) {
+                if (result.details) {
+                    if (result.details.ef !== undefined) {
+                        document.getElementById('efDisplay').textContent = result.details.ef;
+                    }
+                    if (result.details.interval !== undefined) {
+                        document.getElementById('intervalDisplay').textContent = result.details.interval;
+                    }
+                    if (result.details.reviewCount !== undefined) {
+                        document.getElementById('reviewCount').textContent = result.details.reviewCount;
+                    }
+                    if (result.details.nextReview) {
+                        document.getElementById('nextReview').textContent = result.details.nextReview;
+                    }
+                }
+            }
+
+            log(message, type = 'info') {
+                const consoleEl = document.getElementById('consoleOutput');
+                const line = document.createElement('div');
+                line.className = `console-line log-${type}`;
+                
+                const time = new Date().toLocaleTimeString('fa-IR', { 
+                    hour: '2-digit', 
+                    minute: '2-digit',
+                    second: '2-digit'
+                });
+                
+                line.textContent = `[${time}] ${message}`;
+                consoleEl.appendChild(line);
+                consoleEl.scrollTop = consoleEl.scrollHeight;
+            }
+
+            resetTests() {
+                this.passed = 0;
+                this.failed = 0;
+                this.isRunning = false;
+                
+                tests.forEach(test => {
+                    const testEl = document.getElementById(`test-${test.id}`);
+                    const statusEl = testEl.querySelector('.test-status');
+                    const detailsEl = document.getElementById(`details-${test.id}`);
+                    
+                    statusEl.className = 'test-status status-pending';
+                    statusEl.textContent = 'در انتظار';
+                    testEl.style.borderColor = '#e2e8f0';
+                    detailsEl.style.display = 'none';
+                    detailsEl.textContent = '';
+                });
+                
+                document.getElementById('consoleOutput').innerHTML = '';
+                document.getElementById('efDisplay').textContent = '2.50';
+                document.getElementById('intervalDisplay').textContent = '0';
+                document.getElementById('reviewCount').textContent = '0';
+                document.getElementById('nextReview').textContent = '-';
+                
+                this.updateStats();
+                this.log('🔄 تمام تست‌ها بازنشانی شدند', 'info');
+            }
+
+            delay(ms) {
+                return new Promise(resolve => setTimeout(resolve, ms));
+            }
+        }
+
+        // ==================== شروع برنامه ====================
+        document.addEventListener('DOMContentLoaded', () => {
+            const runner = new TestRunner();
+            runner.log('🔧 تست‌های هسته SRS با فرمول SM-2 آماده اجرا', 'info');
+            runner.log('کیفیت پاسخ: 0=بدترین، 5=بهترین | EF محدوده: 1.3 تا 2.5', 'info');
+            runner.log('برای شروع روی دکمه "اجرای تست‌ها" کلیک کنید', 'info');
+            
+            setTimeout(() => {
+                runner.log('💡 تست 4 بررسی می‌کند که EF با کیفیت پایین کاهش می‌یابد', 'info');
+            }, 1500);
+        });
+    </script>
+</body>
+</html>
