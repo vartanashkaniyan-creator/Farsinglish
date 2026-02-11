@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html lang="fa">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>شبیه‌سازی دستی: جریان کامل کاربر (Farsinglish)</title>
+    <style>
+        body { font-family: system-ui, sans-serif; max-width: 900px; margin: 0 auto; padding: 20px; background: #f5f5f5; }
+        .container { background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        h1 { color: #2c3e50; font-size: 1.8rem; }
+        h2 { font-size: 1.3rem; margin-top: 25px; color: #2c3e50; border-bottom: 2px solid #eee; padding-bottom: 8px; }
+        .step { background: #f8f9fa; border-radius: 8px; padding: 20px; margin: 20px 0; border-right: 6px solid #2c3e50; }
+        button { background: #2c3e50; color: white; border: none; padding: 12px 24px; border-radius: 6px; font-size: 16px; margin: 5px; cursor: pointer; }
+        button:hover { background: #34495e; }
+        .console { background: #1e1e1e; color: #d4d4d4; padding: 20px; border-radius: 8px; font-family: 'Courier New', monospace; white-space: pre-wrap; max-height: 400px; overflow-y: auto; margin-top: 20px; font-size: 13px; }
+        .badge { background: #28a745; color: white; padding: 4px 12px; border-radius: 20px; font-size: 14px; display: inline-block; margin-bottom: 10px; }
+        .warning { background: #ffc107; color: #000; padding: 4px 12px; border-radius: 20px; font-size: 14px; }
+        .log-entry { margin: 5px 0; }
+        .log-success { color: #6fcf97; }
+        .log-info { color: #5dade2; }
+        .log-warning { color: #f7dc6f; }
+        .log-error { color: #e74c3c; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧪 شبیه‌سازی دستی: جریان کامل کاربر</h1>
+        <span class="badge">Manual Flow Test</span>
+        <span class="warning" style="background: #6c757d; color: white;">🎯 ۵ گام اصلی</span>
+
+        <div style="display: flex; gap: 10px; margin-top: 20px; flex-wrap: wrap;">
+            <button onclick="runFullFlow()">▶ اجرای کامل سناریو (۵ گام)</button>
+            <button onclick="clearConsole()">🧹 پاک کردن کنسول</button>
+            <button onclick="exportLog()">📥 خروجی لاگ</button>
+        </div>
+
+        <div class="step">
+            <h3>📋 مراحل جریان کاربر:</h3>
+            <ol style="line-height: 2;">
+                <li>🔐 **احراز هویت** - ثبت‌نام و ورود کاربر</li>
+                <li>📚 **بارگذاری درس‌ها** - دریافت لیست درس‌های سطح ۱</li>
+                <li>🎯 **انجام تمرین** - پاسخ به سوال Multiple Choice</li>
+                <li>🧠 **محاسبه SRS** - ذخیره کیفیت پاسخ و فاصله مرور</li>
+                <li>📊 **ذخیره پیشرفت** - به‌روزرسانی امتیاز و وضعیت درس</li>
+            </ol>
+        </div>
+
+        <div id="console" class="console">
+📋 کنسول شبیه‌سازی - برای شروع دکمه "اجرای کامل سناریو" را بزنید.
+        </div>
+    </div>
+
+    <script>
+        // ------------------------------------------------------------
+        // کنسول لاگ
+        // ------------------------------------------------------------
+        const consoleDiv = document.getElementById('console');
+        
+        function log(message, type = 'info') {
+            const entry = document.createElement('div');
+            entry.className = 'log-entry';
+            
+            const timestamp = new Date().toLocaleTimeString('fa-IR', { hour12: false });
+            
+            let icon = 'ℹ️';
+            let colorClass = 'log-info';
+            
+            if (type === 'success') { icon = '✅'; colorClass = 'log-success'; }
+            else if (type === 'warning') { icon = '⚠️'; colorClass = 'log-warning'; }
+            else if (type === 'error') { icon = '❌'; colorClass = 'log-error'; }
+            else if (type === 'step') { icon = '🚀'; colorClass = 'log-info'; }
+            
+            entry.innerHTML = `<span style="color: #888;">[${timestamp}]</span> ${icon} <span class="${colorClass}">${message}</span>`;
+            consoleDiv.appendChild(entry);
+            consoleDiv.scrollTop = consoleDiv.scrollHeight;
+            
+            // همزمان در console مرورگر هم نمایش بده
+            console.log(`[${timestamp}] ${message}`);
+        }
+
+        function clearConsole() {
+            consoleDiv.innerHTML = '📋 کنسول شبیه‌سازی - برای شروع دکمه "اجرای کامل سناریو" را بزنید.\n';
+            console.clear();
+            log('🧹 کنسول پاک شد', 'warning');
+        }
+
+        function exportLog() {
+            const logText = consoleDiv.innerText;
+            const blob = new Blob([logText], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `farsinglish-flow-${new Date().toISOString().slice(0,10)}.txt`;
+            a.click();
+            URL.revokeObjectURL(url);
+            log('📥 لاگ با موفقیت خروجی گرفته شد', 'success');
+        }
+
+        // ------------------------------------------------------------
+        // ماژول‌های شبیه‌سازی شده
+        // ------------------------------------------------------------
+        
+        // 1. ماژول احراز هویت
+        const AuthService = {
+            currentUser: null,
+            
+            register: function(username, email, password) {
+                log('📝 در حال ثبت‌نام...', 'step');
+                if (username.length < 3) return { success: false, error: 'نام کاربری کوتاه است' };
+                
+                const user = {
+                    id: 'usr_' + Date.now(),
+                    username,
+                    email,
+                    password: btoa(password), // شبیه‌سازی هش
+                    createdAt: new Date().toISOString(),
+                    xp: 0,
+                    level: 1
+                };
+                
+                this.currentUser = user;
+                log(`✅ ثبت‌نام موفق: ${username} (${email})`, 'success');
+                return { success: true, user };
+            },
+            
+            login: function(email, password) {
+                log('🔑 در حال ورود...', 'step');
+                // شبیه‌سازی
+                this.currentUser = {
+                    id: 'usr_1700000000',
+                    username: 'farsinglish_user',
+                    email: email,
+                    xp: 120,
+                    level: 2
+                };
+                log(`✅ ورود موفق: ${email}`, 'success');
+                log(`   👤 کاربر: ${this.currentUser.username} | سطح ${this.currentUser.level} | XP: ${this.currentUser.xp}`, 'info');
+                return { success: true, user: this.currentUser };
+            },
+            
+            logout: function() {
+                this.currentUser = null;
+                log('🔓 خروج از حساب کاربری', 'warning');
+                return { success: true };
+            },
+            
+            getCurrentUser: function() {
+                return this.currentUser;
+            }
+        };
+
+        // 2. ماژول درس
+        const LessonService = {
+            lessons: [
+                { id: 'L1', title: 'Greetings', level: 1, vocabCount: 6, completed: false },
+                { id: 'L2', title: 'Family', level: 1, vocabCount: 8, completed: false },
+                { id: 'L3', title: 'Food', level: 2, vocabCount: 10, completed: false }
+            ],
+            
+            loadLessons: function(level = null) {
+                log('📚 بارگذاری درس‌ها...', 'step');
+                let result = this.lessons;
+                if (level) result = result.filter(l => l.level === level);
+                
+                log(`✅ ${result.length} درس یافت شد (سطح ${level || 'همه'})`, 'success');
+                result.forEach(l => log(`   - ${l.id}: ${l.title} (${l.vocabCount} واژه)`, 'info'));
+                return result;
+            },
+            
+            getLesson: function(id) {
+                return this.lessons.find(l => l.id === id);
+            }
+        };
+
+        // 3. ماژول تمرین
+        const ExerciseService = {
+            generateExercise: function(lessonId, type = 'multiple-choice') {
+                log('🎯 تولید تمرین جدید...', 'step');
+                
+                const exercises = {
+                    'L1': {
+                        question: 'معادل انگلیسی "سلام" کدام است؟',
+                        options: ['Hello', 'Goodbye', 'Morning', 'Night'],
+                        correct: 0,
+                        vocabId: 'vocab_hello'
+                    },
+                    'L2': {
+                        question: 'معادل انگلیسی "پدر" کدام است؟',
+                        options: ['Father', 'Mother', 'Brother', 'Sister'],
+                        correct: 0,
+                        vocabId: 'vocab_father'
+                    }
+                };
+                
+                const ex = exercises[lessonId] || exercises['L1'];
+                log(`📝 سوال: ${ex.question}`, 'info');
+                log(`   گزینه‌ها: ${ex.options.join(' | ')}`, 'info');
+                log(`   ✅ پاسخ صحیح: ${ex.options[ex.correct]}`, 'success');
+                
+                return {
+                    id: `ex_${Date.now()}`,
+                    ...ex,
+                    type,
+                    lessonId
+                };
+            },
+            
+            checkAnswer: function(exercise, selectedIndex) {
+                const isCorrect = selectedIndex === exercise.correct;
+                log(isCorrect ? '✓ پاسخ صحیح!' : '✗ پاسخ نادرست!', isCorrect ? 'success' : 'error');
+                return {
+                    correct: isCorrect,
+                    quality: isCorrect ? (Math.random() > 0.5 ? 5 : 4) : 2,
+                    correctAnswer: exercise.options[exercise.correct]
+                };
+            }
+        };
+
+        // 4. ماژول SRS
+        const SRSService = {
+            calculate: function(easeFactor = 2.5, repetitions = 0, quality) {
+                if (quality < 3) {
+                    return { interval: 1, repetitions: 0, easeFactor: Math.max(1.3, easeFactor - 0.2) };
+                }
+                
+                let interval;
+                if (repetitions === 0) interval = 1;
+                else if (repetitions === 1) interval = 6;
+                else interval = Math.round(repetitions * easeFactor);
+                
+                let newEase = easeFactor + (0.1 - (5 - quality) * (0.08 + (5 - quality) * 0.02));
+                newEase = Math.max(1.3, Math.min(2.5, newEase));
+                
+                return {
+                    interval,
+                    repetitions: repetitions + 1,
+                    easeFactor: newEase
+                };
+            },
+            
+            formatInterval: function(days) {
+                if (days === 1) return 'فردا';
+                if (days < 30) return `${days} روز بعد`;
+                if (days < 365) return `${Math.round(days/30)} ماه بعد`;
+                return `${Math.round(days/365)} سال بعد`;
+            }
+        };
+
+        // 5. ماژول پیشرفت
+        const ProgressService = {
+            progresses: [],
+            
+            saveProgress: function(userId, lessonId, score, status) {
+                log('💾 ذخیره پیشرفت درس...', 'step');
+                
+                const progress = {
+                    userId,
+                    lessonId,
+                    score,
+                    status,
+                    lastReview: new Date().toISOString(),
+                    completedAt: status === 'completed' ? new Date().toISOString() : null
+                };
+                
+                const index = this.progresses.findIndex(p => p.userId === userId && p.lessonId === lessonId);
+                if (index >= 0) this.progresses[index] = progress;
+                else this.progresses.push(progress);
+                
+                log(`✅ پیشرفت درس ${lessonId}: ${score}% (${status})`, 'success');
+                return progress;
+            },
+            
+            getProgress: function(userId, lessonId) {
+                return this.progresses.find(p => p.userId === userId && p.lessonId === lessonId) || 
+                       { score: 0, status: 'not_started' };
+            }
+        };
+
+        // ------------------------------------------------------------
+        // جریان کامل کاربر (۵ گام)
+        // ------------------------------------------------------------
+        function runFullFlow() {
+            log('🚀 ====== شروع شبیه‌سازی جریان کامل کاربر ======', 'step');
+            log('🎯 هدف: ثبت‌نام ← بارگذاری درس ← تمرین ← SRS ← پیشرفت', 'step');
+            
+            // ----- گام ۱: احراز هویت -----
+            log('\n🔐 ===== گام ۱: احراز هویت =====', 'step');
+            const authResult = AuthService.login('user@example.com', 'password123');
+            const user = AuthService.getCurrentUser();
+            
+            // ----- گام ۲: بارگذاری درس‌ها -----
+            log('\n📚 ===== گام ۲: بارگذاری درس‌ها =====', 'step');
+            const lessons = LessonService.loadLessons(1);
+            const currentLesson = lessons[0]; // اولین درس (Greetings)
+            log(`📖 درس انتخاب شده: ${currentLesson.title} (${currentLesson.id})`, 'info');
+            
+            // ----- گام ۳: انجام تمرین -----
+            log('\n🎯 ===== گام ۳: انجام تمرین =====', 'step');
+            const exercise = ExerciseService.generateExercise(currentLesson.id);
+            
+            // شبیه‌سازی پاسخ کاربر (انتخاب گزینه صحیح)
+            const userAnswer = 0; // گزینه اول (Hello)
+            const result = ExerciseService.checkAnswer(exercise, userAnswer);
+            log(`📊 کیفیت پاسخ: ${result.quality}/5`, 'info');
+            
+            // ----- گام ۴: محاسبه SRS -----
+            log('\n🧠 ===== گام ۴: محاسبه SRS (مرور هوشمند) =====', 'step');
+            const srsResult = SRSService.calculate(2.5, 0, result.quality);
+            log(`📅 فاصله مرور بعدی: ${srsResult.interval} روز (${SRSService.formatInterval(srsResult.interval)})`, 'info');
+            log(`📈 عامل سهولت جدید: ${srsResult.easeFactor.toFixed(3)}`, 'info');
+            log(`🔄 تعداد مرور: ${srsResult.repetitions}`, 'info');
+            
+            // ----- گام ۵: ذخیره پیشرفت -----
+            log('\n📊 ===== گام ۵: ذخیره پیشرفت =====', 'step');
+            
+            // محاسبه امتیاز بر اساس کیفیت
+            let score = 0;
+            if (result.quality === 5) score = 100;
+            else if (result.quality === 4) score = 85;
+            else if (result.quality === 3) score = 70;
+            else score = 40;
+            
+            const status = score >= 80 ? 'completed' : 'in_progress';
+            const progress = ProgressService.saveProgress(user.id, currentLesson.id, score, status);
+            
+            // ----- جمع‌بندی نهایی -----
+            log('\n✅ ===== جمع‌بندی نهایی =====', 'step');
+            log(`👤 کاربر: ${user.username} (سطح ${user.level})`, 'success');
+            log(`📚 درس: ${currentLesson.title}`, 'success');
+            log(`🎯 امتیاز: ${score}% - وضعیت: ${status}`, 'success');
+            log(`📅 مرور بعدی: ${SRSService.formatInterval(srsResult.interval)}`, 'success');
+            
+            if (status === 'completed') {
+                log('🏆 تبریک! درس با موفقیت به اتمام رسید!', 'success');
+            } else {
+                log('🔄 درس هنوز کامل نشده. به تمرین ادامه دهید!', 'warning');
+            }
+            
+            log('\n✨ ===== پایان شبیه‌سازی =====', 'step');
+        }
+
+        // اجرای خودکار هنگام بارگذاری صفحه (اختیاری)
+        window.onload = function() {
+            log('🟢 شبیه‌ساز جریان کاربر آماده است.', 'success');
+            log('👆 دکمه "اجرای کامل سناریو" را بزنید.', 'info');
+        };
+    </script>
+</body>
+</html>
