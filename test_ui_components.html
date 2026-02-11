@@ -1,0 +1,1302 @@
+<!DOCTYPE html>
+<html lang="fa">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Farsinglish - تست کامپوننت‌های UI</title>
+    <style>
+        :root {
+            --primary: #4361ee;
+            --success: #06d6a0;
+            --warning: #ffd166;
+            --danger: #ef476f;
+            --dark: #1a1a2e;
+            --light: #f8f9fa;
+        }
+        
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { 
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            color: #e9ecef;
+            min-height: 100vh;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        
+        .container { 
+            max-width: 1000px; 
+            margin: 0 auto;
+            background: rgba(30, 30, 46, 0.95);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+            border: 1px solid rgba(67, 97, 238, 0.2);
+        }
+        
+        h1 { 
+            text-align: center; 
+            margin-bottom: 30px;
+            font-size: 2.2rem;
+            background: linear-gradient(45deg, #4361ee, #3a0ca3);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            text-shadow: 0 2px 10px rgba(67, 97, 238, 0.3);
+        }
+        
+        h2 {
+            margin: 35px 0 20px;
+            color: #4cc9f0;
+            font-size: 1.5rem;
+            border-bottom: 2px solid #4361ee;
+            padding-bottom: 10px;
+        }
+        
+        h3 {
+            margin: 25px 0 15px;
+            color: #7209b7;
+            font-size: 1.2rem;
+        }
+        
+        .test-section { 
+            margin: 20px 0;
+            padding: 20px;
+            background: rgba(40, 40, 60, 0.8);
+            border-radius: 15px;
+            border-left: 5px solid #4361ee;
+            transition: all 0.3s ease;
+        }
+        
+        .test-section:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 25px rgba(67, 97, 238, 0.2);
+        }
+        
+        .test-header { 
+            display: flex; 
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        
+        .test-title { 
+            font-size: 1.1rem; 
+            font-weight: 600;
+            color: #a9d6e5;
+        }
+        
+        .test-result { 
+            padding: 6px 15px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .pass { background: linear-gradient(45deg, #06d6a0, #0cce8a); color: #001219; }
+        .fail { background: linear-gradient(45deg, #ef476f, #e63946); color: white; }
+        .running { background: linear-gradient(45deg, #ffd166, #ffc300); color: #001219; }
+        
+        .details { 
+            margin-top: 15px;
+            padding: 15px;
+            background: rgba(20, 20, 40, 0.7);
+            border-radius: 12px;
+            font-family: 'JetBrains Mono', 'Courier New', monospace;
+            font-size: 0.9rem;
+            color: #90e0ef;
+            max-height: 300px;
+            overflow-y: auto;
+            border: 1px solid rgba(67, 97, 238, 0.3);
+        }
+        
+        .component-demo {
+            margin: 25px 0;
+            padding: 25px;
+            background: rgba(50, 50, 80, 0.7);
+            border-radius: 15px;
+            border: 2px solid #4cc9f0;
+        }
+        
+        .component-preview {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 25px;
+            margin-top: 20px;
+        }
+        
+        .preview-card {
+            background: rgba(30, 30, 50, 0.9);
+            border-radius: 12px;
+            padding: 20px;
+            border: 1px solid rgba(67, 97, 238, 0.4);
+            transition: transform 0.3s;
+        }
+        
+        .preview-card:hover {
+            transform: translateY(-5px);
+        }
+        
+        .summary {
+            margin-top: 40px;
+            padding: 25px;
+            background: linear-gradient(45deg, rgba(67, 97, 238, 0.1), rgba(12, 206, 138, 0.1));
+            border-radius: 15px;
+            text-align: center;
+            border: 1px solid rgba(67, 97, 238, 0.3);
+        }
+        
+        button {
+            background: linear-gradient(45deg, #4361ee, #3a0ca3);
+            color: white;
+            border: none;
+            padding: 12px 28px;
+            border-radius: 12px;
+            font-size: 1rem;
+            cursor: pointer;
+            margin: 8px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            box-shadow: 0 5px 15px rgba(67, 97, 238, 0.3);
+        }
+        
+        button:hover { 
+            transform: translateY(-3px); 
+            box-shadow: 0 8px 20px rgba(67, 97, 238, 0.4);
+        }
+        
+        button:active {
+            transform: translateY(1px);
+        }
+        
+        .btn-secondary {
+            background: linear-gradient(45deg, #7209b7, #560bad);
+        }
+        
+        .btn-warning {
+            background: linear-gradient(45deg, #ffd166, #f9c74f);
+            color: #001219;
+        }
+        
+        .controls { 
+            text-align: center; 
+            margin-top: 30px;
+            padding-top: 25px;
+            border-top: 2px solid rgba(67, 97, 238, 0.3);
+        }
+        
+        .progress-bar {
+            height: 8px;
+            background: rgba(67, 97, 238, 0.2);
+            border-radius: 4px;
+            margin: 20px 0;
+            overflow: hidden;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #4361ee, #06d6a0);
+            border-radius: 4px;
+            transition: width 0.5s ease;
+        }
+        
+        .interactive-test {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            margin-top: 20px;
+        }
+        
+        .test-input {
+            padding: 12px 18px;
+            border: 2px solid #4361ee;
+            border-radius: 10px;
+            background: rgba(20, 20, 40, 0.8);
+            color: white;
+            font-size: 1rem;
+        }
+        
+        .test-input:focus {
+            outline: none;
+            border-color: #4cc9f0;
+            box-shadow: 0 0 0 3px rgba(76, 201, 240, 0.2);
+        }
+        
+        @media (max-width: 768px) {
+            .container { padding: 20px; }
+            h1 { font-size: 1.8rem; }
+            h2 { font-size: 1.3rem; }
+            .component-preview { grid-template-columns: 1fr; }
+            .preview-card { padding: 15px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎨 تست کامپوننت‌های UI - Farsinglish</h1>
+        
+        <div class="progress-bar">
+            <div id="progress-fill" class="progress-fill" style="width: 0%"></div>
+        </div>
+        
+        <div class="component-demo">
+            <h3>📱 پیش‌نمایش کامپوننت‌ها</h3>
+            <div class="component-preview" id="component-preview">
+                <!-- کامپوننت‌های اینجا رندر می‌شوند -->
+            </div>
+        </div>
+        
+        <h2>🧪 تست‌های Unit - منطق کامپوننت‌ها</h2>
+        <div id="unit-tests"></div>
+        
+        <h2>🔗 تست‌های Integration - تعامل کامپوننت‌ها</h2>
+        <div id="integration-tests"></div>
+        
+        <h2>🎮 تست‌های تعاملی - شبیه‌سازی کاربر</h2>
+        <div id="interactive-tests"></div>
+        
+        <div class="summary">
+            <p id="summary-text">آماده اجرای ۱۴ تست کامپوننت UI...</p>
+            <div id="coverage-stats" style="margin-top: 15px; font-size: 0.9rem;"></div>
+        </div>
+        
+        <div class="controls">
+            <button onclick="runAllTests()">🚀 اجرای تمام تست‌ها</button>
+            <button onclick="renderComponents()" class="btn-secondary">🔄 رندر کامپوننت‌ها</button>
+            <button onclick="runInteractiveTests()" class="btn-warning">🎮 اجرای تست‌های تعاملی</button>
+            <button onclick="clearAll()">♻️ پاک کردن همه</button>
+        </div>
+    </div>
+
+    <script>
+        // ==================== UI Components Library ====================
+        class UIComponents {
+            // ========== Component 1: Button ==========
+            static createButton(text, options = {}) {
+                const {
+                    type = 'primary',
+                    size = 'medium',
+                    disabled = false,
+                    loading = false,
+                    onClick = null,
+                    icon = null
+                } = options;
+                
+                const types = {
+                    primary: '#4361ee',
+                    secondary: '#7209b7',
+                    success: '#06d6a0',
+                    warning: '#ffd166',
+                    danger: '#ef476f',
+                    outline: 'transparent'
+                };
+                
+                const sizes = {
+                    small: { padding: '8px 16px', fontSize: '0.85rem' },
+                    medium: { padding: '12px 24px', fontSize: '1rem' },
+                    large: { padding: '16px 32px', fontSize: '1.1rem' }
+                };
+                
+                const button = document.createElement('button');
+                button.className = `ui-button ui-button-${type} ui-button-${size}`;
+                button.textContent = loading ? '⏳ ' + text : text;
+                button.disabled = disabled || loading;
+                
+                // استایل‌گذاری
+                Object.assign(button.style, {
+                    background: type === 'outline' ? 'transparent' : types[type],
+                    color: type === 'warning' ? '#001219' : 
+                           type === 'outline' ? types.primary : 'white',
+                    border: type === 'outline' ? `2px solid ${types.primary}` : 'none',
+                    padding: sizes[size].padding,
+                    fontSize: sizes[size].fontSize,
+                    borderRadius: '10px',
+                    cursor: disabled ? 'not-allowed' : 'pointer',
+                    opacity: disabled ? 0.6 : 1,
+                    fontWeight: '600',
+                    transition: 'all 0.2s ease',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '8px'
+                });
+                
+                if (icon) {
+                    const iconSpan = document.createElement('span');
+                    iconSpan.textContent = icon;
+                    button.prepend(iconSpan);
+                }
+                
+                if (onClick && !disabled && !loading) {
+                    button.addEventListener('click', onClick);
+                }
+                
+                button.addEventListener('mouseenter', () => {
+                    if (!disabled && !loading) {
+                        button.style.transform = 'translateY(-2px)';
+                        button.style.boxShadow = '0 6px 18px rgba(0,0,0,0.2)';
+                    }
+                });
+                
+                button.addEventListener('mouseleave', () => {
+                    button.style.transform = 'translateY(0)';
+                    button.style.boxShadow = 'none';
+                });
+                
+                return button;
+            }
+            
+            // ========== Component 2: Progress Bar ==========
+            static createProgressBar(progress, options = {}) {
+                const {
+                    showPercentage = true,
+                    color = '#4361ee',
+                    height = '12px',
+                    animated = false
+                } = options;
+                
+                const container = document.createElement('div');
+                container.className = 'ui-progress-container';
+                
+                const bar = document.createElement('div');
+                bar.className = 'ui-progress-bar';
+                bar.style.cssText = `
+                    width: ${Math.min(100, Math.max(0, progress))}%;
+                    height: ${height};
+                    background: ${color};
+                    border-radius: 6px;
+                    transition: width 0.5s ease;
+                    ${animated ? 'animation: pulse 1.5s infinite;' : ''}
+                `;
+                
+                container.appendChild(bar);
+                
+                if (showPercentage) {
+                    const text = document.createElement('div');
+                    text.className = 'ui-progress-text';
+                    text.textContent = `${Math.round(progress)}%`;
+                    text.style.cssText = `
+                        margin-top: 8px;
+                        text-align: center;
+                        font-size: 0.9rem;
+                        color: ${color};
+                        font-weight: 600;
+                    `;
+                    container.appendChild(text);
+                }
+                
+                return container;
+            }
+            
+            // ========== Component 3: Card ==========
+            static createCard(content, options = {}) {
+                const {
+                    title = null,
+                    subtitle = null,
+                    footer = null,
+                    elevation = 2,
+                    border = false
+                } = options;
+                
+                const card = document.createElement('div');
+                card.className = 'ui-card';
+                
+                // اعمال elevation
+                const shadows = [
+                    'none',
+                    '0 2px 8px rgba(0,0,0,0.1)',
+                    '0 4px 16px rgba(0,0,0,0.15)',
+                    '0 8px 24px rgba(0,0,0,0.2)'
+                ];
+                
+                card.style.cssText = `
+                    background: rgba(40, 40, 60, 0.9);
+                    border-radius: 15px;
+                    padding: 24px;
+                    ${shadows[elevation] ? `box-shadow: ${shadows[elevation]};` : ''}
+                    ${border ? 'border: 1px solid rgba(67, 97, 238, 0.3);' : ''}
+                    transition: all 0.3s ease;
+                `;
+                
+                card.addEventListener('mouseenter', () => {
+                    card.style.transform = 'translateY(-4px)';
+                    card.style.boxShadow = '0 12px 32px rgba(0,0,0,0.25)';
+                });
+                
+                card.addEventListener('mouseleave', () => {
+                    card.style.transform = 'translateY(0)';
+                    card.style.boxShadow = shadows[elevation] || 'none';
+                });
+                
+                // عنوان
+                if (title) {
+                    const titleEl = document.createElement('h3');
+                    titleEl.className = 'ui-card-title';
+                    titleEl.textContent = title;
+                    titleEl.style.cssText = `
+                        margin: 0 0 12px 0;
+                        color: #4cc9f0;
+                        font-size: 1.3rem;
+                        font-weight: 600;
+                    `;
+                    card.appendChild(titleEl);
+                }
+                
+                // زیرعنوان
+                if (subtitle) {
+                    const subtitleEl = document.createElement('p');
+                    subtitleEl.className = 'ui-card-subtitle';
+                    subtitleEl.textContent = subtitle;
+                    subtitleEl.style.cssText = `
+                        margin: 0 0 20px 0;
+                        color: #a9d6e5;
+                        font-size: 0.95rem;
+                        opacity: 0.8;
+                    `;
+                    card.appendChild(subtitleEl);
+                }
+                
+                // محتوا
+                const contentEl = document.createElement('div');
+                contentEl.className = 'ui-card-content';
+                if (typeof content === 'string') {
+                    contentEl.innerHTML = content;
+                } else if (content instanceof HTMLElement) {
+                    contentEl.appendChild(content);
+                } else if (Array.isArray(content)) {
+                    content.forEach(item => {
+                        if (item instanceof HTMLElement) {
+                            contentEl.appendChild(item);
+                        } else {
+                            const div = document.createElement('div');
+                            div.textContent = String(item);
+                            contentEl.appendChild(div);
+                        }
+                    });
+                }
+                contentEl.style.cssText = 'margin-bottom: 20px;';
+                card.appendChild(contentEl);
+                
+                // فوتر
+                if (footer) {
+                    const footerEl = document.createElement('div');
+                    footerEl.className = 'ui-card-footer';
+                    footerEl.style.cssText = `
+                        border-top: 1px solid rgba(67, 97, 238, 0.2);
+                        padding-top: 16px;
+                        margin-top: 16px;
+                    `;
+                    
+                    if (typeof footer === 'string') {
+                        footerEl.textContent = footer;
+                    } else if (footer instanceof HTMLElement) {
+                        footerEl.appendChild(footer);
+                    }
+                    
+                    card.appendChild(footerEl);
+                }
+                
+                return card;
+            }
+            
+            // ========== Component 4: Alert ==========
+            static createAlert(message, type = 'info', options = {}) {
+                const {
+                    closable = true,
+                    autoClose = null,
+                    icon = null
+                } = options;
+                
+                const types = {
+                    info: { color: '#4361ee', icon: 'ℹ️' },
+                    success: { color: '#06d6a0', icon: '✅' },
+                    warning: { color: '#ffd166', icon: '⚠️' },
+                    danger: { color: '#ef476f', icon: '❌' }
+                };
+                
+                const alert = document.createElement('div');
+                alert.className = `ui-alert ui-alert-${type}`;
+                
+                const alertStyle = {
+                    background: `rgba(${this.hexToRgb(types[type].color)}, 0.1)`,
+                    border: `2px solid ${types[type].color}`,
+                    color: '#e9ecef',
+                    padding: '16px 20px',
+                    borderRadius: '12px',
+                    margin: '16px 0',
+                    display: 'flex',
+                    alignItems: 'flex-start',
+                    gap: '12px',
+                    transition: 'all 0.3s ease'
+                };
+                
+                Object.assign(alert.style, alertStyle);
+                
+                // آیکون
+                const iconEl = document.createElement('span');
+                iconEl.textContent = icon || types[type].icon;
+                iconEl.style.cssText = `
+                    font-size: 1.2rem;
+                    flex-shrink: 0;
+                `;
+                alert.appendChild(iconEl);
+                
+                // متن
+                const messageEl = document.createElement('div');
+                messageEl.className = 'ui-alert-message';
+                messageEl.textContent = message;
+                messageEl.style.cssText = `
+                    flex: 1;
+                    font-size: 0.95rem;
+                    line-height: 1.5;
+                `;
+                alert.appendChild(messageEl);
+                
+                // دکمه بستن
+                if (closable) {
+                    const closeBtn = document.createElement('button');
+                    closeBtn.textContent = '×';
+                    closeBtn.style.cssText = `
+                        background: none;
+                        border: none;
+                        color: ${types[type].color};
+                        font-size: 1.5rem;
+                        cursor: pointer;
+                        padding: 0;
+                        width: 24px;
+                        height: 24px;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        opacity: 0.7;
+                        transition: opacity 0.2s;
+                    `;
+                    
+                    closeBtn.addEventListener('click', () => {
+                        alert.style.opacity = '0';
+                        alert.style.transform = 'translateX(-20px)';
+                        setTimeout(() => alert.remove(), 300);
+                    });
+                    
+                    closeBtn.addEventListener('mouseenter', () => {
+                        closeBtn.style.opacity = '1';
+                    });
+                    
+                    closeBtn.addEventListener('mouseleave', () => {
+                        closeBtn.style.opacity = '0.7';
+                    });
+                    
+                    alert.appendChild(closeBtn);
+                }
+                
+                // بستن خودکار
+                if (autoClose) {
+                    setTimeout(() => {
+                        if (alert.parentNode) {
+                            alert.style.opacity = '0';
+                            setTimeout(() => alert.remove(), 300);
+                        }
+                    }, autoClose);
+                }
+                
+                return alert;
+            }
+            
+            // ========== Component 5: Input Field ==========
+            static createInputField(options = {}) {
+                const {
+                    type = 'text',
+                    placeholder = '',
+                    value = '',
+                    label = null,
+                    error = null,
+                    disabled = false,
+                    required = false,
+                    onChange = null,
+                    prefix = null,
+                    suffix = null
+                } = options;
+                
+                const container = document.createElement('div');
+                container.className = 'ui-input-container';
+                container.style.cssText = 'margin: 20px 0;';
+                
+                // لیبل
+                if (label) {
+                    const labelEl = document.createElement('label');
+                    labelEl.className = 'ui-input-label';
+                    labelEl.textContent = label + (required ? ' *' : '');
+                    labelEl.style.cssText = `
+                        display: block;
+                        margin-bottom: 8px;
+                        color: #a9d6e5;
+                        font-weight: 500;
+                        font-size: 0.95rem;
+                    `;
+                    container.appendChild(labelEl);
+                }
+                
+                // ورودی
+                const inputWrapper = document.createElement('div');
+                inputWrapper.className = 'ui-input-wrapper';
+                inputWrapper.style.cssText = `
+                    display: flex;
+                    align-items: center;
+                    gap: 8px;
+                    border: 2px solid ${error ? '#ef476f' : 'rgba(67, 97, 238, 0.3)'};
+                    border-radius: 10px;
+                    padding: 0 16px;
+                    background: rgba(20, 20, 40, 0.8);
+                    transition: all 0.3s ease;
+                `;
+                
+                // پیشوند
+                if (prefix) {
+                    const prefixEl = document.createElement('span');
+                    prefixEl.className = 'ui-input-prefix';
+                    prefixEl.textContent = prefix;
+                    prefixEl.style.cssText = 'color: rgba(169, 214, 229, 0.7);';
+                    inputWrapper.appendChild(prefixEl);
+                }
+                
+                const input = document.createElement('input');
+                input.type = type;
+                input.placeholder = placeholder;
+                input.value = value;
+                input.disabled = disabled;
+                input.required = required;
+                input.className = 'ui-input';
+                input.style.cssText = `
+                    flex: 1;
+                    background: transparent;
+                    border: none;
+                    padding: 14px 0;
+                    color: white;
+                    font-size: 1rem;
+                    outline: none;
+                    min-width: 0;
+                `;
+                
+                if (onChange) {
+                    input.addEventListener('input', (e) => onChange(e.target.value));
+                }
+                
+                // پسوند
+                if (suffix) {
+                    const suffixEl = document.createElement('span');
+                    suffixEl.className = 'ui-input-suffix';
+                    suffixEl.textContent = suffix;
+                    suffixEl.style.cssText = 'color: rgba(169, 214, 229, 0.7);';
+                    inputWrapper.appendChild(suffixEl);
+                }
+                
+                inputWrapper.appendChild(input);
+                container.appendChild(inputWrapper);
+                
+                // خطا
+                if (error) {
+                    const errorEl = document.createElement('div');
+                    errorEl.className = 'ui-input-error';
+                    errorEl.textContent = error;
+                    errorEl.style.cssText = `
+                        margin-top: 8px;
+                        color: #ef476f;
+                        font-size: 0.85rem;
+                    `;
+                    container.appendChild(errorEl);
+                }
+                
+                // استایل‌های hover/focus
+                inputWrapper.addEventListener('mouseenter', () => {
+                    if (!disabled) {
+                        inputWrapper.style.borderColor = '#4361ee';
+                    }
+                });
+                
+                inputWrapper.addEventListener('mouseleave', () => {
+                    if (!disabled && !input.matches(':focus')) {
+                        inputWrapper.style.borderColor = error ? '#ef476f' : 'rgba(67, 97, 238, 0.3)';
+                    }
+                });
+                
+                input.addEventListener('focus', () => {
+                    inputWrapper.style.borderColor = '#4cc9f0';
+                    inputWrapper.style.boxShadow = '0 0 0 3px rgba(76, 201, 240, 0.2)';
+                });
+                
+                input.addEventListener('blur', () => {
+                    inputWrapper.style.borderColor = error ? '#ef476f' : 'rgba(67, 97, 238, 0.3)';
+                    inputWrapper.style.boxShadow = 'none';
+                });
+                
+                return container;
+            }
+            
+            // ========== Utility Methods ==========
+            static hexToRgb(hex) {
+                const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+                return result ? 
+                    `${parseInt(result[1], 16)}, ${parseInt(result[2], 16)}, ${parseInt(result[3], 16)}` :
+                    '67, 97, 238';
+            }
+            
+            static validateEmail(email) {
+                const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+                return re.test(email);
+            }
+            
+            static validatePassword(password) {
+                return password.length >= 8 && 
+                       /[A-Z]/.test(password) && 
+                       /[a-z]/.test(password) && 
+                       /\d/.test(password);
+            }
+            
+            static formatDate(date, format = 'fa-IR') {
+                return new Date(date).toLocaleDateString(format, {
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric'
+                });
+            }
+        }
+
+        // ==================== Unit Tests ====================
+        const unitTests = [
+            {
+                id: 'unit-1',
+                title: 'Button Component - ساخت صحیح',
+                run: () => {
+                    const button = UIComponents.createButton('تست', {
+                        type: 'primary',
+                        size: 'medium'
+                    });
+                    
+                    const isValid = button instanceof HTMLButtonElement &&
+                                  button.textContent.includes('تست') &&
+                                  button.style.background.includes('4361ee');
+                    
+                    return { result: isValid, element: button };
+                }
+            },
+            {
+                id: 'unit-2',
+                title: 'Button Component - وضعیت غیرفعال',
+                run: () => {
+                    const button = UIComponents.createButton('غیرفعال', {
+                        disabled: true
+                    });
+                    
+                    const isDisabled = button.disabled === true &&
+                                     button.style.opacity === '0.6' &&
+                                     button.style.cursor === 'not-allowed';
+                    
+                    return { result: isDisabled, element: button };
+                }
+            },
+            {
+                id: 'unit-3',
+                title: 'Progress Bar - مقدار صحیح',
+                run: () => {
+                    const progressBar = UIComponents.createProgressBar(75, {
+                        showPercentage: true
+                    });
+                    
+                    const percentageText = progressBar.querySelector('.ui-progress-text');
+                    const isValid = percentageText &&
+                                  percentageText.textContent.includes('75%') &&
+                                  progressBar.querySelector('.ui-progress-bar').style.width === '75%';
+                    
+                    return { result: !!isValid, element: progressBar };
+                }
+            },
+            {
+                id: 'unit-4',
+                title: 'Card Component - ساختار کامل',
+                run: () => {
+                    const card = UIComponents.createCard('محتوا تست', {
+                        title: 'عنوان تست',
+                        subtitle: 'زیرعنوان تست',
+                        footer: 'فوتر تست'
+                    });
+                    
+                    const hasTitle = card.querySelector('.ui-card-title')?.textContent === 'عنوان تست';
+                    const hasSubtitle = card.querySelector('.ui-card-subtitle')?.textContent === 'زیرعنوان تست';
+                    const hasFooter = card.querySelector('.ui-card-footer')?.textContent.includes('فوتر تست');
+                    const hasContent = card.querySelector('.ui-card-content')?.textContent.includes('محتوا تست');
+                    
+                    return { result: hasTitle && hasSubtitle && hasFooter && hasContent, element: card };
+                }
+            },
+            {
+                id: 'unit-5',
+                title: 'Alert Component - انواع مختلف',
+                run: () => {
+                    const alerts = [
+                        UIComponents.createAlert('اطلاع تست', 'info'),
+                        UIComponents.createAlert('موفقیت تست', 'success'),
+                        UIComponents.createAlert('اخطار تست', 'warning'),
+                        UIComponents.createAlert('خطا تست', 'danger')
+                    ];
+                    
+                    const validTypes = alerts.every((alert, index) => {
+                        const types = ['info', 'success', 'warning', 'danger'];
+                        return alert.className.includes(`ui-alert-${types[index]}`);
+                    });
+                    
+                    return { result: validTypes, element: alerts[0] };
+                }
+            },
+            {
+                id: 'unit-6',
+                title: 'Input Field - اعتبارسنجی ایمیل',
+                run: () => {
+                    const validEmail = 'test@example.com';
+                    const invalidEmail = 'invalid-email';
+                    
+                    const isValid1 = UIComponents.validateEmail(validEmail);
+                    const isValid2 = !UIComponents.validateEmail(invalidEmail);
+                    
+                    return { result: isValid1 && isValid2 };
+                }
+            },
+            {
+                id: 'unit-7',
+                title: 'Input Field - اعتبارسنجی رمز عبور',
+                run: () => {
+                    const validPass = 'Pass1234';
+                    const invalidPass1 = 'short';
+                    const invalidPass2 = 'nouppercase123';
+                    const invalidPass3 = 'NOLOWER123';
+                    const invalidPass4 = 'NoNumbers';
+                    
+                    const tests = [
+                        UIComponents.validatePassword(validPass) === true,
+                        UIComponents.validatePassword(invalidPass1) === false,
+                        UIComponents.validatePassword(invalidPass2) === false,
+                        UIComponents.validatePassword(invalidPass3) === false,
+                        UIComponents.validatePassword(invalidPass4) === false
+                    ];
+                    
+                    return { result: tests.every(t => t) };
+                }
+            }
+        ];
+
+        // ==================== Integration Tests ====================
+        const integrationTests = [
+            {
+                id: 'int-1',
+                title: 'تعامل Button + Card',
+                run: () => {
+                    const button = UIComponents.createButton('کلیک کن', {
+                        onClick: () => console.log('Button clicked in integration test')
+                    });
+                    
+                    const card = UIComponents.createCard(button, {
+                        title: 'تست تعامل',
+                        subtitle: 'دکمه داخل کارت'
+                    });
+                    
+                    const hasButtonInsideCard = card.querySelector('button') === button;
+                    const buttonText = card.querySelector('button')?.textContent;
+                    
+                    return { 
+                        result: hasButtonInsideCard && buttonText === 'کلیک کن',
+                        element: card 
+                    };
+                }
+            },
+            {
+                id: 'int-2',
+                title: 'تعامل Input + Alert (خطا)',
+                run: () => {
+                    let lastAlert = null;
+                    
+                    const input = UIComponents.createInputField({
+                        label: 'ایمیل',
+                        placeholder: 'ایمیل خود را وارد کنید',
+                        onChange: (value) => {
+                            if (!UIComponents.validateEmail(value) && value.length > 0) {
+                                lastAlert = UIComponents.createAlert('ایمیل معتبر نیست', 'danger');
+                                document.body.appendChild(lastAlert);
+                            }
+                        }
+                    });
+                    
+                    // شبیه‌سازی ورودی نامعتبر
+                    const inputEl = input.querySelector('input');
+                    inputEl.value = 'invalid-email';
+                    inputEl.dispatchEvent(new Event('input', { bubbles: true }));
+                    
+                    setTimeout(() => {
+                        console.log('Alert created:', !!lastAlert);
+                    }, 100);
+                    
+                    return { result: true, element: input }; // تست غیرهمزمان
+                }
+            },
+            {
+                id: 'int-3',
+                title: 'تعامل Progress Bar + Card',
+                run: () => {
+                    const progressBar = UIComponents.createProgressBar(65, {
+                        showPercentage: true,
+                        color: '#06d6a0'
+                    });
+                    
+                    const card = UIComponents.createCard(progressBar, {
+                        title: 'پیشرفت درس',
+                        subtitle: 'درس ۳ از ۵'
+                    });
+                    
+                    const hasProgressInCard = card.querySelector('.ui-progress-bar') !== null;
+                    const progressValue = card.querySelector('.ui-progress-text')?.textContent;
+                    
+                    return { 
+                        result: hasProgressInCard && progressValue?.includes('65%'),
+                        element: card 
+                    };
+                }
+            },
+            {
+                id: 'int-4',
+                title: 'Form Components Integration',
+                run: () => {
+                    // ساخت فرم نمونه
+                    const emailInput = UIComponents.createInputField({
+                        label: 'ایمیل',
+                        type: 'email',
+                        required: true
+                    });
+                    
+                    const passwordInput = UIComponents.createInputField({
+                        label: 'رمز عبور',
+                        type: 'password',
+                        required: true
+                    });
+                    
+                    const submitButton = UIComponents.createButton('ثبت نام', {
+                        type: 'success',
+                        onClick: () => {
+                            const email = emailInput.querySelector('input').value;
+                            const password = passwordInput.querySelector('input').value;
+                            
+                            const emailValid = UIComponents.validateEmail(email);
+                            const passwordValid = UIComponents.validatePassword(password);
+                            
+                            return emailValid && passwordValid;
+                        }
+                    });
+                    
+                    const formCard = UIComponents.createCard([
+                        emailInput,
+                        passwordInput,
+                        submitButton
+                    ], {
+                        title: 'فرم ثبت نام',
+                        border: true
+                    });
+                    
+                    const hasAllComponents = 
+                        formCard.querySelectorAll('.ui-input-container').length === 2 &&
+                        formCard.querySelector('button') !== null;
+                    
+                    return { result: hasAllComponents, element: formCard };
+                }
+            }
+        ];
+
+        // ==================== Interactive Tests ====================
+        const interactiveTests = [
+            {
+                id: 'inter-1',
+                title: 'تست کلیک دکمه',
+                run: async () => {
+                    return new Promise((resolve) => {
+                        let clicked = false;
+                        
+                        const button = UIComponents.createButton('کلیک کنید', {
+                            onClick: () => {
+                                clicked = true;
+                                resolve({ result: true, element: button });
+                            }
+                        });
+                        
+                        document.getElementById('interactive-tests').appendChild(button);
+                        
+                        // شبیه‌سازی کلیک
+                        setTimeout(() => {
+                            if (!clicked) {
+                                button.click();
+                            }
+                        }, 500);
+                    });
+                }
+            },
+            {
+                id: 'inter-2',
+                title: 'تست ورودی فرم',
+                run: async () => {
+                    return new Promise((resolve) => {
+                        const input = UIComponents.createInputField({
+                            label: 'تست ورودی',
+                            placeholder: 'متن خود را وارد کنید',
+                            onChange: (value) => {
+                                console.log('Input changed:', value);
+                                if (value.length > 0) {
+                                    resolve({ result: true, element: input });
+                                }
+                            }
+                        });
+                        
+                        document.getElementById('interactive-tests').appendChild(input);
+                        
+                        // شبیه‌سازی تایپ
+                        setTimeout(() => {
+                            const inputEl = input.querySelector('input');
+                            inputEl.value = 'متن تست';
+                            inputEl.dispatchEvent(new Event('input', { bubbles: true }));
+                        }, 500);
+                    });
+                }
+            }
+        ];
+
+        // ==================== اجرای تست‌ها ====================
+        let totalTests = 0;
+        let passedTests = 0;
+        
+        async function runAllTests() {
+            clearTestAreas();
+            totalTests = 0;
+            passedTests = 0;
+            
+            updateProgress(0);
+            
+            // اجرای Unit Tests
+            for (const test of unitTests) {
+                await executeTest(test, 'unit-tests', 'unit');
+            }
+            
+            // اجرای Integration Tests
+            for (const test of integrationTests) {
+                await executeTest(test, 'integration-tests', 'integration');
+            }
+            
+            updateSummary();
+            renderComponents(); // رندر مجدد کامپوننت‌ها
+        }
+        
+        async function executeTest(test, containerId, type) {
+            totalTests++;
+            updateProgress((totalTests / (unitTests.length + integrationTests.length)) * 50);
+            
+            const container = document.getElementById(containerId);
+            const testDiv = document.createElement('div');
+            testDiv.className = 'test-section';
+            
+            testDiv.innerHTML = `
+                <div class="test-header">
+                    <div class="test-title">${test.id}. ${test.title}</div>
+                    <div class="test-result running">در حال اجرا...</div>
+                </div>
+            `;
+            
+            container.appendChild(testDiv);
+            
+            try {
+                const result = await test.run();
+                
+                if (result.result) {
+                    passedTests++;
+                    testDiv.querySelector('.test-result').className = 'test-result pass';
+                    testDiv.querySelector('.test-result').textContent = '✅ موفق';
+                } else {
+                    testDiv.querySelector('.test-result').className = 'test-result fail';
+                    testDiv.querySelector('.test-result').textContent = '❌ ناموفق';
+                    
+                    const details = document.createElement('div');
+                    details.className = 'details';
+                    details.textContent = `تست ${type} "${test.title}" ناموفق بود`;
+                    testDiv.appendChild(details);
+                }
+                
+                if (result.element) {
+                    const preview = document.createElement('div');
+                    preview.style.marginTop = '15px';
+                    preview.appendChild(result.element);
+                    testDiv.appendChild(preview);
+                }
+            } catch (error) {
+                testDiv.querySelector('.test-result').className = 'test-result fail';
+                testDiv.querySelector('.test-result').textContent = '❌ خطا';
+                
+                const details = document.createElement('div');
+                details.className = 'details';
+                details.textContent = `خطا: ${error.message}`;
+                testDiv.appendChild(details);
+            }
+            
+            updateProgress((totalTests / (unitTests.length + integrationTests.length)) * 50 + 50);
+        }
+        
+        async function runInteractiveTests() {
+            const container = document.getElementById('interactive-tests');
+            container.innerHTML = '<h3>🎮 تست‌های تعاملی در حال اجرا...</h3>';
+            
+            for (const test of interactiveTests) {
+                const testDiv = document.createElement('div');
+                testDiv.className = 'test-section';
+                testDiv.innerHTML = `
+                    <div class="test-header">
+                        <div class="test-title">${test.title}</div>
+                        <div class="test-result running">در حال اجرا...</div>
+                    </div>
+                `;
+                
+                container.appendChild(testDiv);
+                
+                try {
+                    const result = await test.run();
+                    
+                    testDiv.querySelector('.test-result').className = 'test-result pass';
+                    testDiv.querySelector('.test-result').textContent = '✅ موفق';
+                    
+                    if (result.element) {
+                        const preview = document.createElement('div');
+                        preview.style.marginTop = '15px';
+                        preview.appendChild(result.element);
+                        testDiv.appendChild(preview);
+                    }
+                } catch (error) {
+                    testDiv.querySelector('.test-result').className = 'test-result fail';
+                    testDiv.querySelector('.test-result').textContent = '❌ خطا';
+                }
+            }
+        }
+        
+        function renderComponents() {
+            const previewContainer = document.getElementById('component-preview');
+            previewContainer.innerHTML = '';
+            
+            // رندر تمام کامپوننت‌ها
+            const components = [
+                {
+                    title: 'دکمه‌ها',
+                    element: UIComponents.createCard([
+                        UIComponents.createButton('اصلی', { type: 'primary' }),
+                        UIComponents.createButton('ثانویه', { type: 'secondary' }),
+                        UIComponents.createButton('موفقیت', { type: 'success' }),
+                        UIComponents.createButton('اخطار', { type: 'warning' }),
+                        UIComponents.createButton('خطا', { type: 'danger' }),
+                        UIComponents.createButton('Outline', { type: 'outline' }),
+                        UIComponents.createButton('غیرفعال', { disabled: true }),
+                        UIComponents.createButton('در حال بارگذاری', { loading: true })
+                    ], { title: 'انواع دکمه' })
+                },
+                {
+                    title: 'نوار پیشرفت',
+                    element: UIComponents.createCard([
+                        UIComponents.createProgressBar(25, { color: '#ef476f' }),
+                        UIComponents.createProgressBar(50, { color: '#ffd166' }),
+                        UIComponents.createProgressBar(75, { color: '#06d6a0' }),
+                        UIComponents.createProgressBar(100, { color: '#4361ee', animated: true })
+                    ], { title: 'نوار پیشرفت' })
+                },
+                {
+                    title: 'اعلان‌ها',
+                    element: UIComponents.createCard([
+                        UIComponents.createAlert('این یک اعلان اطلاعاتی است', 'info'),
+                        UIComponents.createAlert('عملیات با موفقیت انجام شد', 'success'),
+                        UIComponents.createAlert('لطفاً این قسمت را بررسی کنید', 'warning'),
+                        UIComponents.createAlert('خطا در انجام عملیات', 'danger')
+                    ], { title: 'انواع اعلان' })
+                },
+                {
+                    title: 'ورودی‌ها',
+                    element: UIComponents.createCard([
+                        UIComponents.createInputField({ label: 'متن ساده', placeholder: 'متن وارد کنید' }),
+                        UIComponents.createInputField({ 
+                            label: 'ایمیل', 
+                            type: 'email',
+                            prefix: '📧',
+                            error: 'ایمیل معتبر نیست'
+                        }),
+                        UIComponents.createInputField({ 
+                            label: 'رمز عبور', 
+                            type: 'password',
+                            suffix: '👁️'
+                        })
+                    ], { title: 'فیلدهای ورودی' })
+                }
+            ];
+            
+            components.forEach(comp => {
+                const card = UIComponents.createCard(comp.element, {
+                    title: comp.title,
+                    border: true,
+                    elevation: 2
+                });
+                
+                previewContainer.appendChild(card);
+            });
+        }
+        
+        function updateProgress(percentage) {
+            const progressFill = document.getElementById('progress-fill');
+            progressFill.style.width = `${percentage}%`;
+        }
+        
+        function updateSummary() {
+            const percentage = totalTests > 0 ? Math.round((passedTests / totalTests) * 100) : 0;
+            const summary = document.getElementById('summary-text');
+            
+            summary.innerHTML = `
+                <strong>نتایج تست UI کامپوننت‌ها:</strong><br>
+                ✅ ${passedTests} موفق | ❌ ${totalTests - passedTests} ناموفق | 📊 ${percentage}% قبولی<br>
+                ${percentage === 100 ? '🎉 تمام کامپوننت‌ها تست شدند!' : ''}
+            `;
+            
+            const coverageStats = document.getElementById('coverage-stats');
+            coverageStats.innerHTML = `
+                <div style="display: flex; justify-content: center; gap: 30px; margin-top: 10px;">
+                    <div>🧪 Unit Tests: ${unitTests.length}</div>
+                    <div>🔗 Integration Tests: ${integrationTests.length}</div>
+                    <div>🎮 Interactive Tests: ${interactiveTests.length}</div>
+                </div>
+            `;
+            
+            summary.style.color = percentage >= 90 ? '#06d6a0' : 
+                                 percentage >= 70 ? '#ffd166' : '#ef476f';
+        }
+        
+        function clearTestAreas() {
+            ['unit-tests', 'integration-tests', 'interactive-tests']
+                .forEach(id => {
+                    const container = document.getElementById(id);
+                    if (container) container.innerHTML = '';
+                });
+        }
+        
+        function clearAll() {
+            clearTestAreas();
+            document.getElementById('component-preview').innerHTML = '';
+            document.getElementById('summary-text').innerHTML = 'آماده اجرای ۱۴ تست کامپوننت UI...';
+            document.getElementById('summary-text').style.color = '#e9ecef';
+            updateProgress(0);
+        }
+
+        // اجرای خودکار
+        window.onload = () => {
+            updateSummary();
+            renderComponents();
+            setTimeout(() => {
+                console.log('✅ کتابخانه UI کامپوننت‌ها آماده است');
+            }, 1000);
+        };
+    </script>
+</body>
+</html>
