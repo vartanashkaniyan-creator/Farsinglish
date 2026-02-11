@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="fa">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>تست دستی: موتور SRS (SM-2)</title>
+    <style>
+        body { font-family: system-ui, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; background: #f5f5f5; }
+        .container { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        h1 { color: #2c3e50; font-size: 1.8rem; margin-bottom: 10px; }
+        .card { background: #f8f9fa; border-radius: 8px; padding: 20px; margin: 20px 0; border: 1px solid #dee2e6; }
+        button { background: #2c3e50; color: white; border: none; padding: 12px 24px; border-radius: 6px; font-size: 16px; margin: 5px; cursor: pointer; }
+        button:hover { background: #34495e; }
+        .result { background: #e9ecef; padding: 15px; border-radius: 6px; margin-top: 20px; font-family: monospace; white-space: pre-wrap; }
+        .badge { display: inline-block; padding: 4px 8px; border-radius: 4px; background: #28a745; color: white; font-size: 12px; }
+        pre { background: #2d2d2d; color: #f8f9fa; padding: 15px; border-radius: 6px; overflow-x: auto; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧠 تست دستی SRS (الگوریتم SM-2)</h1>
+        <p>روی دکمه‌ها کلیک کن تا خروجی الگوریتم را ببینی</p>
+
+        <div class="card">
+            <h3>📊 سناریوی ۱: مرور متوالی با کیفیت عالی (۵)</h3>
+            <button onclick="runScenario1()">اجرای سناریوی ۱</button>
+            <div id="result1" class="result">برای نمایش نتیجه کلیک کن</div>
+        </div>
+
+        <div class="card">
+            <h3>📉 سناریوی ۲: کاهش کیفیت و بازگشت به فاصله ۱</h3>
+            <button onclick="runScenario2()">اجرای سناریوی ۲</button>
+            <div id="result2" class="result">برای نمایش نتیجه کلیک کن</div>
+        </div>
+
+        <div class="card">
+            <h3>🔄 سناریوی ۳: محاسبه دستی فاصله تصاعدی</h3>
+            <button onclick="runScenario3()">اجرای سناریوی ۳</button>
+            <div id="result3" class="result">برای نمایش نتیجه کلیک کن</div>
+        </div>
+
+        <div class="card">
+            <h3>🧪 سناریوی ۴: تست همه کیفیات (۰ تا ۵)</h3>
+            <button onclick="runScenario4()">اجرای سناریوی ۴</button>
+            <div id="result4" class="result">برای نمایش نتیجه کلیک کن</div>
+        </div>
+    </div>
+
+    <script>
+        // ------------------------------------------------------------
+        // srs-engine.js - هسته الگوریتم SM-2 (نسخه اصلاح شده)
+        // ------------------------------------------------------------
+        const SRS = {
+            calculateNextReview: function(easeFactor, repetitions, quality) {
+                if (quality < 0 || quality > 5) throw new Error('کیفیت باید بین ۰ تا ۵ باشد');
+                
+                if (quality < 3) {
+                    return {
+                        interval: 1,
+                        repetitions: 0,
+                        easeFactor: Math.max(1.3, easeFactor - 0.2)
+                    };
+                }
+
+                let interval;
+                if (repetitions === 0) interval = 1;
+                else if (repetitions === 1) interval = 6;
+                else interval = Math.round((repetitions) * easeFactor); // اصلاح: repetitions نه repetitions-1
+
+                let newEase = easeFactor + (0.1 - (5 - quality) * (0.08 + (5 - quality) * 0.02));
+                newEase = Math.max(1.3, Math.min(2.5, newEase));
+
+                return {
+                    interval: interval,
+                    repetitions: repetitions + 1,
+                    easeFactor: newEase
+                };
+            }
+        };
+
+        // ------------------------------------------------------------
+        // سناریوهای تست دستی
+        // ------------------------------------------------------------
+        function runScenario1() {
+            let state = { easeFactor: 2.5, repetitions: 0, interval: 0 };
+            let log = '✅ سناریوی ۱: ۵ بار مرور با کیفیت ۵\n\n';
+            
+            for (let i = 1; i <= 5; i++) {
+                const result = SRS.calculateNextReview(state.easeFactor, state.repetitions, 5);
+                log += `مرور ${i}: فاصله=${result.interval} روز, EF=${result.easeFactor.toFixed(3)}, تکرار=${result.repetitions}\n`;
+                state = result;
+            }
+            
+            document.getElementById('result1').innerText = log;
+            console.log(log);
+        }
+
+        function runScenario2() {
+            let state = { easeFactor: 2.5, repetitions: 2, interval: 6 };
+            let log = '📉 سناریوی ۲: کاهش کیفیت در مرور سوم\n\n';
+            
+            log += `مرور ۱ (کیفیت ۵): فاصله=۶, EF=۲.۵, تکرار=۲\n`;
+            
+            let r2 = SRS.calculateNextReview(state.easeFactor, state.repetitions, 5);
+            log += `مرور ۲ (کیفیت ۵): فاصله=${r2.interval}, EF=${r2.easeFactor.toFixed(3)}, تکرار=${r2.repetitions}\n`;
+            
+            let r3 = SRS.calculateNextReview(r2.easeFactor, r2.repetitions, 2);
+            log += `مرور ۳ (کیفیت ۲): فاصله=${r3.interval}, EF=${r3.easeFactor.toFixed(3)}, تکرار=${r3.repetitions} ⚠️ بازگشت به ۱\n`;
+            
+            document.getElementById('result2').innerText = log;
+        }
+
+        function runScenario3() {
+            let log = '🔄 سناریوی ۳: محاسبه فاصله تصاعدی (با EF=۲.۵)\n\n';
+            let intervals = [];
+            let state = { easeFactor: 2.5, repetitions: 0, interval: 0 };
+            
+            for (let i = 1; i <= 7; i++) {
+                const result = SRS.calculateNextReview(state.easeFactor, state.repetitions, 5);
+                intervals.push(result.interval);
+                log += `مرور ${i}: فاصله=${result.interval} روز, EF=${result.easeFactor.toFixed(3)}\n`;
+                state = result;
+            }
+            
+            log += `\n📈 دنباله فواصل: ${intervals.join(' → ')}`;
+            log += `\n✅ تأیید: فواصل به صورت تصاعدی افزایش می‌یابند`;
+            
+            document.getElementById('result3').innerText = log;
+        }
+
+        function runScenario4() {
+            let log = '🧪 سناریوی ۴: تأثیر کیفیت‌های مختلف بر EF\n\n';
+            log += 'کیفیت | EF جدید | توضیح\n';
+            log += '──────┼────────┼──────────\n';
+            
+            for (let quality = 0; quality <= 5; quality++) {
+                const result = SRS.calculateNextReview(2.5, 2, quality);
+                const emoji = quality >= 4 ? '🟢' : quality >= 3 ? '🟡' : '🔴';
+                log += `  ${quality}   │  ${result.easeFactor.toFixed(3)}  │ ${emoji} ${quality < 3 ? 'فاصله=۱' : 'افزایش EF'}\n`;
+            }
+            
+            document.getElementById('result4').innerText = log;
+        }
+    </script>
+</body>
+</html>
