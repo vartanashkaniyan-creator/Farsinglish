@@ -1,0 +1,561 @@
+<!DOCTYPE html>
+<html lang="fa">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Farsinglish - Unit Test: Exercise Validator</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { 
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+            background: linear-gradient(135deg, #0b3d3f 0%, #1c5a5c 100%);
+            color: #e0f2f1;
+            padding: 20px;
+        }
+        .container { 
+            max-width: 900px; 
+            margin: 0 auto;
+            background: rgba(20, 50, 55, 0.9);
+            border-radius: 16px;
+            padding: 24px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        }
+        h1, h2 { 
+            text-align: center; 
+            color: #b2dfdb;
+            border-bottom: 2px solid #4db6ac;
+            padding-bottom: 10px;
+            margin-bottom: 20px;
+        }
+        .suite {
+            background: rgba(38, 80, 85, 0.8);
+            border-radius: 12px;
+            padding: 16px;
+            margin: 20px 0;
+            border-right: 6px solid #009688;
+        }
+        .test-case {
+            background: rgba(30, 60, 65, 0.9);
+            margin: 12px 0;
+            padding: 12px 16px;
+            border-radius: 8px;
+            border-left: 4px solid #ffb300;
+        }
+        .test-header {
+            display: flex;
+            justify-content: space-between;
+            font-weight: 600;
+            color: #ffe082;
+        }
+        .pass { background: #2e7d32; color: white; padding: 2px 12px; border-radius: 20px; }
+        .fail { background: #c62828; color: white; padding: 2px 12px; border-radius: 20px; }
+        .summary {
+            background: #004d40;
+            padding: 18px;
+            border-radius: 10px;
+            text-align: center;
+            font-size: 1.1rem;
+            margin-top: 25px;
+            border: 1px solid #80cbc4;
+        }
+        button {
+            background: #00695c;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 30px;
+            font-size: 1rem;
+            cursor: pointer;
+            margin: 8px;
+            font-weight: 600;
+            transition: 0.2s;
+        }
+        button:hover { background: #00897b; transform: scale(1.02); }
+        .controls { text-align: center; margin: 20px 0; }
+        .log {
+            background: #1e3a3f;
+            padding: 12px;
+            border-radius: 8px;
+            font-family: monospace;
+            font-size: 0.8rem;
+            color: #b9f6ca;
+            max-height: 200px;
+            overflow-y: auto;
+            margin-top: 20px;
+            border: 1px solid #4db6ac;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧪 Unit Test – Exercise Validator</h1>
+        <p style="text-align:center; color:#b2dfdb;">اعتبارسنجی تمرین‌های چهارگزینه‌ای، جای‌خالی، ترجمه و تلفظ</p>
+
+        <div class="suite" id="suite-multiple-choice">
+            <h2>✅ Multiple Choice Validator</h2>
+            <div id="tests-mc"></div>
+        </div>
+        <div class="suite" id="suite-fill-blank">
+            <h2>📝 Fill‑in‑the‑Blank Validator</h2>
+            <div id="tests-fb"></div>
+        </div>
+        <div class="suite" id="suite-translation">
+            <h2>🌐 Translation Validator</h2>
+            <div id="tests-tl"></div>
+        </div>
+        <div class="suite" id="suite-pronunciation">
+            <h2>🎤 Pronunciation Validator</h2>
+            <div id="tests-pr"></div>
+        </div>
+        <div class="suite" id="suite-integration">
+            <h2>🔗 Integration (Mock DB) – Lesson Service</h2>
+            <div id="tests-integration"></div>
+        </div>
+
+        <div class="summary" id="summary-box">
+            ⏳ در حال بارگذاری تست‌ها...
+        </div>
+
+        <div class="controls">
+            <button onclick="ExerciseValidatorTest.runAll()">🚀 اجرای تمام تست‌ها</button>
+            <button onclick="ExerciseValidatorTest.reset()">🧹 پاک کردن نتایج</button>
+        </div>
+
+        <div class="log" id="log-panel">
+            📋 لاگ کنسول شبیه‌سازی‌شده
+        </div>
+    </div>
+
+    <script>
+        // ===================================================================
+        // 1️⃣ کلاس اصلی اعتبارسنجی تمرین (Exercise Validator)
+        //    منطق محض – بدون وابستگی به UI/DB
+        // ===================================================================
+        class ExerciseValidator {
+            // ----- اعتبارسنجی چهارگزینه‌ای -----
+            static validateMultipleChoice(userAnswer, correctIndex, choices) {
+                // ورودی: اندیس انتخاب‌شده توسط کاربر، اندیس صحیح، آرایه گزینه‌ها
+                if (!Array.isArray(choices) || choices.length === 0) return false;
+                if (typeof userAnswer !== 'number' || userAnswer < 0 || userAnswer >= choices.length) return false;
+                if (typeof correctIndex !== 'number' || correctIndex < 0 || correctIndex >= choices.length) return false;
+                return userAnswer === correctIndex;
+            }
+
+            // ----- اعتبارسنجی جای‌خالی (مقایسه رشته‌ای) -----
+            static validateFillBlank(userAnswer, correctAnswer, caseInsensitive = true, trimSpaces = true) {
+                if (typeof userAnswer !== 'string' || typeof correctAnswer !== 'string') return false;
+                let processedUser = userAnswer;
+                let processedCorrect = correctAnswer;
+                if (trimSpaces) {
+                    processedUser = processedUser.trim();
+                    processedCorrect = processedCorrect.trim();
+                }
+                if (caseInsensitive) {
+                    processedUser = processedUser.toLowerCase();
+                    processedCorrect = processedCorrect.toLowerCase();
+                }
+                return processedUser === processedCorrect;
+            }
+
+            // ----- اعتبارسنجی ترجمه (انگلیسی به فارسی / فارسی به انگلیسی) -----
+            static validateTranslation(userAnswer, expectedAnswer, direction = 'en2fa', tolerance = 0) {
+                // tolerance: تعداد کاراکتر اختلاف مجاز (برای غلط‌گیری املایی ساده)
+                if (typeof userAnswer !== 'string' || typeof expectedAnswer !== 'string') return false;
+                const u = userAnswer.trim().toLowerCase();
+                const e = expectedAnswer.trim().toLowerCase();
+                if (u === e) return true;
+                if (tolerance > 0) {
+                    // فاصله لوناشتاین ساده (تفاوت کاراکتری)
+                    const diff = Math.abs(u.length - e.length);
+                    if (diff <= tolerance) return true;
+                }
+                return false;
+            }
+
+            // ----- اعتبارسنجی تلفظ (مقایسه فونتیک) -----
+            static validatePronunciation(userPhonetic, correctPhoneticList) {
+                if (typeof userPhonetic !== 'string' || !Array.isArray(correctPhoneticList)) return false;
+                const normalizedUser = userPhonetic.trim().replace(/[\/\s]/g, '');
+                return correctPhoneticList.some(p => 
+                    p.trim().replace(/[\/\s]/g, '') === normalizedUser
+                );
+            }
+
+            // ----- اعتبارسنجی امتیاز SRS (کیفیت پاسخ) -----
+            static validateSrsQuality(userScore) {
+                // کیفیت پاسخ باید بین ۰ تا ۵ باشد
+                return Number.isInteger(userScore) && userScore >= 0 && userScore <= 5;
+            }
+        }
+
+        // ===================================================================
+        // 2️⃣ Mock از IndexedDB برای Integration Test (Lesson Service)
+        // ===================================================================
+        class MockLessonDB {
+            constructor() {
+                this.lessons = new Map();
+                this.progress = new Map();
+                console.log('📁 [MOCK DB] نمونه‌سازی شد');
+            }
+
+            async saveLesson(lesson) {
+                if (!lesson.id) throw new Error('درس باید id داشته باشد');
+                this.lessons.set(lesson.id, { ...lesson, savedAt: Date.now() });
+                return { success: true, id: lesson.id };
+            }
+
+            async getLesson(id) {
+                return this.lessons.get(id) || null;
+            }
+
+            async saveProgress(userId, progress) {
+                this.progress.set(userId, { ...progress, updatedAt: Date.now() });
+                return { success: true };
+            }
+
+            async getProgress(userId) {
+                return this.progress.get(userId) || null;
+            }
+
+            // متدهای کمکی برای تست
+            clear() {
+                this.lessons.clear();
+                this.progress.clear();
+            }
+        }
+
+        // ===================================================================
+        // 3️⃣ سرویس درس که از دیتابیس (حقیقی یا Mock) استفاده می‌کند
+        // ===================================================================
+        class LessonService {
+            constructor(db) {
+                this.db = db; // وارونگی وابستگی (DIP)
+            }
+
+            async submitExerciseResult(lessonId, userId, exerciseType, userAnswer, correctData) {
+                // این متد ترکیبی از اعتبارسنجی + ذخیره‌سازی است
+                let isValid = false;
+                switch (exerciseType) {
+                    case 'multiple-choice':
+                        isValid = ExerciseValidator.validateMultipleChoice(userAnswer, correctData.correctIndex, correctData.choices);
+                        break;
+                    case 'fill-blank':
+                        isValid = ExerciseValidator.validateFillBlank(userAnswer, correctData.correctAnswer, true, true);
+                        break;
+                    case 'translation':
+                        isValid = ExerciseValidator.validateTranslation(userAnswer, correctData.correctAnswer, correctData.direction, 1);
+                        break;
+                    case 'pronunciation':
+                        isValid = ExerciseValidator.validatePronunciation(userAnswer, correctData.phoneticList);
+                        break;
+                    default: return { error: 'نوع تمرین نامشخص' };
+                }
+
+                // ذخیره نتیجه در دیتابیس (از طریق mock)
+                await this.db.saveProgress(userId, {
+                    lessonId,
+                    exerciseType,
+                    isValid,
+                    timestamp: Date.now()
+                });
+
+                return { success: true, isValid, saved: true };
+            }
+        }
+
+        // ===================================================================
+        // 4️⃣ واحد تست – شامل Unit Tests و Integration Test
+        // ===================================================================
+        const ExerciseValidatorTest = {
+            results: { total: 0, passed: 0, failed: 0 },
+            log: [],
+
+            async runAll() {
+                this.reset();
+                this.addLog('🧪 شروع مجموعه تست‌های Exercise Validator');
+
+                // ---- Unit Test Suites ----
+                await this.testMultipleChoice();
+                await this.testFillBlank();
+                await this.testTranslation();
+                await this.testPronunciation();
+                await this.testSrsQuality();
+                // ---- Integration Test ----
+                await this.testLessonServiceIntegration();
+
+                this.renderSummary();
+                this.addLog(`✅ تست‌ها پایان یافت: ${this.results.passed}/${this.results.total} موفق`);
+            },
+
+            // --------------------------------------------------------------
+            // تست‌های واحد (Unit Tests) – ورودی مشخص → خروجی مشخص
+            // --------------------------------------------------------------
+            testMultipleChoice() {
+                const suiteId = 'tests-mc';
+                const container = document.getElementById(suiteId);
+                container.innerHTML = '';
+
+                // تست 1: پاسخ کاملاً درست
+                this.assert(
+                    () => ExerciseValidator.validateMultipleChoice(2, 2, ['cat','dog','bird','fish']),
+                    true,
+                    'MC-01: انتخاب صحیح اندیس',
+                    suiteId
+                );
+                // تست 2: پاسخ نادرست
+                this.assert(
+                    () => ExerciseValidator.validateMultipleChoice(0, 2, ['cat','dog','bird','fish']),
+                    false,
+                    'MC-02: انتخاب نادرست',
+                    suiteId
+                );
+                // تست 3: اندیس خارج از محدوده
+                this.assert(
+                    () => ExerciseValidator.validateMultipleChoice(5, 2, ['cat','dog','bird','fish']),
+                    false,
+                    'MC-03: اندیس خارج از محدوده',
+                    suiteId
+                );
+                // تست 4: آرایه گزینه‌ها خالی
+                this.assert(
+                    () => ExerciseValidator.validateMultipleChoice(0, 0, []),
+                    false,
+                    'MC-04: گزینه‌ها خالی',
+                    suiteId
+                );
+            },
+
+            testFillBlank() {
+                const suiteId = 'tests-fb';
+                const container = document.getElementById(suiteId);
+                container.innerHTML = '';
+
+                // تست 1: تطابق کامل
+                this.assert(
+                    () => ExerciseValidator.validateFillBlank('book', 'book'),
+                    true,
+                    'FB-01: تطابق کامل',
+                    suiteId
+                );
+                // تست 2: case-insensitive
+                this.assert(
+                    () => ExerciseValidator.validateFillBlank('Book', 'book'),
+                    true,
+                    'FB-02: بزرگ‌/کوچک‌نما',
+                    suiteId
+                );
+                // تست 3: فضای اضافی
+                this.assert(
+                    () => ExerciseValidator.validateFillBlank('  book  ', 'book'),
+                    true,
+                    'FB-03: حذف فاصله',
+                    suiteId
+                );
+                // تست 4: پاسخ غلط
+                this.assert(
+                    () => ExerciseValidator.validateFillBlank('cat', 'book'),
+                    false,
+                    'FB-04: پاسخ کاملاً اشتباه',
+                    suiteId
+                );
+            },
+
+            testTranslation() {
+                const suiteId = 'tests-tl';
+                const container = document.getElementById(suiteId);
+                container.innerHTML = '';
+
+                // تست 1: ترجمه صحیح انگلیسی→فارسی
+                this.assert(
+                    () => ExerciseValidator.validateTranslation('water', 'آب', 'en2fa'),
+                    false, // 'water' با 'آب' برابر نیست — منطقی است
+                    'TL-01: ترجمه غلط',
+                    suiteId
+                );
+                // تست 2: ترجمه صحیح با تسامح ۱ کاراکتر (شبیه غلط‌گیری املایی)
+                this.assert(
+                    () => ExerciseValidator.validateTranslation('آب', 'آب', 'fa2en', 0),
+                    true,
+                    'TL-02: ترجمه دقیق',
+                    suiteId
+                );
+                // تست 3: تسامح ۱ کاراکتر (کاربر "کت" نوشته به جای "کتاب")
+                this.assert(
+                    () => ExerciseValidator.validateTranslation('کت', 'کتاب', 'fa2en', 1),
+                    true,
+                    'TL-03: غلط‌گیری املایی (فاصله ۱)',
+                    suiteId
+                );
+            },
+
+            testPronunciation() {
+                const suiteId = 'tests-pr';
+                const container = document.getElementById(suiteId);
+                container.innerHTML = '';
+
+                const phoneticList = ['/həˈloʊ/', '/hɛˈloʊ/', '/həˈləʊ/'];
+
+                // تست 1: تلفظ صحیح
+                this.assert(
+                    () => ExerciseValidator.validatePronunciation('/həˈloʊ/', phoneticList),
+                    true,
+                    'PR-01: تلفظ درست',
+                    suiteId
+                );
+                // تست 2: تلفظ با فاصله اضافی
+                this.assert(
+                    () => ExerciseValidator.validatePronunciation('  /həˈloʊ/  ', phoneticList),
+                    true,
+                    'PR-02: فاصله اضافی',
+                    suiteId
+                );
+                // تست 3: تلفظ کاملاً غلط
+                this.assert(
+                    () => ExerciseValidator.validatePronunciation('/bæd/', phoneticList),
+                    false,
+                    'PR-03: تلفظ غلط',
+                    suiteId
+                );
+            },
+
+            testSrsQuality() {
+                // تست کمکی برای SRS (الگوریتم کیفیت)
+                const suiteId = 'tests-mc'; // فقط یک دکوریشن
+                this.assert(
+                    () => ExerciseValidator.validateSrsQuality(4),
+                    true,
+                    'SRS-01: کیفیت ۴ (معتبر)',
+                    'tests-mc'
+                );
+                this.assert(
+                    () => ExerciseValidator.validateSrsQuality(6),
+                    false,
+                    'SRS-02: کیفیت ۶ (نامعتبر)',
+                    'tests-mc'
+                );
+            },
+
+            // --------------------------------------------------------------
+            // تست یکپارچگی (Integration Test) با Mock DB
+            // --------------------------------------------------------------
+            async testLessonServiceIntegration() {
+                const suiteId = 'tests-integration';
+                const container = document.getElementById(suiteId);
+                container.innerHTML = '';
+
+                // ایجاد Mock و سرویس
+                const mockDb = new MockLessonDB();
+                const lessonService = new LessonService(mockDb);
+
+                // 1. ذخیره یک درس در دیتابیس جعلی
+                await mockDb.saveLesson({ id: 'L101', title: 'حیوانات', words: ['cat','dog'] });
+
+                // 2. ثبت نتیجه تمرین چهارگزینه‌ای
+                const correctData = {
+                    correctIndex: 1,
+                    choices: ['گربه', 'سگ', 'پرنده', 'ماهی']
+                };
+                const result = await lessonService.submitExerciseResult(
+                    'L101', 'user-001', 'multiple-choice', 1, correctData
+                );
+
+                // 3. Assertion
+                const testPassed = result.success === true && result.isValid === true && result.saved === true;
+
+                this.assert(
+                    () => testPassed,
+                    true,
+                    'INT-01: ثبت نتیجه تمرین + اعتبارسنجی + ذخیره در Mock',
+                    suiteId
+                );
+
+                // 4. بررسی ذخیره‌سازی واقعی در Mock
+                const progress = await mockDb.getProgress('user-001');
+                this.assert(
+                    () => progress && progress.lessonId === 'L101' && progress.isValid === true,
+                    true,
+                    'INT-02: داده در Mock DB ذخیره شده',
+                    suiteId
+                );
+            },
+
+            // --------------------------------------------------------------
+            // ابزارهای کمکی تست
+            // --------------------------------------------------------------
+            assert(testFn, expected, name, suiteId) {
+                this.results.total++;
+                let passed = false;
+                let error = null;
+                try {
+                    const actual = testFn();
+                    passed = (actual === expected);
+                } catch (e) {
+                    error = e.message;
+                    passed = false;
+                }
+
+                if (passed) this.results.passed++;
+                else this.results.failed++;
+
+                const container = document.getElementById(suiteId);
+                if (!container) return;
+
+                const testDiv = document.createElement('div');
+                testDiv.className = 'test-case';
+                testDiv.innerHTML = `
+                    <div class="test-header">
+                        <span>${name}</span>
+                        <span class="${passed ? 'pass' : 'fail'}">${passed ? '✔ PASS' : '✘ FAIL'}</span>
+                    </div>
+                    ${error ? `<div style="color:#ffab91; margin-top:5px;">⚠️ ${error}</div>` : ''}
+                `;
+                container.appendChild(testDiv);
+                this.addLog(`${passed ? '✅' : '❌'} ${name} — ${passed ? 'موفق' : 'ناموفق'}`);
+            },
+
+            addLog(message) {
+                this.log.push(`[${new Date().toLocaleTimeString('fa-IR')}] ${message}`);
+                const logPanel = document.getElementById('log-panel');
+                if (logPanel) {
+                    logPanel.innerHTML = '📋 لاگ کنسول شبیه‌سازی‌شده<br>' + this.log.slice(-8).join('<br>');
+                }
+                console.log(message);
+            },
+
+            reset() {
+                this.results = { total: 0, passed: 0, failed: 0 };
+                this.log = [];
+                const suites = ['tests-mc', 'tests-fb', 'tests-tl', 'tests-pr', 'tests-integration'];
+                suites.forEach(id => {
+                    const el = document.getElementById(id);
+                    if (el) el.innerHTML = '';
+                });
+                document.getElementById('summary-box').innerHTML = '⏳ تست‌ها بازنشانی شدند';
+                document.getElementById('log-panel').innerHTML = '📋 لاگ کنسول شبیه‌سازی‌شده';
+                this.addLog('🧹 پاکسازی نتایج');
+            },
+
+            renderSummary() {
+                const total = this.results.total;
+                const passed = this.results.passed;
+                const failed = this.results.failed;
+                const percent = total ? ((passed / total) * 100).toFixed(0) : 0;
+                const box = document.getElementById('summary-box');
+                box.innerHTML = `
+                    ✅ <strong>${passed}</strong> موفق &nbsp;&nbsp; 
+                    ❌ <strong>${failed}</strong> ناموفق &nbsp;&nbsp; 
+                    📊 <strong>${percent}%</strong> قبولی<br>
+                    🧪 مجموع تست‌ها: ${total}
+                `;
+                box.style.background = failed === 0 ? '#1b5e20' : '#4a2c2c';
+                box.style.color = 'white';
+            }
+        };
+
+        // اجرای خودکار پس از بارگذاری
+        window.onload = () => {
+            setTimeout(() => ExerciseValidatorTest.runAll(), 300);
+        };
+    </script>
+</body>
+  </html>
