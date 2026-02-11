@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="fa">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>تست یکپارچگی: Lesson Service + Mock DB</title>
+    <style>
+        body { font-family: system-ui, sans-serif; max-width: 900px; margin: 0 auto; padding: 20px; background: #f5f5f5; }
+        .container { background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        h1 { color: #2c3e50; font-size: 1.8rem; }
+        .card { background: #f8f9fa; border-radius: 8px; padding: 20px; margin: 20px 0; border: 1px solid #dee2e6; }
+        button { background: #2c3e50; color: white; border: none; padding: 10px 20px; border-radius: 6px; font-size: 14px; margin: 5px; cursor: pointer; }
+        button:hover { background: #34495e; }
+        .result { background: #e9ecef; padding: 15px; border-radius: 6px; margin-top: 15px; font-family: monospace; white-space: pre-wrap; max-height: 300px; overflow-y: auto; }
+        .badge { background: #28a745; color: white; padding: 2px 8px; border-radius: 12px; font-size: 12px; }
+        pre { background: #2d2d2d; color: #f8f9fa; padding: 15px; border-radius: 6px; overflow-x: auto; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧪 تست یکپارچگی: Lesson Service + Mock IndexedDB</h1>
+        <p>شبیه‌سازی شده با دیتابیس جعبی - <span class="badge">Integration Test</span></p>
+
+        <div class="card">
+            <h3>📥 ۱. بارگذاری درس‌ها از Mock DB</h3>
+            <button onclick="testLoadLessons()">اجرا</button>
+            <div id="result1" class="result">برای نمایش نتیجه کلیک کن</div>
+        </div>
+
+        <div class="card">
+            <h3>✅ ۲. ذخیره پاسخ کاربر و محاسبه SRS</h3>
+            <button onclick="testSaveAnswer()">اجرا</button>
+            <div id="result2" class="result">برای نمایش نتیجه کلیک کن</div>
+        </div>
+
+        <div class="card">
+            <h3>📊 ۳. دریافت پیشرفت درس</h3>
+            <button onclick="testGetProgress()">اجرا</button>
+            <div id="result3" class="result">برای نمایش نتیجه کلیک کن</div>
+        </div>
+
+        <div class="card">
+            <h3>🎯 ۴. تولید تمرین هوشمند بر اساس SRS</h3>
+            <button onclick="testGenerateExercise()">اجرا</button>
+            <div id="result4" class="result">برای نمایش نتیجه کلیک کن</div>
+        </div>
+
+        <div class="card">
+            <h3>🔄 ۵. جریان کامل: درس → تمرین → ذخیره → پیشرفت</h3>
+            <button onclick="testFullFlow()">اجرای سناریوی کامل</button>
+            <div id="result5" class="result">برای نمایش نتیجه کلیک کن</div>
+        </div>
+
+        <div style="display: flex; gap: 10px; margin-top: 20px;">
+            <button onclick="clearAll()" style="background: #6c757d;">🧹 پاک کردن همه</button>
+            <button onclick="runAll()" style="background: #007bff;">⚡ اجرای تمام تست‌ها</button>
+        </div>
+    </div>
+
+    <script>
+        // ------------------------------------------------------------
+        // Mock IndexedDB (شبیه‌سازی شده)
+        // ------------------------------------------------------------
+        const MockDB = {
+            data: {
+                lessons: [
+                    { id: 'L1', title: 'درس ۱: Greetings', level: 1, vocabCount: 5 },
+                    { id: 'L2', title: 'درس ۲: Family', level: 1, vocabCount: 6 },
+                    { id: 'L3', title: 'درس ۳: Food', level: 2, vocabCount: 8 }
+                ],
+                progresses: [
+                    { userId: 'user1', lessonId: 'L1', status: 'completed', score: 85, lastReview: '2026-02-10' }
+                ],
+                reviews: []
+            },
+            
+            get: function(store, id) {
+                if (!this.data[store]) return null;
+                if (id) return this.data[store].find(item => item.id === id);
+                return [...this.data[store]];
+            },
+            
+            save: function(store, item) {
+                if (!this.data[store]) this.data[store] = [];
+                const index = this.data[store].findIndex(i => i.id === item.id);
+                if (index >= 0) this.data[store][index] = item;
+                else this.data[store].push(item);
+                return { success: true, item };
+            },
+            
+            delete: function(store, id) {
+                if (!this.data[store]) return false;
+                this.data[store] = this.data[store].filter(i => i.id !== id);
+                return true;
+            },
+            
+            clear: function() {
+                this.data.lessons = [...this.data.lessons.slice(0, 3)]; // keep original lessons
+                this.data.progresses = [];
+                this.data.reviews = [];
+            }
+        };
+
+        // ------------------------------------------------------------
+        // SRS Engine (خلاصه شده)
+        // ------------------------------------------------------------
+        const SRS = {
+            calculateNextReview: function(easeFactor, repetitions, quality) {
+                if (quality < 3) return { interval: 1, repetitions: 0, easeFactor: Math.max(1.3, easeFactor - 0.2) };
+                let interval = repetitions === 0 ? 1 : repetitions === 1 ? 6 : Math.round(repetitions * easeFactor);
+                let newEase = easeFactor + (0.1 - (5 - quality) * (0.08 + (5 - quality) * 0.02));
+                newEase = Math.max(1.3, Math.min(2.5, newEase));
+                return { interval, repetitions: repetitions + 1, easeFactor: newEase };
+            }
+        };
+
+        // ------------------------------------------------------------
+        // Lesson Service (با تزریق وابستگی Mock DB)
+        // ------------------------------------------------------------
+        const LessonService = {
+            db: MockDB,
+            
+            loadLessons: function(level = null) {
+                let lessons = this.db.get('lessons');
+                if (level) lessons = lessons.filter(l => l.level === level);
+                return lessons;
+            },
+            
+            getLessonById: function(lessonId) {
+                return this.db.get('lessons', lessonId);
+            },
+            
+            saveAnswer: function(userId, lessonId, vocabId, quality) {
+                const now = new Date().toISOString();
+                let review = this.db.get('reviews')?.find(r => r.userId === userId && r.vocabId === vocabId);
+                
+                if (!review) {
+                    review = {
+                        id: `rev_${Date.now()}`,
+                        userId, lessonId, vocabId,
+                        easeFactor: 2.5,
+                        repetitions: 0,
+                        interval: 0,
+                        lastReview: null
+                    };
+                }
+                
+                const result = SRS.calculateNextReview(review.easeFactor, review.repetitions, quality);
+                review.easeFactor = result.easeFactor;
+                review.repetitions = result.repetitions;
+                review.interval = result.interval;
+                review.lastReview = now;
+                
+                this.db.save('reviews', review);
+                
+                // به‌روزرسانی پیشرفت درس
+                this.updateProgress(userId, lessonId);
+                
+                return { success: true, review, nextReviewDate: result.interval };
+            },
+            
+            updateProgress: function(userId, lessonId) {
+                const reviews = this.db.get('reviews').filter(r => r.userId === userId && r.lessonId === lessonId);
+                const totalVocab = this.db.get('lessons', lessonId)?.vocabCount || 5;
+                const mastered = reviews.filter(r => r.interval >= 6).length;
+                const score = Math.min(100, Math.round((mastered / totalVocab) * 100));
+                
+                let progress = this.db.get('progresses')?.find(p => p.userId === userId && p.lessonId === lessonId);
+                if (!progress) {
+                    progress = { id: `prog_${lessonId}_${userId}`, userId, lessonId, status: 'in_progress', score: 0, lastReview: null };
+                }
+                
+                progress.score = score;
+                progress.lastReview = new Date().toISOString();
+                if (score >= 80) progress.status = 'completed';
+                else if (score > 0) progress.status = 'in_progress';
+                
+                this.db.save('progresses', progress);
+                return progress;
+            },
+            
+            getProgress: function(userId, lessonId) {
+                return this.db.get('progresses')?.find(p => p.userId === userId && p.lessonId === lessonId) || 
+                       { userId, lessonId, status: 'not_started', score: 0, lastReview: null };
+            },
+            
+            generateExercise: function(lessonId, type = 'multiple-choice') {
+                const lesson = this.db.get('lessons', lessonId);
+                if (!lesson) return null;
+                
+                // شبیه‌سازی تمرین
+                return {
+                    id: `ex_${Date.now()}`,
+                    lessonId,
+                    type,
+                    question: `سوال نمونه برای ${lesson.title}`,
+                    options: ['گزینه ۱', 'گزینه ۲', 'گزینه ۳', 'گزینه ۴'],
+                    correctAnswer: 0,
+                    vocabId: `vocab_${lessonId}_1`
+                };
+            }
+        };
+
+        // ------------------------------------------------------------
+        // تست‌های دستی
+        // ------------------------------------------------------------
+        function testLoadLessons() {
+            MockDB.clear();
+            const lessons = LessonService.loadLessons();
+            const level1 = LessonService.loadLessons(1);
+            
+            let log = '📚 همه درس‌ها:\n';
+            lessons.forEach(l => log += `- ${l.id}: ${l.title} (سطح ${l.level})\n`);
+            log += `\n📗 درس‌های سطح ۱: ${level1.length} مورد`;
+            
+            document.getElementById('result1').innerText = log;
+        }
+
+        function testSaveAnswer() {
+            MockDB.clear();
+            const result = LessonService.saveAnswer('user1', 'L1', 'vocab_L1_1', 5);
+            const progress = LessonService.getProgress('user1', 'L1');
+            
+            let log = '💾 ذخیره پاسخ (کیفیت ۵):\n';
+            log += `✅ فاصله مرور: ${result.review.interval} روز\n`;
+            log += `📈 عامل سهولت: ${result.review.easeFactor.toFixed(3)}\n`;
+            log += `📊 پیشرفت درس: ${progress.score}% - ${progress.status}`;
+            
+            document.getElementById('result2').innerText = log;
+        }
+
+        function testGetProgress() {
+            MockDB.clear();
+            LessonService.saveAnswer('user1', 'L1', 'vocab_L1_1', 5);
+            LessonService.saveAnswer('user1', 'L1', 'vocab_L1_2', 4);
+            
+            const progress = LessonService.getProgress('user1', 'L1');
+            
+            let log = '📊 پیشرفت درس L1:\n';
+            log += `وضعیت: ${progress.status}\n`;
+            log += `امتیاز: ${progress.score}%\n`;
+            log += `آخرین مرور: ${progress.lastReview?.split('T')[0] || 'ندارد'}`;
+            
+            document.getElementById('result3').innerText = log;
+        }
+
+        function testGenerateExercise() {
+            const exercise = LessonService.generateExercise('L1', 'multiple-choice');
+            
+            let log = '🎯 تمرین تولید شده:\n';
+            log += `سوال: ${exercise.question}\n`;
+            log += `گزینه‌ها: ${exercise.options.join(' | ')}\n`;
+            log += `پاسخ صحیح: گزینه ${exercise.correctAnswer + 1}`;
+            
+            document.getElementById('result4').innerText = log;
+        }
+
+        function testFullFlow() {
+            MockDB.clear();
+            let log = '🔄 جریان کامل کاربر:\n\n';
+            
+            // 1. بارگذاری درس
+            const lesson = LessonService.getLessonById('L1');
+            log += `1. 📥 بارگذاری درس: ${lesson.title}\n`;
+            
+            // 2. تولید تمرین
+            const exercise = LessonService.generateExercise('L1', 'multiple-choice');
+            log += `2. 🎯 تولید تمرین: ${exercise.question}\n`;
+            
+            // 3. ذخیره پاسخ
+            const answer = LessonService.saveAnswer('user1', 'L1', exercise.vocabId, 5);
+            log += `3. 💾 ذخیره پاسخ: کیفیت ۵ → فاصله ${answer.review.interval} روز\n`;
+            
+            // 4. دریافت پیشرفت
+            const progress = LessonService.getProgress('user1', 'L1');
+            log += `4. 📊 پیشرفت فعلی: ${progress.score}% (${progress.status})\n`;
+            
+            // 5. ذخیره پاسخ دوم
+            const answer2 = LessonService.saveAnswer('user1', 'L1', 'vocab_L1_2', 3);
+            log += `5. 💾 پاسخ دوم: کیفیت ۳ → فاصله ${answer2.review.interval} روز\n`;
+            
+            // 6. پیشرفت نهایی
+            const finalProgress = LessonService.getProgress('user1', 'L1');
+            log += `\n✅ پیشرفت نهایی درس: ${finalProgress.score}% - ${finalProgress.status}`;
+            
+            document.getElementById('result5').innerText = log;
+        }
+
+        function clearAll() {
+            document.querySelectorAll('.result').forEach(el => el.innerText = 'برای نمایش نتیجه کلیک کن');
+            MockDB.clear();
+            console.log('🧹 همه نتایج پاک شدند');
+        }
+
+        function runAll() {
+            testLoadLessons();
+            testSaveAnswer();
+            testGetProgress();
+            testGenerateExercise();
+            testFullFlow();
+            console.log('⚡ تمام تست‌ها اجرا شدند');
+        }
+    </script>
+</body>
+</html>
