@@ -1,0 +1,1169 @@
+<!DOCTYPE html>
+<html lang="fa">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Farsinglish - Manual Flow Test: جریان کامل کاربر</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { 
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+            background: linear-gradient(135deg, #1a2f3f 0%, #2c4a5e 100%);
+            color: #e0f2fe;
+            padding: 20px;
+        }
+        .container { 
+            max-width: 1000px; 
+            margin: 0 auto;
+            background: rgba(30, 50, 70, 0.95);
+            border-radius: 20px;
+            padding: 25px;
+            box-shadow: 0 15px 40px rgba(0,0,0,0.6);
+            border: 1px solid rgba(100, 180, 255, 0.2);
+        }
+        h1 { 
+            text-align: center; 
+            color: #b3e5fc;
+            border-bottom: 3px solid #0288d1;
+            padding-bottom: 15px;
+            margin-bottom: 25px;
+            font-size: 1.8rem;
+        }
+        .flow-card {
+            background: rgba(20, 40, 60, 0.8);
+            border-radius: 16px;
+            padding: 20px;
+            margin: 20px 0;
+            border: 1px solid #4fc3f7;
+            box-shadow: 0 5px 15px rgba(0,150,255,0.1);
+        }
+        .step {
+            background: rgba(30, 60, 90, 0.7);
+            margin: 18px 0;
+            padding: 18px;
+            border-radius: 12px;
+            border-left: 6px solid #29b6f6;
+            transition: all 0.2s;
+        }
+        .step:hover {
+            background: rgba(40, 80, 120, 0.8);
+            transform: translateX(5px);
+        }
+        .step-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+            font-size: 1.1rem;
+            color: #b3e5fc;
+        }
+        .step-number {
+            background: #0288d1;
+            padding: 5px 15px;
+            border-radius: 25px;
+            font-weight: bold;
+            color: white;
+        }
+        .step-title {
+            font-weight: 700;
+            font-size: 1.1rem;
+        }
+        .step-content {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 15px;
+            border-radius: 10px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9rem;
+            color: #e1f5fe;
+            margin-top: 10px;
+            border: 1px solid #4fc3f7;
+        }
+        .btn {
+            background: linear-gradient(45deg, #0288d1, #29b6f6);
+            color: white;
+            border: none;
+            padding: 12px 28px;
+            border-radius: 30px;
+            font-size: 1rem;
+            cursor: pointer;
+            margin: 8px;
+            font-weight: 600;
+            transition: 0.3s;
+            border: 1px solid rgba(255,255,255,0.2);
+        }
+        .btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px rgba(2,136,209,0.4);
+        }
+        .btn-warning {
+            background: linear-gradient(45deg, #f57c00, #ffb74d);
+        }
+        .btn-success {
+            background: linear-gradient(45deg, #2e7d32, #66bb6a);
+        }
+        .console {
+            background: #0a1a1f;
+            padding: 18px;
+            border-radius: 12px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.85rem;
+            color: #a7ffeb;
+            max-height: 300px;
+            overflow-y: auto;
+            margin-top: 25px;
+            border: 1px solid #4dd0e1;
+            line-height: 1.6;
+        }
+        .console-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+            color: #80deea;
+            font-weight: bold;
+        }
+        .badge {
+            background: #006064;
+            padding: 4px 12px;
+            border-radius: 15px;
+            font-size: 0.8rem;
+        }
+        .status-box {
+            display: flex;
+            justify-content: space-around;
+            margin: 20px 0;
+            padding: 15px;
+            background: rgba(0,100,150,0.2);
+            border-radius: 12px;
+        }
+        .status-item {
+            text-align: center;
+        }
+        .status-label {
+            font-size: 0.8rem;
+            color: #80deea;
+        }
+        .status-value {
+            font-size: 1.3rem;
+            font-weight: bold;
+            color: #b3e5fc;
+        }
+        @media (max-width: 600px) {
+            .container { padding: 15px; }
+            h1 { font-size: 1.5rem; }
+            .step-header { flex-direction: column; align-items: flex-start; }
+            .step-number { margin-bottom: 8px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧪 تست دستی جریان کامل کاربر - Farsinglish</h1>
+        
+        <!-- وضعیت فعلی سیستم -->
+        <div class="status-box">
+            <div class="status-item">
+                <div class="status-label">👤 کاربر</div>
+                <div class="status-value" id="status-user">خروج</div>
+            </div>
+            <div class="status-item">
+                <div class="status-label">📚 درس جاری</div>
+                <div class="status-value" id="status-lesson">-</div>
+            </div>
+            <div class="status-item">
+                <div class="status-label">📊 پیشرفت</div>
+                <div class="status-value" id="status-progress">0%</div>
+            </div>
+            <div class="status-item">
+                <div class="status-label">🔄 SRS</div>
+                <div class="status-value" id="status-srs">-</div>
+            </div>
+        </div>
+
+        <!-- گام‌های جریان کاربر -->
+        <div class="flow-card">
+            <h2 style="color: #81d4fa; margin-bottom: 20px;">📋 گام‌های تست دستی</h2>
+            
+            <!-- گام ۱: احراز هویت -->
+            <div class="step" id="step1">
+                <div class="step-header">
+                    <span class="step-number">گام ۱</span>
+                    <span class="step-title">🔐 احراز هویت - ثبت‌نام / ورود</span>
+                </div>
+                <div class="step-content" id="step1-content">
+                    <strong>🟡 وضعیت:</strong> کاربر وارد نشده است<br>
+                    <strong>📝 سناریو:</strong> ثبت‌نام کاربر جدید + ورود خودکار
+                </div>
+                <div style="margin-top: 15px;">
+                    <button class="btn" onclick="FlowTest.register()">📝 ثبت‌نام کاربر جدید</button>
+                    <button class="btn" onclick="FlowTest.login()">🔑 ورود کاربر (test-user)</button>
+                    <button class="btn btn-warning" onclick="FlowTest.logout()">🚪 خروج</button>
+                </div>
+            </div>
+
+            <!-- گام ۲: بارگذاری درس -->
+            <div class="step" id="step2">
+                <div class="step-header">
+                    <span class="step-number">گام ۲</span>
+                    <span class="step-title">📖 بارگذاری درس و واژگان</span>
+                </div>
+                <div class="step-content" id="step2-content">
+                    <strong>🟡 وضعیت:</strong> درسی بارگذاری نشده<br>
+                    <strong>📚 درس نمونه:</strong> حیوانات (سطح ۱) - ۵ واژه
+                </div>
+                <div style="margin-top: 15px;">
+                    <button class="btn" onclick="FlowTest.loadLesson()">📂 بارگذاری درس نمونه</button>
+                    <button class="btn" onclick="FlowTest.loadVocabulary()">📜 نمایش واژگان درس</button>
+                </div>
+            </div>
+
+            <!-- گام ۳: تمرین و پاسخ‌دهی -->
+            <div class="step" id="step3">
+                <div class="step-header">
+                    <span class="step-number">گام ۳</span>
+                    <span class="step-title">✏️ انجام تمرین و ثبت پاسخ</span>
+                </div>
+                <div class="step-content" id="step3-content">
+                    <strong>🟡 وضعیت:</strong> تمرینی شروع نشده<br>
+                    <strong>🎯 سناریو:</strong> ۴ نوع تمرین + غلط‌گیری املایی
+                </div>
+                <div style="margin-top: 15px;">
+                    <button class="btn" onclick="FlowTest.startExercise('mc')">✅ چهارگزینه‌ای</button>
+                    <button class="btn" onclick="FlowTest.startExercise('fb')">📝 جای‌خالی</button>
+                    <button class="btn" onclick="FlowTest.startExercise('tl')">🌐 ترجمه</button>
+                    <button class="btn" onclick="FlowTest.startExercise('pr')">🎤 تلفظ</button>
+                </div>
+            </div>
+
+            <!-- گام ۴: ذخیره پیشرفت و SRS -->
+            <div class="step" id="step4">
+                <div class="step-header">
+                    <span class="step-number">گام ۴</span>
+                    <span class="step-title">💾 ذخیره پیشرفت و الگوریتم SRS</span>
+                </div>
+                <div class="step-content" id="step4-content">
+                    <strong>🟡 وضعیت:</strong> پیشرفتی ثبت نشده<br>
+                    <strong>🧠 SRS:</strong> محاسبه فاصله مرور بعدی
+                </div>
+                <div style="margin-top: 15px;">
+                    <button class="btn" onclick="FlowTest.saveProgress()">💾 ذخیره پیشرفت</button>
+                    <button class="btn" onclick="FlowTest.calculateSRS()">🧮 محاسبه SRS</button>
+                    <button class="btn" onclick="FlowTest.showProgress()">📊 نمایش پیشرفت</button>
+                </div>
+            </div>
+
+            <!-- گام ۵: همگام‌سازی و پایداری -->
+            <div class="step" id="step5">
+                <div class="step-header">
+                    <span class="step-number">گام ۵</span>
+                    <span class="step-title">🔄 همگام‌سازی و پایداری</span>
+                </div>
+                <div class="step-content" id="step5-content">
+                    <strong>🟡 وضعیت:</strong> همگام‌سازی انجام نشده<br>
+                    <strong>📶 سناریو:</strong> شبیه‌سازی آفلاین/آنلاین
+                </div>
+                <div style="margin-top: 15px;">
+                    <button class="btn" onclick="FlowTest.simulateOffline()">🔌 شبیه‌سازی آفلاین</button>
+                    <button class="btn" onclick="FlowTest.simulateOnline()">🌐 شبیه‌سازی آنلاین</button>
+                    <button class="btn btn-success" onclick="FlowTest.syncData()">🔄 همگام‌سازی</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- دکمه‌های کنترل کلی -->
+        <div style="display: flex; justify-content: center; gap: 15px; margin: 30px 0;">
+            <button class="btn btn-success" onclick="FlowTest.runFullFlow()">🚀 اجرای جریان کامل خودکار</button>
+            <button class="btn btn-warning" onclick="FlowTest.resetAll()">🧹 ریست کامل سیستم</button>
+            <button class="btn" onclick="FlowTest.clearConsole()">🗑️ پاک کردن کنسول</button>
+        </div>
+
+        <!-- کنسول نمایش لاگ -->
+        <div class="console">
+            <div class="console-header">
+                <span>📋 کنسول تست - جریان کاربر</span>
+                <span class="badge" id="log-count">0 رویداد</span>
+            </div>
+            <div id="console-output">
+                [سیستم] آماده اجرای تست دستی - روی دکمه‌ها کلیک کنید
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ==================== کلاس‌های اصلی سیستم ====================
+        
+        // 1. سرویس احراز هویت (Auth Service)
+        class AuthService {
+            constructor() {
+                this.currentUser = null;
+                this.users = new Map();
+                this.loggedIn = false;
+            }
+
+            async register(username, password, email) {
+                if (this.users.has(username)) {
+                    return { success: false, error: 'نام کاربری تکراری است' };
+                }
+                
+                const user = {
+                    id: `user-${Date.now()}`,
+                    username,
+                    email,
+                    password: this.hashPassword(password),
+                    createdAt: Date.now(),
+                    lastLogin: null
+                };
+                
+                this.users.set(username, user);
+                this.currentUser = user;
+                this.loggedIn = true;
+                user.lastLogin = Date.now();
+                
+                return { success: true, user: { ...user, password: undefined } };
+            }
+
+            async login(username, password) {
+                const user = this.users.get(username);
+                if (!user) {
+                    return { success: false, error: 'کاربر یافت نشد' };
+                }
+                
+                if (user.password !== this.hashPassword(password)) {
+                    return { success: false, error: 'رمز عبور اشتباه است' };
+                }
+                
+                this.currentUser = user;
+                this.loggedIn = true;
+                user.lastLogin = Date.now();
+                
+                return { success: true, user: { ...user, password: undefined } };
+            }
+
+            logout() {
+                this.currentUser = null;
+                this.loggedIn = false;
+                return { success: true };
+            }
+
+            getCurrentUser() {
+                return this.currentUser ? { ...this.currentUser, password: undefined } : null;
+            }
+
+            isLoggedIn() {
+                return this.loggedIn;
+            }
+
+            hashPassword(password) {
+                let hash = 0;
+                for (let i = 0; i < password.length; i++) {
+                    const char = password.charCodeAt(i);
+                    hash = ((hash << 5) - hash) + char;
+                    hash = hash & hash;
+                }
+                return hash.toString(16);
+            }
+        }
+
+        // 2. سرویس درس (Lesson Service)
+        class LessonService {
+            constructor() {
+                this.lessons = new Map();
+                this.currentLesson = null;
+                this.vocabulary = new Map();
+                this.initSampleLessons();
+            }
+
+            initSampleLessons() {
+                // درس نمونه: حیوانات
+                const lesson1 = {
+                    id: 'L001',
+                    title: 'حیوانات',
+                    level: 1,
+                    description: 'آموزش نام حیوانات به انگلیسی',
+                    totalWords: 5,
+                    completed: false
+                };
+                
+                this.lessons.set(lesson1.id, lesson1);
+                
+                // واژگان درس
+                const vocab = [
+                    { id: 'V001', english: 'cat', persian: 'گربه', difficulty: 'easy', phonetic: '/kæt/' },
+                    { id: 'V002', english: 'dog', persian: 'سگ', difficulty: 'easy', phonetic: '/dɒɡ/' },
+                    { id: 'V003', english: 'bird', persian: 'پرنده', difficulty: 'medium', phonetic: '/bɜːrd/' },
+                    { id: 'V004', english: 'fish', persian: 'ماهی', difficulty: 'medium', phonetic: '/fɪʃ/' },
+                    { id: 'V005', english: 'horse', persian: 'اسب', difficulty: 'hard', phonetic: '/hɔːrs/' }
+                ];
+                
+                this.vocabulary.set(lesson1.id, vocab);
+                
+                // درس دوم: رنگ‌ها
+                const lesson2 = {
+                    id: 'L002',
+                    title: 'رنگ‌ها',
+                    level: 1,
+                    description: 'آموزش نام رنگ‌ها',
+                    totalWords: 4,
+                    completed: false
+                };
+                
+                this.lessons.set(lesson2.id, lesson2);
+                
+                const vocab2 = [
+                    { id: 'V006', english: 'red', persian: 'قرمز', difficulty: 'easy', phonetic: '/red/' },
+                    { id: 'V007', english: 'blue', persian: 'آبی', difficulty: 'easy', phonetic: '/bluː/' },
+                    { id: 'V008', english: 'green', persian: 'سبز', difficulty: 'easy', phonetic: '/ɡriːn/' },
+                    { id: 'V009', english: 'yellow', persian: 'زرد', difficulty: 'medium', phonetic: '/ˈjeloʊ/' }
+                ];
+                
+                this.vocabulary.set(lesson2.id, vocab2);
+            }
+
+            async loadLesson(lessonId) {
+                const lesson = this.lessons.get(lessonId);
+                if (!lesson) {
+                    return { success: false, error: 'درس یافت نشد' };
+                }
+                
+                this.currentLesson = lesson;
+                return { 
+                    success: true, 
+                    lesson,
+                    vocabulary: this.vocabulary.get(lessonId) || []
+                };
+            }
+
+            getCurrentLesson() {
+                return this.currentLesson;
+            }
+
+            getVocabulary(lessonId) {
+                return this.vocabulary.get(lessonId) || [];
+            }
+
+            getAllLessons() {
+                return Array.from(this.lessons.values());
+            }
+        }
+
+        // 3. اعتبارسنج تمرین (Exercise Validator)
+        class ExerciseValidator {
+            static validateMultipleChoice(userAnswer, correctIndex, choices) {
+                if (!Array.isArray(choices) || choices.length === 0) return false;
+                if (typeof userAnswer !== 'number' || userAnswer < 0 || userAnswer >= choices.length) return false;
+                if (typeof correctIndex !== 'number' || correctIndex < 0 || correctIndex >= choices.length) return false;
+                return userAnswer === correctIndex;
+            }
+
+            static validateFillBlank(userAnswer, correctAnswer, caseInsensitive = true, trimSpaces = true) {
+                if (typeof userAnswer !== 'string' || typeof correctAnswer !== 'string') return false;
+                let u = userAnswer, c = correctAnswer;
+                if (trimSpaces) { u = u.trim(); c = c.trim(); }
+                if (caseInsensitive) { u = u.toLowerCase(); c = c.toLowerCase(); }
+                return u === c;
+            }
+
+            static validateTranslation(userAnswer, expectedAnswer, tolerance = 0) {
+                if (typeof userAnswer !== 'string' || typeof expectedAnswer !== 'string') return false;
+                const u = userAnswer.trim().toLowerCase();
+                const e = expectedAnswer.trim().toLowerCase();
+                if (u === e) return true;
+                if (tolerance > 0) {
+                    const distance = this.levenshteinDistance(u, e);
+                    return distance <= tolerance;
+                }
+                return false;
+            }
+
+            static levenshteinDistance(a, b) {
+                const matrix = [];
+                for (let i = 0; i <= b.length; i++) matrix[i] = [i];
+                for (let j = 0; j <= a.length; j++) matrix[0][j] = j;
+                
+                for (let i = 1; i <= b.length; i++) {
+                    for (let j = 1; j <= a.length; j++) {
+                        if (b.charAt(i-1) === a.charAt(j-1)) {
+                            matrix[i][j] = matrix[i-1][j-1];
+                        } else {
+                            matrix[i][j] = Math.min(
+                                matrix[i-1][j-1] + 1,
+                                matrix[i][j-1] + 1,
+                                matrix[i-1][j] + 1
+                            );
+                        }
+                    }
+                }
+                return matrix[b.length][a.length];
+            }
+
+            static validatePronunciation(userPhonetic, correctPhoneticList) {
+                if (typeof userPhonetic !== 'string' || !Array.isArray(correctPhoneticList)) return false;
+                const normalizedUser = userPhonetic.trim().replace(/[\/\s]/g, '');
+                return correctPhoneticList.some(p => 
+                    p.trim().replace(/[\/\s]/g, '') === normalizedUser
+                );
+            }
+        }
+
+        // 4. الگوریتم SRS (مرور هوشمند)
+        class SRSEngine {
+            constructor() {
+                this.reviewHistory = new Map();
+            }
+
+            calculateNextReview(quality, oldInterval = null, oldFactor = 2.5) {
+                quality = Math.max(0, Math.min(5, quality));
+                let newInterval;
+                
+                if (quality < 3) {
+                    newInterval = 1; // فردا مرور کن
+                } else {
+                    if (!oldInterval) {
+                        newInterval = 1;
+                    } else if (oldInterval === 1) {
+                        newInterval = 6;
+                    } else {
+                        newInterval = Math.round(oldInterval * oldFactor);
+                    }
+                }
+                
+                // محدودیت فاصله
+                newInterval = Math.min(365, Math.max(1, newInterval));
+                
+                // محاسبه فاکتور سهولت جدید
+                let newFactor = oldFactor + (0.1 - (5 - quality) * (0.08 + (5 - quality) * 0.02));
+                newFactor = Math.max(1.3, Math.min(3.5, newFactor));
+                
+                return {
+                    interval: newInterval,
+                    factor: newFactor,
+                    nextReviewDate: new Date(Date.now() + (newInterval * 86400000)).toLocaleDateString('fa-IR'),
+                    quality
+                };
+            }
+
+            saveReview(wordId, quality) {
+                const now = Date.now();
+                const history = this.reviewHistory.get(wordId) || [];
+                history.push({ quality, timestamp: now });
+                this.reviewHistory.set(wordId, history);
+                
+                return this.calculateNextReview(quality);
+            }
+        }
+
+        // 5. سرویس پیشرفت کاربر (Progress Service)
+        class ProgressService {
+            constructor() {
+                this.userProgress = new Map();
+                this.srsEngine = new SRSEngine();
+            }
+
+            saveProgress(userId, lessonId, exerciseResults) {
+                let progress = this.userProgress.get(userId) || {
+                    userId,
+                    completedLessons: [],
+                    xp: 0,
+                    streak: 0,
+                    lastActive: null,
+                    wordReviews: []
+                };
+                
+                // محاسبه XP
+                const xpGained = exerciseResults.filter(r => r.correct).length * 10;
+                progress.xp += xpGained;
+                
+                // به‌روزرسانی streak
+                const today = new Date().toDateString();
+                if (progress.lastActive !== today) {
+                    progress.streak += 1;
+                    progress.lastActive = today;
+                }
+                
+                // بررسی تکمیل درس
+                if (exerciseResults.length > 0) {
+                    if (!progress.completedLessons.includes(lessonId)) {
+                        progress.completedLessons.push(lessonId);
+                    }
+                }
+                
+                // ذخیره نتایج SRS
+                exerciseResults.forEach(result => {
+                    if (result.wordId) {
+                        const srsResult = this.srsEngine.saveReview(result.wordId, result.quality || 4);
+                        progress.wordReviews.push({
+                            wordId: result.wordId,
+                            ...srsResult,
+                            timestamp: Date.now()
+                        });
+                    }
+                });
+                
+                this.userProgress.set(userId, progress);
+                
+                return {
+                    success: true,
+                    progress: {
+                        xp: progress.xp,
+                        streak: progress.streak,
+                        completedLessons: progress.completedLessons.length,
+                        xpGained
+                    },
+                    srsResults: exerciseResults
+                        .filter(r => r.wordId)
+                        .map(r => this.srsEngine.calculateNextReview(r.quality || 4))
+                };
+            }
+
+            getProgress(userId) {
+                return this.userProgress.get(userId) || null;
+            }
+
+            calculateLevel(xp) {
+                if (xp < 100) return 1;
+                if (xp < 300) return 2;
+                if (xp < 600) return 3;
+                if (xp < 1000) return 4;
+                if (xp < 1500) return 5;
+                return 6;
+            }
+        }
+
+        // ==================== کلاس اصلی تست ====================
+        const FlowTest = {
+            auth: new AuthService(),
+            lesson: new LessonService(),
+            progress: new ProgressService(),
+            
+            currentUserId: null,
+            currentLessonId: null,
+            exerciseResults: [],
+            offlineMode: false,
+            logEntries: [],
+
+            // لاگ کردن
+            log(message, type = 'info') {
+                const timestamp = new Date().toLocaleTimeString('fa-IR', { hour12: false });
+                const entry = `[${timestamp}] ${message}`;
+                this.logEntries.push(entry);
+                
+                const output = document.getElementById('console-output');
+                const countSpan = document.getElementById('log-count');
+                
+                let color = '#a7ffeb';
+                if (type === 'success') color = '#b9f6ca';
+                if (type === 'error') color = '#ffcdd2';
+                if (type === 'warning') color = '#ffe0b2';
+                
+                output.innerHTML += `<br><span style="color: ${color};">${entry}</span>`;
+                output.scrollTop = output.scrollHeight;
+                countSpan.textContent = `${this.logEntries.length} رویداد`;
+                
+                console.log(entry);
+            },
+
+            // ========== گام ۱: احراز هویت ==========
+            async register() {
+                this.log('📝 شروع فرآیند ثبت‌نام...');
+                
+                const result = await this.auth.register('test-user', '123456', 'test@example.com');
+                
+                if (result.success) {
+                    this.currentUserId = result.user.id;
+                    this.updateUserStatus('✅ ' + result.user.username);
+                    this.updateStepContent('step1-content', `
+                        <strong style="color: #b9f6ca;">✅ ثبت‌نام موفق</strong><br>
+                        👤 کاربر: ${result.user.username}<br>
+                        🆔 آیدی: ${result.user.id}<br>
+                        📧 ایمیل: ${result.user.email}<br>
+                        📅 تاریخ: ${new Date(result.user.createdAt).toLocaleDateString('fa-IR')}
+                    `);
+                    this.log('✅ ثبت‌نام موفق - کاربر: test-user', 'success');
+                } else {
+                    this.log('❌ خطا در ثبت‌نام: ' + result.error, 'error');
+                }
+            },
+
+            async login() {
+                this.log('🔑 شروع فرآیند ورود...');
+                
+                // اگر کاربر وجود ندارد، ابتدا ثبت‌نام کن
+                if (!this.auth.users.has('test-user')) {
+                    await this.register();
+                }
+                
+                const result = await this.auth.login('test-user', '123456');
+                
+                if (result.success) {
+                    this.currentUserId = result.user.id;
+                    this.updateUserStatus('✅ ' + result.user.username);
+                    this.updateStepContent('step1-content', `
+                        <strong style="color: #b9f6ca;">✅ ورود موفق</strong><br>
+                        👤 کاربر: ${result.user.username}<br>
+                        🆔 آیدی: ${result.user.id}<br>
+                        📅 آخرین ورود: ${new Date(result.user.lastLogin).toLocaleTimeString('fa-IR')}
+                    `);
+                    this.log('✅ ورود موفق - کاربر: test-user', 'success');
+                } else {
+                    this.log('❌ خطا در ورود: ' + result.error, 'error');
+                }
+            },
+
+            logout() {
+                this.auth.logout();
+                this.currentUserId = null;
+                this.updateUserStatus('🚪 خروج');
+                this.updateStepContent('step1-content', `
+                    <strong style="color: #ffcc80;">🟡 کاربر خارج شد</strong><br>
+                    برای ادامه آزمایش، دوباره وارد شوید.
+                `);
+                this.log('🚪 کاربر از سیستم خارج شد', 'warning');
+            },
+
+            // ========== گام ۲: بارگذاری درس ==========
+            async loadLesson() {
+                if (!this.auth.isLoggedIn()) {
+                    this.log('❌ ابتدا باید وارد شوید', 'error');
+                    return;
+                }
+                
+                this.log('📂 بارگذاری درس نمونه...');
+                
+                const result = await this.lesson.loadLesson('L001');
+                
+                if (result.success) {
+                    this.currentLessonId = result.lesson.id;
+                    this.updateLessonStatus(result.lesson.title);
+                    
+                    let vocabHtml = '';
+                    result.vocabulary.forEach(v => {
+                        vocabHtml += `${v.english} (${v.persian}) - ${v.phonetic}<br>`;
+                    });
+                    
+                    this.updateStepContent('step2-content', `
+                        <strong style="color: #b9f6ca;">✅ درس بارگذاری شد</strong><br>
+                        📚 عنوان: ${result.lesson.title}<br>
+                        📊 سطح: ${result.lesson.level}<br>
+                        📝 توضیح: ${result.lesson.description}<br>
+                        🎯 تعداد واژگان: ${result.vocabulary.length}<br>
+                        <br><strong>📖 واژگان:</strong><br>
+                        ${vocabHtml}
+                    `);
+                    this.log(`✅ درس "${result.lesson.title}" بارگذاری شد - ${result.vocabulary.length} واژه`, 'success');
+                }
+            },
+
+            loadVocabulary() {
+                if (!this.currentLessonId) {
+                    this.log('❌ ابتدا یک درس بارگذاری کنید', 'error');
+                    return;
+                }
+                
+                const vocab = this.lesson.getVocabulary(this.currentLessonId);
+                let list = '';
+                vocab.forEach(v => {
+                    list += `🔹 ${v.english} = ${v.persian} [${v.phonetic}]\n`;
+                });
+                
+                this.log(`📜 واژگان درس جاری:\n${list}`);
+            },
+
+            // ========== گام ۳: تمرین و پاسخ‌دهی ==========
+            startExercise(type) {
+                if (!this.currentLessonId) {
+                    this.log('❌ ابتدا یک درس بارگذاری کنید', 'error');
+                    return;
+                }
+                
+                const vocab = this.lesson.getVocabulary(this.currentLessonId);
+                if (vocab.length === 0) {
+                    this.log('❌ واژه‌ای برای تمرین وجود ندارد', 'error');
+                    return;
+                }
+                
+                const randomWord = vocab[Math.floor(Math.random() * vocab.length)];
+                
+                switch(type) {
+                    case 'mc':
+                        this.runMultipleChoice(randomWord);
+                        break;
+                    case 'fb':
+                        this.runFillBlank(randomWord);
+                        break;
+                    case 'tl':
+                        this.runTranslation(randomWord);
+                        break;
+                    case 'pr':
+                        this.runPronunciation(randomWord);
+                        break;
+                }
+            },
+
+            runMultipleChoice(word) {
+                const choices = ['cat', 'dog', 'bird', 'fish'];
+                const correctIndex = choices.findIndex(c => c === word.english);
+                
+                // شبیه‌سازی انتخاب کاربر (انتخاب صحیح)
+                const userAnswer = correctIndex;
+                const isValid = ExerciseValidator.validateMultipleChoice(userAnswer, correctIndex, choices);
+                
+                this.exerciseResults.push({
+                    wordId: word.id,
+                    type: 'multiple-choice',
+                    correct: isValid,
+                    quality: isValid ? 5 : 2
+                });
+                
+                this.updateStepContent('step3-content', `
+                    <strong style="color: #b9f6ca;">✅ تمرین چهارگزینه‌ای</strong><br>
+                    📝 سوال: معنی "${word.persian}" چیست؟<br>
+                    🔘 گزینه‌ها: ${choices.join('، ')}<br>
+                    🎯 پاسخ صحیح: ${word.english} (گزینه ${correctIndex + 1})<br>
+                    👤 پاسخ کاربر: ${choices[userAnswer]} (گزینه ${userAnswer + 1})<br>
+                    <strong>📊 نتیجه: ${isValid ? '✅ صحیح' : '❌ غلط'}</strong>
+                `);
+                
+                this.log(`✅ تمرین چهارگزینه‌ای - کلمه: ${word.english} - نتیجه: ${isValid ? 'صحیح' : 'غلط'}`, isValid ? 'success' : 'warning');
+            },
+
+            runFillBlank(word) {
+                const sentence = `The ${word.english} is sleeping.`;
+                const userAnswer = word.english; // پاسخ صحیح
+                const isValid = ExerciseValidator.validateFillBlank(userAnswer, word.english);
+                
+                this.exerciseResults.push({
+                    wordId: word.id,
+                    type: 'fill-blank',
+                    correct: isValid,
+                    quality: isValid ? 4 : 2
+                });
+                
+                this.updateStepContent('step3-content', `
+                    <strong style="color: #b9f6ca;">✅ تمرین جای‌خالی</strong><br>
+                    📝 جمله: The __________ is sleeping.<br>
+                    🎯 پاسخ صحیح: ${word.english}<br>
+                    👤 پاسخ کاربر: ${userAnswer}<br>
+                    <strong>📊 نتیجه: ${isValid ? '✅ صحیح' : '❌ غلط'}</strong>
+                `);
+                
+                this.log(`✅ تمرین جای‌خالی - کلمه: ${word.english} - نتیجه: ${isValid ? 'صحیح' : 'غلط'}`, isValid ? 'success' : 'warning');
+            },
+
+            runTranslation(word) {
+                // تست غلط‌گیری املایی - کاربر "کت" مینویسد به جای "کتاب"
+                let userAnswer, expected, tolerance, description;
+                
+                if (word.english === 'cat') {
+                    userAnswer = 'گربه';
+                    expected = 'گربه';
+                    tolerance = 0;
+                    description = 'ترجمه دقیق';
+                } else if (word.english === 'bird') {
+                    userAnswer = 'پرند'; // غلط املایی
+                    expected = 'پرنده';
+                    tolerance = 1;
+                    description = 'غلط‌گیری املایی (پرند → پرنده)';
+                } else {
+                    userAnswer = word.persian;
+                    expected = word.persian;
+                    tolerance = 0;
+                    description = 'ترجمه دقیق';
+                }
+                
+                const isValid = ExerciseValidator.validateTranslation(userAnswer, expected, tolerance);
+                
+                this.exerciseResults.push({
+                    wordId: word.id,
+                    type: 'translation',
+                    correct: isValid,
+                    quality: isValid ? 4 : 2
+                });
+                
+                this.updateStepContent('step3-content', `
+                    <strong style="color: #b9f6ca;">✅ تمرین ترجمه</strong><br>
+                    📝 سوال: ترجمه "${word.english}" به فارسی<br>
+                    🎯 پاسخ صحیح: ${expected}<br>
+                    👤 پاسخ کاربر: ${userAnswer}<br>
+                    🔧 غلط‌گیری: ${tolerance > 0 ? 'فعال (tolerance=' + tolerance + ')' : 'غیرفعال'}<br>
+                    <strong>📊 نتیجه: ${isValid ? '✅ صحیح' : '❌ غلط'}</strong>
+                    ${isValid && userAnswer !== expected ? '⚠️ با غلط‌گیری املایی قبول شد' : ''}
+                `);
+                
+                this.log(`✅ تمرین ترجمه - ${description} - نتیجه: ${isValid ? 'صحیح' : 'غلط'}`, isValid ? 'success' : 'warning');
+            },
+
+            runPronunciation(word) {
+                const phoneticList = [word.phonetic, '/' + word.english + '/', '/?/'];
+                const userAnswer = word.phonetic;
+                const isValid = ExerciseValidator.validatePronunciation(userAnswer, phoneticList);
+                
+                this.exerciseResults.push({
+                    wordId: word.id,
+                    type: 'pronunciation',
+                    correct: isValid,
+                    quality: isValid ? 5 : 2
+                });
+                
+                this.updateStepContent('step3-content', `
+                    <strong style="color: #b9f6ca;">✅ تمرین تلفظ</strong><br>
+                    📝 کلمه: ${word.english}<br>
+                    🎯 تلفظ صحیح: ${word.phonetic}<br>
+                    👤 تلفظ کاربر: ${userAnswer}<br>
+                    🔍 گزینه‌های معتبر: ${phoneticList.join('، ')}<br>
+                    <strong>📊 نتیجه: ${isValid ? '✅ صحیح' : '❌ غلط'}</strong>
+                `);
+                
+                this.log(`✅ تمرین تلفظ - کلمه: ${word.english} - نتیجه: ${isValid ? 'صحیح' : 'غلط'}`, isValid ? 'success' : 'warning');
+            },
+
+            // ========== گام ۴: ذخیره پیشرفت و SRS ==========
+            saveProgress() {
+                if (!this.currentUserId || !this.currentLessonId) {
+                    this.log('❌ کاربر وارد نشده یا درسی انتخاب نشده', 'error');
+                    return;
+                }
+                
+                if (this.exerciseResults.length === 0) {
+                    this.log('⚠️ هیچ تمرینی انجام نشده است', 'warning');
+                    return;
+                }
+                
+                this.log('💾 در حال ذخیره پیشرفت...');
+                
+                const result = this.progress.saveProgress(
+                    this.currentUserId,
+                    this.currentLessonId,
+                    this.exerciseResults
+                );
+                
+                if (result.success) {
+                    const level = this.progress.calculateLevel(result.progress.xp);
+                    
+                    this.updateProgressStatus(`${result.progress.completedLessons} درس`, result.progress.xp);
+                    
+                    this.updateStepContent('step4-content', `
+                        <strong style="color: #b9f6ca;">✅ پیشرفت ذخیره شد</strong><br>
+                        📊 XP: ${result.progress.xp} (+${result.progress.xpGained})<br>
+                        🔥 Streak: ${result.progress.streak} روز<br>
+                        🎯 سطح: ${level}<br>
+                        📚 درس‌های تکمیل‌شده: ${result.progress.completedLessons}<br>
+                        <br><strong>🧠 نتایج SRS:</strong><br>
+                        ${result.srsResults.map((r, i) => 
+                            `🔹 مرور ${i+1}: فاصله ${r.interval} روز - مرور بعدی: ${r.nextReviewDate}`
+                        ).join('<br>')}
+                    `);
+                    
+                    this.log(`✅ پیشرفت ذخیره شد - XP: ${result.progress.xp} (+${result.progress.xpGained})`, 'success');
+                }
+            },
+
+            calculateSRS() {
+                if (this.exerciseResults.length === 0) {
+                    this.log('⚠️ ابتدا یک تمرین انجام دهید', 'warning');
+                    return;
+                }
+                
+                const lastResult = this.exerciseResults[this.exerciseResults.length - 1];
+                const quality = lastResult.quality || 4;
+                
+                const srs = this.progress.srsEngine.calculateNextReview(quality);
+                
+                this.log(`🧮 محاسبه SRS - کیفیت: ${quality} - فاصله: ${srs.interval} روز - مرور بعدی: ${srs.nextReviewDate}`);
+                
+                alert(`📊 نتیجه SRS:\n
+کیفیت پاسخ: ${quality}
+فاصله مرور: ${srs.interval} روز
+مرور بعدی: ${srs.nextReviewDate}
+فاکتور سهولت: ${srs.factor.toFixed(2)}`);
+            },
+
+            showProgress() {
+                if (!this.currentUserId) {
+                    this.log('❌ کاربر وارد نشده است', 'error');
+                    return;
+                }
+                
+                const progress = this.progress.getProgress(this.currentUserId);
+                
+                if (!progress) {
+                    this.log('📊 هیچ پیشرفتی ثبت نشده است', 'warning');
+                    return;
+                }
+                
+                const level = this.progress.calculateLevel(progress.xp);
+                
+                let progressText = `📊 پیشرفت کاربر ${this.currentUserId}:\n`;
+                progressText += `XP: ${progress.xp} (سطح ${level})\n`;
+                progressText += `Streak: ${progress.streak} روز\n`;
+                progressText += `درس‌های تکمیل‌شده: ${progress.completedLessons.length}\n`;
+                progressText += `آخرین فعالیت: ${progress.lastActive || 'ندارد'}\n`;
+                progressText += `تعداد مرورهای SRS: ${progress.wordReviews.length}`;
+                
+                this.log(progressText);
+                
+                alert(progressText.replace(/\n/g, '\n'));
+            },
+
+            // ========== گام ۵: همگام‌سازی و پایداری ==========
+            simulateOffline() {
+                this.offlineMode = true;
+                this.updateStepContent('step5-content', `
+                    <strong style="color: #ffcc80;">🔌 حالت آفلاین فعال شد</strong><br>
+                    ⚠️ همگام‌سازی غیرفعال است<br>
+                    📱 داده‌ها به صورت محلی ذخیره می‌شوند
+                `);
+                this.log('🔌 شبیه‌سازی حالت آفلاین - همگام‌سازی غیرفعال شد', 'warning');
+            },
+
+            simulateOnline() {
+                this.offlineMode = false;
+                this.updateStepContent('step5-content', `
+                    <strong style="color: #b9f6ca;">🌐 حالت آنلاین فعال شد</strong><br>
+                    ✅ همگام‌سازی فعال است
+                `);
+                this.log('🌐 شبیه‌سازی حالت آنلاین - همگام‌سازی فعال شد', 'success');
+            },
+
+            async syncData() {
+                if (this.offlineMode) {
+                    this.log('❌ در حالت آفلاین امکان همگام‌سازی وجود ندارد', 'error');
+                    return;
+                }
+                
+                this.log('🔄 شروع همگام‌سازی داده‌ها...');
+                
+                // شبیه‌سازی تاخیر شبکه
+                await new Promise(resolve => setTimeout(resolve, 1000));
+                
+                const progress = this.progress.getProgress(this.currentUserId);
+                
+                if (progress) {
+                    this.updateStepContent('step5-content', `
+                        <strong style="color: #b9f6ca;">✅ همگام‌سازی کامل شد</strong><br>
+                        📤 ارسال ${progress.wordReviews.length} مرور SRS<br>
+                        📥 دریافت به‌روزرسانی‌ها<br>
+                        ⏱ زمان: ${new Date().toLocaleTimeString('fa-IR')}
+                    `);
+                    this.log(`✅ همگام‌سازی موفق - ${progress.wordReviews.length} آیتم همگام شد`, 'success');
+                } else {
+                    this.log('⚠️ داده‌ای برای همگام‌سازی وجود ندارد', 'warning');
+                }
+            },
+
+            // ========== جریان کامل خودکار ==========
+            async runFullFlow() {
+                this.log('🚀 شروع جریان کامل کاربر - حالت خودکار', 'success');
+                
+                // گام 1: ورود
+                await this.login();
+                
+                // گام 2: بارگذاری درس
+                await this.loadLesson();
+                
+                // گام 3: انجام تمرین‌ها
+                await new Promise(r => setTimeout(r, 500));
+                this.startExercise('mc');
+                
+                await new Promise(r => setTimeout(r, 500));
+                this.startExercise('fb');
+                
+                await new Promise(r => setTimeout(r, 500));
+                this.startExercise('tl');
+                
+                await new Promise(r => setTimeout(r, 500));
+                this.startExercise('pr');
+                
+                // گام 4: ذخیره پیشرفت
+                await new Promise(r => setTimeout(r, 800));
+                this.saveProgress();
+                
+                // گام 5: محاسبه SRS
+                await new Promise(r => setTimeout(r, 500));
+                this.calculateSRS();
+                
+                this.log('🎯 جریان کامل کاربر با موفقیت اجرا شد', 'success');
+            },
+
+            // ========== ابزارهای کمکی ==========
+            updateUserStatus(status) {
+                document.getElementById('status-user').textContent = status;
+            },
+
+            updateLessonStatus(lessonTitle) {
+                document.getElementById('status-lesson').textContent = lessonTitle;
+            },
+
+            updateProgressStatus(completed, xp) {
+                document.getElementById('status-progress').textContent = `${xp} XP`;
+            },
+
+            updateStepContent(stepId, content) {
+                const step = document.getElementById(stepId);
+                if (step) {
+                    step.innerHTML = content;
+                }
+            },
+
+            resetAll() {
+                // ریست سرویس‌ها
+                this.auth = new AuthService();
+                this.lesson = new LessonService();
+                this.progress = new ProgressService();
+                
+                // ریست متغیرها
+                this.currentUserId = null;
+                this.currentLessonId = null;
+                this.exerciseResults = [];
+                this.offlineMode = false;
+                
+                // ریست UI
+                this.updateUserStatus('خروج');
+                this.updateLessonStatus('-');
+                this.updateProgressStatus('0%', 0);
+                
+                // ریست گام‌ها
+                this.updateStepContent('step1-content', `
+                    <strong>🟡 وضعیت:</strong> کاربر وارد نشده است<br>
+                    <strong>📝 سناریو:</strong> ثبت‌نام کاربر جدید + ورود خودکار
+                `);
+                this.updateStepContent('step2-content', `
+                    <strong>🟡 وضعیت:</strong> درسی بارگذاری نشده<br>
+                    <strong>📚 درس نمونه:</strong> حیوانات (سطح ۱) - ۵ واژه
+                `);
+                this.updateStepContent('step3-content', `
+                    <strong>🟡 وضعیت:</strong> تمرینی شروع نشده<br>
+                    <strong>🎯 سناریو:</strong> ۴ نوع تمرین + غلط‌گیری املایی
+                `);
+                this.updateStepContent('step4-content', `
+                    <strong>🟡 وضعیت:</strong> پیشرفتی ثبت نشده<br>
+                    <strong>🧠 SRS:</strong> محاسبه فاصله مرور بعدی
+                `);
+                this.updateStepContent('step5-content', `
+                    <strong>🟡 وضعیت:</strong> همگام‌سازی انجام نشده<br>
+                    <strong>📶 سناریو:</strong> شبیه‌سازی آفلاین/آنلاین
+                `);
+                
+                this.clearConsole();
+                this.log('🧹 سیستم ریست شد - آماده برای تست جدید', 'warning');
+            },
+
+            clearConsole() {
+                const output = document.getElementById('console-output');
+                output.innerHTML = '[سیستم] کنسول پاک شد - آماده اجرای تست دستی';
+                this.logEntries = [];
+                document.getElementById('log-count').textContent = '0 رویداد';
+            }
+        };
+
+        // مقداردهی اولیه
+        window.onload = () => {
+            FlowTest.log('🚀 سیستم تست دستی آماده است - روی دکمه‌ها کلیک کنید');
+            
+            // ثبت کاربر نمونه
+            setTimeout(() => {
+                FlowTest.auth.register('test-user', '123456', 'test@example.com');
+            }, 500);
+        };
+    </script>
+</body>
+</html>
