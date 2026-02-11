@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="fa">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>تست واحد: Auth Service (JWT, هش، اعتبارسنجی)</title>
+    <style>
+        body { font-family: system-ui, sans-serif; max-width: 900px; margin: 0 auto; padding: 20px; background: #f5f5f5; }
+        .container { background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        h1 { color: #2c3e50; font-size: 1.8rem; }
+        .test-card { background: #f8f9fa; border-radius: 8px; padding: 15px; margin: 15px 0; border-right: 6px solid #2c3e50; }
+        .pass { background: #e8f5e9; border-right-color: #4caf50; }
+        .fail { background: #ffebee; border-right-color: #f44336; }
+        button { background: #2c3e50; color: white; border: none; padding: 12px 24px; border-radius: 6px; font-size: 16px; margin: 5px; cursor: pointer; }
+        button:hover { background: #34495e; }
+        .result { background: #e9ecef; padding: 15px; border-radius: 6px; margin-top: 15px; font-family: monospace; white-space: pre-wrap; max-height: 300px; overflow-y: auto; }
+        .badge { background: #28a745; color: white; padding: 4px 12px; border-radius: 20px; font-size: 14px; display: inline-block; }
+        pre { background: #2d2d2d; color: #f8f9fa; padding: 15px; border-radius: 6px; overflow-x: auto; }
+        table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+        td, th { padding: 10px; border-bottom: 1px solid #dee2e6; text-align: right; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔐 تست واحد: Auth Service</h1>
+        <span class="badge">Unit Test</span>
+        <span style="background: #6c757d; color: white; padding: 4px 12px; border-radius: 20px; font-size: 14px; margin-right: 10px;">JWT + هش + اعتبارسنجی</span>
+
+        <div style="display: flex; gap: 10px; margin-top: 20px;">
+            <button onclick="runAllTests()">🧪 اجرای تمام تست‌ها</button>
+            <button onclick="resetResults()" style="background: #6c757d;">🧹 پاک کردن</button>
+        </div>
+
+        <div id="results" class="result">
+            📋 برای اجرای تست‌ها دکمه بالا را بزنید.
+        </div>
+
+        <div id="summary" style="margin-top: 20px; padding: 15px; background: #2c3e50; color: white; border-radius: 8px; display: none;">
+            ✅ خلاصه تست‌ها: <span id="summary-text"></span>
+        </div>
+    </div>
+
+    <script>
+        // ------------------------------------------------------------
+        // Auth Service - پیاده‌سازی کامل
+        // ------------------------------------------------------------
+        const AuthService = {
+            // --- اعتبارسنجی ---
+            validateUsername: function(username) {
+                if (!username || typeof username !== 'string') return false;
+                return username.length >= 3 && username.length <= 40 && /^[a-zA-Z0-9_]+$/.test(username);
+            },
+
+            validateEmail: function(email) {
+                if (!email || typeof email !== 'string') return false;
+                const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+                return regex.test(email) && email.length <= 100;
+            },
+
+            validatePassword: function(password) {
+                if (!password || typeof password !== 'string') return false;
+                return password.length >= 6 && password.length <= 50;
+            },
+
+            // --- هش (شبیه‌سازی) ---
+            hashPassword: function(password) {
+                if (!password) return null;
+                let hash = 0;
+                for (let i = 0; i < password.length; i++) {
+                    const char = password.charCodeAt(i);
+                    hash = ((hash << 5) - hash) + char;
+                    hash = hash & hash;
+                }
+                return Math.abs(hash).toString(16) + Date.now().toString(16).slice(-4);
+            },
+
+            verifyPassword: function(plainPassword, hashedPassword) {
+                return this.hashPassword(plainPassword) === hashedPassword;
+            },
+
+            // --- JWT (شبیه‌سازی شده) ---
+            generateToken: function(payload, expiresInHours = 24) {
+                const header = btoa(JSON.stringify({ alg: 'HS256', typ: 'JWT' }));
+                const encodedPayload = btoa(JSON.stringify({
+                    ...payload,
+                    exp: Date.now() + (expiresInHours * 60 * 60 * 1000),
+                    iat: Date.now(),
+                    jti: Math.random().toString(36).substring(2, 15)
+                }));
+                const signature = btoa('signature_' + payload.userId + '_' + Date.now());
+                return `${header}.${encodedPayload}.${signature}`;
+            },
+
+            verifyToken: function(token) {
+                try {
+                    const parts = token.split('.');
+                    if (parts.length !== 3) return null;
+                    
+                    const payload = JSON.parse(atob(parts[1]));
+                    if (payload.exp && payload.exp < Date.now()) return null;
+                    
+                    return payload;
+                } catch {
+                    return null;
+                }
+            },
+
+            refreshToken: function(oldToken) {
+                const payload = this.verifyToken(oldToken);
+                if (!payload) return null;
+                
+                return this.generateToken(
+                    { userId: payload.userId, email: payload.email },
+                    24
+                );
+            },
+
+            // --- ثبت‌نام و ورود ---
+            register: function(username, email, password) {
+                if (!this.validateUsername(username)) return { success: false, error: 'نام کاربری نامعتبر' };
+                if (!this.validateEmail(email)) return { success: false, error: 'ایمیل نامعتبر' };
+                if (!this.validatePassword(password)) return { success: false, error: 'رمز عبور باید بین ۶ تا ۵۰ کاراکتر باشد' };
+
+                const user = {
+                    id: 'usr_' + Date.now(),
+                    username,
+                    email,
+                    passwordHash: this.hashPassword(password),
+                    createdAt: new Date().toISOString(),
+                    xp: 0,
+                    level: 1
+                };
+
+                const token = this.generateToken({ userId: user.id, email: user.email });
+                return { success: true, user, token };
+            },
+
+            login: function(email, password, storedHash) {
+                if (!this.validateEmail(email)) return { success: false, error: 'ایمیل نامعتبر' };
+                if (!this.validatePassword(password)) return { success: false, error: 'رمز عبور نامعتبر' };
+                
+                if (this.verifyPassword(password, storedHash)) {
+                    const token = this.generateToken({ userId: 'usr_' + Date.now(), email });
+                    return { success: true, token };
+                }
+                return { success: false, error: 'ایمیل یا رمز عبور اشتباه است' };
+            }
+        };
+
+        // ------------------------------------------------------------
+        // تست‌های واحد
+        // ------------------------------------------------------------
+        const tests = [
+            {
+                name: '✅ اعتبارسنجی نام کاربری - معتبر',
+                fn: () => AuthService.validateUsername('farsinglish_user') === true
+            },
+            {
+                name: '❌ اعتبارسنجی نام کاربری - کوتاه',
+                fn: () => AuthService.validateUsername('ab') === false
+            },
+            {
+                name: '✅ اعتبارسنجی ایمیل - معتبر',
+                fn: () => AuthService.validateEmail('user@example.com') === true
+            },
+            {
+                name: '❌ اعتبارسنجی ایمیل - بدون @',
+                fn: () => AuthService.validateEmail('userexample.com') === false
+            },
+            {
+                name: '✅ اعتبارسنجی رمز عبور - معتبر',
+                fn: () => AuthService.validatePassword('123456') === true
+            },
+            {
+                name: '❌ اعتبارسنجی رمز عبور - کوتاه',
+                fn: () => AuthService.validatePassword('12345') === false
+            },
+            {
+                name: '🔐 هش کردن رمز عبور - خروجی یکسان برای ورودی یکسان',
+                fn: () => AuthService.hashPassword('password123') === AuthService.hashPassword('password123')
+            },
+            {
+                name: '🔐 تأیید رمز عبور - صحیح',
+                fn: () => {
+                    const hash = AuthService.hashPassword('mypass');
+                    return AuthService.verifyPassword('mypass', hash) === true;
+                }
+            },
+            {
+                name: '🔐 تأیید رمز عبور - نادرست',
+                fn: () => {
+                    const hash = AuthService.hashPassword('mypass');
+                    return AuthService.verifyPassword('wrongpass', hash) === false;
+                }
+            },
+            {
+                name: '🎫 تولید JWT - ساختار سه‌قسمتی',
+                fn: () => {
+                    const token = AuthService.generateToken({ userId: '123', email: 'test@test.com' });
+                    return token.split('.').length === 3;
+                }
+            },
+            {
+                name: '🎫 اعتبارسنجی JWT - معتبر',
+                fn: () => {
+                    const token = AuthService.generateToken({ userId: '123', email: 'test@test.com' });
+                    const payload = AuthService.verifyToken(token);
+                    return payload && payload.userId === '123';
+                }
+            },
+            {
+                name: '🎫 اعتبارسنجی JWT - توکن خراب',
+                fn: () => AuthService.verifyToken('invalid.token.string') === null
+            },
+            {
+                name: '🔄 تمدید JWT - موفق',
+                fn: () => {
+                    const token = AuthService.generateToken({ userId: '123', email: 'test@test.com' });
+                    const newToken = AuthService.refreshToken(token);
+                    return newToken !== null && newToken !== token;
+                }
+            },
+            {
+                name: '📝 ثبت‌نام - موفق',
+                fn: () => {
+                    const result = AuthService.register('newuser', 'new@test.com', 'password123');
+                    return result.success && result.user && result.token;
+                }
+            },
+            {
+                name: '📝 ثبت‌نام - نام کاربری تکراری (شبیه‌سازی)',
+                fn: () => {
+                    // این تست فقط اعتبارسنجی را چک می‌کند
+                    const result = AuthService.register('us', 'test@test.com', 'pass123');
+                    return result.success === false;
+                }
+            },
+            {
+                name: '🔑 ورود - موفق',
+                fn: () => {
+                    const hash = AuthService.hashPassword('correctpass');
+                    const result = AuthService.login('user@test.com', 'correctpass', hash);
+                    return result.success === true;
+                }
+            },
+            {
+                name: '🔑 ورود - رمز اشتباه',
+                fn: () => {
+                    const hash = AuthService.hashPassword('correctpass');
+                    const result = AuthService.login('user@test.com', 'wrongpass', hash);
+                    return result.success === false;
+                }
+            }
+        ];
+
+        // ------------------------------------------------------------
+        // اجرای تست‌ها
+        // ------------------------------------------------------------
+        function runAllTests() {
+            const resultsDiv = document.getElementById('results');
+            const summaryDiv = document.getElementById('summary');
+            const summaryText = document.getElementById('summary-text');
+            
+            let passed = 0;
+            let html = '<table><tr><th>#</th><th>نام تست</th><th>وضعیت</th><th>توضیح</th></tr>';
+            
+            tests.forEach((test, index) => {
+                try {
+                    const result = test.fn();
+                    if (result) {
+                        passed++;
+                        html += `<tr style="background: #e8f5e9;">
+                                    <td>${index + 1}</td>
+                                    <td>${test.name}</td>
+                                    <td>✅ پاس</td>
+                                    <td>موفق</td>
+                                </tr>`;
+                    } else {
+                        html += `<tr style="background: #ffebee;">
+                                    <td>${index + 1}</td>
+                                    <td>${test.name}</td>
+                                    <td>❌ خطا</td>
+                                    <td>مقدار بازگشتی false</td>
+                                </tr>`;
+                    }
+                } catch(e) {
+                    html += `<tr style="background: #ffebee;">
+                                <td>${index + 1}</td>
+                                <td>${test.name}</td>
+                                <td>⚠️ خطا</td>
+                                <td>${e.message}</td>
+                            </tr>`;
+                }
+            });
+            
+            html += '</table>';
+            resultsDiv.innerHTML = html;
+            
+            summaryDiv.style.display = 'block';
+            summaryText.innerHTML = `✅ ${passed} از ${tests.length} تست پاس شد (${Math.round((passed/tests.length)*100)}%)`;
+            
+            // نمایش در کنسول
+            console.log(`🔐 Auth Service Unit Tests: ${passed}/${tests.length} passed`);
+            if (passed === tests.length) console.log('🎉 همه تست‌ها با موفقیت پاس شدند!');
+        }
+
+        function resetResults() {
+            document.getElementById('results').innerHTML = '📋 برای اجرای تست‌ها دکمه بالا را بزنید.';
+            document.getElementById('summary').style.display = 'none';
+        }
+    </script>
+</body>
+</html>
