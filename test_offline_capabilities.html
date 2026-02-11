@@ -1,0 +1,1205 @@
+<!DOCTYPE html>
+<html lang="fa">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Farsinglish - تست قابلیت‌های آفلاین</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { 
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+            background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+            color: #ecf0f1;
+            min-height: 100vh;
+            padding: 15px;
+        }
+        .container { 
+            max-width: 900px; 
+            margin: 0 auto;
+            background: rgba(40, 50, 60, 0.95);
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.7);
+            border: 1px solid rgba(100, 150, 200, 0.2);
+        }
+        h1 { 
+            text-align: center; 
+            margin-bottom: 25px;
+            font-size: 1.8rem;
+            color: #3498db;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+        }
+        h2 {
+            margin: 20px 0 15px;
+            color: #5dade2;
+            font-size: 1.3rem;
+            border-bottom: 2px solid #2980b9;
+            padding-bottom: 8px;
+        }
+        .test-section { 
+            margin: 15px 0;
+            padding: 14px;
+            background: rgba(50, 60, 70, 0.7);
+            border-radius: 10px;
+            border-left: 4px solid #3498db;
+            transition: transform 0.2s;
+        }
+        .test-section:hover {
+            transform: translateX(5px);
+        }
+        .test-header { 
+            display: flex; 
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        .test-title { 
+            font-size: 0.95rem; 
+            font-weight: 600;
+            color: #d6eaf8;
+        }
+        .test-result { 
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 0.8rem;
+            font-weight: bold;
+        }
+        .pass { background: linear-gradient(45deg, #27ae60, #2ecc71); }
+        .fail { background: linear-gradient(45deg, #c0392b, #e74c3c); }
+        .details { 
+            margin-top: 10px;
+            padding: 10px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.85rem;
+            color: #abebc6;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+        .summary {
+            margin-top: 25px;
+            padding: 18px;
+            background: rgba(50, 60, 70, 0.8);
+            border-radius: 10px;
+            text-align: center;
+            border: 1px solid rgba(52, 152, 219, 0.3);
+        }
+        button {
+            background: linear-gradient(45deg, #2980b9, #3498db);
+            color: white;
+            border: none;
+            padding: 10px 22px;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            cursor: pointer;
+            margin: 6px;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(52, 152, 219, 0.4);
+        }
+        .controls { text-align: center; margin-top: 20px; }
+        .network-status {
+            display: inline-block;
+            padding: 5px 12px;
+            border-radius: 15px;
+            margin: 10px;
+            font-size: 0.9rem;
+            font-weight: bold;
+        }
+        .online { background: #27ae60; }
+        .offline { background: #e74c3c; }
+        .sync-indicator {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 8px;
+            animation: pulse 2s infinite;
+        }
+        .syncing { background: #f39c12; }
+        .synced { background: #2ecc71; }
+        @keyframes pulse {
+            0% { opacity: 0.6; }
+            50% { opacity: 1; }
+            100% { opacity: 0.6; }
+        }
+        .demo-area {
+            margin: 20px 0;
+            padding: 15px;
+            background: rgba(30, 40, 50, 0.8);
+            border-radius: 10px;
+            border: 1px solid #3498db;
+        }
+        @media (max-width: 600px) {
+            .container { padding: 12px; }
+            h1 { font-size: 1.5rem; }
+            h2 { font-size: 1.1rem; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📶 تست قابلیت‌های آفلاین - Farsinglish</h1>
+        
+        <div class="demo-area">
+            <div id="network-status" class="network-status online">🔗 آنلاین</div>
+            <div id="sync-status">
+                <span class="sync-indicator synced"></span>
+                <span>همگام‌سازی: کامل</span>
+            </div>
+            <div style="margin-top: 10px;">
+                <button onclick="simulateOffline()">🔌 شبیه‌سازی آفلاین</button>
+                <button onclick="simulateOnline()">🌐 شبیه‌سازی آنلاین</button>
+                <button onclick="simulateSync()">🔄 شبیه‌سازی همگام‌سازی</button>
+            </div>
+        </div>
+        
+        <h2>🗄️ تست‌های ذخیره‌سازی آفلاین</h2>
+        <div id="storage-tests"></div>
+        
+        <h2>🔄 تست‌های همگام‌سازی</h2>
+        <div id="sync-tests"></div>
+        
+        <h2>🚨 تست‌های بازیابی خطا</h2>
+        <div id="recovery-tests"></div>
+        
+        <h2>⚡ تست‌های عملکرد آفلاین</h2>
+        <div id="performance-tests"></div>
+        
+        <div class="summary">
+            <p id="summary-text">آماده اجرای ۱۶ تست آفلاین...</p>
+        </div>
+        
+        <div class="controls">
+            <button onclick="runAllTests()">🚀 اجرای تمام تست‌ها</button>
+            <button onclick="runOfflineDemo()">💻 نمایش عملکرد آفلاین</button>
+            <button onclick="clearTests()">♻️ پاک کردن نتایج</button>
+        </div>
+    </div>
+
+    <script>
+        // ==================== Offline Service ====================
+        class OfflineService {
+            constructor() {
+                this.dbName = 'farsinglish-offline';
+                this.dbVersion = 2;
+                this.db = null;
+                this.pendingOperations = [];
+                this.syncQueue = [];
+                this.lastSync = null;
+                this.maxOfflineDays = 7;
+                this.cacheSizeLimit = 50; // مگابایت
+            }
+
+            // ========== IndexedDB Management ==========
+            async initDatabase() {
+                return new Promise((resolve, reject) => {
+                    const request = indexedDB.open(this.dbName, this.dbVersion);
+                    
+                    request.onerror = () => reject(new Error('خطا در باز کردن دیتابیس'));
+                    
+                    request.onsuccess = (event) => {
+                        this.db = event.target.result;
+                        resolve(this.db);
+                    };
+                    
+                    request.onupgradeneeded = (event) => {
+                        const db = event.target.result;
+                        
+                        // ایجاد جداول
+                        if (!db.objectStoreNames.contains('lessons')) {
+                            const lessonsStore = db.createObjectStore('lessons', { keyPath: 'id' });
+                            lessonsStore.createIndex('updatedAt', 'updatedAt', { unique: false });
+                            lessonsStore.createIndex('level', 'level', { unique: false });
+                        }
+                        
+                        if (!db.objectStoreNames.contains('userProgress')) {
+                            const progressStore = db.createObjectStore('userProgress', { keyPath: 'userId' });
+                            progressStore.createIndex('lastUpdated', 'lastUpdated', { unique: false });
+                        }
+                        
+                        if (!db.objectStoreNames.contains('syncQueue')) {
+                            const syncStore = db.createObjectStore('syncQueue', { keyPath: 'id', autoIncrement: true });
+                            syncStore.createIndex('type', 'type', { unique: false });
+                            syncStore.createIndex('timestamp', 'timestamp', { unique: false });
+                        }
+                        
+                        if (!db.objectStoreNames.contains('cache')) {
+                            const cacheStore = db.createObjectStore('cache', { keyPath: 'key' });
+                            cacheStore.createIndex('expires', 'expires', { unique: false });
+                        }
+                    };
+                });
+            }
+
+            // ========== داده‌های درس ==========
+            async saveLessonsOffline(lessons) {
+                try {
+                    if (!this.db) await this.initDatabase();
+                    
+                    const transaction = this.db.transaction(['lessons'], 'readwrite');
+                    const store = transaction.objectStore('lessons');
+                    
+                    const promises = lessons.map(lesson => {
+                        const offlineLesson = {
+                            ...lesson,
+                            offline: true,
+                            savedAt: Date.now(),
+                            expires: Date.now() + (30 * 24 * 60 * 60 * 1000) // 30 روز
+                        };
+                        
+                        return new Promise((resolve, reject) => {
+                            const request = store.put(offlineLesson);
+                            request.onsuccess = () => resolve();
+                            request.onerror = () => reject(new Error('خطا در ذخیره درس'));
+                        });
+                    });
+                    
+                    await Promise.all(promises);
+                    return { success: true, count: lessons.length };
+                } catch (error) {
+                    console.error('خطا در ذخیره آفلاین:', error);
+                    return { success: false, error: error.message };
+                }
+            }
+
+            async getLessonsOffline(level = null) {
+                try {
+                    if (!this.db) await this.initDatabase();
+                    
+                    return new Promise((resolve, reject) => {
+                        const transaction = this.db.transaction(['lessons'], 'readonly');
+                        const store = transaction.objectStore('lessons');
+                        let request;
+                        
+                        if (level) {
+                            const index = store.index('level');
+                            request = index.getAll(level);
+                        } else {
+                            request = store.getAll();
+                        }
+                        
+                        request.onsuccess = () => {
+                            const lessons = request.result || [];
+                            // فیلتر کردن موارد منقضی
+                            const validLessons = lessons.filter(lesson => 
+                                !lesson.expires || lesson.expires > Date.now()
+                            );
+                            resolve({ success: true, lessons: validLessons });
+                        };
+                        
+                        request.onerror = () => reject(new Error('خطا در خواندن درس‌ها'));
+                    });
+                } catch (error) {
+                    return { success: false, error: error.message, lessons: [] };
+                }
+            }
+
+            // ========== پیشرفت کاربر ==========
+            async saveUserProgress(userId, progress) {
+                try {
+                    if (!this.db) await this.initDatabase();
+                    
+                    return new Promise((resolve, reject) => {
+                        const transaction = this.db.transaction(['userProgress'], 'readwrite');
+                        const store = transaction.objectStore('userProgress');
+                        
+                        const offlineProgress = {
+                            userId,
+                            ...progress,
+                            offline: true,
+                            lastUpdated: Date.now(),
+                            syncRequired: true
+                        };
+                        
+                        const request = store.put(offlineProgress);
+                        
+                        request.onsuccess = () => {
+                            // اضافه کردن به صف همگام‌سازی
+                            this.addToSyncQueue({
+                                type: 'progress_update',
+                                userId,
+                                data: progress,
+                                timestamp: Date.now()
+                            });
+                            resolve({ success: true });
+                        };
+                        
+                        request.onerror = () => reject(new Error('خطا در ذخیره پیشرفت'));
+                    });
+                } catch (error) {
+                    return { success: false, error: error.message };
+                }
+            }
+
+            async getUserProgress(userId) {
+                try {
+                    if (!this.db) await this.initDatabase();
+                    
+                    return new Promise((resolve, reject) => {
+                        const transaction = this.db.transaction(['userProgress'], 'readonly');
+                        const store = transaction.objectStore('userProgress');
+                        const request = store.get(userId);
+                        
+                        request.onsuccess = () => {
+                            const progress = request.result;
+                            if (progress) {
+                                resolve({ success: true, progress });
+                            } else {
+                                resolve({ success: false, error: 'داده‌ای یافت نشد' });
+                            }
+                        };
+                        
+                        request.onerror = () => reject(new Error('خطا در خواندن پیشرفت'));
+                    });
+                } catch (error) {
+                    return { success: false, error: error.message };
+                }
+            }
+
+            // ========== مدیریت صف همگام‌سازی ==========
+            async addToSyncQueue(item) {
+                try {
+                    if (!this.db) await this.initDatabase();
+                    
+                    return new Promise((resolve, reject) => {
+                        const transaction = this.db.transaction(['syncQueue'], 'readwrite');
+                        const store = transaction.objectStore('syncQueue');
+                        
+                        const syncItem = {
+                            ...item,
+                            attempts: 0,
+                            maxAttempts: 3,
+                            status: 'pending'
+                        };
+                        
+                        const request = store.add(syncItem);
+                        
+                        request.onsuccess = () => {
+                            this.syncQueue.push(syncItem);
+                            resolve({ success: true, id: request.result });
+                        };
+                        
+                        request.onerror = () => reject(new Error('خطا در اضافه کردن به صف'));
+                    });
+                } catch (error) {
+                    console.error('خطا در اضافه به صف:', error);
+                    return { success: false, error: error.message };
+                }
+            }
+
+            async getPendingSyncItems() {
+                try {
+                    if (!this.db) await this.initDatabase();
+                    
+                    return new Promise((resolve, reject) => {
+                        const transaction = this.db.transaction(['syncQueue'], 'readonly');
+                        const store = transaction.objectStore('syncQueue');
+                        const index = store.index('timestamp');
+                        const request = index.getAll();
+                        
+                        request.onsuccess = () => {
+                            const items = request.result || [];
+                            const pending = items.filter(item => item.status === 'pending');
+                            resolve({ success: true, items: pending });
+                        };
+                        
+                        request.onerror = () => reject(new Error('خطا در خواندن صف'));
+                    });
+                } catch (error) {
+                    return { success: false, error: error.message, items: [] };
+                }
+            }
+
+            // ========== همگام‌سازی با سرور ==========
+            async syncWithServer() {
+                if (!navigator.onLine) {
+                    return { success: false, error: 'دستگاه آفلاین است', synced: false };
+                }
+                
+                try {
+                    const pendingItems = await this.getPendingSyncItems();
+                    
+                    if (!pendingItems.success || pendingItems.items.length === 0) {
+                        return { success: true, synced: true, message: 'چیزی برای همگام‌سازی وجود ندارد' };
+                    }
+                    
+                    let syncedCount = 0;
+                    let failedCount = 0;
+                    
+                    // شبیه‌سازی ارسال به سرور
+                    for (const item of pendingItems.items) {
+                        try {
+                            // شبیه‌سازی API call
+                            await this.simulateApiCall(item);
+                            syncedCount++;
+                            
+                            // حذف از صف بعد از موفقیت
+                            await this.removeFromSyncQueue(item.id);
+                        } catch (error) {
+                            failedCount++;
+                            item.attempts++;
+                            
+                            if (item.attempts >= item.maxAttempts) {
+                                // پس از ۳ بار تلاش ناموفق، علامت‌گذاری به عنوان شکست خورده
+                                await this.markSyncItemFailed(item.id);
+                            }
+                        }
+                    }
+                    
+                    this.lastSync = Date.now();
+                    
+                    return {
+                        success: syncedCount > 0 || failedCount === 0,
+                        synced: syncedCount > 0,
+                        syncedCount,
+                        failedCount,
+                        lastSync: this.lastSync
+                    };
+                } catch (error) {
+                    return { success: false, error: error.message, synced: false };
+                }
+            }
+
+            async simulateApiCall(item) {
+                // شبیه‌سازی تاخیر شبکه
+                await new Promise(resolve => setTimeout(resolve, Math.random() * 300 + 100));
+                
+                // شبیه‌سازی خطای تصادفی (۲۰٪ احتمال خطا)
+                if (Math.random() < 0.2) {
+                    throw new Error('خطای شبکه شبیه‌سازی شده');
+                }
+                
+                return { success: true };
+            }
+
+            async removeFromSyncQueue(id) {
+                try {
+                    if (!this.db) await this.initDatabase();
+                    
+                    return new Promise((resolve, reject) => {
+                        const transaction = this.db.transaction(['syncQueue'], 'readwrite');
+                        const store = transaction.objectStore('syncQueue');
+                        const request = store.delete(id);
+                        
+                        request.onsuccess = () => resolve({ success: true });
+                        request.onerror = () => reject(new Error('خطا در حذف از صف'));
+                    });
+                } catch (error) {
+                    return { success: false, error: error.message };
+                }
+            }
+
+            async markSyncItemFailed(id) {
+                try {
+                    if (!this.db) await this.initDatabase();
+                    
+                    return new Promise((resolve, reject) => {
+                        const transaction = this.db.transaction(['syncQueue'], 'readwrite');
+                        const store = transaction.objectStore('syncQueue');
+                        const getRequest = store.get(id);
+                        
+                        getRequest.onsuccess = () => {
+                            const item = getRequest.result;
+                            if (item) {
+                                item.status = 'failed';
+                                item.lastAttempt = Date.now();
+                                const updateRequest = store.put(item);
+                                updateRequest.onsuccess = () => resolve({ success: true });
+                                updateRequest.onerror = () => reject(new Error('خطا در بروزرسانی'));
+                            }
+                        };
+                        
+                        getRequest.onerror = () => reject(new Error('خطا در خواندن آیتم'));
+                    });
+                } catch (error) {
+                    return { success: false, error: error.message };
+                }
+            }
+
+            // ========== Cache Management ==========
+            async cacheData(key, data, ttl = 3600000) { // 1 hour default
+                try {
+                    if (!this.db) await this.initDatabase();
+                    
+                    return new Promise((resolve, reject) => {
+                        const transaction = this.db.transaction(['cache'], 'readwrite');
+                        const store = transaction.objectStore('cache');
+                        
+                        const cacheItem = {
+                            key,
+                            data: JSON.stringify(data),
+                            cachedAt: Date.now(),
+                            expires: Date.now() + ttl
+                        };
+                        
+                        const request = store.put(cacheItem);
+                        
+                        request.onsuccess = () => resolve({ success: true });
+                        request.onerror = () => reject(new Error('خطا در ذخیره کش'));
+                    });
+                } catch (error) {
+                    return { success: false, error: error.message };
+                }
+            }
+
+            async getCachedData(key) {
+                try {
+                    if (!this.db) await this.initDatabase();
+                    
+                    return new Promise((resolve, reject) => {
+                        const transaction = this.db.transaction(['cache'], 'readonly');
+                        const store = transaction.objectStore('cache');
+                        const request = store.get(key);
+                        
+                        request.onsuccess = () => {
+                            const item = request.result;
+                            
+                            if (!item) {
+                                resolve({ success: false, error: 'داده‌ای در کش نیست' });
+                                return;
+                            }
+                            
+                            if (item.expires < Date.now()) {
+                                // حذف داده منقضی شده
+                                this.clearCacheKey(key);
+                                resolve({ success: false, error: 'داده منقضی شده' });
+                                return;
+                            }
+                            
+                            try {
+                                const data = JSON.parse(item.data);
+                                resolve({ success: true, data, cachedAt: item.cachedAt });
+                            } catch {
+                                resolve({ success: false, error: 'خطا در پردازش داده کش' });
+                            }
+                        };
+                        
+                        request.onerror = () => reject(new Error('خطا در خواندن کش'));
+                    });
+                } catch (error) {
+                    return { success: false, error: error.message };
+                }
+            }
+
+            async clearExpiredCache() {
+                try {
+                    if (!this.db) await this.initDatabase();
+                    
+                    return new Promise((resolve, reject) => {
+                        const transaction = this.db.transaction(['cache'], 'readwrite');
+                        const store = transaction.objectStore('cache');
+                        const index = store.index('expires');
+                        const range = IDBKeyRange.upperBound(Date.now());
+                        const request = index.openCursor(range);
+                        
+                        let deletedCount = 0;
+                        
+                        request.onsuccess = (event) => {
+                            const cursor = event.target.result;
+                            if (cursor) {
+                                cursor.delete();
+                                deletedCount++;
+                                cursor.continue();
+                            } else {
+                                resolve({ success: true, deletedCount });
+                            }
+                        };
+                        
+                        request.onerror = () => reject(new Error('خطا در پاکسازی کش'));
+                    });
+                } catch (error) {
+                    return { success: false, error: error.message };
+                }
+            }
+
+            async clearCacheKey(key) {
+                try {
+                    if (!this.db) await this.initDatabase();
+                    
+                    return new Promise((resolve, reject) => {
+                        const transaction = this.db.transaction(['cache'], 'readwrite');
+                        const store = transaction.objectStore('cache');
+                        const request = store.delete(key);
+                        
+                        request.onsuccess = () => resolve({ success: true });
+                        request.onerror = () => reject(new Error('خطا در حذف کش'));
+                    });
+                } catch (error) {
+                    return { success: false, error: error.message };
+                }
+            }
+
+            // ========== بازیابی و بازیابی ==========
+            async backupUserData(userId) {
+                try {
+                    const [lessonsResult, progressResult] = await Promise.all([
+                        this.getLessonsOffline(),
+                        this.getUserProgress(userId)
+                    ]);
+                    
+                    const backup = {
+                        userId,
+                        timestamp: Date.now(),
+                        lessons: lessonsResult.lessons || [],
+                        progress: progressResult.progress || null,
+                        syncQueue: (await this.getPendingSyncItems()).items || []
+                    };
+                    
+                    // ذخیره بکاپ در localStorage (فقط برای تست)
+                    localStorage.setItem(`backup_${userId}`, JSON.stringify(backup));
+                    
+                    return {
+                        success: true,
+                        backup,
+                        size: JSON.stringify(backup).length
+                    };
+                } catch (error) {
+                    return { success: false, error: error.message };
+                }
+            }
+
+            async restoreFromBackup(userId) {
+                try {
+                    const backupStr = localStorage.getItem(`backup_${userId}`);
+                    if (!backupStr) {
+                        return { success: false, error: 'بکاپی یافت نشد' };
+                    }
+                    
+                    const backup = JSON.parse(backupStr);
+                    
+                    // بازیابی درس‌ها
+                    if (backup.lessons.length > 0) {
+                        await this.saveLessonsOffline(backup.lessons);
+                    }
+                    
+                    // بازیابی پیشرفت
+                    if (backup.progress) {
+                        await this.saveUserProgress(userId, backup.progress);
+                    }
+                    
+                    return {
+                        success: true,
+                        restored: {
+                            lessons: backup.lessons.length,
+                            progress: backup.progress ? 1 : 0
+                        },
+                        backupDate: new Date(backup.timestamp).toLocaleString('fa-IR')
+                    };
+                } catch (error) {
+                    return { success: false, error: error.message };
+                }
+            }
+
+            // ========== Utilities ==========
+            isOnline() {
+                return navigator.onLine;
+            }
+
+            getStorageInfo() {
+                if (!this.db) return { success: false, error: 'دیتابیس اولیه‌سازی نشده' };
+                
+                const transaction = this.db.transaction(
+                    ['lessons', 'userProgress', 'syncQueue', 'cache'], 
+                    'readonly'
+                );
+                
+                const promises = [
+                    this.getObjectStoreCount(transaction.objectStore('lessons')),
+                    this.getObjectStoreCount(transaction.objectStore('userProgress')),
+                    this.getObjectStoreCount(transaction.objectStore('syncQueue')),
+                    this.getObjectStoreCount(transaction.objectStore('cache'))
+                ];
+                
+                return Promise.all(promises).then(counts => ({
+                    success: true,
+                    lessons: counts[0],
+                    userProgress: counts[1],
+                    syncQueue: counts[2],
+                    cache: counts[3],
+                    total: counts.reduce((a, b) => a + b, 0),
+                    lastSync: this.lastSync ? new Date(this.lastSync).toLocaleString('fa-IR') : 'هرگز'
+                }));
+            }
+
+            getObjectStoreCount(store) {
+                return new Promise((resolve, reject) => {
+                    const request = store.count();
+                    request.onsuccess = () => resolve(request.result);
+                    request.onerror = () => reject(new Error('خطا در شمارش'));
+                });
+            }
+
+            async clearAllData() {
+                try {
+                    if (!this.db) await this.initDatabase();
+                    
+                    const stores = ['lessons', 'userProgress', 'syncQueue', 'cache'];
+                    const results = {};
+                    
+                    for (const storeName of stores) {
+                        const transaction = this.db.transaction([storeName], 'readwrite');
+                        const store = transaction.objectStore(storeName);
+                        const request = store.clear();
+                        
+                        await new Promise((resolve, reject) => {
+                            request.onsuccess = () => resolve();
+                            request.onerror = () => reject(new Error(`خطا در پاکسازی ${storeName}`));
+                        });
+                        
+                        results[storeName] = 'پاک شد';
+                    }
+                    
+                    return { success: true, results };
+                } catch (error) {
+                    return { success: false, error: error.message };
+                }
+            }
+        }
+
+        // ==================== تست‌های آفلاین ====================
+        const offlineService = new OfflineService();
+        
+        const storageTests = [
+            {
+                id: 'st-1',
+                title: 'ذخیره‌سازی درس‌های آفلاین',
+                run: async () => {
+                    const lessons = [
+                        { id: 1, title: 'درس ۱', level: 1, content: 'محتوا ۱' },
+                        { id: 2, title: 'درس ۲', level: 1, content: 'محتوا ۲' },
+                        { id: 3, title: 'درس ۳', level: 2, content: 'محتوا ۳' }
+                    ];
+                    
+                    const result = await offlineService.saveLessonsOffline(lessons);
+                    return result.success && result.count === 3;
+                }
+            },
+            {
+                id: 'st-2',
+                title: 'خواندن درس‌های آفلاین',
+                run: async () => {
+                    const result = await offlineService.getLessonsOffline();
+                    return result.success && Array.isArray(result.lessons);
+                }
+            },
+            {
+                id: 'st-3',
+                title: 'فیلتر درس‌ها بر اساس سطح',
+                run: async () => {
+                    const result = await offlineService.getLessonsOffline(1);
+                    return result.success && 
+                           result.lessons.every(lesson => lesson.level === 1);
+                }
+            },
+            {
+                id: 'st-4',
+                title: 'ذخیره پیشرفت کاربر آفلاین',
+                run: async () => {
+                    const progress = {
+                        level: 3,
+                        xp: 1200,
+                        completedLessons: [1, 2, 3],
+                        lastActivity: Date.now()
+                    };
+                    
+                    const result = await offlineService.saveUserProgress('test-user-123', progress);
+                    return result.success;
+                }
+            }
+        ];
+
+        const syncTests = [
+            {
+                id: 'sy-1',
+                title: 'افزودن به صف همگام‌سازی',
+                run: async () => {
+                    const result = await offlineService.addToSyncQueue({
+                        type: 'test_sync',
+                        data: { test: 'data' },
+                        timestamp: Date.now()
+                    });
+                    
+                    return result.success && typeof result.id === 'number';
+                }
+            },
+            {
+                id: 'sy-2',
+                title: 'خواندن آیتم‌های در انتظار همگام‌سازی',
+                run: async () => {
+                    const result = await offlineService.getPendingSyncItems();
+                    return result.success && Array.isArray(result.items);
+                }
+            },
+            {
+                id: 'sy-3',
+                title: 'همگام‌سازی با سرور (شبیه‌سازی)',
+                run: async () => {
+                    const result = await offlineService.syncWithServer();
+                    return result.success === true;
+                }
+            },
+            {
+                id: 'sy-4',
+                title: 'مدیریت کش',
+                run: async () => {
+                    const testData = { message: 'داده تست کش' };
+                    
+                    // ذخیره در کش
+                    const saveResult = await offlineService.cacheData('test-key', testData, 60000);
+                    if (!saveResult.success) return false;
+                    
+                    // خواندن از کش
+                    const readResult = await offlineService.getCachedData('test-key');
+                    
+                    return readResult.success && 
+                           readResult.data.message === 'داده تست کش';
+                }
+            }
+        ];
+
+        const recoveryTests = [
+            {
+                id: 'rc-1',
+                title: 'بازیابی از بکاپ',
+                run: async () => {
+                    const result = await offlineService.restoreFromBackup('test-user-123');
+                    return result.success || result.error === 'بکاپی یافت نشد';
+                }
+            },
+            {
+                id: 'rc-2',
+                title: 'ایجاد بکاپ',
+                run: async () => {
+                    const result = await offlineService.backupUserData('test-user-123');
+                    return result.success;
+                }
+            },
+            {
+                id: 'rc-3',
+                title: 'پاکسازی کش منقضی شده',
+                run: async () => {
+                    // ذخیره داده با زمان انقضای گذشته
+                    await offlineService.cacheData('expired-key', { data: 'منقضی' }, -1000);
+                    
+                    const result = await offlineService.clearExpiredCache();
+                    return result.success;
+                }
+            },
+            {
+                id: 'rc-4',
+                title: 'دریافت اطلاعات ذخیره‌سازی',
+                run: async () => {
+                    const result = await offlineService.getStorageInfo();
+                    return result.success && typeof result.total === 'number';
+                }
+            }
+        ];
+
+        const performanceTests = [
+            {
+                id: 'pf-1',
+                title: 'ذخیره‌سازی حجم زیاد (۱۰۰ درس)',
+                run: async () => {
+                    const lessons = [];
+                    for (let i = 1; i <= 100; i++) {
+                        lessons.push({
+                            id: 1000 + i,
+                            title: `درس حجمی ${i}`,
+                            level: Math.ceil(i / 20),
+                            content: 'محتوا تست '.repeat(10),
+                            vocabulary: Array(20).fill().map((_, idx) => ({
+                                english: `Word${idx}`,
+                                persian: `کلمه ${idx}`
+                            }))
+                        });
+                    }
+                    
+                    const start = performance.now();
+                    const result = await offlineService.saveLessonsOffline(lessons);
+                    const end = performance.now();
+                    const duration = end - start;
+                    
+                    console.log('ذخیره‌سازی ۱۰۰ درس:', { duration: `${duration.toFixed(2)}ms` });
+                    
+                    return result.success && duration < 5000; // کمتر از ۵ ثانیه
+                }
+            },
+            {
+                id: 'pf-2',
+                title: 'خواندن همزمان',
+                run: async () => {
+                    const start = performance.now();
+                    
+                    const [lessonsResult, progressResult, syncResult] = await Promise.all([
+                        offlineService.getLessonsOffline(),
+                        offlineService.getUserProgress('test-user-123'),
+                        offlineService.getPendingSyncItems()
+                    ]);
+                    
+                    const end = performance.now();
+                    const duration = end - start;
+                    
+                    console.log('خواندن همزمان:', { duration: `${duration.toFixed(2)}ms` });
+                    
+                    return lessonsResult.success &&
+                           progressResult.success !== undefined &&
+                           syncResult.success &&
+                           duration < 3000; // کمتر از ۳ ثانیه
+                }
+            },
+            {
+                id: 'pf-3',
+                title: 'شبیه‌سازی حالت آفلاین',
+                run: async () => {
+                    const originalOnline = navigator.onLine;
+                    
+                    // شبیه‌سازی آفلاین
+                    Object.defineProperty(navigator, 'onLine', { value: false, configurable: true });
+                    
+                    const syncResult = await offlineService.syncWithServer();
+                    
+                    // بازگردانی وضعیت
+                    Object.defineProperty(navigator, 'onLine', { value: originalOnline, configurable: true });
+                    
+                    return !syncResult.synced && syncResult.error.includes('آفلاین');
+                }
+            },
+            {
+                id: 'pf-4',
+                title: 'پاکسازی کامل داده',
+                run: async () => {
+                    const result = await offlineService.clearAllData();
+                    return result.success;
+                }
+            }
+        ];
+
+        // ==================== اجرای تست‌ها ====================
+        async function runAllTests() {
+            clearTestAreas();
+            await offlineService.initDatabase();
+            
+            const allTests = [
+                ...storageTests,
+                ...syncTests,
+                ...recoveryTests,
+                ...performanceTests
+            ];
+            
+            let passed = 0;
+            let total = 0;
+            
+            // اجرای تست‌های ذخیره‌سازی
+            for (const test of storageTests) {
+                await executeTest(test, 'storage-tests');
+                total++;
+                if (await test.run()) passed++;
+            }
+            
+            // اجرای تست‌های همگام‌سازی
+            for (const test of syncTests) {
+                await executeTest(test, 'sync-tests');
+                total++;
+                if (await test.run()) passed++;
+            }
+            
+            // اجرای تست‌های بازیابی
+            for (const test of recoveryTests) {
+                await executeTest(test, 'recovery-tests');
+                total++;
+                if (await test.run()) passed++;
+            }
+            
+            // اجرای تست‌های عملکرد
+            for (const test of performanceTests) {
+                await executeTest(test, 'performance-tests');
+                total++;
+                if (await test.run()) passed++;
+            }
+            
+            updateSummary(passed, total);
+        }
+        
+        async function executeTest(test, containerId) {
+            const container = document.getElementById(containerId);
+            const testDiv = document.createElement('div');
+            testDiv.className = 'test-section';
+            
+            try {
+                const result = await test.run();
+                testDiv.innerHTML = `
+                    <div class="test-header">
+                        <div class="test-title">${test.id}. ${test.title}</div>
+                        <div class="test-result ${result ? 'pass' : 'fail'}">
+                            ${result ? '✅' : '❌'}
+                        </div>
+                    </div>
+                `;
+            } catch (error) {
+                testDiv.innerHTML = `
+                    <div class="test-header">
+                        <div class="test-title">${test.id}. ${test.title}</div>
+                        <div class="test-result fail">❌ خطا</div>
+                    </div>
+                    <div class="details">${error.message}</div>
+                `;
+            }
+            
+            container.appendChild(testDiv);
+        }
+        
+        async function runOfflineDemo() {
+            const demoArea = document.querySelector('.demo-area');
+            const originalHTML = demoArea.innerHTML;
+            
+            demoArea.innerHTML = `
+                <h3>💻 نمایش عملکرد آفلاین</h3>
+                <div id="demo-output" style="margin-top: 10px;"></div>
+            `;
+            
+            const output = document.getElementById('demo-output');
+            
+            // شبیه‌سازی جریان آفلاین
+            output.innerHTML = '<p>📥 در حال ذخیره‌سازی داده‌ها آفلاین...</p>';
+            
+            // ذخیره درس‌های نمونه
+            const lessons = [
+                { id: 101, title: 'حیوانات', level: 1, words: ['Cat', 'Dog', 'Bird'] },
+                { id: 102, title: 'رنگ‌ها', level: 1, words: ['Red', 'Blue', 'Green'] }
+            ];
+            
+            await offlineService.saveLessonsOffline(lessons);
+            
+            output.innerHTML += '<p>✅ درس‌ها ذخیره شدند</p>';
+            output.innerHTML += '<p>📊 در حال ذخیره پیشرفت کاربر...</p>';
+            
+            // ذخیره پیشرفت
+            const progress = {
+                level: 2,
+                xp: 450,
+                completedLessons: [101],
+                currentLesson: 102
+            };
+            
+            await offlineService.saveUserProgress('demo-user', progress);
+            
+            output.innerHTML += '<p>✅ پیشرفت کاربر ذخیره شد</p>';
+            output.innerHTML += '<p>🔄 در حال افزودن به صف همگام‌سازی...</p>';
+            
+            // اضافه کردن به صف sync
+            await offlineService.addToSyncQueue({
+                type: 'progress_sync',
+                userId: 'demo-user',
+                timestamp: Date.now()
+            });
+            
+            output.innerHTML += '<p>✅ به صف همگام‌سازی اضافه شد</p>';
+            
+            // نمایش اطلاعات
+            const storageInfo = await offlineService.getStorageInfo();
+            
+            output.innerHTML += `
+                <div style="margin-top: 15px; padding: 10px; background: rgba(255,255,255,0.05); border-radius: 8px;">
+                    <strong>📈 اطلاعات ذخیره‌سازی:</strong><br>
+                    درس‌ها: ${storageInfo.lessons || 0}<br>
+                    پیشرفت کاربر: ${storageInfo.userProgress || 0}<br>
+                    در صف همگام‌سازی: ${storageInfo.syncQueue || 0}<br>
+                    وضعیت: ${offlineService.isOnline() ? '🌐 آنلاین' : '🔌 آفلاین'}
+                </div>
+            `;
+            
+            setTimeout(() => {
+                demoArea.innerHTML = originalHTML;
+            }, 5000);
+        }
+        
+        function simulateOffline() {
+            document.getElementById('network-status').className = 'network-status offline';
+            document.getElementById('network-status').textContent = '🔌 آفلاین';
+            
+            const syncIndicator = document.querySelector('.sync-indicator');
+            syncIndicator.className = 'sync-indicator syncing';
+            
+            const syncStatus = document.getElementById('sync-status').querySelector('span:last-child');
+            syncStatus.textContent = 'همگام‌سازی: در انتظار اتصال';
+            
+            console.log('شبیه‌سازی حالت آفلاین');
+        }
+        
+        function simulateOnline() {
+            document.getElementById('network-status').className = 'network-status online';
+            document.getElementById('network-status').textContent = '🔗 آنلاین';
+            
+            console.log('شبیه‌سازی حالت آنلاین');
+        }
+        
+        async function simulateSync() {
+            const syncIndicator = document.querySelector('.sync-indicator');
+            syncIndicator.className = 'sync-indicator syncing';
+            
+            const syncStatus = document.getElementById('sync-status').querySelector('span:last-child');
+            syncStatus.textContent = 'همگام‌سازی: در حال انجام...';
+            
+            // شبیه‌سازی تاخیر
+            await new Promise(resolve => setTimeout(resolve, 1500));
+            
+            const result = await offlineService.syncWithServer();
+            
+            if (result.synced) {
+                syncIndicator.className = 'sync-indicator synced';
+                syncStatus.textContent = `همگام‌سازی: کامل (${result.syncedCount} آیتم)`;
+            } else {
+                syncIndicator.className = 'sync-indicator';
+                syncIndicator.style.background = '#e74c3c';
+                syncStatus.textContent = 'همگام‌سازی: ناموفق';
+            }
+        }
+        
+        function updateSummary(passed, total) {
+            const percentage = total > 0 ? Math.round((passed / total) * 100) : 0;
+            const summary = document.getElementById('summary-text');
+            
+            summary.innerHTML = `
+                <strong>نتایج تست آفلاین:</strong><br>
+                ✅ ${passed} موفق | ❌ ${total - passed} ناموفق | 📊 ${percentage}% قبولی<br>
+                ${percentage === 100 ? '🎉 عملکرد آفلاین عالی!' : ''}
+            `;
+            
+            summary.style.color = percentage >= 90 ? '#27ae60' : 
+                                 percentage >= 70 ? '#f39c12' : '#e74c3c';
+        }
+        
+        function clearTestAreas() {
+            ['storage-tests', 'sync-tests', 'recovery-tests', 'performance-tests']
+                .forEach(id => {
+                    document.getElementById(id).innerHTML = '';
+                });
+        }
+        
+        function clearTests() {
+            clearTestAreas();
+            document.getElementById('summary-text').innerHTML = 'آماده اجرای ۱۶ تست آفلاین...';
+            document.getElementById('summary-text').style.color = '#ecf0f1';
+        }
+
+        // اجرای خودکار تست‌ها
+        window.onload = async () => {
+            updateSummary(0, 0);
+            
+            // اولیه‌سازی سرویس
+            try {
+                await offlineService.initDatabase();
+                console.log('✅ سرویس آفلاین آماده است');
+                setTimeout(runAllTests, 1000);
+            } catch (error) {
+                console.error('خطا در اولیه‌سازی:', error);
+            }
+        };
+    </script>
+</body>
+</html>
