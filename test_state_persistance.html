@@ -1,0 +1,2818 @@
+<!DOCTYPE html>
+<html lang="fa">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Farsinglish - تست ذخیره‌سازی State در IndexedDB</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { 
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+            background: linear-gradient(135deg, #1a2980 0%, #26d0ce 100%);
+            color: #f5f5f5;
+            min-height: 100vh;
+            padding: 15px;
+        }
+        .container { 
+            max-width: 900px; 
+            margin: 0 auto;
+            background: rgba(20, 25, 45, 0.9);
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.5);
+            border: 1px solid rgba(64, 224, 208, 0.3);
+        }
+        h1 { 
+            text-align: center; 
+            margin-bottom: 25px;
+            font-size: 1.8rem;
+            color: #40e0d0;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+        }
+        .test-section { 
+            margin: 15px 0;
+            padding: 15px;
+            background: rgba(30, 35, 60, 0.8);
+            border-radius: 10px;
+            border-left: 4px solid #ff6b6b;
+            transition: all 0.3s;
+        }
+        .test-section:hover {
+            background: rgba(40, 45, 70, 0.9);
+            transform: translateY(-2px);
+        }
+        .test-header { 
+            display: flex; 
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        .test-title { 
+            font-size: 1rem; 
+            font-weight: 600;
+            color: #bb86fc;
+        }
+        .test-result { 
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 0.8rem;
+            font-weight: bold;
+        }
+        .pass { background: linear-gradient(45deg, #00c853, #64dd17); }
+        .fail { background: linear-gradient(45deg, #d50000, #ff5252); }
+        .details { 
+            margin-top: 10px;
+            padding: 12px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.85rem;
+            color: #a5d6a7;
+            border: 1px solid rgba(100, 150, 100, 0.2);
+            max-height: 200px;
+            overflow-y: auto;
+        }
+        .summary {
+            margin-top: 20px;
+            padding: 15px;
+            background: rgba(30, 40, 60, 0.8);
+            border-radius: 10px;
+            text-align: center;
+            font-size: 0.95rem;
+            border: 1px solid rgba(64, 224, 208, 0.3);
+        }
+        button {
+            background: linear-gradient(45deg, #8e2de2, #4a00e0);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            cursor: pointer;
+            margin: 5px;
+            transition: all 0.3s;
+            font-weight: 600;
+        }
+        button:hover { 
+            transform: translateY(-2px); 
+            box-shadow: 0 5px 15px rgba(142, 45, 226, 0.4);
+        }
+        .controls { text-align: center; margin-top: 20px; }
+        .state-viewer {
+            background: rgba(0, 0, 0, 0.2);
+            padding: 15px;
+            border-radius: 10px;
+            margin: 15px 0;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .state-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+        .state-key { color: #bb86fc; }
+        .state-value { color: #4fc3f7; }
+        .simulator {
+            background: rgba(0, 20, 40, 0.6);
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+        }
+        .sim-buttons {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            justify-content: center;
+            margin: 15px 0;
+        }
+        .sim-btn {
+            background: linear-gradient(45deg, #2196F3, #21CBF3);
+            flex: 1;
+            min-width: 120px;
+        }
+        .sim-btn.delete {
+            background: linear-gradient(45deg, #f44336, #ff7961);
+        }
+        @media (max-width: 600px) {
+            .container { padding: 12px; }
+            .test-header { flex-direction: column; align-items: flex-start; }
+            .sim-buttons { flex-direction: column; }
+            .sim-btn { width: 100%; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>💾 تست ذخیره‌سازی State در IndexedDB</h1>
+        
+        <div class="simulator">
+            <h3 style="text-align: center; color: #4fc3f7; margin-bottom: 15px;">🔧 شبیه‌ساز State</h3>
+            <div class="sim-buttons">
+                <button class="sim-btn" onclick="simulateUserLogin()">👤 ورود کاربر</button>
+                <button class="sim-btn" onclick="simulateLessonProgress()">📚 پیشرفت درس</button>
+                <button class="sim-btn" onclick="simulateSettingsChange()">⚙️ تغییر تنظیمات</button>
+                <button class="sim-btn" onclick="simulateLargeState()">📊 State بزرگ</button>
+                <button class="sim-btn delete" onclick="clearAllStates()">🗑️ حذف همه</button>
+            </div>
+            <div class="state-viewer">
+                <h4>📋 State فعلی در حافظه:</h4>
+                <div id="current-state"></div>
+            </div>
+        </div>
+        
+        <div id="test-results"></div>
+        
+        <div class="summary">
+            <p id="summary-text">آماده اجرای ۱۲ تست ذخیره‌سازی...</p>
+        </div>
+        
+        <div class="controls">
+            <button onclick="runAllTests()">🚀 اجرای تمام تست‌ها</button>
+            <button onclick="clearTests()" style="background: linear-gradient(45deg, #757575, #9e9e9e);">♻️ بازنشانی</button>
+        </div>
+    </div>
+
+    <script>
+        // ==================== State Persistence Service ====================
+        class StatePersistenceService {
+            constructor() {
+                this.dbName = 'farsinglish_state_db';
+                this.dbVersion = 1;
+                this.storeName = 'app_states';
+                this.db = null;
+                this.currentState = null;
+                this.autoSave = true;
+            }
+
+            // ========== IndexedDB Management ==========
+            async initDatabase() {
+                return new Promise((resolve, reject) => {
+                    const request = indexedDB.open(this.dbName, this.dbVersion);
+                    
+                    request.onerror = () => reject(new Error('خطا در باز کردن دیتابیس'));
+                    
+                    request.onsuccess = (event) => {
+                        this.db = event.target.result;
+                        console.log('✅ دیتابیس State با موفقیت بارگذاری شد');
+                        resolve(this.db);
+                    };
+                    
+                    request.onupgradeneeded = (event) => {
+                        const db = event.target.result;
+                        if (!db.objectStoreNames.contains(this.storeName)) {
+                            const store = db.createObjectStore(this.storeName, { keyPath: 'id' });
+                            store.createIndex('timestamp', 'timestamp', { unique: false });
+                            store.createIndex('stateType', 'stateType', { unique: false });
+                            console.log('📦 ObjectStore State ایجاد شد');
+                        }
+                    };
+                });
+            }
+
+            // ========== State Operations ==========
+            async saveState(stateId, stateData, metadata = {}) {
+                if (!this.db) await this.initDatabase();
+                
+                return new Promise((resolve, reject) => {
+                    const transaction = this.db.transaction([this.storeName], 'readwrite');
+                    const store = transaction.objectStore(this.storeName);
+                    
+                    const stateRecord = {
+                        id: stateId,
+                        data: this.deepClone(stateData),
+                        timestamp: Date.now(),
+                        stateType: metadata.type || 'general',
+                        version: metadata.version || '1.0',
+                        checksum: this.calculateChecksum(stateData),
+                        ...metadata
+                    };
+                    
+                    const request = store.put(stateRecord);
+                    
+                    request.onsuccess = () => {
+                        console.log(`✅ State "${stateId}" ذخیره شد`, stateRecord);
+                        resolve(stateRecord);
+                    };
+                    
+                    request.onerror = () => reject(new Error('خطا در ذخیره State'));
+                });
+            }
+
+            async loadState(stateId) {
+                if (!this.db) await this.initDatabase();
+                
+                return new Promise((resolve, reject) => {
+                    const transaction = this.db.transaction([this.storeName], 'readonly');
+                    const store = transaction.objectStore(this.storeName);
+                    const request = store.get(stateId);
+                    
+                    request.onsuccess = () => {
+                        const result = request.result;
+                        if (result) {
+                            // اعتبارسنجی checksum
+                            const currentChecksum = this.calculateChecksum(result.data);
+                            if (currentChecksum !== result.checksum) {
+                                console.warn('⚠️ Checksum State مطابقت ندارد');
+                            }
+                            
+                            console.log(`📥 State "${stateId}" بارگذاری شد`, result);
+                            this.currentState = result.data;
+                            resolve(result);
+                        } else {
+                            resolve(null);
+                        }
+                    };
+                    
+                    request.onerror = () => reject(new Error('خطا در بارگذاری State'));
+                });
+            }
+
+            async deleteState(stateId) {
+                if (!this.db) await this.initDatabase();
+                
+                return new Promise((resolve, reject) => {
+                    const transaction = this.db.transaction([this.storeName], 'readwrite');
+                    const store = transaction.objectStore(this.storeName);
+                    const request = store.delete(stateId);
+                    
+                    request.onsuccess = () => {
+                        console.log(`🗑️ State "${stateId}" حذف شد`);
+                        resolve(true);
+                    };
+                    
+                    request.onerror = () => reject(new Error('خطا در حذف State'));
+                });
+            }
+
+            async getAllStates() {
+                if (!this.db) await this.initDatabase();
+                
+                return new Promise((resolve, reject) => {
+                    const transaction = this.db.transaction([this.storeName], 'readonly');
+                    const store = transaction.objectStore(this.storeName);
+                    const request = store.getAll();
+                    
+                    request.onsuccess = () => resolve(request.result);
+                    request.onerror = () => reject(new Error('خطا در دریافت لیست Stateها'));
+                });
+            }
+
+            async clearAllStates() {
+                if (!this.db) await this.initDatabase();
+                
+                return new Promise((resolve, reject) => {
+                    const transaction = this.db.transaction([this.storeName], 'readwrite');
+                    const store = transaction.objectStore(this.storeName);
+                    const request = store.clear();
+                    
+                    request.onsuccess = () => {
+                        console.log('🧹 تمام Stateها حذف شدند');
+                        resolve(true);
+                    };
+                    
+                    request.onerror = () => reject(new Error('خطا در حذف Stateها'));
+                });
+            }
+
+            async getStatesByType(stateType) {
+                if (!this.db) await this.initDatabase();
+                
+                return new Promise((resolve, reject) => {
+                    const transaction = this.db.transaction([this.storeName], 'readonly');
+                    const store = transaction.objectStore(this.storeName);
+                    const index = store.index('stateType');
+                    const request = index.getAll(stateType);
+                    
+                    request.onsuccess = () => resolve(request.result);
+                    request.onerror = () => reject(new Error(`خطا در دریافت Stateهای نوع ${stateType}`));
+                });
+            }
+
+            // ========== State Compression ==========
+            compressState(state) {
+                try {
+                    const json = JSON.stringify(state);
+                    // شبیه‌سازی compression ساده
+                    return {
+                        compressed: true,
+                        originalSize: json.length,
+                        data: state // در واقعیت اینجا compression انجام می‌شد
+                    };
+                } catch (error) {
+                    console.error('خطا در فشرده‌سازی:', error);
+                    return state;
+                }
+            }
+
+            // ========== State Recovery ==========
+            async recoverFromBackup(stateId) {
+                try {
+                    // بارگذاری آخرین نسخه سالم
+                    const allStates = await this.getAllStates();
+                    const stateVersions = allStates.filter(s => s.id.startsWith(stateId));
+                    
+                    if (stateVersions.length === 0) {
+                        return null;
+                    }
+                    
+                    // مرتب‌سازی بر اساس timestamp
+                    stateVersions.sort((a, b) => b.timestamp - a.timestamp);
+                    
+                    // بررسی checksum هر نسخه
+                    for (const version of stateVersions) {
+                        const checksum = this.calculateChecksum(version.data);
+                        if (checksum === version.checksum) {
+                            console.log(`🔄 بازیابی State "${stateId}" از نسخه ${new Date(version.timestamp).toLocaleTimeString()}`);
+                            return version;
+                        }
+                    }
+                    
+                    console.warn('⚠️ هیچ نسخه سالمی برای بازیابی یافت نشد');
+                    return null;
+                } catch (error) {
+                    console.error('خطا در بازیابی:', error);
+                    return null;
+                }
+            }
+
+            // ========== Utility Methods ==========
+            deepClone(obj) {
+                if (obj === null || typeof obj !== 'object') return obj;
+                return JSON.parse(JSON.stringify(obj));
+            }
+
+            calculateChecksum(data) {
+                const json = JSON.stringify(data);
+                let hash = 0;
+                for (let i = 0; i < json.length; i++) {
+                    const char = json.charCodeAt(i);
+                    hash = ((hash << 5) - hash) + char;
+                    hash = hash & hash; // تبدیل به 32-bit integer
+                }
+                return hash.toString(16);
+            }
+
+            generateStateId(prefix = 'state') {
+                return `${prefix}_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+            }
+
+            async getDatabaseInfo() {
+                if (!this.db) await this.initDatabase();
+                
+                const allStates = await this.getAllStates();
+                const totalSize = JSON.stringify(allStates).length;
+                
+                return {
+                    totalStates: allStates.length,
+                    totalSizeKB: (totalSize / 1024).toFixed(2),
+                    stateTypes: [...new Set(allStates.map(s => s.stateType))],
+                    lastUpdate: allStates.length > 0 ? 
+                        new Date(Math.max(...allStates.map(s => s.timestamp))) : 
+                        null
+                };
+            }
+        }
+
+        // ==================== تست‌ها ====================
+        const persistenceTests = [
+            {
+                id: 1,
+                title: "ذخیره‌سازی State کاربر",
+                run: async (service) => {
+                    const userState = {
+                        user: {
+                            id: "user_123",
+                            username: "علی محمدی",
+                            level: 5,
+                            xp: 1250,
+                            lastLogin: new Date().toISOString()
+                        },
+                        preferences: {
+                            theme: "dark",
+                            language: "fa",
+                            notifications: true
+                        }
+                    };
+                    
+                    const stateId = service.generateStateId('user');
+                    await service.saveState(stateId, userState, { 
+                        type: 'user', 
+                        version: '1.1' 
+                    });
+                    
+                    const loaded = await service.loadState(stateId);
+                    return loaded && 
+                           loaded.data.user.username === "علی محمدی" &&
+                           loaded.data.preferences.language === "fa";
+                }
+            },
+            {
+                id: 2,
+                title: "بارگذاری State درس",
+                run: async (service) => {
+                    const lessonState = {
+                        currentLesson: {
+                            id: "lesson_456",
+                            title: "مکالمه روزمره",
+                            progress: 75,
+                            lastReview: Date.now() - 86400000,
+                            nextReview: Date.now() + 86400000
+                        },
+                        vocabulary: [
+                            { word: "hello", meaning: "سلام", mastered: true },
+                            { word: "thank you", meaning: "متشکرم", mastered: false }
+                        ]
+                    };
+                    
+                    const stateId = "lesson_current_456";
+                    await service.saveState(stateId, lessonState, { type: 'lesson' });
+                    
+                    const loaded = await service.loadState(stateId);
+                    return loaded && 
+                           loaded.data.currentLesson.progress === 75 &&
+                           loaded.data.vocabulary.length === 2;
+                }
+            },
+            {
+                id: 3,
+                title: "حذف State",
+                run: async (service) => {
+                    const tempState = { test: "حذف خواهد شد" };
+                    const stateId = "temp_state_to_delete";
+                    
+                    await service.saveState(stateId, tempState, { type: 'test' });
+                    await service.deleteState(stateId);
+                    
+                    const loaded = await service.loadState(stateId);
+                    return loaded === null;
+                }
+            },
+            {
+                id: 4,
+                title: "دریافت همه Stateها",
+                run: async (service) => {
+                    // حذف Stateهای قبلی برای تست تمیز
+                    await service.clearAllStates();
+                    
+                    // ذخیره چند State
+                    await service.saveState("state1", { data: "اول" }, { type: 'test' });
+                    await service.saveState("state2", { data: "دوم" }, { type: 'test' });
+                    await service.saveState("state3", { data: "سوم" }, { type: 'other' });
+                    
+                    const allStates = await service.getAllStates();
+                    return allStates.length === 3;
+                }
+            },
+            {
+                id: 5,
+                title: "فیلتر Stateها بر اساس نوع",
+                run: async (service) => {
+                    await service.clearAllStates();
+                    
+                    await service.saveState("user_1", { name: "کاربر۱" }, { type: 'user' });
+                    await service.saveState("user_2", { name: "کاربر۲" }, { type: 'user' });
+                    await service.saveState("lesson_1", { title: "درس۱" }, { type: 'lesson' });
+                    
+                    const userStates = await service.getStatesByType('user');
+                    return userStates.length === 2;
+                }
+            },
+            {
+                id: 6,
+                title: "Checksum برای یکپارچگی داده",
+                run: async (service) => {
+                    const testState = { important: "داده مهم", number: 42 };
+                    const stateId = "checksum_test";
+                    
+                    const saved = await service.saveState(stateId, testState);
+                    const loaded = await service.loadState(stateId);
+                    
+                    const originalChecksum = service.calculateChecksum(testState);
+                    return saved.checksum === loaded.checksum && 
+                           loaded.checksum === originalChecksum;
+                }
+            },
+            {
+                id: 7,
+                title: "بازیابی از نسخه‌های قبلی",
+                run: async (service) => {
+                    await service.clearAllStates();
+                    
+                    const stateId = "recovery_test";
+                    const stateV1 = { version: 1, data: "نسخه اول" };
+                    const stateV2 = { version: 2, data: "نسخه دوم" };
+                    
+                    // ذخیره دو نسخه
+                    await service.saveState(stateId, stateV1, { version: '1.0' });
+                    await new Promise(resolve => setTimeout(resolve, 100));
+                    await service.saveState(stateId, stateV2, { version: '2.0' });
+                    
+                    // حذف آخرین نسخه
+                    await service.deleteState(stateId);
+                    
+                    // بازیابی
+                    const recovered = await service.recoverFromBackup(stateId);
+                    return recovered && recovered.data.version === 1;
+                }
+            },
+            {
+                id: 8,
+                title: "State بزرگ (Performance)",
+                run: async (service) => {
+                    // ایجاد State با حجم نسبتاً بزرگ
+                    const largeState = {
+                        vocabulary: Array.from({ length: 100 }, (_, i) => ({
+                            id: `word_${i}`,
+                            english: `word${i}`,
+                            persian: `کلمه ${i}`,
+                            example: `This is example ${i}`,
+                            mastered: i % 3 === 0,
+                            reviews: Array.from({ length: 10 }, (_, j) => ({
+                                date: Date.now() - j * 86400000,
+                                score: Math.random() * 100
+                            }))
+                        })),
+                        metadata: {
+                            totalWords: 100,
+                            masteredCount: 34,
+                            averageScore: 78.5
+                        }
+                    };
+                    
+                    const stateId = "large_vocabulary_state";
+                    const startTime = performance.now();
+                    
+                    await service.saveState(stateId, largeState, { type: 'vocabulary' });
+                    const loaded = await service.loadState(stateId);
+                    
+                    const endTime = performance.now();
+                    const duration = endTime - startTime;
+                    
+                    console.log(`⏱️ زمان ذخیره/بارگذاری State بزرگ: ${duration.toFixed(2)}ms`);
+                    
+                    return loaded && 
+                           loaded.data.vocabulary.length === 100 &&
+                           duration < 5000; // باید زیر 5 ثانیه باشد
+                }
+            },
+            {
+                id: 9,
+                title: "Deep Clone صحیح",
+                run: async (service) => {
+                    const original = {
+                        nested: {
+                            data: "اصلی",
+                            numbers: [1, 2, 3],
+                            deep: { level: 3 }
+                        }
+                    };
+                    
+                    const cloned = service.deepClone(original);
+                    cloned.nested.data = "تغییر یافته";
+                    cloned.nested.numbers.push(4);
+                    cloned.nested.deep.level = 999;
+                    
+                    // original نباید تغییر کرده باشد
+                    return original.nested.data === "اصلی" &&
+                           original.nested.numbers.length === 3 &&
+                           original.nested.deep.level === 3;
+                }
+            },
+            {
+                id: 10,
+                title: "اطلاعات دیتابیس",
+                run: async (service) => {
+                    await service.clearAllStates();
+                    
+                    await service.saveState("info_test_1", { test: 1 }, { type: 'test' });
+                    await service.saveState("info_test_2", { test: 2 }, { type: 'test' });
+                    await service.saveState("user_info", { user: "test" }, { type: 'user' });
+                    
+                    const info = await service.getDatabaseInfo();
+                    return info.totalStates === 3 &&
+                           info.stateTypes.includes('test') &&
+                           info.stateTypes.includes('user');
+                }
+            },
+            {
+                id: 11,
+                title: "مدیریت خطا - دیتابیس بسته",
+                run: async (service) => {
+                    // شبیه‌سازی خطای دیتابیس
+                    const oldDB = service.db;
+                    service.db = null;
+                    
+                    try {
+                        // این باید خطا ندهد و دیتابیس را مجدداً باز کند
+                        await service.saveState("recovery_test", { data: "تست" });
+                        const loaded = await service.loadState("recovery_test");
+                        
+                        return loaded !== null;
+                    } catch (error) {
+                        console.error('خطا در تست:', error);
+                        return false;
+                    } finally {
+                        service.db = oldDB;
+                    }
+                }
+            },
+            {
+                id: 12,
+                title: "کاراکترهای فارسی در State",
+                run: async (service) => {
+                    const farsiState = {
+                        title: "درس مکالمه فارسی",
+                        description: "این یک درس برای آموزش مکالمه‌های روزمره است",
+                        vocabulary: [
+                            { english: "hello", persian: "سلام" },
+                            { english: "thank you", persian: "متشکرم" },
+                            { english: "goodbye", persian: "خداحافظ" }
+                        ],
+                        notes: "توجه: این درس شامل نکات مهم گرامری می‌باشد"
+                    };
+                    
+                    const stateId = "farsi_content_lesson";
+                    await service.saveState(stateId, farsiState, { 
+                        type: 'lesson',
+                        language: 'fa'
+                    });
+                    
+                    const loaded = await service.loadState(stateId);
+                    return loaded && 
+                           loaded.data.title === "درس مکالمه فارسی" &&
+                           loaded.data.vocabulary[1].persian === "متشکرم";
+                }
+            }
+        ];
+
+        // ==================== شبیه‌ساز ====================
+        const stateService = new StatePersistenceService();
+        let currentStates = [];
+
+        async function simulateUserLogin() {
+            const userState = {
+                user: {
+                    id: "sim_user_" + Date.now(),
+                    username: "کاربر شبیه‌ساز",
+                    level: Math.floor(Math.random() * 10) + 1,
+                    xp: Math.floor(Math.random() * 1000),
+                    loginCount: Math.floor(Math.random() * 50) + 1
+                },
+                session: {
+                    loginTime: new Date().toISOString(),
+                    device: navigator.userAgent.substr(0, 50)
+                }
+            };
+            
+            const stateId = stateService.generateStateId('user_session');
+            await stateService.saveState(stateId, userState, { 
+                type: 'user_session',
+                autoGenerated: true
+            });
+            
+            updateStateViewer();
+            showMessage(`👤 State کاربر ذخیره شد (${stateId})`);
+        }
+
+        async function simulateLessonProgress() {
+            const lessonState = {
+                lesson: {
+                    id: "lesson_" + Math.floor(Math.random() * 1000),
+                    title: ["مکالمه پایه", "گرامر پیشرفته", "واژگان تجاری"][Math.floor(Math.random() * 3)],
+                    progress: Math.floor(Math.random() * 100),
+                    score: Math.floor(Math.random() * 100),
+                    timeSpent: Math.floor(Math.random() * 3600)
+                },
+                completedExercises: Array.from({ length: Math.floor(Math.random() * 10) + 1 }, (_, i) => ({
+                    id: `ex_${i}`,
+                    type: ['choice', 'typing', 'listening'][Math.floor(Math.random() * 3)],
+                    score: Math.floor(Math.random() * 100),
+                    time: Math.floor(Math.random() * 300)
+                }))
+            };
+            
+            const stateId = stateService.generateStateId('lesson_progress');
+            await stateService.saveState(stateId, lessonState, { 
+                type: 'lesson_progress',
+                autoGenerated: true
+            });
+            
+            updateStateViewer();
+            showMessage(`📚 State درس ذخیره شد (${stateId})`);
+        }
+
+        async function simulateSettingsChange() {
+            const settingsState = {
+                preferences: {
+                    theme: ['dark', 'light', 'auto'][Math.floor(Math.random() * 3)],
+                    language: ['fa', 'en'][Math.floor(Math.random() * 2)],
+                    fontSize: Math.floor(Math.random() * 5) + 12,
+                    sound: Math.random() > 0.5,
+                    notifications: Math.random() > 0.5
+                },
+                lastUpdated: new Date().toISOString()
+            };
+            
+            const stateId = "user_settings";
+            await stateService.saveState(stateId, settingsState, { 
+                type: 'settings',
+                autoGenerated: true
+            });
+            
+            updateStateViewer();
+            showMessage(`⚙️ State تنظیمات به‌روز شد`);
+        }
+
+        async function simulateLargeState() {
+            const largeState = {
+                timestamp: Date.now(),
+                data: Array.from({ length: 50 }, (_, i) => ({
+                    id: `item_${i}`,
+                    value: `مقدار ${i}`,
+                    metadata: {
+                        created: Date.now() - i * 1000,
+                        tags: ['tag1', 'tag2', 'tag3'].slice(0, Math.floor(Math.random() * 3) + 1),
+                        active: Math.random() > 0.5
+                    }
+                })),
+                summary: {
+                    totalItems: 50,
+                    activeItems: 25,
+                    lastUpdate: new Date().toISOString()
+                }
+            };
+            
+            const stateId = stateService.generateStateId('large_data');
+            await stateService.saveState(stateId, largeState, { 
+                type: 'bulk_data',
+                autoGenerated: true
+            });
+            
+            updateStateViewer();
+            showMessage(`📊 State بزرگ (50 آیتم) ذخیره شد`);
+        }
+
+        async function clearAllStates() {
+            await stateService.clearAllStates();
+            updateStateViewer();
+            showMessage('🗑️ تمام Stateها حذف شدند');
+        }
+
+        async function updateStateViewer() {
+            const states = await stateService.getAllStates();
+            currentStates = states;
+            
+            const container = document.getElementById('current-state');
+            if (states.length === 0) {
+                container.innerHTML = '<div style="color: #888; text-align: center;">هیچ Stateای ذخیره نشده است</div>';
+                return;
+            }
+            
+            let html = '';
+            states.slice(-5).reverse().forEach(state => {
+                const time = new Date(state.timestamp).toLocaleTimeString();
+                const size = JSON.stringify(state.data).length;
+                
+                html += `
+                    <div class="state-item">
+                        <div class="state-key">${state.id}</div>
+                        <div class="state-value">
+                            ${state.stateType} • ${time} • ${size} بایت
+                        </div>
+                    </div>
+                `;
+            });
+            
+            if (states.length > 5) {
+                html += `<div style="color: #888; text-align: center; padding: 10px;">
+                    + ${states.length - 5} State دیگر
+                </div>`;
+            }
+            
+            container.innerHTML = html;
+        }
+
+        function showMessage(text) {
+            console.log('💬 ' + text);
+            const summary = document.getElementById('summary-text');
+            const originalText = summary.textContent;
+            summary.innerHTML = `<span style="color: #4fc3f7;">${text}</span><br>${originalText}`;
+            
+            setTimeout(() => {
+                summary.innerHTML = originalText;
+            }, 3000);
+        }
+
+        // ==================== اجرای تست‌ها ====================
+        let passedTests = 0;
+        let failedTests = 0;
+
+        async function runAllTests() {
+            passedTests = 0;
+            failedTests = 0;
+            const resultsDiv = document.getElementById('test-results');
+            resultsDiv.innerHTML = '';
+            
+            // حذف Stateهای تست قبلی
+            await stateService.clearAllStates();
+            
+            for (const test of persistenceTests) {
+                try {
+                    const result = await test.run(stateService);
+                    const testDiv = document.createElement('div');
+                    testDiv.className = 'test-section';
+                    
+                    const testResult = result ? 'pass' : 'fail';
+                    const resultText = result ? '✅ موفق' : '❌ ناموفق';
+                    
+                    if (result) passedTests++;
+                    else failedTests++;
+                    
+                    testDiv.innerHTML = `
+                        <div class="test-header">
+                            <div class="test-title">${test.id}. ${test.title}</div>
+                            <div class="test-result ${testResult}">${resultText}</div>
+                        </div>
+                    `;
+                    
+                    resultsDiv.appendChild(testDiv);
+                } catch (error) {
+                    failedTests++;
+                    const testDiv = document.createElement('div');
+                    testDiv.className = 'test-section';
+                    testDiv.innerHTML = `
+                        <div class="test-header">
+                            <div class="test-title">${test.id}. ${test.title}</div>
+                            <div class="test-result fail">❌ خطا</div>
+                        </div>
+                        <div class="details">${error.message}</div>
+                    `;
+                    resultsDiv.appendChild(testDiv);
+                }
+                
+                updateSummary();
+            }
+            
+            // به‌روزرسانی نمایش Stateها
+            updateStateViewer();
+        }
+
+        function clearTests() {
+            document.getElementById('test-results').innerHTML = '';
+            passedTests = failedTests = 0;
+            updateSummary();
+        }
+
+        function updateSummary() {
+            const summary = document.getElementById('summary-text');
+            const total = persistenceTests.length;
+            const percentage = total > 0 ? Math.round((passedTests / total) * 100) : 0;
+            
+            let statusIcon = '✅';
+            if (percentage < 70) statusIcon = '⚠️';
+            if (percentage < 50) statusIcon = '🚨';
+            
+            summary.innerHTML = `
+                <strong>نتیجه تست‌های ذخیره‌سازی State:</strong><br>
+                ${statusIcon} ${passedTests} موفق | ❌ ${failedTests} ناموفق | 📊 ${percentage}% قبولی
+            `;
+            
+            summary.style.color = percentage >= 90 ? '#4caf50' : 
+                                 percentage >= 70 ? '#ff9800' : '#f44336';
+        }
+
+        // اجرای خودکار و اولیه
+        window.onload = async () => {
+            try {
+                await stateService.initDatabase();
+                updateSummary();
+                updateStateViewer();
+                setTimeout(runAllTests, 1000);
+            } catch (error) {
+                console.error('خطا در بارگذاری اولیه:', error);
+                document.getElementById('summary-text').textContent = 
+                    'خطا در بارگذاری دیتابیس: ' + error.message;
+            }
+        };
+    </script>
+</body>
+  </html><!DOCTYPE html>
+<html lang="fa">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Farsinglish - تست ذخیره‌سازی State در IndexedDB</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { 
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+            background: linear-gradient(135deg, #1a2980 0%, #26d0ce 100%);
+            color: #f5f5f5;
+            min-height: 100vh;
+            padding: 15px;
+        }
+        .container { 
+            max-width: 900px; 
+            margin: 0 auto;
+            background: rgba(20, 25, 45, 0.9);
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.5);
+            border: 1px solid rgba(64, 224, 208, 0.3);
+        }
+        h1 { 
+            text-align: center; 
+            margin-bottom: 25px;
+            font-size: 1.8rem;
+            color: #40e0d0;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+        }
+        .test-section { 
+            margin: 15px 0;
+            padding: 15px;
+            background: rgba(30, 35, 60, 0.8);
+            border-radius: 10px;
+            border-left: 4px solid #ff6b6b;
+            transition: all 0.3s;
+        }
+        .test-section:hover {
+            background: rgba(40, 45, 70, 0.9);
+            transform: translateY(-2px);
+        }
+        .test-header { 
+            display: flex; 
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        .test-title { 
+            font-size: 1rem; 
+            font-weight: 600;
+            color: #bb86fc;
+        }
+        .test-result { 
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 0.8rem;
+            font-weight: bold;
+        }
+        .pass { background: linear-gradient(45deg, #00c853, #64dd17); }
+        .fail { background: linear-gradient(45deg, #d50000, #ff5252); }
+        .details { 
+            margin-top: 10px;
+            padding: 12px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.85rem;
+            color: #a5d6a7;
+            border: 1px solid rgba(100, 150, 100, 0.2);
+            max-height: 200px;
+            overflow-y: auto;
+        }
+        .summary {
+            margin-top: 20px;
+            padding: 15px;
+            background: rgba(30, 40, 60, 0.8);
+            border-radius: 10px;
+            text-align: center;
+            font-size: 0.95rem;
+            border: 1px solid rgba(64, 224, 208, 0.3);
+        }
+        button {
+            background: linear-gradient(45deg, #8e2de2, #4a00e0);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            cursor: pointer;
+            margin: 5px;
+            transition: all 0.3s;
+            font-weight: 600;
+        }
+        button:hover { 
+            transform: translateY(-2px); 
+            box-shadow: 0 5px 15px rgba(142, 45, 226, 0.4);
+        }
+        .controls { text-align: center; margin-top: 20px; }
+        .state-viewer {
+            background: rgba(0, 0, 0, 0.2);
+            padding: 15px;
+            border-radius: 10px;
+            margin: 15px 0;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .state-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+        .state-key { color: #bb86fc; }
+        .state-value { color: #4fc3f7; }
+        .simulator {
+            background: rgba(0, 20, 40, 0.6);
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+        }
+        .sim-buttons {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            justify-content: center;
+            margin: 15px 0;
+        }
+        .sim-btn {
+            background: linear-gradient(45deg, #2196F3, #21CBF3);
+            flex: 1;
+            min-width: 120px;
+        }
+        .sim-btn.delete {
+            background: linear-gradient(45deg, #f44336, #ff7961);
+        }
+        @media (max-width: 600px) {
+            .container { padding: 12px; }
+            .test-header { flex-direction: column; align-items: flex-start; }
+            .sim-buttons { flex-direction: column; }
+            .sim-btn { width: 100%; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>💾 تست ذخیره‌سازی State در IndexedDB</h1>
+        
+        <div class="simulator">
+            <h3 style="text-align: center; color: #4fc3f7; margin-bottom: 15px;">🔧 شبیه‌ساز State</h3>
+            <div class="sim-buttons">
+                <button class="sim-btn" onclick="simulateUserLogin()">👤 ورود کاربر</button>
+                <button class="sim-btn" onclick="simulateLessonProgress()">📚 پیشرفت درس</button>
+                <button class="sim-btn" onclick="simulateSettingsChange()">⚙️ تغییر تنظیمات</button>
+                <button class="sim-btn" onclick="simulateLargeState()">📊 State بزرگ</button>
+                <button class="sim-btn delete" onclick="clearAllStates()">🗑️ حذف همه</button>
+            </div>
+            <div class="state-viewer">
+                <h4>📋 State فعلی در حافظه:</h4>
+                <div id="current-state"></div>
+            </div>
+        </div>
+        
+        <div id="test-results"></div>
+        
+        <div class="summary">
+            <p id="summary-text">آماده اجرای ۱۲ تست ذخیره‌سازی...</p>
+        </div>
+        
+        <div class="controls">
+            <button onclick="runAllTests()">🚀 اجرای تمام تست‌ها</button>
+            <button onclick="clearTests()" style="background: linear-gradient(45deg, #757575, #9e9e9e);">♻️ بازنشانی</button>
+        </div>
+    </div>
+
+    <script>
+        // ==================== State Persistence Service ====================
+        class StatePersistenceService {
+            constructor() {
+                this.dbName = 'farsinglish_state_db';
+                this.dbVersion = 1;
+                this.storeName = 'app_states';
+                this.db = null;
+                this.currentState = null;
+                this.autoSave = true;
+            }
+
+            // ========== IndexedDB Management ==========
+            async initDatabase() {
+                return new Promise((resolve, reject) => {
+                    const request = indexedDB.open(this.dbName, this.dbVersion);
+                    
+                    request.onerror = () => reject(new Error('خطا در باز کردن دیتابیس'));
+                    
+                    request.onsuccess = (event) => {
+                        this.db = event.target.result;
+                        console.log('✅ دیتابیس State با موفقیت بارگذاری شد');
+                        resolve(this.db);
+                    };
+                    
+                    request.onupgradeneeded = (event) => {
+                        const db = event.target.result;
+                        if (!db.objectStoreNames.contains(this.storeName)) {
+                            const store = db.createObjectStore(this.storeName, { keyPath: 'id' });
+                            store.createIndex('timestamp', 'timestamp', { unique: false });
+                            store.createIndex('stateType', 'stateType', { unique: false });
+                            console.log('📦 ObjectStore State ایجاد شد');
+                        }
+                    };
+                });
+            }
+
+            // ========== State Operations ==========
+            async saveState(stateId, stateData, metadata = {}) {
+                if (!this.db) await this.initDatabase();
+                
+                return new Promise((resolve, reject) => {
+                    const transaction = this.db.transaction([this.storeName], 'readwrite');
+                    const store = transaction.objectStore(this.storeName);
+                    
+                    const stateRecord = {
+                        id: stateId,
+                        data: this.deepClone(stateData),
+                        timestamp: Date.now(),
+                        stateType: metadata.type || 'general',
+                        version: metadata.version || '1.0',
+                        checksum: this.calculateChecksum(stateData),
+                        ...metadata
+                    };
+                    
+                    const request = store.put(stateRecord);
+                    
+                    request.onsuccess = () => {
+                        console.log(`✅ State "${stateId}" ذخیره شد`, stateRecord);
+                        resolve(stateRecord);
+                    };
+                    
+                    request.onerror = () => reject(new Error('خطا در ذخیره State'));
+                });
+            }
+
+            async loadState(stateId) {
+                if (!this.db) await this.initDatabase();
+                
+                return new Promise((resolve, reject) => {
+                    const transaction = this.db.transaction([this.storeName], 'readonly');
+                    const store = transaction.objectStore(this.storeName);
+                    const request = store.get(stateId);
+                    
+                    request.onsuccess = () => {
+                        const result = request.result;
+                        if (result) {
+                            // اعتبارسنجی checksum
+                            const currentChecksum = this.calculateChecksum(result.data);
+                            if (currentChecksum !== result.checksum) {
+                                console.warn('⚠️ Checksum State مطابقت ندارد');
+                            }
+                            
+                            console.log(`📥 State "${stateId}" بارگذاری شد`, result);
+                            this.currentState = result.data;
+                            resolve(result);
+                        } else {
+                            resolve(null);
+                        }
+                    };
+                    
+                    request.onerror = () => reject(new Error('خطا در بارگذاری State'));
+                });
+            }
+
+            async deleteState(stateId) {
+                if (!this.db) await this.initDatabase();
+                
+                return new Promise((resolve, reject) => {
+                    const transaction = this.db.transaction([this.storeName], 'readwrite');
+                    const store = transaction.objectStore(this.storeName);
+                    const request = store.delete(stateId);
+                    
+                    request.onsuccess = () => {
+                        console.log(`🗑️ State "${stateId}" حذف شد`);
+                        resolve(true);
+                    };
+                    
+                    request.onerror = () => reject(new Error('خطا در حذف State'));
+                });
+            }
+
+            async getAllStates() {
+                if (!this.db) await this.initDatabase();
+                
+                return new Promise((resolve, reject) => {
+                    const transaction = this.db.transaction([this.storeName], 'readonly');
+                    const store = transaction.objectStore(this.storeName);
+                    const request = store.getAll();
+                    
+                    request.onsuccess = () => resolve(request.result);
+                    request.onerror = () => reject(new Error('خطا در دریافت لیست Stateها'));
+                });
+            }
+
+            async clearAllStates() {
+                if (!this.db) await this.initDatabase();
+                
+                return new Promise((resolve, reject) => {
+                    const transaction = this.db.transaction([this.storeName], 'readwrite');
+                    const store = transaction.objectStore(this.storeName);
+                    const request = store.clear();
+                    
+                    request.onsuccess = () => {
+                        console.log('🧹 تمام Stateها حذف شدند');
+                        resolve(true);
+                    };
+                    
+                    request.onerror = () => reject(new Error('خطا در حذف Stateها'));
+                });
+            }
+
+            async getStatesByType(stateType) {
+                if (!this.db) await this.initDatabase();
+                
+                return new Promise((resolve, reject) => {
+                    const transaction = this.db.transaction([this.storeName], 'readonly');
+                    const store = transaction.objectStore(this.storeName);
+                    const index = store.index('stateType');
+                    const request = index.getAll(stateType);
+                    
+                    request.onsuccess = () => resolve(request.result);
+                    request.onerror = () => reject(new Error(`خطا در دریافت Stateهای نوع ${stateType}`));
+                });
+            }
+
+            // ========== State Compression ==========
+            compressState(state) {
+                try {
+                    const json = JSON.stringify(state);
+                    // شبیه‌سازی compression ساده
+                    return {
+                        compressed: true,
+                        originalSize: json.length,
+                        data: state // در واقعیت اینجا compression انجام می‌شد
+                    };
+                } catch (error) {
+                    console.error('خطا در فشرده‌سازی:', error);
+                    return state;
+                }
+            }
+
+            // ========== State Recovery ==========
+            async recoverFromBackup(stateId) {
+                try {
+                    // بارگذاری آخرین نسخه سالم
+                    const allStates = await this.getAllStates();
+                    const stateVersions = allStates.filter(s => s.id.startsWith(stateId));
+                    
+                    if (stateVersions.length === 0) {
+                        return null;
+                    }
+                    
+                    // مرتب‌سازی بر اساس timestamp
+                    stateVersions.sort((a, b) => b.timestamp - a.timestamp);
+                    
+                    // بررسی checksum هر نسخه
+                    for (const version of stateVersions) {
+                        const checksum = this.calculateChecksum(version.data);
+                        if (checksum === version.checksum) {
+                            console.log(`🔄 بازیابی State "${stateId}" از نسخه ${new Date(version.timestamp).toLocaleTimeString()}`);
+                            return version;
+                        }
+                    }
+                    
+                    console.warn('⚠️ هیچ نسخه سالمی برای بازیابی یافت نشد');
+                    return null;
+                } catch (error) {
+                    console.error('خطا در بازیابی:', error);
+                    return null;
+                }
+            }
+
+            // ========== Utility Methods ==========
+            deepClone(obj) {
+                if (obj === null || typeof obj !== 'object') return obj;
+                return JSON.parse(JSON.stringify(obj));
+            }
+
+            calculateChecksum(data) {
+                const json = JSON.stringify(data);
+                let hash = 0;
+                for (let i = 0; i < json.length; i++) {
+                    const char = json.charCodeAt(i);
+                    hash = ((hash << 5) - hash) + char;
+                    hash = hash & hash; // تبدیل به 32-bit integer
+                }
+                return hash.toString(16);
+            }
+
+            generateStateId(prefix = 'state') {
+                return `${prefix}_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+            }
+
+            async getDatabaseInfo() {
+                if (!this.db) await this.initDatabase();
+                
+                const allStates = await this.getAllStates();
+                const totalSize = JSON.stringify(allStates).length;
+                
+                return {
+                    totalStates: allStates.length,
+                    totalSizeKB: (totalSize / 1024).toFixed(2),
+                    stateTypes: [...new Set(allStates.map(s => s.stateType))],
+                    lastUpdate: allStates.length > 0 ? 
+                        new Date(Math.max(...allStates.map(s => s.timestamp))) : 
+                        null
+                };
+            }
+        }
+
+        // ==================== تست‌ها ====================
+        const persistenceTests = [
+            {
+                id: 1,
+                title: "ذخیره‌سازی State کاربر",
+                run: async (service) => {
+                    const userState = {
+                        user: {
+                            id: "user_123",
+                            username: "علی محمدی",
+                            level: 5,
+                            xp: 1250,
+                            lastLogin: new Date().toISOString()
+                        },
+                        preferences: {
+                            theme: "dark",
+                            language: "fa",
+                            notifications: true
+                        }
+                    };
+                    
+                    const stateId = service.generateStateId('user');
+                    await service.saveState(stateId, userState, { 
+                        type: 'user', 
+                        version: '1.1' 
+                    });
+                    
+                    const loaded = await service.loadState(stateId);
+                    return loaded && 
+                           loaded.data.user.username === "علی محمدی" &&
+                           loaded.data.preferences.language === "fa";
+                }
+            },
+            {
+                id: 2,
+                title: "بارگذاری State درس",
+                run: async (service) => {
+                    const lessonState = {
+                        currentLesson: {
+                            id: "lesson_456",
+                            title: "مکالمه روزمره",
+                            progress: 75,
+                            lastReview: Date.now() - 86400000,
+                            nextReview: Date.now() + 86400000
+                        },
+                        vocabulary: [
+                            { word: "hello", meaning: "سلام", mastered: true },
+                            { word: "thank you", meaning: "متشکرم", mastered: false }
+                        ]
+                    };
+                    
+                    const stateId = "lesson_current_456";
+                    await service.saveState(stateId, lessonState, { type: 'lesson' });
+                    
+                    const loaded = await service.loadState(stateId);
+                    return loaded && 
+                           loaded.data.currentLesson.progress === 75 &&
+                           loaded.data.vocabulary.length === 2;
+                }
+            },
+            {
+                id: 3,
+                title: "حذف State",
+                run: async (service) => {
+                    const tempState = { test: "حذف خواهد شد" };
+                    const stateId = "temp_state_to_delete";
+                    
+                    await service.saveState(stateId, tempState, { type: 'test' });
+                    await service.deleteState(stateId);
+                    
+                    const loaded = await service.loadState(stateId);
+                    return loaded === null;
+                }
+            },
+            {
+                id: 4,
+                title: "دریافت همه Stateها",
+                run: async (service) => {
+                    // حذف Stateهای قبلی برای تست تمیز
+                    await service.clearAllStates();
+                    
+                    // ذخیره چند State
+                    await service.saveState("state1", { data: "اول" }, { type: 'test' });
+                    await service.saveState("state2", { data: "دوم" }, { type: 'test' });
+                    await service.saveState("state3", { data: "سوم" }, { type: 'other' });
+                    
+                    const allStates = await service.getAllStates();
+                    return allStates.length === 3;
+                }
+            },
+            {
+                id: 5,
+                title: "فیلتر Stateها بر اساس نوع",
+                run: async (service) => {
+                    await service.clearAllStates();
+                    
+                    await service.saveState("user_1", { name: "کاربر۱" }, { type: 'user' });
+                    await service.saveState("user_2", { name: "کاربر۲" }, { type: 'user' });
+                    await service.saveState("lesson_1", { title: "درس۱" }, { type: 'lesson' });
+                    
+                    const userStates = await service.getStatesByType('user');
+                    return userStates.length === 2;
+                }
+            },
+            {
+                id: 6,
+                title: "Checksum برای یکپارچگی داده",
+                run: async (service) => {
+                    const testState = { important: "داده مهم", number: 42 };
+                    const stateId = "checksum_test";
+                    
+                    const saved = await service.saveState(stateId, testState);
+                    const loaded = await service.loadState(stateId);
+                    
+                    const originalChecksum = service.calculateChecksum(testState);
+                    return saved.checksum === loaded.checksum && 
+                           loaded.checksum === originalChecksum;
+                }
+            },
+            {
+                id: 7,
+                title: "بازیابی از نسخه‌های قبلی",
+                run: async (service) => {
+                    await service.clearAllStates();
+                    
+                    const stateId = "recovery_test";
+                    const stateV1 = { version: 1, data: "نسخه اول" };
+                    const stateV2 = { version: 2, data: "نسخه دوم" };
+                    
+                    // ذخیره دو نسخه
+                    await service.saveState(stateId, stateV1, { version: '1.0' });
+                    await new Promise(resolve => setTimeout(resolve, 100));
+                    await service.saveState(stateId, stateV2, { version: '2.0' });
+                    
+                    // حذف آخرین نسخه
+                    await service.deleteState(stateId);
+                    
+                    // بازیابی
+                    const recovered = await service.recoverFromBackup(stateId);
+                    return recovered && recovered.data.version === 1;
+                }
+            },
+            {
+                id: 8,
+                title: "State بزرگ (Performance)",
+                run: async (service) => {
+                    // ایجاد State با حجم نسبتاً بزرگ
+                    const largeState = {
+                        vocabulary: Array.from({ length: 100 }, (_, i) => ({
+                            id: `word_${i}`,
+                            english: `word${i}`,
+                            persian: `کلمه ${i}`,
+                            example: `This is example ${i}`,
+                            mastered: i % 3 === 0,
+                            reviews: Array.from({ length: 10 }, (_, j) => ({
+                                date: Date.now() - j * 86400000,
+                                score: Math.random() * 100
+                            }))
+                        })),
+                        metadata: {
+                            totalWords: 100,
+                            masteredCount: 34,
+                            averageScore: 78.5
+                        }
+                    };
+                    
+                    const stateId = "large_vocabulary_state";
+                    const startTime = performance.now();
+                    
+                    await service.saveState(stateId, largeState, { type: 'vocabulary' });
+                    const loaded = await service.loadState(stateId);
+                    
+                    const endTime = performance.now();
+                    const duration = endTime - startTime;
+                    
+                    console.log(`⏱️ زمان ذخیره/بارگذاری State بزرگ: ${duration.toFixed(2)}ms`);
+                    
+                    return loaded && 
+                           loaded.data.vocabulary.length === 100 &&
+                           duration < 5000; // باید زیر 5 ثانیه باشد
+                }
+            },
+            {
+                id: 9,
+                title: "Deep Clone صحیح",
+                run: async (service) => {
+                    const original = {
+                        nested: {
+                            data: "اصلی",
+                            numbers: [1, 2, 3],
+                            deep: { level: 3 }
+                        }
+                    };
+                    
+                    const cloned = service.deepClone(original);
+                    cloned.nested.data = "تغییر یافته";
+                    cloned.nested.numbers.push(4);
+                    cloned.nested.deep.level = 999;
+                    
+                    // original نباید تغییر کرده باشد
+                    return original.nested.data === "اصلی" &&
+                           original.nested.numbers.length === 3 &&
+                           original.nested.deep.level === 3;
+                }
+            },
+            {
+                id: 10,
+                title: "اطلاعات دیتابیس",
+                run: async (service) => {
+                    await service.clearAllStates();
+                    
+                    await service.saveState("info_test_1", { test: 1 }, { type: 'test' });
+                    await service.saveState("info_test_2", { test: 2 }, { type: 'test' });
+                    await service.saveState("user_info", { user: "test" }, { type: 'user' });
+                    
+                    const info = await service.getDatabaseInfo();
+                    return info.totalStates === 3 &&
+                           info.stateTypes.includes('test') &&
+                           info.stateTypes.includes('user');
+                }
+            },
+            {
+                id: 11,
+                title: "مدیریت خطا - دیتابیس بسته",
+                run: async (service) => {
+                    // شبیه‌سازی خطای دیتابیس
+                    const oldDB = service.db;
+                    service.db = null;
+                    
+                    try {
+                        // این باید خطا ندهد و دیتابیس را مجدداً باز کند
+                        await service.saveState("recovery_test", { data: "تست" });
+                        const loaded = await service.loadState("recovery_test");
+                        
+                        return loaded !== null;
+                    } catch (error) {
+                        console.error('خطا در تست:', error);
+                        return false;
+                    } finally {
+                        service.db = oldDB;
+                    }
+                }
+            },
+            {
+                id: 12,
+                title: "کاراکترهای فارسی در State",
+                run: async (service) => {
+                    const farsiState = {
+                        title: "درس مکالمه فارسی",
+                        description: "این یک درس برای آموزش مکالمه‌های روزمره است",
+                        vocabulary: [
+                            { english: "hello", persian: "سلام" },
+                            { english: "thank you", persian: "متشکرم" },
+                            { english: "goodbye", persian: "خداحافظ" }
+                        ],
+                        notes: "توجه: این درس شامل نکات مهم گرامری می‌باشد"
+                    };
+                    
+                    const stateId = "farsi_content_lesson";
+                    await service.saveState(stateId, farsiState, { 
+                        type: 'lesson',
+                        language: 'fa'
+                    });
+                    
+                    const loaded = await service.loadState(stateId);
+                    return loaded && 
+                           loaded.data.title === "درس مکالمه فارسی" &&
+                           loaded.data.vocabulary[1].persian === "متشکرم";
+                }
+            }
+        ];
+
+        // ==================== شبیه‌ساز ====================
+        const stateService = new StatePersistenceService();
+        let currentStates = [];
+
+        async function simulateUserLogin() {
+            const userState = {
+                user: {
+                    id: "sim_user_" + Date.now(),
+                    username: "کاربر شبیه‌ساز",
+                    level: Math.floor(Math.random() * 10) + 1,
+                    xp: Math.floor(Math.random() * 1000),
+                    loginCount: Math.floor(Math.random() * 50) + 1
+                },
+                session: {
+                    loginTime: new Date().toISOString(),
+                    device: navigator.userAgent.substr(0, 50)
+                }
+            };
+            
+            const stateId = stateService.generateStateId('user_session');
+            await stateService.saveState(stateId, userState, { 
+                type: 'user_session',
+                autoGenerated: true
+            });
+            
+            updateStateViewer();
+            showMessage(`👤 State کاربر ذخیره شد (${stateId})`);
+        }
+
+        async function simulateLessonProgress() {
+            const lessonState = {
+                lesson: {
+                    id: "lesson_" + Math.floor(Math.random() * 1000),
+                    title: ["مکالمه پایه", "گرامر پیشرفته", "واژگان تجاری"][Math.floor(Math.random() * 3)],
+                    progress: Math.floor(Math.random() * 100),
+                    score: Math.floor(Math.random() * 100),
+                    timeSpent: Math.floor(Math.random() * 3600)
+                },
+                completedExercises: Array.from({ length: Math.floor(Math.random() * 10) + 1 }, (_, i) => ({
+                    id: `ex_${i}`,
+                    type: ['choice', 'typing', 'listening'][Math.floor(Math.random() * 3)],
+                    score: Math.floor(Math.random() * 100),
+                    time: Math.floor(Math.random() * 300)
+                }))
+            };
+            
+            const stateId = stateService.generateStateId('lesson_progress');
+            await stateService.saveState(stateId, lessonState, { 
+                type: 'lesson_progress',
+                autoGenerated: true
+            });
+            
+            updateStateViewer();
+            showMessage(`📚 State درس ذخیره شد (${stateId})`);
+        }
+
+        async function simulateSettingsChange() {
+            const settingsState = {
+                preferences: {
+                    theme: ['dark', 'light', 'auto'][Math.floor(Math.random() * 3)],
+                    language: ['fa', 'en'][Math.floor(Math.random() * 2)],
+                    fontSize: Math.floor(Math.random() * 5) + 12,
+                    sound: Math.random() > 0.5,
+                    notifications: Math.random() > 0.5
+                },
+                lastUpdated: new Date().toISOString()
+            };
+            
+            const stateId = "user_settings";
+            await stateService.saveState(stateId, settingsState, { 
+                type: 'settings',
+                autoGenerated: true
+            });
+            
+            updateStateViewer();
+            showMessage(`⚙️ State تنظیمات به‌روز شد`);
+        }
+
+        async function simulateLargeState() {
+            const largeState = {
+                timestamp: Date.now(),
+                data: Array.from({ length: 50 }, (_, i) => ({
+                    id: `item_${i}`,
+                    value: `مقدار ${i}`,
+                    metadata: {
+                        created: Date.now() - i * 1000,
+                        tags: ['tag1', 'tag2', 'tag3'].slice(0, Math.floor(Math.random() * 3) + 1),
+                        active: Math.random() > 0.5
+                    }
+                })),
+                summary: {
+                    totalItems: 50,
+                    activeItems: 25,
+                    lastUpdate: new Date().toISOString()
+                }
+            };
+            
+            const stateId = stateService.generateStateId('large_data');
+            await stateService.saveState(stateId, largeState, { 
+                type: 'bulk_data',
+                autoGenerated: true
+            });
+            
+            updateStateViewer();
+            showMessage(`📊 State بزرگ (50 آیتم) ذخیره شد`);
+        }
+
+        async function clearAllStates() {
+            await stateService.clearAllStates();
+            updateStateViewer();
+            showMessage('🗑️ تمام Stateها حذف شدند');
+        }
+
+        async function updateStateViewer() {
+            const states = await stateService.getAllStates();
+            currentStates = states;
+            
+            const container = document.getElementById('current-state');
+            if (states.length === 0) {
+                container.innerHTML = '<div style="color: #888; text-align: center;">هیچ Stateای ذخیره نشده است</div>';
+                return;
+            }
+            
+            let html = '';
+            states.slice(-5).reverse().forEach(state => {
+                const time = new Date(state.timestamp).toLocaleTimeString();
+                const size = JSON.stringify(state.data).length;
+                
+                html += `
+                    <div class="state-item">
+                        <div class="state-key">${state.id}</div>
+                        <div class="state-value">
+                            ${state.stateType} • ${time} • ${size} بایت
+                        </div>
+                    </div>
+                `;
+            });
+            
+            if (states.length > 5) {
+                html += `<div style="color: #888; text-align: center; padding: 10px;">
+                    + ${states.length - 5} State دیگر
+                </div>`;
+            }
+            
+            container.innerHTML = html;
+        }
+
+        function showMessage(text) {
+            console.log('💬 ' + text);
+            const summary = document.getElementById('summary-text');
+            const originalText = summary.textContent;
+            summary.innerHTML = `<span style="color: #4fc3f7;">${text}</span><br>${originalText}`;
+            
+            setTimeout(() => {
+                summary.innerHTML = originalText;
+            }, 3000);
+        }
+
+        // ==================== اجرای تست‌ها ====================
+        let passedTests = 0;
+        let failedTests = 0;
+
+        async function runAllTests() {
+            passedTests = 0;
+            failedTests = 0;
+            const resultsDiv = document.getElementById('test-results');
+            resultsDiv.innerHTML = '';
+            
+            // حذف Stateهای تست قبلی
+            await stateService.clearAllStates();
+            
+            for (const test of persistenceTests) {
+                try {
+                    const result = await test.run(stateService);
+                    const testDiv = document.createElement('div');
+                    testDiv.className = 'test-section';
+                    
+                    const testResult = result ? 'pass' : 'fail';
+                    const resultText = result ? '✅ موفق' : '❌ ناموفق';
+                    
+                    if (result) passedTests++;
+                    else failedTests++;
+                    
+                    testDiv.innerHTML = `
+                        <div class="test-header">
+                            <div class="test-title">${test.id}. ${test.title}</div>
+                            <div class="test-result ${testResult}">${resultText}</div>
+                        </div>
+                    `;
+                    
+                    resultsDiv.appendChild(testDiv);
+                } catch (error) {
+                    failedTests++;
+                    const testDiv = document.createElement('div');
+                    testDiv.className = 'test-section';
+                    testDiv.innerHTML = `
+                        <div class="test-header">
+                            <div class="test-title">${test.id}. ${test.title}</div>
+                            <div class="test-result fail">❌ خطا</div>
+                        </div>
+                        <div class="details">${error.message}</div>
+                    `;
+                    resultsDiv.appendChild(testDiv);
+                }
+                
+                updateSummary();
+            }
+            
+            // به‌روزرسانی نمایش Stateها
+            updateStateViewer();
+        }
+
+        function clearTests() {
+            document.getElementById('test-results').innerHTML = '';
+            passedTests = failedTests = 0;
+            updateSummary();
+        }
+
+        function updateSummary() {
+            const summary = document.getElementById('summary-text');
+            const total = persistenceTests.length;
+            const percentage = total > 0 ? Math.round((passedTests / total) * 100) : 0;
+            
+            let statusIcon = '✅';
+            if (percentage < 70) statusIcon = '⚠️';
+            if (percentage < 50) statusIcon = '🚨';
+            
+            summary.innerHTML = `
+                <strong>نتیجه تست‌های ذخیره‌سازی State:</strong><br>
+                ${statusIcon} ${passedTests} موفق | ❌ ${failedTests} ناموفق | 📊 ${percentage}% قبولی
+            `;
+            
+            summary.style.color = percentage >= 90 ? '#4caf50' : 
+                                 percentage >= 70 ? '#ff9800' : '#f44336';
+        }
+
+        // اجرای خودکار و اولیه
+        window.onload = async () => {
+            try {
+                await stateService.initDatabase();
+                updateSummary();
+                updateStateViewer();
+                setTimeout(runAllTests, 1000);
+            } catch (error) {
+                console.error('خطا در بارگذاری اولیه:', error);
+                document.getElementById('summary-text').textContent = 
+                    'خطا در بارگذاری دیتابیس: ' + error.message;
+            }
+        };
+    </script>
+</body>
+</html><!DOCTYPE html>
+<html lang="fa">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Farsinglish - تست ذخیره‌سازی State در IndexedDB</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { 
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+            background: linear-gradient(135deg, #1a2980 0%, #26d0ce 100%);
+            color: #f5f5f5;
+            min-height: 100vh;
+            padding: 15px;
+        }
+        .container { 
+            max-width: 900px; 
+            margin: 0 auto;
+            background: rgba(20, 25, 45, 0.9);
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.5);
+            border: 1px solid rgba(64, 224, 208, 0.3);
+        }
+        h1 { 
+            text-align: center; 
+            margin-bottom: 25px;
+            font-size: 1.8rem;
+            color: #40e0d0;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+        }
+        .test-section { 
+            margin: 15px 0;
+            padding: 15px;
+            background: rgba(30, 35, 60, 0.8);
+            border-radius: 10px;
+            border-left: 4px solid #ff6b6b;
+            transition: all 0.3s;
+        }
+        .test-section:hover {
+            background: rgba(40, 45, 70, 0.9);
+            transform: translateY(-2px);
+        }
+        .test-header { 
+            display: flex; 
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        .test-title { 
+            font-size: 1rem; 
+            font-weight: 600;
+            color: #bb86fc;
+        }
+        .test-result { 
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 0.8rem;
+            font-weight: bold;
+        }
+        .pass { background: linear-gradient(45deg, #00c853, #64dd17); }
+        .fail { background: linear-gradient(45deg, #d50000, #ff5252); }
+        .details { 
+            margin-top: 10px;
+            padding: 12px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.85rem;
+            color: #a5d6a7;
+            border: 1px solid rgba(100, 150, 100, 0.2);
+            max-height: 200px;
+            overflow-y: auto;
+        }
+        .summary {
+            margin-top: 20px;
+            padding: 15px;
+            background: rgba(30, 40, 60, 0.8);
+            border-radius: 10px;
+            text-align: center;
+            font-size: 0.95rem;
+            border: 1px solid rgba(64, 224, 208, 0.3);
+        }
+        button {
+            background: linear-gradient(45deg, #8e2de2, #4a00e0);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            cursor: pointer;
+            margin: 5px;
+            transition: all 0.3s;
+            font-weight: 600;
+        }
+        button:hover { 
+            transform: translateY(-2px); 
+            box-shadow: 0 5px 15px rgba(142, 45, 226, 0.4);
+        }
+        .controls { text-align: center; margin-top: 20px; }
+        .state-viewer {
+            background: rgba(0, 0, 0, 0.2);
+            padding: 15px;
+            border-radius: 10px;
+            margin: 15px 0;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .state-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+        .state-key { color: #bb86fc; }
+        .state-value { color: #4fc3f7; }
+        .simulator {
+            background: rgba(0, 20, 40, 0.6);
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+        }
+        .sim-buttons {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            justify-content: center;
+            margin: 15px 0;
+        }
+        .sim-btn {
+            background: linear-gradient(45deg, #2196F3, #21CBF3);
+            flex: 1;
+            min-width: 120px;
+        }
+        .sim-btn.delete {
+            background: linear-gradient(45deg, #f44336, #ff7961);
+        }
+        @media (max-width: 600px) {
+            .container { padding: 12px; }
+            .test-header { flex-direction: column; align-items: flex-start; }
+            .sim-buttons { flex-direction: column; }
+            .sim-btn { width: 100%; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>💾 تست ذخیره‌سازی State در IndexedDB</h1>
+        
+        <div class="simulator">
+            <h3 style="text-align: center; color: #4fc3f7; margin-bottom: 15px;">🔧 شبیه‌ساز State</h3>
+            <div class="sim-buttons">
+                <button class="sim-btn" onclick="simulateUserLogin()">👤 ورود کاربر</button>
+                <button class="sim-btn" onclick="simulateLessonProgress()">📚 پیشرفت درس</button>
+                <button class="sim-btn" onclick="simulateSettingsChange()">⚙️ تغییر تنظیمات</button>
+                <button class="sim-btn" onclick="simulateLargeState()">📊 State بزرگ</button>
+                <button class="sim-btn delete" onclick="clearAllStates()">🗑️ حذف همه</button>
+            </div>
+            <div class="state-viewer">
+                <h4>📋 State فعلی در حافظه:</h4>
+                <div id="current-state"></div>
+            </div>
+        </div>
+        
+        <div id="test-results"></div>
+        
+        <div class="summary">
+            <p id="summary-text">آماده اجرای ۱۲ تست ذخیره‌سازی...</p>
+        </div>
+        
+        <div class="controls">
+            <button onclick="runAllTests()">🚀 اجرای تمام تست‌ها</button>
+            <button onclick="clearTests()" style="background: linear-gradient(45deg, #757575, #9e9e9e);">♻️ بازنشانی</button>
+        </div>
+    </div>
+
+    <script>
+        // ==================== State Persistence Service ====================
+        class StatePersistenceService {
+            constructor() {
+                this.dbName = 'farsinglish_state_db';
+                this.dbVersion = 1;
+                this.storeName = 'app_states';
+                this.db = null;
+                this.currentState = null;
+                this.autoSave = true;
+            }
+
+            // ========== IndexedDB Management ==========
+            async initDatabase() {
+                return new Promise((resolve, reject) => {
+                    const request = indexedDB.open(this.dbName, this.dbVersion);
+                    
+                    request.onerror = () => reject(new Error('خطا در باز کردن دیتابیس'));
+                    
+                    request.onsuccess = (event) => {
+                        this.db = event.target.result;
+                        console.log('✅ دیتابیس State با موفقیت بارگذاری شد');
+                        resolve(this.db);
+                    };
+                    
+                    request.onupgradeneeded = (event) => {
+                        const db = event.target.result;
+                        if (!db.objectStoreNames.contains(this.storeName)) {
+                            const store = db.createObjectStore(this.storeName, { keyPath: 'id' });
+                            store.createIndex('timestamp', 'timestamp', { unique: false });
+                            store.createIndex('stateType', 'stateType', { unique: false });
+                            console.log('📦 ObjectStore State ایجاد شد');
+                        }
+                    };
+                });
+            }
+
+            // ========== State Operations ==========
+            async saveState(stateId, stateData, metadata = {}) {
+                if (!this.db) await this.initDatabase();
+                
+                return new Promise((resolve, reject) => {
+                    const transaction = this.db.transaction([this.storeName], 'readwrite');
+                    const store = transaction.objectStore(this.storeName);
+                    
+                    const stateRecord = {
+                        id: stateId,
+                        data: this.deepClone(stateData),
+                        timestamp: Date.now(),
+                        stateType: metadata.type || 'general',
+                        version: metadata.version || '1.0',
+                        checksum: this.calculateChecksum(stateData),
+                        ...metadata
+                    };
+                    
+                    const request = store.put(stateRecord);
+                    
+                    request.onsuccess = () => {
+                        console.log(`✅ State "${stateId}" ذخیره شد`, stateRecord);
+                        resolve(stateRecord);
+                    };
+                    
+                    request.onerror = () => reject(new Error('خطا در ذخیره State'));
+                });
+            }
+
+            async loadState(stateId) {
+                if (!this.db) await this.initDatabase();
+                
+                return new Promise((resolve, reject) => {
+                    const transaction = this.db.transaction([this.storeName], 'readonly');
+                    const store = transaction.objectStore(this.storeName);
+                    const request = store.get(stateId);
+                    
+                    request.onsuccess = () => {
+                        const result = request.result;
+                        if (result) {
+                            // اعتبارسنجی checksum
+                            const currentChecksum = this.calculateChecksum(result.data);
+                            if (currentChecksum !== result.checksum) {
+                                console.warn('⚠️ Checksum State مطابقت ندارد');
+                            }
+                            
+                            console.log(`📥 State "${stateId}" بارگذاری شد`, result);
+                            this.currentState = result.data;
+                            resolve(result);
+                        } else {
+                            resolve(null);
+                        }
+                    };
+                    
+                    request.onerror = () => reject(new Error('خطا در بارگذاری State'));
+                });
+            }
+
+            async deleteState(stateId) {
+                if (!this.db) await this.initDatabase();
+                
+                return new Promise((resolve, reject) => {
+                    const transaction = this.db.transaction([this.storeName], 'readwrite');
+                    const store = transaction.objectStore(this.storeName);
+                    const request = store.delete(stateId);
+                    
+                    request.onsuccess = () => {
+                        console.log(`🗑️ State "${stateId}" حذف شد`);
+                        resolve(true);
+                    };
+                    
+                    request.onerror = () => reject(new Error('خطا در حذف State'));
+                });
+            }
+
+            async getAllStates() {
+                if (!this.db) await this.initDatabase();
+                
+                return new Promise((resolve, reject) => {
+                    const transaction = this.db.transaction([this.storeName], 'readonly');
+                    const store = transaction.objectStore(this.storeName);
+                    const request = store.getAll();
+                    
+                    request.onsuccess = () => resolve(request.result);
+                    request.onerror = () => reject(new Error('خطا در دریافت لیست Stateها'));
+                });
+            }
+
+            async clearAllStates() {
+                if (!this.db) await this.initDatabase();
+                
+                return new Promise((resolve, reject) => {
+                    const transaction = this.db.transaction([this.storeName], 'readwrite');
+                    const store = transaction.objectStore(this.storeName);
+                    const request = store.clear();
+                    
+                    request.onsuccess = () => {
+                        console.log('🧹 تمام Stateها حذف شدند');
+                        resolve(true);
+                    };
+                    
+                    request.onerror = () => reject(new Error('خطا در حذف Stateها'));
+                });
+            }
+
+            async getStatesByType(stateType) {
+                if (!this.db) await this.initDatabase();
+                
+                return new Promise((resolve, reject) => {
+                    const transaction = this.db.transaction([this.storeName], 'readonly');
+                    const store = transaction.objectStore(this.storeName);
+                    const index = store.index('stateType');
+                    const request = index.getAll(stateType);
+                    
+                    request.onsuccess = () => resolve(request.result);
+                    request.onerror = () => reject(new Error(`خطا در دریافت Stateهای نوع ${stateType}`));
+                });
+            }
+
+            // ========== State Compression ==========
+            compressState(state) {
+                try {
+                    const json = JSON.stringify(state);
+                    // شبیه‌سازی compression ساده
+                    return {
+                        compressed: true,
+                        originalSize: json.length,
+                        data: state // در واقعیت اینجا compression انجام می‌شد
+                    };
+                } catch (error) {
+                    console.error('خطا در فشرده‌سازی:', error);
+                    return state;
+                }
+            }
+
+            // ========== State Recovery ==========
+            async recoverFromBackup(stateId) {
+                try {
+                    // بارگذاری آخرین نسخه سالم
+                    const allStates = await this.getAllStates();
+                    const stateVersions = allStates.filter(s => s.id.startsWith(stateId));
+                    
+                    if (stateVersions.length === 0) {
+                        return null;
+                    }
+                    
+                    // مرتب‌سازی بر اساس timestamp
+                    stateVersions.sort((a, b) => b.timestamp - a.timestamp);
+                    
+                    // بررسی checksum هر نسخه
+                    for (const version of stateVersions) {
+                        const checksum = this.calculateChecksum(version.data);
+                        if (checksum === version.checksum) {
+                            console.log(`🔄 بازیابی State "${stateId}" از نسخه ${new Date(version.timestamp).toLocaleTimeString()}`);
+                            return version;
+                        }
+                    }
+                    
+                    console.warn('⚠️ هیچ نسخه سالمی برای بازیابی یافت نشد');
+                    return null;
+                } catch (error) {
+                    console.error('خطا در بازیابی:', error);
+                    return null;
+                }
+            }
+
+            // ========== Utility Methods ==========
+            deepClone(obj) {
+                if (obj === null || typeof obj !== 'object') return obj;
+                return JSON.parse(JSON.stringify(obj));
+            }
+
+            calculateChecksum(data) {
+                const json = JSON.stringify(data);
+                let hash = 0;
+                for (let i = 0; i < json.length; i++) {
+                    const char = json.charCodeAt(i);
+                    hash = ((hash << 5) - hash) + char;
+                    hash = hash & hash; // تبدیل به 32-bit integer
+                }
+                return hash.toString(16);
+            }
+
+            generateStateId(prefix = 'state') {
+                return `${prefix}_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+            }
+
+            async getDatabaseInfo() {
+                if (!this.db) await this.initDatabase();
+                
+                const allStates = await this.getAllStates();
+                const totalSize = JSON.stringify(allStates).length;
+                
+                return {
+                    totalStates: allStates.length,
+                    totalSizeKB: (totalSize / 1024).toFixed(2),
+                    stateTypes: [...new Set(allStates.map(s => s.stateType))],
+                    lastUpdate: allStates.length > 0 ? 
+                        new Date(Math.max(...allStates.map(s => s.timestamp))) : 
+                        null
+                };
+            }
+        }
+
+        // ==================== تست‌ها ====================
+        const persistenceTests = [
+            {
+                id: 1,
+                title: "ذخیره‌سازی State کاربر",
+                run: async (service) => {
+                    const userState = {
+                        user: {
+                            id: "user_123",
+                            username: "علی محمدی",
+                            level: 5,
+                            xp: 1250,
+                            lastLogin: new Date().toISOString()
+                        },
+                        preferences: {
+                            theme: "dark",
+                            language: "fa",
+                            notifications: true
+                        }
+                    };
+                    
+                    const stateId = service.generateStateId('user');
+                    await service.saveState(stateId, userState, { 
+                        type: 'user', 
+                        version: '1.1' 
+                    });
+                    
+                    const loaded = await service.loadState(stateId);
+                    return loaded && 
+                           loaded.data.user.username === "علی محمدی" &&
+                           loaded.data.preferences.language === "fa";
+                }
+            },
+            {
+                id: 2,
+                title: "بارگذاری State درس",
+                run: async (service) => {
+                    const lessonState = {
+                        currentLesson: {
+                            id: "lesson_456",
+                            title: "مکالمه روزمره",
+                            progress: 75,
+                            lastReview: Date.now() - 86400000,
+                            nextReview: Date.now() + 86400000
+                        },
+                        vocabulary: [
+                            { word: "hello", meaning: "سلام", mastered: true },
+                            { word: "thank you", meaning: "متشکرم", mastered: false }
+                        ]
+                    };
+                    
+                    const stateId = "lesson_current_456";
+                    await service.saveState(stateId, lessonState, { type: 'lesson' });
+                    
+                    const loaded = await service.loadState(stateId);
+                    return loaded && 
+                           loaded.data.currentLesson.progress === 75 &&
+                           loaded.data.vocabulary.length === 2;
+                }
+            },
+            {
+                id: 3,
+                title: "حذف State",
+                run: async (service) => {
+                    const tempState = { test: "حذف خواهد شد" };
+                    const stateId = "temp_state_to_delete";
+                    
+                    await service.saveState(stateId, tempState, { type: 'test' });
+                    await service.deleteState(stateId);
+                    
+                    const loaded = await service.loadState(stateId);
+                    return loaded === null;
+                }
+            },
+            {
+                id: 4,
+                title: "دریافت همه Stateها",
+                run: async (service) => {
+                    // حذف Stateهای قبلی برای تست تمیز
+                    await service.clearAllStates();
+                    
+                    // ذخیره چند State
+                    await service.saveState("state1", { data: "اول" }, { type: 'test' });
+                    await service.saveState("state2", { data: "دوم" }, { type: 'test' });
+                    await service.saveState("state3", { data: "سوم" }, { type: 'other' });
+                    
+                    const allStates = await service.getAllStates();
+                    return allStates.length === 3;
+                }
+            },
+            {
+                id: 5,
+                title: "فیلتر Stateها بر اساس نوع",
+                run: async (service) => {
+                    await service.clearAllStates();
+                    
+                    await service.saveState("user_1", { name: "کاربر۱" }, { type: 'user' });
+                    await service.saveState("user_2", { name: "کاربر۲" }, { type: 'user' });
+                    await service.saveState("lesson_1", { title: "درس۱" }, { type: 'lesson' });
+                    
+                    const userStates = await service.getStatesByType('user');
+                    return userStates.length === 2;
+                }
+            },
+            {
+                id: 6,
+                title: "Checksum برای یکپارچگی داده",
+                run: async (service) => {
+                    const testState = { important: "داده مهم", number: 42 };
+                    const stateId = "checksum_test";
+                    
+                    const saved = await service.saveState(stateId, testState);
+                    const loaded = await service.loadState(stateId);
+                    
+                    const originalChecksum = service.calculateChecksum(testState);
+                    return saved.checksum === loaded.checksum && 
+                           loaded.checksum === originalChecksum;
+                }
+            },
+            {
+                id: 7,
+                title: "بازیابی از نسخه‌های قبلی",
+                run: async (service) => {
+                    await service.clearAllStates();
+                    
+                    const stateId = "recovery_test";
+                    const stateV1 = { version: 1, data: "نسخه اول" };
+                    const stateV2 = { version: 2, data: "نسخه دوم" };
+                    
+                    // ذخیره دو نسخه
+                    await service.saveState(stateId, stateV1, { version: '1.0' });
+                    await new Promise(resolve => setTimeout(resolve, 100));
+                    await service.saveState(stateId, stateV2, { version: '2.0' });
+                    
+                    // حذف آخرین نسخه
+                    await service.deleteState(stateId);
+                    
+                    // بازیابی
+                    const recovered = await service.recoverFromBackup(stateId);
+                    return recovered && recovered.data.version === 1;
+                }
+            },
+            {
+                id: 8,
+                title: "State بزرگ (Performance)",
+                run: async (service) => {
+                    // ایجاد State با حجم نسبتاً بزرگ
+                    const largeState = {
+                        vocabulary: Array.from({ length: 100 }, (_, i) => ({
+                            id: `word_${i}`,
+                            english: `word${i}`,
+                            persian: `کلمه ${i}`,
+                            example: `This is example ${i}`,
+                            mastered: i % 3 === 0,
+                            reviews: Array.from({ length: 10 }, (_, j) => ({
+                                date: Date.now() - j * 86400000,
+                                score: Math.random() * 100
+                            }))
+                        })),
+                        metadata: {
+                            totalWords: 100,
+                            masteredCount: 34,
+                            averageScore: 78.5
+                        }
+                    };
+                    
+                    const stateId = "large_vocabulary_state";
+                    const startTime = performance.now();
+                    
+                    await service.saveState(stateId, largeState, { type: 'vocabulary' });
+                    const loaded = await service.loadState(stateId);
+                    
+                    const endTime = performance.now();
+                    const duration = endTime - startTime;
+                    
+                    console.log(`⏱️ زمان ذخیره/بارگذاری State بزرگ: ${duration.toFixed(2)}ms`);
+                    
+                    return loaded && 
+                           loaded.data.vocabulary.length === 100 &&
+                           duration < 5000; // باید زیر 5 ثانیه باشد
+                }
+            },
+            {
+                id: 9,
+                title: "Deep Clone صحیح",
+                run: async (service) => {
+                    const original = {
+                        nested: {
+                            data: "اصلی",
+                            numbers: [1, 2, 3],
+                            deep: { level: 3 }
+                        }
+                    };
+                    
+                    const cloned = service.deepClone(original);
+                    cloned.nested.data = "تغییر یافته";
+                    cloned.nested.numbers.push(4);
+                    cloned.nested.deep.level = 999;
+                    
+                    // original نباید تغییر کرده باشد
+                    return original.nested.data === "اصلی" &&
+                           original.nested.numbers.length === 3 &&
+                           original.nested.deep.level === 3;
+                }
+            },
+            {
+                id: 10,
+                title: "اطلاعات دیتابیس",
+                run: async (service) => {
+                    await service.clearAllStates();
+                    
+                    await service.saveState("info_test_1", { test: 1 }, { type: 'test' });
+                    await service.saveState("info_test_2", { test: 2 }, { type: 'test' });
+                    await service.saveState("user_info", { user: "test" }, { type: 'user' });
+                    
+                    const info = await service.getDatabaseInfo();
+                    return info.totalStates === 3 &&
+                           info.stateTypes.includes('test') &&
+                           info.stateTypes.includes('user');
+                }
+            },
+            {
+                id: 11,
+                title: "مدیریت خطا - دیتابیس بسته",
+                run: async (service) => {
+                    // شبیه‌سازی خطای دیتابیس
+                    const oldDB = service.db;
+                    service.db = null;
+                    
+                    try {
+                        // این باید خطا ندهد و دیتابیس را مجدداً باز کند
+                        await service.saveState("recovery_test", { data: "تست" });
+                        const loaded = await service.loadState("recovery_test");
+                        
+                        return loaded !== null;
+                    } catch (error) {
+                        console.error('خطا در تست:', error);
+                        return false;
+                    } finally {
+                        service.db = oldDB;
+                    }
+                }
+            },
+            {
+                id: 12,
+                title: "کاراکترهای فارسی در State",
+                run: async (service) => {
+                    const farsiState = {
+                        title: "درس مکالمه فارسی",
+                        description: "این یک درس برای آموزش مکالمه‌های روزمره است",
+                        vocabulary: [
+                            { english: "hello", persian: "سلام" },
+                            { english: "thank you", persian: "متشکرم" },
+                            { english: "goodbye", persian: "خداحافظ" }
+                        ],
+                        notes: "توجه: این درس شامل نکات مهم گرامری می‌باشد"
+                    };
+                    
+                    const stateId = "farsi_content_lesson";
+                    await service.saveState(stateId, farsiState, { 
+                        type: 'lesson',
+                        language: 'fa'
+                    });
+                    
+                    const loaded = await service.loadState(stateId);
+                    return loaded && 
+                           loaded.data.title === "درس مکالمه فارسی" &&
+                           loaded.data.vocabulary[1].persian === "متشکرم";
+                }
+            }
+        ];
+
+        // ==================== شبیه‌ساز ====================
+        const stateService = new StatePersistenceService();
+        let currentStates = [];
+
+        async function simulateUserLogin() {
+            const userState = {
+                user: {
+                    id: "sim_user_" + Date.now(),
+                    username: "کاربر شبیه‌ساز",
+                    level: Math.floor(Math.random() * 10) + 1,
+                    xp: Math.floor(Math.random() * 1000),
+                    loginCount: Math.floor(Math.random() * 50) + 1
+                },
+                session: {
+                    loginTime: new Date().toISOString(),
+                    device: navigator.userAgent.substr(0, 50)
+                }
+            };
+            
+            const stateId = stateService.generateStateId('user_session');
+            await stateService.saveState(stateId, userState, { 
+                type: 'user_session',
+                autoGenerated: true
+            });
+            
+            updateStateViewer();
+            showMessage(`👤 State کاربر ذخیره شد (${stateId})`);
+        }
+
+        async function simulateLessonProgress() {
+            const lessonState = {
+                lesson: {
+                    id: "lesson_" + Math.floor(Math.random() * 1000),
+                    title: ["مکالمه پایه", "گرامر پیشرفته", "واژگان تجاری"][Math.floor(Math.random() * 3)],
+                    progress: Math.floor(Math.random() * 100),
+                    score: Math.floor(Math.random() * 100),
+                    timeSpent: Math.floor(Math.random() * 3600)
+                },
+                completedExercises: Array.from({ length: Math.floor(Math.random() * 10) + 1 }, (_, i) => ({
+                    id: `ex_${i}`,
+                    type: ['choice', 'typing', 'listening'][Math.floor(Math.random() * 3)],
+                    score: Math.floor(Math.random() * 100),
+                    time: Math.floor(Math.random() * 300)
+                }))
+            };
+            
+            const stateId = stateService.generateStateId('lesson_progress');
+            await stateService.saveState(stateId, lessonState, { 
+                type: 'lesson_progress',
+                autoGenerated: true
+            });
+            
+            updateStateViewer();
+            showMessage(`📚 State درس ذخیره شد (${stateId})`);
+        }
+
+        async function simulateSettingsChange() {
+            const settingsState = {
+                preferences: {
+                    theme: ['dark', 'light', 'auto'][Math.floor(Math.random() * 3)],
+                    language: ['fa', 'en'][Math.floor(Math.random() * 2)],
+                    fontSize: Math.floor(Math.random() * 5) + 12,
+                    sound: Math.random() > 0.5,
+                    notifications: Math.random() > 0.5
+                },
+                lastUpdated: new Date().toISOString()
+            };
+            
+            const stateId = "user_settings";
+            await stateService.saveState(stateId, settingsState, { 
+                type: 'settings',
+                autoGenerated: true
+            });
+            
+            updateStateViewer();
+            showMessage(`⚙️ State تنظیمات به‌روز شد`);
+        }
+
+        async function simulateLargeState() {
+            const largeState = {
+                timestamp: Date.now(),
+                data: Array.from({ length: 50 }, (_, i) => ({
+                    id: `item_${i}`,
+                    value: `مقدار ${i}`,
+                    metadata: {
+                        created: Date.now() - i * 1000,
+                        tags: ['tag1', 'tag2', 'tag3'].slice(0, Math.floor(Math.random() * 3) + 1),
+                        active: Math.random() > 0.5
+                    }
+                })),
+                summary: {
+                    totalItems: 50,
+                    activeItems: 25,
+                    lastUpdate: new Date().toISOString()
+                }
+            };
+            
+            const stateId = stateService.generateStateId('large_data');
+            await stateService.saveState(stateId, largeState, { 
+                type: 'bulk_data',
+                autoGenerated: true
+            });
+            
+            updateStateViewer();
+            showMessage(`📊 State بزرگ (50 آیتم) ذخیره شد`);
+        }
+
+        async function clearAllStates() {
+            await stateService.clearAllStates();
+            updateStateViewer();
+            showMessage('🗑️ تمام Stateها حذف شدند');
+        }
+
+        async function updateStateViewer() {
+            const states = await stateService.getAllStates();
+            currentStates = states;
+            
+            const container = document.getElementById('current-state');
+            if (states.length === 0) {
+                container.innerHTML = '<div style="color: #888; text-align: center;">هیچ Stateای ذخیره نشده است</div>';
+                return;
+            }
+            
+            let html = '';
+            states.slice(-5).reverse().forEach(state => {
+                const time = new Date(state.timestamp).toLocaleTimeString();
+                const size = JSON.stringify(state.data).length;
+                
+                html += `
+                    <div class="state-item">
+                        <div class="state-key">${state.id}</div>
+                        <div class="state-value">
+                            ${state.stateType} • ${time} • ${size} بایت
+                        </div>
+                    </div>
+                `;
+            });
+            
+            if (states.length > 5) {
+                html += `<div style="color: #888; text-align: center; padding: 10px;">
+                    + ${states.length - 5} State دیگر
+                </div>`;
+            }
+            
+            container.innerHTML = html;
+        }
+
+        function showMessage(text) {
+            console.log('💬 ' + text);
+            const summary = document.getElementById('summary-text');
+            const originalText = summary.textContent;
+            summary.innerHTML = `<span style="color: #4fc3f7;">${text}</span><br>${originalText}`;
+            
+            setTimeout(() => {
+                summary.innerHTML = originalText;
+            }, 3000);
+        }
+
+        // ==================== اجرای تست‌ها ====================
+        let passedTests = 0;
+        let failedTests = 0;
+
+        async function runAllTests() {
+            passedTests = 0;
+            failedTests = 0;
+            const resultsDiv = document.getElementById('test-results');
+            resultsDiv.innerHTML = '';
+            
+            // حذف Stateهای تست قبلی
+            await stateService.clearAllStates();
+            
+            for (const test of persistenceTests) {
+                try {
+                    const result = await test.run(stateService);
+                    const testDiv = document.createElement('div');
+                    testDiv.className = 'test-section';
+                    
+                    const testResult = result ? 'pass' : 'fail';
+                    const resultText = result ? '✅ موفق' : '❌ ناموفق';
+                    
+                    if (result) passedTests++;
+                    else failedTests++;
+                    
+                    testDiv.innerHTML = `
+                        <div class="test-header">
+                            <div class="test-title">${test.id}. ${test.title}</div>
+                            <div class="test-result ${testResult}">${resultText}</div>
+                        </div>
+                    `;
+                    
+                    resultsDiv.appendChild(testDiv);
+                } catch (error) {
+                    failedTests++;
+                    const testDiv = document.createElement('div');
+                    testDiv.className = 'test-section';
+                    testDiv.innerHTML = `
+                        <div class="test-header">
+                            <div class="test-title">${test.id}. ${test.title}</div>
+                            <div class="test-result fail">❌ خطا</div>
+                        </div>
+                        <div class="details">${error.message}</div>
+                    `;
+                    resultsDiv.appendChild(testDiv);
+                }
+                
+                updateSummary();
+            }
+            
+            // به‌روزرسانی نمایش Stateها
+            updateStateViewer();
+        }
+
+        function clearTests() {
+            document.getElementById('test-results').innerHTML = '';
+            passedTests = failedTests = 0;
+            updateSummary();
+        }
+
+        function updateSummary() {
+            const summary = document.getElementById('summary-text');
+            const total = persistenceTests.length;
+            const percentage = total > 0 ? Math.round((passedTests / total) * 100) : 0;
+            
+            let statusIcon = '✅';
+            if (percentage < 70) statusIcon = '⚠️';
+            if (percentage < 50) statusIcon = '🚨';
+            
+            summary.innerHTML = `
+                <strong>نتیجه تست‌های ذخیره‌سازی State:</strong><br>
+                ${statusIcon} ${passedTests} موفق | ❌ ${failedTests} ناموفق | 📊 ${percentage}% قبولی
+            `;
+            
+            summary.style.color = percentage >= 90 ? '#4caf50' : 
+                                 percentage >= 70 ? '#ff9800' : '#f44336';
+        }
+
+        // اجرای خودکار و اولیه
+        window.onload = async () => {
+            try {
+                await stateService.initDatabase();
+                updateSummary();
+                updateStateViewer();
+                setTimeout(runAllTests, 1000);
+            } catch (error) {
+                console.error('خطا در بارگذاری اولیه:', error);
+                document.getElementById('summary-text').textContent = 
+                    'خطا در بارگذاری دیتابیس: ' + error.message;
+            }
+        };
+    </script>
+</body>
+</html>
