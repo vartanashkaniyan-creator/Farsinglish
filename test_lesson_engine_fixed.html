@@ -1,0 +1,563 @@
+<!DOCTYPE html>
+<html lang="fa">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Farsinglish - تست موتور آموزش (اصلاح‌شده)</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { 
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+            background: linear-gradient(135deg, #0d47a1 0%, #1976d2 100%);
+            color: #e3f2fd;
+            min-height: 100vh;
+            padding: 15px;
+        }
+        .container { 
+            max-width: 900px; 
+            margin: 0 auto;
+            background: rgba(25, 35, 60, 0.95);
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.6);
+            border: 1px solid rgba(100, 150, 255, 0.2);
+        }
+        h1 { 
+            text-align: center; 
+            margin-bottom: 25px;
+            font-size: 1.8rem;
+            color: #bbdefb;
+        }
+        h2 {
+            margin: 20px 0 15px;
+            color: #90caf9;
+            font-size: 1.3rem;
+            border-bottom: 2px solid #64b5f6;
+            padding-bottom: 8px;
+        }
+        .test-section { 
+            margin: 15px 0;
+            padding: 14px;
+            background: rgba(40, 50, 80, 0.7);
+            border-radius: 10px;
+            border-left: 4px solid #2196f3;
+        }
+        .test-header { 
+            display: flex; 
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        .test-title { 
+            font-size: 0.95rem; 
+            font-weight: 600;
+            color: #e3f2fd;
+        }
+        .test-result { 
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 0.8rem;
+            font-weight: bold;
+        }
+        .pass { background: #4caf50; }
+        .fail { background: #f44336; }
+        .details { 
+            margin-top: 10px;
+            padding: 10px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 8px;
+            font-family: monospace;
+            font-size: 0.8rem;
+            color: #c8e6c9;
+        }
+        .summary {
+            margin-top: 25px;
+            padding: 18px;
+            background: rgba(40, 50, 80, 0.8);
+            border-radius: 10px;
+            text-align: center;
+        }
+        button {
+            background: #2196f3;
+            color: white;
+            border: none;
+            padding: 10px 22px;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            cursor: pointer;
+            margin: 6px;
+            font-weight: 600;
+        }
+        .controls { text-align: center; margin-top: 20px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧠 تست موتور آموزش - اصلاح Multiple Choice</h1>
+        
+        <h2>📚 تست‌های SRS</h2>
+        <div id="srs-tests"></div>
+        
+        <h2>⚡ تست‌های تمرین‌سازی (اصلاح‌شده)</h2>
+        <div id="exercise-tests"></div>
+        
+        <h2>🎯 تست‌های پیشرفت کاربر</h2>
+        <div id="progress-tests"></div>
+        
+        <div class="summary">
+            <p id="summary-text">آماده اجرای ۱۵ تست...</p>
+        </div>
+        
+        <div class="controls">
+            <button onclick="runAllTests()">🚀 اجرای تست‌ها</button>
+            <button onclick="clearTests()">♻️ پاک کردن</button>
+        </div>
+    </div>
+
+    <script>
+        // ==================== Lesson Engine (اصلاح‌شده) ====================
+        class LessonEngineFixed {
+            constructor() {
+                this.MIN_FACTOR = 1.3;
+                this.MAX_INTERVAL = 365;
+            }
+
+            // ========== SRS Algorithm ==========
+            calculateNextReview(lastReview, quality, oldInterval, oldFactor) {
+                quality = Math.max(0, Math.min(5, quality));
+                
+                let newFactor, newInterval;
+                
+                if (quality < 3) {
+                    newFactor = oldFactor || 2.5;
+                    newInterval = 1;
+                } else {
+                    if (!oldInterval) {
+                        newInterval = 1;
+                        newFactor = 2.5;
+                    } else if (oldInterval === 1) {
+                        newInterval = 6;
+                        newFactor = oldFactor;
+                    } else {
+                        newInterval = Math.round(oldInterval * (oldFactor || 2.5));
+                        newFactor = oldFactor || 2.5;
+                    }
+                    
+                    newFactor = oldFactor + (0.1 - (5 - quality) * (0.08 + (5 - quality) * 0.02));
+                    newInterval = Math.min(this.MAX_INTERVAL, newInterval);
+                }
+                
+                const nextDate = new Date(lastReview || Date.now());
+                nextDate.setDate(nextDate.getDate() + newInterval);
+                
+                return {
+                    nextReview: nextDate.getTime(),
+                    interval: newInterval,
+                    factor: Math.max(this.MIN_FACTOR, Math.min(3.5, newFactor)),
+                    quality
+                };
+            }
+
+            // ========== تمرین‌سازی (اصلاح Multiple Choice) ==========
+            generateVocabularyExercise(word, options = {}) {
+                const type = options.type || this.getRandomExerciseType();
+                
+                switch (type) {
+                    case 'multiple_choice':
+                        return this.generateMultipleChoiceFixed(word, options);
+                    case 'fill_in_blank':
+                        return this.generateFillInBlank(word, options);
+                    case 'translation':
+                        return this.generateTranslation(word, options);
+                    default:
+                        return this.generateMultipleChoiceFixed(word, options);
+                }
+            }
+
+            getRandomExerciseType() {
+                const types = ['multiple_choice', 'fill_in_blank', 'translation'];
+                return types[Math.floor(Math.random() * types.length)];
+            }
+
+            // === اصلاح اصلی: تابع Multiple Choice ===
+            generateMultipleChoiceFixed(word, options) {
+                // گزینه‌های صحیح و غلط
+                const correctAnswer = word.english;
+                const wrongAnswers = this.getWrongAnswers(word.english, 3);
+                
+                // ترکیب همه گزینه‌ها
+                let allChoices = [correctAnswer, ...wrongAnswers];
+                
+                // به هم ریختن گزینه‌ها
+                allChoices = this.shuffleArrayFixed(allChoices);
+                
+                // پیدا کردن موقعیت گزینه صحیح بعد از shuffle
+                const correctIndex = allChoices.indexOf(correctAnswer);
+                
+                return {
+                    type: 'multiple_choice',
+                    question: `معنی "${word.persian}" چیست؟`,
+                    choices: allChoices,
+                    correctIndex: correctIndex,
+                    correctAnswer: correctAnswer,
+                    difficulty: word.difficulty || 'medium'
+                };
+            }
+
+            getWrongAnswers(correctWord, count) {
+                const wordBank = [
+                    'House', 'Book', 'Car', 'Tree', 'Water', 
+                    'Time', 'Friend', 'City', 'School', 'Computer',
+                    'Phone', 'Table', 'Chair', 'Door', 'Window',
+                    'Apple', 'Orange', 'Bread', 'Milk', 'Coffee'
+                ];
+                
+                // فیلتر کردن کلمه صحیح
+                const availableWords = wordBank.filter(w => 
+                    w.toLowerCase() !== correctWord.toLowerCase()
+                );
+                
+                // انتخاب تصادفی
+                const selected = [];
+                while (selected.length < count && availableWords.length > 0) {
+                    const randomIndex = Math.floor(Math.random() * availableWords.length);
+                    selected.push(availableWords[randomIndex]);
+                    availableWords.splice(randomIndex, 1);
+                }
+                
+                return selected;
+            }
+
+            generateFillInBlank(word, options) {
+                const sentence = options.sentence || `I need to buy a new ___.`;
+                
+                return {
+                    type: 'fill_in_blank',
+                    question: 'جای خالی را پر کنید:',
+                    sentence: sentence.replace('___', '__________'),
+                    correctAnswer: word.english,
+                    hint: word.persian
+                };
+            }
+
+            generateTranslation(word, options) {
+                const direction = options.direction || 'en_to_fa';
+                
+                return {
+                    type: 'translation',
+                    question: direction === 'en_to_fa' 
+                        ? `ترجمه "${word.english}" به فارسی چیست؟`
+                        : `ترجمه "${word.persian}" به انگلیسی چیست؟`,
+                    correctAnswer: direction === 'en_to_fa' ? word.persian : word.english,
+                    direction: direction
+                };
+            }
+
+            // ========== پیشرفت کاربر ==========
+            calculateUserProgress(userStats, lessonStats) {
+                const total = lessonStats.totalExercises || 100;
+                const completed = userStats.completedExercises || 0;
+                const correct = userStats.correctAnswers || 0;
+                
+                const completionRate = total > 0 ? (completed / total) * 100 : 0;
+                const accuracyRate = completed > 0 ? (correct / completed) * 100 : 0;
+                
+                // محاسبه سطح
+                const xp = userStats.xp || 0;
+                let level = 1;
+                const thresholds = [0, 100, 300, 600, 1000, 1500, 2100, 2800, 3600, 4500];
+                
+                for (let i = thresholds.length - 1; i >= 0; i--) {
+                    if (xp >= thresholds[i]) {
+                        level = i + 1;
+                        break;
+                    }
+                }
+                
+                return {
+                    level,
+                    xp,
+                    completionRate: Math.round(completionRate),
+                    accuracyRate: Math.round(accuracyRate),
+                    completed,
+                    correct,
+                    total
+                };
+            }
+
+            // ========== ابزار کمکی ==========
+            shuffleArrayFixed(array) {
+                const newArray = [...array];
+                for (let i = newArray.length - 1; i > 0; i--) {
+                    const j = Math.floor(Math.random() * (i + 1));
+                    [newArray[i], newArray[j]] = [newArray[j], newArray[i]];
+                }
+                return newArray;
+            }
+
+            needsReview(lastReview) {
+                if (!lastReview) return true;
+                const days = (Date.now() - lastReview) / (86400000);
+                return days >= 1;
+            }
+        }
+
+        // ==================== تست‌ها (اصلاح‌شده) ====================
+        const engine = new LessonEngineFixed();
+        
+        const srsTests = [
+            {
+                id: 'srs-1',
+                title: 'SRS - اولین مرور',
+                run: () => {
+                    const result = engine.calculateNextReview(null, 5, null, null);
+                    return result.interval === 1 && result.quality === 5;
+                }
+            },
+            {
+                id: 'srs-2',
+                title: 'SRS - پاسخ اشتباه',
+                run: () => {
+                    const result = engine.calculateNextReview(Date.now(), 2, 10, 2.5);
+                    return result.interval === 1;
+                }
+            }
+        ];
+
+        // === اصلاح: تست Multiple Choice ===
+        const exerciseTests = [
+            {
+                id: 'ex-1',
+                title: 'Multiple Choice - تولید صحیح',
+                run: () => {
+                    const word = { 
+                        english: 'House', 
+                        persian: 'خانه', 
+                        difficulty: 'easy' 
+                    };
+                    
+                    const exercise = engine.generateMultipleChoiceFixed(word);
+                    
+                    // بررسی ساختار
+                    const hasCorrectStructure = 
+                        exercise.type === 'multiple_choice' &&
+                        exercise.question.includes('خانه') &&
+                        Array.isArray(exercise.choices) &&
+                        exercise.choices.length === 4 &&
+                        exercise.correctAnswer === 'House';
+                    
+                    // بررسی وجود گزینه صحیح
+                    const hasCorrectOption = exercise.choices.includes('House');
+                    
+                    // بررسی ایندکس صحیح
+                    const correctIndexValid = 
+                        exercise.correctIndex >= 0 && 
+                        exercise.correctIndex < 4 &&
+                        exercise.choices[exercise.correctIndex] === 'House';
+                    
+                    // بررسی عدم تکرار
+                    const uniqueChoices = new Set(exercise.choices);
+                    const noDuplicates = uniqueChoices.size === 4;
+                    
+                    console.log('Multiple Choice Test:', {
+                        exercise,
+                        hasCorrectStructure,
+                        hasCorrectOption,
+                        correctIndexValid,
+                        noDuplicates
+                    });
+                    
+                    return hasCorrectStructure && 
+                           hasCorrectOption && 
+                           correctIndexValid && 
+                           noDuplicates;
+                }
+            },
+            {
+                id: 'ex-2',
+                title: 'Multiple Choice - گزینه‌های غلط متفاوت',
+                run: () => {
+                    const word = { english: 'Book', persian: 'کتاب' };
+                    const exercise = engine.generateMultipleChoiceFixed(word);
+                    
+                    // گزینه‌های غلط نباید برابر با پاسخ صحیح باشند
+                    const wrongAnswers = exercise.choices.filter(c => c !== 'Book');
+                    const allWrong = wrongAnswers.every(w => w !== 'Book');
+                    const allDifferent = new Set(wrongAnswers).size === 3;
+                    
+                    return allWrong && allDifferent;
+                }
+            },
+            {
+                id: 'ex-3',
+                title: 'Fill in Blank',
+                run: () => {
+                    const word = { english: 'book', persian: 'کتاب' };
+                    const exercise = engine.generateFillInBlank(word, {
+                        sentence: 'I read a ___ every night.'
+                    });
+                    
+                    return exercise.type === 'fill_in_blank' &&
+                           exercise.correctAnswer === 'book' &&
+                           exercise.question.includes('جای خالی');
+                }
+            },
+            {
+                id: 'ex-4',
+                title: 'Translation',
+                run: () => {
+                    const word = { english: 'Water', persian: 'آب' };
+                    const exercise1 = engine.generateTranslation(word, { direction: 'en_to_fa' });
+                    const exercise2 = engine.generateTranslation(word, { direction: 'fa_to_en' });
+                    
+                    return exercise1.correctAnswer === 'آب' &&
+                           exercise2.correctAnswer === 'Water' &&
+                           exercise1.type === 'translation';
+                }
+            },
+            {
+                id: 'ex-5',
+                title: 'Shuffle Array',
+                run: () => {
+                    const array = [1, 2, 3, 4];
+                    const shuffled = engine.shuffleArrayFixed([...array]);
+                    
+                    return shuffled.length === 4 &&
+                           JSON.stringify(shuffled.sort()) === JSON.stringify(array.sort()) &&
+                           JSON.stringify(shuffled) !== JSON.stringify(array);
+                }
+            }
+        ];
+
+        const progressTests = [
+            {
+                id: 'pr-1',
+                title: 'محاسبه پیشرفت',
+                run: () => {
+                    const userStats = { 
+                        xp: 1200, 
+                        completedExercises: 50, 
+                        correctAnswers: 40 
+                    };
+                    const lessonStats = { totalExercises: 100 };
+                    
+                    const progress = engine.calculateUserProgress(userStats, lessonStats);
+                    
+                    return progress.level > 1 &&
+                           progress.accuracyRate === 80 &&
+                           progress.completionRate === 50;
+                }
+            },
+            {
+                id: 'pr-2',
+                title: 'نیاز به مرور',
+                run: () => {
+                    const needs1 = engine.needsReview(null);
+                    const needs2 = engine.needsReview(Date.now() - 172800000); // 2 روز پیش
+                    const needs3 = engine.needsReview(Date.now() - 3600000); // 1 ساعت پیش
+                    
+                    return needs1 && needs2 && !needs3;
+                }
+            }
+        ];
+
+        // ==================== اجرای تست‌ها ====================
+        async function runAllTests() {
+            clearTestAreas();
+            
+            const allTests = [...srsTests, ...exerciseTests, ...progressTests];
+            let passed = 0;
+            let total = 0;
+            
+            // اجرای تست‌های SRS
+            for (const test of srsTests) {
+                await executeTest(test, 'srs-tests');
+                total++;
+                if (await test.run()) passed++;
+            }
+            
+            // اجرای تست‌های تمرین (با تمرکز بر Multiple Choice)
+            for (const test of exerciseTests) {
+                await executeTest(test, 'exercise-tests');
+                total++;
+                if (await test.run()) passed++;
+            }
+            
+            // اجرای تست‌های پیشرفت
+            for (const test of progressTests) {
+                await executeTest(test, 'progress-tests');
+                total++;
+                if (await test.run()) passed++;
+            }
+            
+            updateSummary(passed, total);
+        }
+        
+        async function executeTest(test, containerId) {
+            const container = document.getElementById(containerId);
+            const testDiv = document.createElement('div');
+            testDiv.className = 'test-section';
+            
+            try {
+                const result = await test.run();
+                testDiv.innerHTML = `
+                    <div class="test-header">
+                        <div class="test-title">${test.title}</div>
+                        <div class="test-result ${result ? 'pass' : 'fail'}">
+                            ${result ? '✅' : '❌'}
+                        </div>
+                    </div>
+                `;
+                
+                if (!result) {
+                    const details = document.createElement('div');
+                    details.className = 'details';
+                    details.textContent = `تست "${test.title}" ناموفق بود`;
+                    testDiv.appendChild(details);
+                }
+            } catch (error) {
+                testDiv.innerHTML = `
+                    <div class="test-header">
+                        <div class="test-title">${test.title}</div>
+                        <div class="test-result fail">❌ خطا</div>
+                    </div>
+                    <div class="details">${error.message}</div>
+                `;
+            }
+            
+            container.appendChild(testDiv);
+        }
+        
+        function updateSummary(passed, total) {
+            const percentage = total > 0 ? Math.round((passed / total) * 100) : 0;
+            const summary = document.getElementById('summary-text');
+            
+            summary.innerHTML = `
+                <strong>نتایج تست:</strong><br>
+                ✅ ${passed} موفق | ❌ ${total - passed} ناموفق | 📊 ${percentage}% قبولی
+            `;
+            
+            summary.style.color = percentage >= 90 ? '#4caf50' : 
+                                 percentage >= 70 ? '#ff9800' : '#f44336';
+        }
+        
+        function clearTestAreas() {
+            document.getElementById('srs-tests').innerHTML = '';
+            document.getElementById('exercise-tests').innerHTML = '';
+            document.getElementById('progress-tests').innerHTML = '';
+        }
+        
+        function clearTests() {
+            clearTestAreas();
+            document.getElementById('summary-text').innerHTML = 'آماده اجرای ۱۵ تست...';
+            document.getElementById('summary-text').style.color = '#e3f2fd';
+        }
+
+        // اجرای خودکار تست‌ها
+        window.onload = () => {
+            updateSummary(0, 0);
+            setTimeout(runAllTests, 500);
+        };
+    </script>
+</body>
+</html>
