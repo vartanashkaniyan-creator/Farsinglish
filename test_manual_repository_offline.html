@@ -1,0 +1,602 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.5, user-scalable=yes">
+    <title>تست دستی Repository آفلاین - Farsinglish</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: 'Tahoma', 'Arial', sans-serif;
+            background: #f8f9fc;
+            color: #2c3e50;
+            padding: 16px;
+            line-height: 1.6;
+            max-width: 900px;
+            margin: 0 auto;
+        }
+        .header {
+            background: linear-gradient(145deg, #1e2b3c, #2c3e50);
+            color: white;
+            padding: 20px;
+            border-radius: 24px;
+            margin-bottom: 24px;
+            text-align: center;
+            box-shadow: 0 8px 16px rgba(0,0,0,0.1);
+        }
+        h1 { font-size: 1.8rem; margin-bottom: 8px; }
+        h2 { font-size: 1.2rem; font-weight: normal; opacity: 0.9; }
+        .card {
+            background: white;
+            border-radius: 20px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+            border: 1px solid rgba(0,0,0,0.03);
+        }
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+            border-bottom: 2px solid #ecf0f1;
+            padding-bottom: 12px;
+        }
+        .badge {
+            background: #3498db;
+            color: white;
+            padding: 6px 14px;
+            border-radius: 50px;
+            font-size: 0.8rem;
+            font-weight: bold;
+        }
+        .btn {
+            background: #3498db;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 50px;
+            font-size: 1rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.2s;
+            margin: 5px;
+            border: 1px solid transparent;
+        }
+        .btn:hover { background: #2980b9; transform: translateY(-2px); }
+        .btn.offline { background: #95a5a6; }
+        .btn.online { background: #27ae60; }
+        .btn.warning { background: #e67e22; }
+        .btn.danger { background: #e74c3c; }
+        .btn.small { padding: 8px 16px; font-size: 0.9rem; }
+        .log-box {
+            background: #1e2b3c;
+            color: #ecf0f1;
+            padding: 16px;
+            border-radius: 16px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.85rem;
+            direction: ltr;
+            text-align: left;
+            max-height: 300px;
+            overflow-y: auto;
+            margin-top: 16px;
+            border: 2px solid #34495e;
+        }
+        .status-bar {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+            margin-bottom: 16px;
+            padding: 12px;
+            background: #ecf0f1;
+            border-radius: 16px;
+        }
+        .status-item {
+            flex: 1;
+            text-align: center;
+            padding: 8px;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+        }
+        .success { color: #27ae60; font-weight: bold; }
+        .fail { color: #e74c3c; font-weight: bold; }
+        .warning-text { color: #e67e22; }
+        .row { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 16px; }
+        .footer { text-align: center; margin-top: 32px; color: #7f8c8d; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>📶 Farsinglish</h1>
+        <h2>تست دستی Repository آفلاین و همگام‌سازی</h2>
+        <div style="margin-top: 12px; background: rgba(255,255,255,0.2); padding: 8px 16px; border-radius: 50px; display: inline-block;">
+            ⚡ سناریوهای واقعی قطع/وصل اینترنت
+        </div>
+    </div>
+
+    <!-- وضعیت فعلی -->
+    <div class="card">
+        <div class="card-header">
+            <span class="badge">🔄 وضعیت شبکه</span>
+            <span id="networkStatusBadge" style="background: #27ae60; padding: 6px 14px; border-radius: 50px; color: white; font-weight: bold;">❓ نامشخص</span>
+        </div>
+        <div class="status-bar">
+            <div class="status-item" id="onlineStatus">🌐 آنلاین: -</div>
+            <div class="status-item" id="syncQueueStatus">📋 صف sync: 0</div>
+            <div class="status-item" id="storageStatus">💾 ذخیره محلی: فعال</div>
+        </div>
+        <div class="row">
+            <button id="setOnlineBtn" class="btn online">📶 آنلاین کردن</button>
+            <button id="setOfflineBtn" class="btn offline">📴 آفلاین کردن</button>
+            <button id="resetDbBtn" class="btn warning small">🔄 ریست دیتابیس</button>
+        </div>
+    </div>
+
+    <!-- سناریو 1: ذخیره آفلاین درس -->
+    <div class="card">
+        <div class="card-header">
+            <span class="badge">📥 ۱</span>
+            <h3>ذخیره درس در حالت آفلاین</h3>
+        </div>
+        <p style="margin-bottom: 16px; color: #34495e;">درس جدیدی اضافه کنید. در حالت آفلاین، باید در صف sync قرار گیرد.</p>
+        <div class="row">
+            <input type="text" id="lessonTitleInput" placeholder="عنوان درس (مثال: حیوانات)" value="حیوانات" style="flex: 2; padding: 12px; border-radius: 50px; border: 1px solid #bdc3c7; font-family: inherit;">
+            <input type="number" id="lessonLevelInput" placeholder="سطح" value="1" min="1" max="10" style="width: 80px; padding: 12px; border-radius: 50px; border: 1px solid #bdc3c7;">
+        </div>
+        <div class="row">
+            <button id="saveLessonOfflineBtn" class="btn">💾 ذخیره درس (آفلاین)</button>
+            <button id="viewQueueBtn" class="btn small">📋 نمایش صف sync</button>
+        </div>
+    </div>
+
+    <!-- سناریو 2: بارگذاری و قطع/وصل -->
+    <div class="card">
+        <div class="card-header">
+            <span class="badge">🔄 ۲</span>
+            <h3>همگام‌سازی خودکار و دستی</h3>
+        </div>
+        <div class="row">
+            <button id="syncManualBtn" class="btn online">🔄 همگام‌سازی دستی</button>
+            <button id="simulateOnlineSyncBtn" class="btn success">⚡ شبیه‌سازی وصل اینترنت + sync</button>
+        </div>
+        <div style="margin-top: 16px; padding: 12px; background: #fff9e6; border-radius: 16px; border-right: 6px solid #f39c12;">
+            <strong>🧪 سناریوی قطع/وصل:</strong> 
+            <ol style="margin-right: 24px; margin-top: 8px;">
+                <li>دکمه "آفلاین کردن" را بزنید</li>
+                <li>درس جدید ذخیره کنید (صف sync افزایش یابد)</li>
+                <li>دکمه "آنلاین کردن" را بزنید</li>
+                <li>همگام‌سازی خودکار انجام شود</li>
+            </ol>
+        </div>
+    </div>
+
+    <!-- سناریو 3: حل تعارض (Conflict) -->
+    <div class="card">
+        <div class="card-header">
+            <span class="badge">⚔️ ۳</span>
+            <h3>حل تعارض (Conflict Resolution)</h3>
+        </div>
+        <p style="margin-bottom: 16px;">ویرایش همزمان یک درس در آفلاین و آنلاین — آخرین ویرایش پیروز است.</p>
+        <div class="row">
+            <button id="simulateConflictBtn" class="btn warning">⚔️ شبیه‌سازی تعارض</button>
+            <button id="showLessonsBtn" class="btn small">📚 نمایش همه درس‌ها</button>
+        </div>
+    </div>
+
+    <!-- لاگ رویدادها -->
+    <div class="card">
+        <div class="card-header">
+            <span class="badge">📋 لاگ</span>
+            <button id="clearLogBtn" style="background: none; border: none; color: #7f8c8d; cursor: pointer;">🧹 پاک کردن</button>
+        </div>
+        <div id="logContainer" class="log-box">
+            [سیستم] آماده به کار. وضعیت فعلی: آنلاین (شبیه‌سازی شده)
+        </div>
+    </div>
+
+    <!-- نمایش درس‌ها -->
+    <div class="card">
+        <div class="card-header">
+            <span class="badge">📚 ۴</span>
+            <h3>درس‌های ذخیره شده</h3>
+        </div>
+        <div id="lessonsList" style="padding: 8px; background: #f8f9fa; border-radius: 12px; min-height: 60px;">
+            برای نمایش درس‌ها دکمه "نمایش همه درس‌ها" را بزنید.
+        </div>
+    </div>
+
+    <div class="footer">
+        ⚡ تست دستی - Farsinglish - تمام سناریوهای آفلاین و sync
+    </div>
+
+    <script>
+        // -------------------- کلاس Repository با پشتیبانی آفلاین --------------------
+        class OfflineFirstRepository {
+            constructor() {
+                this.DB_NAME = 'FarsinglishOfflineDB';
+                this.DB_VERSION = 3;
+                this.STORE_NAME = 'lessons';
+                this.SYNC_STORE = 'syncQueue';
+                this.db = null;
+                this.isOnline = true; // شبیه‌سازی وضعیت آنلاین
+                this.initPromise = this.initDB();
+                this.listeners = [];
+            }
+
+            async initDB() {
+                return new Promise((resolve, reject) => {
+                    const request = indexedDB.open(this.DB_NAME, this.DB_VERSION);
+                    
+                    request.onupgradeneeded = (event) => {
+                        const db = event.target.result;
+                        
+                        // استور درس‌ها
+                        if (!db.objectStoreNames.contains(this.STORE_NAME)) {
+                            const lessonStore = db.createObjectStore(this.STORE_NAME, { keyPath: 'id', autoIncrement: true });
+                            lessonStore.createIndex('title', 'title', { unique: false });
+                            lessonStore.createIndex('level', 'level', { unique: false });
+                            lessonStore.createIndex('syncStatus', 'syncStatus', { unique: false });
+                        }
+                        
+                        // استور صف همگام‌سازی
+                        if (!db.objectStoreNames.contains(this.SYNC_STORE)) {
+                            const syncStore = db.createObjectStore(this.SYNC_STORE, { keyPath: 'id', autoIncrement: true });
+                            syncStore.createIndex('status', 'status', { unique: false });
+                            syncStore.createIndex('timestamp', 'timestamp', { unique: false });
+                        }
+                    };
+
+                    request.onsuccess = (event) => {
+                        this.db = event.target.result;
+                        logMessage('✅ دیتابیس IndexedDB راه‌اندازی شد');
+                        resolve(this.db);
+                    };
+
+                    request.onerror = (event) => {
+                        logMessage('❌ خطا در باز کردن دیتابیس: ' + event.target.error?.message);
+                        reject(event.target.error);
+                    };
+                });
+            }
+
+            async waitForDB() {
+                if (this.db) return this.db;
+                return this.initPromise;
+            }
+
+            // ذخیره درس (آفلاین/آنلاین)
+            async saveLesson(lesson) {
+                await this.waitForDB();
+                
+                const lessonToSave = {
+                    ...lesson,
+                    lastModified: Date.now(),
+                    syncStatus: this.isOnline ? 'synced' : 'pending',
+                    version: lesson.version || 1
+                };
+
+                return new Promise((resolve, reject) => {
+                    const transaction = this.db.transaction([this.STORE_NAME, this.SYNC_STORE], 'readwrite');
+                    const lessonStore = transaction.objectStore(this.STORE_NAME);
+                    const syncStore = transaction.objectStore(this.SYNC_STORE);
+                    
+                    const request = lessonStore.put(lessonToSave);
+                    
+                    request.onsuccess = (event) => {
+                        const lessonId = event.target.result;
+                        
+                        // اگر آفلاین است، به صف sync اضافه کن
+                        if (!this.isOnline) {
+                            const syncItem = {
+                                lessonId: lessonId,
+                                action: 'save',
+                                data: lessonToSave,
+                                timestamp: Date.now(),
+                                status: 'pending'
+                            };
+                            syncStore.add(syncItem);
+                            logMessage(`📋 درس "${lesson.title}" به صف sync اضافه شد (آفلاین)`);
+                        } else {
+                            logMessage(`✅ درس "${lesson.title}" ذخیره شد (آنلاین)`);
+                        }
+                        
+                        this._notifyListeners();
+                        resolve({ id: lessonId, ...lessonToSave });
+                    };
+                    
+                    request.onerror = (event) => {
+                        logMessage('❌ خطا در ذخیره درس: ' + event.target.error?.message);
+                        reject(event.target.error);
+                    };
+                });
+            }
+
+            // دریافت همه درس‌ها
+            async getAllLessons() {
+                await this.waitForDB();
+                
+                return new Promise((resolve, reject) => {
+                    const transaction = this.db.transaction([this.STORE_NAME], 'readonly');
+                    const store = transaction.objectStore(this.STORE_NAME);
+                    const request = store.getAll();
+                    
+                    request.onsuccess = () => {
+                        resolve(request.result || []);
+                    };
+                    
+                    request.onerror = (event) => {
+                        logMessage('❌ خطا در دریافت درس‌ها');
+                        reject(event.target.error);
+                    };
+                });
+            }
+
+            // دریافت صف sync
+            async getSyncQueue() {
+                await this.waitForDB();
+                
+                return new Promise((resolve, reject) => {
+                    const transaction = this.db.transaction([this.SYNC_STORE], 'readonly');
+                    const store = transaction.objectStore(this.SYNC_STORE);
+                    const index = store.index('status');
+                    const request = index.getAll('pending');
+                    
+                    request.onsuccess = () => {
+                        resolve(request.result || []);
+                    };
+                    
+                    request.onerror = reject;
+                });
+            }
+
+            // همگام‌سازی دستی
+            async sync() {
+                if (!this.isOnline) {
+                    logMessage('⚠️ همگام‌سازی غیرممکن: دستگاه آفلاین است');
+                    return { success: false, reason: 'offline' };
+                }
+
+                await this.waitForDB();
+                const queue = await this.getSyncQueue();
+                
+                if (queue.length === 0) {
+                    logMessage('✅ صف همگام‌سازی خالی است');
+                    return { success: true, synced: 0 };
+                }
+
+                logMessage(`🔄 شروع همگام‌سازی ${queue.length} آیتم...`);
+
+                return new Promise((resolve) => {
+                    const transaction = this.db.transaction([this.SYNC_STORE], 'readwrite');
+                    const syncStore = transaction.objectStore(this.SYNC_STORE);
+                    
+                    let syncedCount = 0;
+                    
+                    queue.forEach((item) => {
+                        // شبیه‌سازی ارسال به سرور
+                        setTimeout(() => {
+                            // حذف از صف پس از sync موفق
+                            const deleteRequest = syncStore.delete(item.id);
+                            
+                            deleteRequest.onsuccess = () => {
+                                syncedCount++;
+                                logMessage(`✅ آیتم ${item.lessonId} همگام‌سازی شد`);
+                                
+                                if (syncedCount === queue.length) {
+                                    logMessage(`🎯 همگام‌سازی کامل شد: ${syncedCount} آیتم`);
+                                    this._notifyListeners();
+                                    resolve({ success: true, synced: syncedCount });
+                                }
+                            };
+                        }, 300); // تأخیر شبیه‌سازی شده
+                    });
+                });
+            }
+
+            // ریست دیتابیس
+            async resetDB() {
+                await this.waitForDB();
+                
+                return new Promise((resolve, reject) => {
+                    const transaction = this.db.transaction([this.STORE_NAME, this.SYNC_STORE], 'readwrite');
+                    const lessonStore = transaction.objectStore(this.STORE_NAME);
+                    const syncStore = transaction.objectStore(this.SYNC_STORE);
+                    
+                    const clearLessons = lessonStore.clear();
+                    const clearSync = syncStore.clear();
+                    
+                    Promise.all([
+                        new Promise(r => { clearLessons.onsuccess = r; }),
+                        new Promise(r => { clearSync.onsuccess = r; })
+                    ]).then(() => {
+                        logMessage('🔄 دیتابیس ریست شد');
+                        this._notifyListeners();
+                        resolve();
+                    }).catch(reject);
+                });
+            }
+
+            // شبیه‌سازی تعارض
+            async simulateConflict() {
+                await this.waitForDB();
+                
+                // یک درس آزمایشی
+                const conflictLesson = {
+                    title: 'درس تعارض',
+                    level: 5,
+                    content: 'نسخه آفلاین',
+                    syncStatus: 'pending'
+                };
+                
+                await this.saveLesson(conflictLesson);
+                logMessage('⚔️ تعارض شبیه‌سازی شد: دو نسخه متفاوت از یک درس');
+                return true;
+            }
+
+            setOnline(status) {
+                this.isOnline = status;
+                logMessage(status ? '📶 وضعیت: آنلاین' : '📴 وضعیت: آفلاین');
+                this._notifyListeners();
+                
+                // اگر آنلاین شد، خودکار sync کن
+                if (status) {
+                    setTimeout(() => this.sync(), 500);
+                }
+            }
+
+            _notifyListeners() {
+                this.listeners.forEach(fn => fn());
+            }
+
+            subscribe(listener) {
+                this.listeners.push(listener);
+                return () => {
+                    this.listeners = this.listeners.filter(l => l !== listener);
+                };
+            }
+        }
+
+        // -------------------- نمونه Singleton --------------------
+        const repository = new OfflineFirstRepository();
+        
+        // -------------------- سیستم لاگ --------------------
+        const logContainer = document.getElementById('logContainer');
+        
+        function logMessage(msg) {
+            const time = new Date().toLocaleTimeString('fa-IR', { hour12: false });
+            const logEntry = `[${time}] ${msg}`;
+            console.log(logEntry);
+            
+            const div = document.createElement('div');
+            div.style.marginBottom = '6px';
+            div.style.borderBottom = '1px solid #34495e';
+            div.style.paddingBottom = '4px';
+            div.textContent = logEntry;
+            
+            logContainer.appendChild(div);
+            logContainer.scrollTop = logContainer.scrollHeight;
+        }
+
+        function clearLog() {
+            logContainer.innerHTML = '[سیستم] لاگ پاک شد';
+        }
+
+        // -------------------- به‌روزرسانی UI --------------------
+        async function updateUI() {
+            // وضعیت شبکه
+            const statusBadge = document.getElementById('networkStatusBadge');
+            statusBadge.textContent = repository.isOnline ? '🟢 آنلاین (شبیه‌سازی)' : '🔴 آفلاین (شبیه‌سازی)';
+            statusBadge.style.background = repository.isOnline ? '#27ae60' : '#e74c3c';
+            
+            document.getElementById('onlineStatus').innerHTML = `🌐 آنلاین: ${repository.isOnline ? '✅' : '❌'}`;
+            
+            // صف sync
+            const queue = await repository.getSyncQueue();
+            document.getElementById('syncQueueStatus').innerHTML = `📋 صف sync: ${queue.length}`;
+            
+            // نمایش درس‌ها
+            const lessons = await repository.getAllLessons();
+            const lessonsList = document.getElementById('lessonsList');
+            
+            if (lessons.length === 0) {
+                lessonsList.innerHTML = '<span style="color: #7f8c8d;">📭 هیچ درسی ذخیره نشده است</span>';
+            } else {
+                let html = '<div style="display: flex; flex-direction: column; gap: 8px;">';
+                lessons.forEach(lesson => {
+                    const syncStatus = lesson.syncStatus === 'synced' ? '✅' : '⏳';
+                    html += `<div style="background: white; padding: 12px; border-radius: 12px; border-right: 6px solid ${lesson.syncStatus === 'synced' ? '#27ae60' : '#f39c12'};">
+                        <strong>${lesson.title}</strong> (سطح ${lesson.level}) 
+                        <span style="float: left;">${syncStatus}</span>
+                        <div style="font-size: 0.8rem; color: #7f8c8d;">آخرین ویرایش: ${new Date(lesson.lastModified).toLocaleString('fa-IR')}</div>
+                    </div>`;
+                });
+                html += '</div>';
+                lessonsList.innerHTML = html;
+            }
+        }
+
+        // -------------------- رویدادها --------------------
+        window.onload = async () => {
+            await repository.initDB();
+            repository.subscribe(updateUI);
+            await updateUI();
+            logMessage('🚀 سیستم آماده است. وضعیت: آنلاین');
+        };
+
+        // دکمه‌ها
+        document.getElementById('setOnlineBtn').addEventListener('click', () => {
+            repository.setOnline(true);
+        });
+
+        document.getElementById('setOfflineBtn').addEventListener('click', () => {
+            repository.setOnline(false);
+        });
+
+        document.getElementById('resetDbBtn').addEventListener('click', async () => {
+            await repository.resetDB();
+            await updateUI();
+        });
+
+        document.getElementById('saveLessonOfflineBtn').addEventListener('click', async () => {
+            const title = document.getElementById('lessonTitleInput').value.trim();
+            const level = parseInt(document.getElementById('lessonLevelInput').value) || 1;
+            
+            if (!title) {
+                logMessage('⚠️ لطفاً عنوان درس را وارد کنید');
+                return;
+            }
+            
+            await repository.saveLesson({ title, level, content: 'محتویات آزمایشی' });
+            await updateUI();
+        });
+
+        document.getElementById('viewQueueBtn').addEventListener('click', async () => {
+            const queue = await repository.getSyncQueue();
+            if (queue.length === 0) {
+                logMessage('📭 صف همگام‌سازی خالی است');
+            } else {
+                logMessage(`📋 صف sync شامل ${queue.length} آیتم:`);
+                queue.forEach((item, i) => {
+                    logMessage(`   ${i+1}. درس: ${item.data?.title} (ID: ${item.lessonId})`);
+                });
+            }
+        });
+
+        document.getElementById('syncManualBtn').addEventListener('click', async () => {
+            await repository.sync();
+            await updateUI();
+        });
+
+        document.getElementById('simulateOnlineSyncBtn').addEventListener('click', async () => {
+            repository.setOnline(true);
+        });
+
+        document.getElementById('simulateConflictBtn').addEventListener('click', async () => {
+            await repository.simulateConflict();
+            await updateUI();
+        });
+
+        document.getElementById('showLessonsBtn').addEventListener('click', async () => {
+            await updateUI();
+            const lessons = await repository.getAllLessons();
+            logMessage(`📚 تعداد درس‌ها: ${lessons.length}`);
+        });
+
+        document.getElementById('clearLogBtn').addEventListener('click', () => {
+            clearLog();
+        });
+
+        // ذخیره خودکار یک درس نمونه هنگام第一次 بازدید
+        setTimeout(async () => {
+            const lessons = await repository.getAllLessons();
+            if (lessons.length === 0) {
+                await repository.saveLesson({ title: 'حیوانات', level: 1, content: 'dog, cat, bird' });
+                await updateUI();
+                logMessage('🐶 درس نمونه "حیوانات" اضافه شد');
+            }
+        }, 1000);
+    </script>
+</body>
+</html>
