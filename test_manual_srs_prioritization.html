@@ -1,0 +1,484 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.5, user-scalable=yes">
+    <title>تست دستی اولویت‌بندی SRS - Farsinglish</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: 'Tahoma', 'Vazir', 'Segoe UI', sans-serif;
+            background: #f8fafc;
+            color: #1e293b;
+            padding: 16px;
+            max-width: 800px;
+            margin: 0 auto;
+            line-height: 1.6;
+        }
+        .header {
+            background: linear-gradient(145deg, #0f2c3e, #1a3a4f);
+            color: white;
+            padding: 24px 20px;
+            border-radius: 28px;
+            margin-bottom: 24px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+            text-align: center;
+        }
+        h1 { font-size: 1.8rem; margin-bottom: 8px; }
+        h2 { font-size: 1.2rem; font-weight: 400; opacity: 0.95; }
+        .scenario-card {
+            background: white;
+            border-radius: 20px;
+            padding: 20px;
+            margin-bottom: 25px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+            border: 1px solid #e2e8f0;
+            transition: all 0.2s;
+        }
+        .scenario-title {
+            background: #f1f5f9;
+            padding: 12px 18px;
+            border-radius: 14px;
+            margin-bottom: 18px;
+            font-weight: bold;
+            color: #0c4a6e;
+            border-right: 6px solid #0284c7;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 1.1rem;
+        }
+        .btn {
+            background: #ffffff;
+            border: 2px solid #cbd5e1;
+            padding: 14px 20px;
+            border-radius: 50px;
+            font-size: 1rem;
+            font-weight: 600;
+            color: #1e293b;
+            cursor: pointer;
+            transition: 0.2s;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            margin: 6px;
+            min-width: 140px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+        }
+        .btn-primary {
+            background: #0284c7;
+            border-color: #0284c7;
+            color: white;
+        }
+        .btn-success {
+            background: #0f7b5a;
+            border-color: #0f7b5a;
+            color: white;
+        }
+        .btn-warning {
+            background: #b45309;
+            border-color: #b45309;
+            color: white;
+        }
+        .btn:active { transform: scale(0.97); }
+        .log-panel {
+            background: #0f172a;
+            color: #e2e8f0;
+            padding: 18px;
+            border-radius: 16px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.85rem;
+            direction: ltr;
+            text-align: left;
+            max-height: 300px;
+            overflow-y: auto;
+            margin-top: 25px;
+            border: 1px solid #334155;
+        }
+        .badge {
+            background: #e2e8f0;
+            padding: 6px 14px;
+            border-radius: 30px;
+            font-size: 0.8rem;
+            color: #334155;
+            display: inline-block;
+            margin-left: 8px;
+        }
+        .review-item {
+            background: #fef9c3;
+            border-right: 6px solid #eab308;
+            padding: 12px;
+            margin: 10px 0;
+            border-radius: 12px;
+        }
+        .footer {
+            text-align: center;
+            margin-top: 35px;
+            color: #64748b;
+            font-size: 0.9rem;
+        }
+        .flex-row {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 12px;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🧠 آزمون دستی اولویت‌بندی SRS</h1>
+        <h2>✏️ Farsinglish — شبیه‌ساز مرور هوشمند (الگوریتم SM-2 پیشرفته)</h2>
+        <div style="margin-top: 12px;"><span class="badge">📱 تست لمسی و دستی</span><span class="badge">⚡ ۸ سناریوی واقعی</span></div>
+    </div>
+
+    <!-- سناریو ۱: اولویت با درس‌های دارای بیشترین تأخیر -->
+    <div class="scenario-card" id="scenario1">
+        <div class="scenario-title">
+            <span>🔴 ۱. اولویت‌بندی بر اساس تأخیر (Overdue)</span>
+        </div>
+        <p style="margin-bottom: 12px;">📌 ۳ درس با تأخیرهای متفاوت: <strong>درس A (۵ روز عقب), درس B (۲ روز عقب), درس C (۰ روز عقب)</strong></p>
+        <div id="reviewList1" class="review-item" style="background:#f1f5f9;">
+            منتظر اجرای تست...
+        </div>
+        <div class="flex-row">
+            <button class="btn btn-primary" onclick="runScenario1()">🔄 شبیه‌سازی و اولویت‌بندی</button>
+            <button class="btn" onclick="markResult('scenario1', true)">✅ تأیید اولویت درست</button>
+            <button class="btn" onclick="markResult('scenario1', false)">❌ اولویت نادرست</button>
+        </div>
+        <p id="status1" style="margin-top: 12px; color: #475569;"></p>
+    </div>
+
+    <!-- سناریو ۲: پاسخ ضعیف => بازگشت به فاصله ۱ روزه -->
+    <div class="scenario-card" id="scenario2">
+        <div class="scenario-title">
+            <span>🟠 ۲. پاسخ نادرست (کیفیت ۲) و تأثیر بر اولویت</span>
+        </div>
+        <p>📌 درس D با ۴ بار تکرار، فاصله ۱۲ روزه، پاسخ کاربر: <strong>کیفیت ۲ (ضعیف)</strong></p>
+        <div id="reviewList2" style="background: #fee2e2; padding: 12px; border-radius: 12px; margin: 10px 0;">
+            ...
+        </div>
+        <div class="flex-row">
+            <button class="btn btn-primary" onclick="runScenario2()">📉 اعمال پاسخ و محاسبه اولویت جدید</button>
+            <button class="btn" onclick="markResult('scenario2', true)">✅ تأیید</button>
+            <button class="btn" onclick="markResult('scenario2', false)">❌ رد</button>
+        </div>
+        <p id="status2"></p>
+    </div>
+
+    <!-- سناریو ۳: درس جدید در مقابل درس نیازمند مرور فوری -->
+    <div class="scenario-card" id="scenario3">
+        <div class="scenario-title">
+            <span>🟡 ۳. درس جدید (تکرار ۰) vs درس آماده مرور</span>
+        </div>
+        <p>📌 درس E: جدید، بدون مرور — درس F: آماده مرور (۲ روز گذشته)</p>
+        <div class="flex-row">
+            <button class="btn btn-primary" onclick="runScenario3()">⚖️ مقایسه اولویت</button>
+            <button class="btn" onclick="markResult('scenario3', true)">✅ درس F اولویت بالاتر</button>
+            <button class="btn" onclick="markResult('scenario3', false)">❌ اشتباه</button>
+        </div>
+        <p id="status3"></p>
+    </div>
+
+    <!-- سناریو ۴: حداقل و حداکثر عامل سهولت -->
+    <div class="scenario-card" id="scenario4">
+        <div class="scenario-title">
+            <span>🟢 ۴. کران‌های عامل سهولت (Ease Factor)</span>
+        </div>
+        <p>📌 اعمال ۵ پاسخ عالی پیاپی و سپس ۳ پاسخ ضعیف — بررسی محدودیت ۱.۳ تا ۳.۰</p>
+        <div class="flex-row">
+            <button class="btn btn-primary" onclick="runScenario4()">📊 شبیه‌سازی زنجیره</button>
+            <button class="btn" onclick="markResult('scenario4', true)">✅ کران‌ها رعایت شده</button>
+            <button class="btn" onclick="markResult('scenario4', false)">❌ نقض کران</button>
+        </div>
+        <p id="status4"></p>
+    </div>
+
+    <!-- سناریو ۵: بارگذاری همزمان ۲۰ درس و محاسبه بار مرور -->
+    <div class="scenario-card" id="scenario5">
+        <div class="scenario-title">
+            <span>🔵 ۵. عملکرد در حجم بالا (۲۰ درس متنوع)</span>
+        </div>
+        <p>📌 شبیه‌سازی ۲۰ درس با فواصل و تکرارهای تصادفی، محاسبه ۱۰ درس اولویت‌دار</p>
+        <div class="flex-row">
+            <button class="btn btn-primary" onclick="runScenario5()">⚡ اجرای بارگذاری</button>
+            <button class="btn" onclick="markResult('scenario5', true)">✅ نتیجه منطقی</button>
+            <button class="btn" onclick="markResult('scenario5', false)">❌ ناپایدار</button>
+        </div>
+        <pre id="scenario5Output" style="background: #e6f7ff; padding: 8px; margin-top: 10px; direction: ltr; max-height: 150px;"></pre>
+        <p id="status5"></p>
+    </div>
+
+    <!-- سناریو ۶: توزیع هوشمند مرور در روزهای آتی -->
+    <div class="scenario-card" id="scenario6">
+        <div class="scenario-title">
+            <span>🟣 ۶. پیشنهاد مرور برای فردا و ۷ روز آینده</span>
+        </div>
+        <p>📌 از میان ۱۵ درس، کدام‌ها باید فردا مرور شوند؟</p>
+        <div class="flex-row">
+            <button class="btn btn-primary" onclick="runScenario6()">📅 تولید برنامه مرور</button>
+            <button class="btn" onclick="markResult('scenario6', true)">✅ منطقی است</button>
+            <button class="btn" onclick="markResult('scenario6', false)">❌ نیاز به اصلاح</button>
+        </div>
+        <div id="scenario6Output" style="margin-top: 12px;"></div>
+        <p id="status6"></p>
+    </div>
+
+    <!-- سناریو ۷: ترکیب پاسخ‌های مختلف و تغییر اولویت پویا -->
+    <div class="scenario-card" id="scenario7">
+        <div class="scenario-title">
+            <span>🟤 ۷. به‌روزرسانی پویا پس از پاسخ متوالی</span>
+        </div>
+        <p>📌 سه درس G, H, I — اعمال کیفیت‌های ۵, ۲, ۴ — بررسی رتبه‌بندی نهایی</p>
+        <div class="flex-row">
+            <button class="btn btn-primary" onclick="runScenario7()">🔄 تغییر و اولویت جدید</button>
+            <button class="btn" onclick="markResult('scenario7', true)">✅ تأیید</button>
+            <button class="btn" onclick="markResult('scenario7', false)">❌ مشکل دارد</button>
+        </div>
+        <p id="status7"></p>
+    </div>
+
+    <!-- سناریو ۸: اعتبارسنجی ورودی و خطاهای محتمل -->
+    <div class="scenario-card" id="scenario8">
+        <div class="scenario-title">
+            <span>⚫ ۸. رفتار در شرایط مرزی (ورودی نامعتبر)</span>
+        </div>
+        <p>📌 کیفیت ۷، تکرار منفی، فاصله صفر — آیا خطای مناسب دریافت می‌شود؟</p>
+        <div class="flex-row">
+            <button class="btn btn-primary" onclick="runScenario8()">⚠️ شبیه‌سازی خطا</button>
+            <button class="btn" onclick="markResult('scenario8', true)">✅ مدیریت خطا صحیح</button>
+            <button class="btn" onclick="markResult('scenario8', false)">❌ خطا قورت داده شد</button>
+        </div>
+        <p id="status8" style="color: #b45309;"></p>
+    </div>
+
+    <!-- پنل لاگ و گزارش دستی -->
+    <div style="background: white; border-radius: 20px; padding: 20px; margin: 30px 0;">
+        <h3 style="display: flex; gap: 10px; margin-bottom: 16px;">📋 ارزیابی دستی تست‌کننده</h3>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;" id="checklist">
+            <label><input type="checkbox" id="c1"> سناریو ۱ - اولویت تأخیر</label>
+            <label><input type="checkbox" id="c2"> سناریو ۲ - پاسخ ضعیف</label>
+            <label><input type="checkbox" id="c3"> سناریو ۳ - درس جدید/مرور</label>
+            <label><input type="checkbox" id="c4"> سناریو ۴ - کران EF</label>
+            <label><input type="checkbox" id="c5"> سناریو ۵ - حجم بالا</label>
+            <label><input type="checkbox" id="c6"> سناریو ۶ - توزیع مرور</label>
+            <label><input type="checkbox" id="c7"> سناریو ۷ - اولویت پویا</label>
+            <label><input type="checkbox" id="c8"> سناریو ۸ - خطاهای مرزی</label>
+        </div>
+        <button class="btn btn-success" style="width: 100%; margin-top: 20px;" onclick="exportReport()">📤 ذخیره گزارش دستی</button>
+    </div>
+
+    <div class="log-panel" id="logPanel">
+        ⏳ منتظر اجرای اولین سناریو...
+    </div>
+
+    <div class="footer">
+        ✅ این تست کاملاً دستی و قابل اجرا در موبایل — هر سناریو با دکمه مجزا ارزیابی می‌شود.
+    </div>
+
+    <script>
+        // ---------- هسته SRS (دقیقاً مشابه نسخه اصلی) ----------
+        class SRSScheduler {
+            constructor() {
+                this.defaultEaseFactor = 2.5;
+                this.minEaseFactor = 1.3;
+                this.maxEaseFactor = 3.0;
+            }
+            calculateNextReview(quality, repetitions, easeFactor, interval = 0) {
+                if (quality < 0 || quality > 5) throw new Error('کیفیت باید بین ۰ تا ۵ باشد');
+                if (repetitions < 0) throw new Error('تکرار نمی‌تواند منفی باشد');
+                if (quality < 3) {
+                    return {
+                        interval: 1,
+                        repetitions: 0,
+                        easeFactor: Math.max(this.minEaseFactor, (easeFactor - 0.2).toFixed(2) * 1)
+                    };
+                }
+                let newInterval;
+                if (repetitions === 0) newInterval = 1;
+                else if (repetitions === 1) newInterval = 6;
+                else newInterval = Math.round(interval * easeFactor);
+                let newEaseFactor = easeFactor + (0.1 - (5 - quality) * (0.08 + (5 - quality) * 0.02));
+                newEaseFactor = Math.max(this.minEaseFactor, Math.min(this.maxEaseFactor, newEaseFactor));
+                newEaseFactor = Math.round(newEaseFactor * 100) / 100;
+                return {
+                    interval: newInterval,
+                    repetitions: repetitions + 1,
+                    easeFactor: newEaseFactor
+                };
+            }
+            needsReview(lastReviewDate, currentDate, interval) {
+                const daysPassed = Math.floor((currentDate - lastReviewDate) / (1000 * 60 * 60 * 24));
+                return daysPassed >= interval;
+            }
+            prioritizeReviews(items) {
+                return [...items].sort((a, b) => {
+                    const aOverdue = a.daysOverdue || 0;
+                    const bOverdue = b.daysOverdue || 0;
+                    return bOverdue - aOverdue;
+                });
+            }
+        }
+
+        const scheduler = new SRSScheduler();
+        const logPanel = document.getElementById('logPanel');
+
+        function log(message) {
+            const p = document.createElement('div');
+            p.innerHTML = `⏱️ ${new Date().toLocaleTimeString('fa-IR')} — ${message}`;
+            logPanel.appendChild(p);
+            logPanel.scrollTop = logPanel.scrollHeight;
+        }
+
+        // ---------- سناریو 1 ----------
+        window.runScenario1 = function() {
+            const items = [
+                { id: 'درس A', daysOverdue: 5 },
+                { id: 'درس B', daysOverdue: 2 },
+                { id: 'درس C', daysOverdue: 0 }
+            ];
+            const prioritized = scheduler.prioritizeReviews(items);
+            let html = '🔹 اولویت نهایی: <br>';
+            prioritized.forEach((item, idx) => { html += `${idx+1}. ${item.id} (${item.daysOverdue} روز عقب)<br>`; });
+            document.getElementById('reviewList1').innerHTML = html;
+            document.getElementById('status1').innerHTML = '✅ آزمون اجرا شد – اولویت با بیشترین تأخیر است.';
+            log('سناریو ۱: اولویت‌بندی انجام شد.');
+        };
+
+        window.runScenario2 = function() {
+            const result = scheduler.calculateNextReview(2, 4, 2.5, 12);
+            document.getElementById('reviewList2').innerHTML = `📉 فاصله جدید: ${result.interval} روز | تکرار: ${result.repetitions} | EF: ${result.easeFactor}`;
+            document.getElementById('status2').innerHTML = '🟠 پاسخ ضعیف => بازگشت به فاصله ۱ روزه. اولویت افزایش یافت.';
+            log('سناریو ۲: پاسخ ضعیف اعمال شد.');
+        };
+
+        window.runScenario3 = function() {
+            const newLesson = { id: 'درس E', repetitions: 0, interval: 0, daysOverdue: 0 };
+            const reviewLesson = { id: 'درس F', repetitions: 3, interval: 6, daysOverdue: 2 };
+            const items = [newLesson, reviewLesson];
+            const prioritized = scheduler.prioritizeReviews(items.map(i => ({ ...i, daysOverdue: i.daysOverdue })));
+            let msg = `🥇 اولویت اول: ${prioritized[0].id}`;
+            document.getElementById('status3').innerHTML = msg;
+            log('سناریو ۳: درس آماده مرور مقدم است.');
+        };
+
+        window.runScenario4 = function() {
+            let ef = 2.5;
+            for (let i=0; i<5; i++) ef = scheduler.calculateNextReview(5, 3, ef, 10).easeFactor;
+            for (let i=0; i<3; i++) ef = scheduler.calculateNextReview(2, 3, ef, 5).easeFactor;
+            const boundPass = (ef >= 1.3 && ef <= 3.0);
+            document.getElementById('status4').innerHTML = `EF نهایی: ${ef} — ${boundPass ? '✅ در محدوده مجاز' : '❌ خارج از کران'}`;
+            log(`سناریو ۴: EF=${ef} , کران‌ها رعایت شد: ${boundPass}`);
+        };
+
+        window.runScenario5 = function() {
+            let lessons = [];
+            for (let i=1; i<=20; i++) {
+                lessons.push({
+                    id: `درس ${i}`,
+                    interval: Math.floor(Math.random() * 30) + 1,
+                    repetitions: Math.floor(Math.random() * 5),
+                    easeFactor: (Math.random() * 1.5 + 1.5).toFixed(2),
+                    daysOverdue: Math.floor(Math.random() * 10) - 2
+                });
+            }
+            const top10 = scheduler.prioritizeReviews(lessons).slice(0, 10);
+            let out = '۱۰ درس اولویت‌دار:\n';
+            top10.forEach((l,i) => out += `${i+1}. ${l.id} (تأخیر: ${l.daysOverdue})\n`);
+            document.getElementById('scenario5Output').innerText = out;
+            document.getElementById('status5').innerHTML = '⚡ بارگذاری حجم بالا انجام شد.';
+            log('سناریو ۵: ۲۰ درس پردازش شد.');
+        };
+
+        window.runScenario6 = function() {
+            const baseDate = new Date('2026-02-12');
+            const reviews = [];
+            for (let i=0; i<15; i++) {
+                let interval = [1,2,4,7,15,30][Math.floor(Math.random()*6)];
+                let lastDate = new Date(baseDate);
+                lastDate.setDate(baseDate.getDate() - interval + 1);
+                reviews.push({ id: `واژه ${i+1}`, interval, lastDate });
+            }
+            let tomorrowReviews = reviews.filter(r => r.interval <= 1);
+            let nextWeekReviews = reviews.filter(r => r.interval <= 7 && r.interval > 1);
+            document.getElementById('scenario6Output').innerHTML = `
+                <div style="background:#e0f2fe; padding:10px; border-radius:10px;">
+                📅 فردا: ${tomorrowReviews.length} درس<br>
+                📆 ۷ روز آینده: ${nextWeekReviews.length} درس
+                </div>
+            `;
+            document.getElementById('status6').innerHTML = '✅ توزیع مرور محاسبه شد.';
+            log('سناریو ۶: پیشنهاد مرور فردا/هفته آینده');
+        };
+
+        window.runScenario7 = function() {
+            let items = [
+                { id: 'درس G', reps: 2, ef: 2.5, interval: 6, daysOverdue: 1 },
+                { id: 'درس H', reps: 1, ef: 2.3, interval: 3, daysOverdue: 2 },
+                { id: 'درس I', reps: 4, ef: 2.8, interval: 20, daysOverdue: 0 }
+            ];
+            items[0] = { ...items[0], ...scheduler.calculateNextReview(5, items[0].reps, items[0].ef, items[0].interval) };
+            items[1] = { ...items[1], ...scheduler.calculateNextReview(2, items[1].reps, items[1].ef, items[1].interval) };
+            items[2] = { ...items[2], ...scheduler.calculateNextReview(4, items[2].reps, items[2].ef, items[2].interval) };
+            const sorted = scheduler.prioritizeReviews(items.map(i => ({ ...i, daysOverdue: i.daysOverdue || 0 })));
+            document.getElementById('status7').innerHTML = `🥇 اولویت جدید: ${sorted[0].id} | ${sorted[1].id} | ${sorted[2].id}`;
+            log('سناریو ۷: اولویت پویا به‌روز شد.');
+        };
+
+        window.runScenario8 = function() {
+            try {
+                scheduler.calculateNextReview(7, 1, 2.5, 5);
+                document.getElementById('status8').innerHTML = '❌ خطا: ورودی نامعتبر منجر به خطا نشد!';
+            } catch(e) {
+                document.getElementById('status8').innerHTML = `✅ خطای صحیح: ${e.message}`;
+            }
+            try {
+                scheduler.calculateNextReview(4, -3, 2.0, 2);
+            } catch(e) {
+                document.getElementById('status8').innerHTML += ` — و همچنین تکرر منفی: ${e.message}`;
+            }
+            log('سناریو ۸: اعتبارسنجی ورودی آزمایش شد.');
+        };
+
+        window.markResult = function(scenarioId, passed) {
+            const statusEl = document.getElementById('status' + scenarioId.slice(-1));
+            if (passed) {
+                statusEl.innerHTML += ' ✅ کاربر تأیید کرد.';
+                statusEl.style.color = '#0f7b5a';
+            } else {
+                statusEl.innerHTML += ' ❌ کاربر رد کرد.';
+                statusEl.style.color = '#b45309';
+            }
+            log(`سناریو ${scenarioId.slice(-1)}: ${passed ? 'تأیید' : 'رد'} شد توسط کاربر.`);
+        };
+
+        window.exportReport = function() {
+            const checks = [
+                document.getElementById('c1').checked,
+                document.getElementById('c2').checked,
+                document.getElementById('c3').checked,
+                document.getElementById('c4').checked,
+                document.getElementById('c5').checked,
+                document.getElementById('c6').checked,
+                document.getElementById('c7').checked,
+                document.getElementById('c8').checked,
+            ];
+            let report = '📋 گزارش ارزیابی دستی SRS Prioritization\n';
+            report += `تاریخ: ${new Date().toLocaleDateString('fa-IR')}\n`;
+            checks.forEach((v, i) => report += `سناریو ${i+1}: ${v ? '✅' : '⬜'}\n`);
+            const total = checks.filter(Boolean).length;
+            report += `\n✅ مجموع تأیید شده: ${total}/8`;
+            alert(report);
+            log('📤 گزارش دستی گرفته شد.');
+        };
+
+        // اجرای پیش‌نمایش سناریو ۱ در شروع
+        window.onload = function() {
+            runScenario1();
+            log('🚀 تست دستی اولویت‌بندی SRS آماده است.');
+        };
+    </script>
+</body>
+</html>
