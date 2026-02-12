@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.5, user-scalable=yes">
+    <title>تست دستی قفل/باز شدن درس - Farsinglish</title>
+    <style>
+        body { font-family: Tahoma, Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 15px; background: #f0f2f5; }
+        .header { background: #8e44ad; color: white; padding: 15px; border-radius: 15px; margin-bottom: 20px; text-align: center; }
+        .test-section { background: white; border-radius: 12px; padding: 20px; margin-bottom: 20px; box-shadow: 0 3px 10px rgba(0,0,0,0.08); }
+        h2 { font-size: 1.4rem; margin-top: 0; color: #2c3e50; border-bottom: 2px solid #ecf0f1; padding-bottom: 10px; }
+        .lesson-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px; margin: 20px 0; }
+        .lesson-card { background: #f8f9fa; padding: 15px; border-radius: 12px; text-align: center; border: 2px solid #ddd; transition: 0.2s; }
+        .lesson-card.locked { background: #ecf0f1; color: #7f8c8d; border-color: #bdc3c7; opacity: 0.8; }
+        .lesson-card.unlocked { background: #d4edc9; border-color: #27ae60; }
+        .lesson-card.completed { background: #f39c12; color: white; border-color: #e67e22; }
+        .badge { display: inline-block; padding: 4px 10px; border-radius: 20px; font-size: 12px; font-weight: bold; margin-top: 8px; }
+        .btn { background: #3498db; color: white; border: none; padding: 12px 20px; border-radius: 8px; font-size: 16px; cursor: pointer; width: 100%; margin: 5px 0; }
+        .btn-success { background: #27ae60; }
+        .btn-warning { background: #f39c12; }
+        .btn-danger { background: #e74c3c; }
+        .scenario { background: #f8f9fa; padding: 15px; border-radius: 10px; margin-bottom: 20px; border-right: 4px solid #8e44ad; }
+        .progress-bar { width: 100%; height: 20px; background: #ecf0f1; border-radius: 10px; margin: 15px 0; overflow: hidden; }
+        .progress-fill { height: 100%; background: #27ae60; width: 0%; transition: width 0.3s; }
+        .star-rating { color: #f1c40f; font-size: 20px; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🔓 Farsinglish - تست دستی قفل/باز شدن درس</h1>
+        <p>شبیه‌سازی سیستم پیشرفت و آنلاک درس‌ها</p>
+    </div>
+
+    <div class="test-section">
+        <h2>📚 ۱. ساختار دروس (درس‌های ۱ تا ۶)</h2>
+        <div id="lessonGrid" class="lesson-grid"></div>
+        
+        <div style="display: flex; gap: 10px; margin: 20px 0;">
+            <button id="completeLessonBtn" class="btn btn-success">✅ تکمیل درس جاری</button>
+            <button id="resetProgressBtn" class="btn btn-danger">🔄 ریست پیشرفت</button>
+        </div>
+        
+        <div class="progress-bar">
+            <div id="progressFill" class="progress-fill" style="width: 0%;"></div>
+        </div>
+        <p id="progressText">پیشرفت کلی: ۰ از ۶ درس (۰٪)</p>
+    </div>
+
+    <div class="test-section">
+        <h2>🧪 ۲. سناریوهای تست دستی</h2>
+        
+        <div class="scenario">
+            <h3>🔹 سناریو ۱: قفل بودن درس‌های بعدی</h3>
+            <p>درس ۱ باز است، درس ۲ تا ۶ قفل باشند.</p>
+            <button id="scenario1Btn" class="btn">▶ اجرای سناریو ۱</button>
+            <div id="result1" class="result-box" style="margin-top: 10px; padding: 10px; background: #f0f0f0; border-radius: 5px;">منتظر اجرا...</div>
+        </div>
+
+        <div class="scenario">
+            <h3>🔹 سناریو ۲: تکمیل درس و آنلاک درس بعدی</h3>
+            <p>پس از تکمیل درس ۱، درس ۲ آنلاک شود.</p>
+            <button id="scenario2Btn" class="btn">▶ اجرای سناریو ۲</button>
+            <div id="result2" class="result-box" style="margin-top: 10px; padding: 10px; background: #f0f0f0; border-radius: 5px;">منتظر اجرا...</div>
+        </div>
+
+        <div class="scenario">
+            <h3>🔹 سناریو ۳: آنلاک زنجیره‌ای</h3>
+            <p>تکمیل درس ۲ → آنلاک درس ۳ | تکمیل درس ۳ → آنلاک درس ۴</p>
+            <button id="scenario3Btn" class="btn">▶ اجرای سناریو ۳</button>
+            <div id="result3" class="result-box" style="margin-top: 10px; padding: 10px; background: #f0f0f0; border-radius: 5px;">منتظر اجرا...</div>
+        </div>
+
+        <div class="scenario">
+            <h3>🔹 سناریو ۴: شرط امتیاز برای آنلاک</h3>
+            <p>برای آنلاک درس ۵ باید حداقل ۶۰٪ پیشرفت داشت.</p>
+            <label>امتیاز فعلی: <input type="number" id="scoreInput" min="0" max="100" value="65" style="width: 60px;">٪</label>
+            <button id="scenario4Btn" class="btn">▶ بررسی شرط آنلاک</button>
+            <div id="result4" class="result-box" style="margin-top: 10px; padding: 10px; background: #f0f0f0; border-radius: 5px;">منتظر اجرا...</div>
+        </div>
+
+        <div class="scenario">
+            <h3>🔹 سناریو ۵: قفل شدن مجدد</h3>
+            <p>پس از ریست، تمام درس‌ها به جز درس ۱ قفل شوند.</p>
+            <button id="scenario5Btn" class="btn btn-warning">▶ اجرای سناریو ۵</button>
+            <div id="result5" class="result-box" style="margin-top: 10px; padding: 10px; background: #f0f0f0; border-radius: 5px;">منتظر اجرا...</div>
+        </div>
+
+        <div class="scenario">
+            <h3>🔹 سناریو ۶: آنلاک همزمان چند درس</h3>
+            <p>کسب امتیاز عالی (۹۰٪+) → آنلاک درس ۴ و ۵ همزمان</p>
+            <button id="scenario6Btn" class="btn">▶ اجرای سناریو ۶</button>
+            <div id="result6" class="result-box" style="margin-top: 10px; padding: 10px; background: #f0f0f0; border-radius: 5px;">منتظر اجرا...</div>
+        </div>
+    </div>
+
+    <div class="test-section">
+        <h2>📊 ۳. وضعیت نهایی</h2>
+        <div id="finalStatus" style="background: #2c3e50; color: white; padding: 15px; border-radius: 10px;">
+            <p>درس باز شده: - | درس‌های تکمیل: - | پیشرفت: -</p>
+        </div>
+    </div>
+
+    <script>
+        // -------------------- مدل درس و سیستم قفل --------------------
+        class LessonUnlockSystem {
+            constructor() {
+                this.lessons = [
+                    { id: 1, title: "مقدمه - الفبا", unlocked: true, completed: false, score: 0, requiredScore: 0 },
+                    { id: 2, title: "اعداد ۱-۱۰", unlocked: false, completed: false, score: 0, requiredScore: 30 },
+                    { id: 3, title: "رنگ‌ها", unlocked: false, completed: false, score: 0, requiredScore: 40 },
+                    { id: 4, title: "اعضای خانواده", unlocked: false, completed: false, score: 0, requiredScore: 50 },
+                    { id: 5, title: "غذاها", unlocked: false, completed: false, score: 0, requiredScore: 60 },
+                    { id: 6, title: "حیوانات", unlocked: false, completed: false, score: 0, requiredScore: 70 }
+                ];
+            }
+
+            // آنلاک درس بعدی
+            unlockNextLesson(currentLessonId) {
+                const nextLesson = this.lessons.find(l => l.id === currentLessonId + 1);
+                if (nextLesson) {
+                    nextLesson.unlocked = true;
+                    return true;
+                }
+                return false;
+            }
+
+            // تکمیل درس
+            completeLesson(lessonId, score = 80) {
+                const lesson = this.lessons.find(l => l.id === lessonId);
+                if (lesson && lesson.unlocked) {
+                    lesson.completed = true;
+                    lesson.score = score;
+                    
+                    // آنلاک درس بعدی
+                    if (lessonId < 6) {
+                        this.unlockNextLesson(lessonId);
+                    }
+                    
+                    // آنلاک شرطی بر اساس امتیاز
+                    if (score >= 90) {
+                        this.unlockConditionalLessons(lessonId);
+                    }
+                    
+                    this.updateProgress();
+                    return true;
+                }
+                return false;
+            }
+
+            // آنلاک شرطی چند درس
+            unlockConditionalLessons(completedLessonId) {
+                if (completedLessonId >= 3) {
+                    const lesson5 = this.lessons.find(l => l.id === 5);
+                    const lesson6 = this.lessons.find(l => l.id === 6);
+                    if (lesson5 && !lesson5.unlocked) lesson5.unlocked = true;
+                    if (lesson6 && !lesson6.unlocked) lesson6.unlocked = true;
+                }
+            }
+
+            // بررسی شرط امتیاز برای آنلاک
+            checkScoreRequirement(lessonId, currentScore) {
+                const lesson = this.lessons.find(l => l.id === lessonId);
+                if (lesson) {
+                    return currentScore >= lesson.requiredScore;
+                }
+                return false;
+            }
+
+            // ریست پیشرفت
+            resetProgress() {
+                this.lessons.forEach((lesson, index) => {
+                    lesson.unlocked = index === 0;
+                    lesson.completed = false;
+                    lesson.score = 0;
+                });
+                this.updateProgress();
+            }
+
+            // محاسبه پیشرفت
+            updateProgress() {
+                const completedCount = this.lessons.filter(l => l.completed).length;
+                const progress = (completedCount / this.lessons.length) * 100;
+                return { completedCount, progress };
+            }
+
+            // دریافت وضعیت درس‌ها
+            getLessons() {
+                return this.lessons;
+            }
+        }
+
+        // -------------------- نمونه اصلی سیستم --------------------
+        const unlockSystem = new LessonUnlockSystem();
+
+        // -------------------- توابع رابط کاربری --------------------
+        function renderLessons() {
+            const grid = document.getElementById('lessonGrid');
+            const lessons = unlockSystem.getLessons();
+            
+            let html = '';
+            lessons.forEach(lesson => {
+                let statusClass = 'locked';
+                let statusText = '🔒 قفل';
+                
+                if (lesson.unlocked && lesson.completed) {
+                    statusClass = 'completed';
+                    statusText = '⭐ تکمیل';
+                } else if (lesson.unlocked) {
+                    statusClass = 'unlocked';
+                    statusText = '🔓 باز';
+                }
+                
+                html += `
+                    <div class="lesson-card ${statusClass}">
+                        <h3>درس ${lesson.id}</h3>
+                        <p>${lesson.title}</p>
+                        <span class="badge" style="background: ${statusClass === 'completed' ? '#f39c12' : (statusClass === 'unlocked' ? '#27ae60' : '#95a5a6')}; color: white;">
+                            ${statusText}
+                        </span>
+                        ${lesson.completed ? `<div class="star-rating">★★★★☆</div>` : ''}
+                        <small style="display: block; margin-top: 8px;">امتیاز: ${lesson.score}%</small>
+                    </div>
+                `;
+            });
+            
+            grid.innerHTML = html;
+            updateProgressUI();
+        }
+
+        function updateProgressUI() {
+            const { completedCount, progress } = unlockSystem.updateProgress();
+            document.getElementById('progressFill').style.width = `${progress}%`;
+            document.getElementById('progressText').innerHTML = `پیشرفت کلی: ${completedCount} از ۶ درس (${Math.round(progress)}٪)`;
+            
+            const finalStatus = document.getElementById('finalStatus');
+            const unlockedCount = unlockSystem.getLessons().filter(l => l.unlocked).length;
+            finalStatus.innerHTML = `
+                <p>🔓 درس باز شده: ${unlockedCount} درس | ✅ درس‌های تکمیل: ${completedCount} درس | 📊 پیشرفت: ${Math.round(progress)}%</p>
+            `;
+        }
+
+        function showResult(elementId, message, isSuccess = true) {
+            const resultBox = document.getElementById(elementId);
+            resultBox.innerHTML = message;
+            resultBox.style.background = isSuccess ? '#d4edc9' : '#f8d7da';
+            resultBox.style.color = isSuccess ? '#155724' : '#721c24';
+            resultBox.style.padding = '12px';
+            resultBox.style.borderRadius = '6px';
+        }
+
+        // -------------------- رویدادها و سناریوها --------------------
+        window.onload = function() {
+            renderLessons();
+
+            // دکمه تکمیل درس جاری
+            document.getElementById('completeLessonBtn').onclick = function() {
+                const currentLesson = unlockSystem.getLessons().find(l => l.unlocked && !l.completed);
+                if (currentLesson) {
+                    unlockSystem.completeLesson(currentLesson.id, 85);
+                    showResult('result2', `✅ درس ${currentLesson.id} تکمیل شد. درس ${currentLesson.id + 1} آنلاک گردید.`, true);
+                } else {
+                    showResult('result2', '⚠️ درسی برای تکمیل وجود ندارد یا همه درس‌ها تکمیل شده‌اند.', false);
+                }
+                renderLessons();
+            };
+
+            // ریست پیشرفت
+            document.getElementById('resetProgressBtn').onclick = function() {
+                unlockSystem.resetProgress();
+                renderLessons();
+                showResult('result5', '🔄 پیشرفت ریست شد. فقط درس ۱ باز است.', true);
+            };
+
+            // سناریو ۱: قفل بودن درس‌های بعدی
+            document.getElementById('scenario1Btn').onclick = function() {
+                unlockSystem.resetProgress();
+                renderLessons();
+                const lessons = unlockSystem.getLessons();
+                const allLockedExceptFirst = lessons.slice(1).every(l => !l.unlocked);
+                
+                if (allLockedExceptFirst && lessons[0].unlocked) {
+                    showResult('result1', '✅ سناریو ۱ موفق: درس ۱ باز است، درس‌های ۲-۶ قفل هستند.', true);
+                } else {
+                    showResult('result1', '❌ سناریو ۱ ناموفق: وضعیت قفل/باز شدن صحیح نیست.', false);
+                }
+            };
+
+            // سناریو ۲: تکمیل درس و آنلاک درس بعدی
+            document.getElementById('scenario2Btn').onclick = function() {
+                unlockSystem.resetProgress();
+                unlockSystem.completeLesson(1, 80);
+                renderLessons();
+                const lesson2 = unlockSystem.getLessons().find(l => l.id === 2);
+                
+                if (lesson2.unlocked) {
+                    showResult('result2', '✅ سناریو ۲ موفق: درس ۱ تکمیل شد، درس ۲ آنلاک گردید.', true);
+                } else {
+                    showResult('result2', '❌ سناریو ۲ ناموفق: درس ۲ آنلاک نشد.', false);
+                }
+            };
+
+            // سناریو ۳: آنلاک زنجیره‌ای
+            document.getElementById('scenario3Btn').onclick = function() {
+                unlockSystem.resetProgress();
+                unlockSystem.completeLesson(1, 80);
+                unlockSystem.completeLesson(2, 85);
+                unlockSystem.completeLesson(3, 90);
+                renderLessons();
+                
+                const lesson4 = unlockSystem.getLessons().find(l => l.id === 4);
+                
+                if (lesson4.unlocked) {
+                    showResult('result3', '✅ سناریو ۳ موفق: درس‌های ۱←۲←۳ تکمیل، درس ۴ آنلاک شد.', true);
+                } else {
+                    showResult('result3', '❌ سناریو ۳ ناموفق: درس ۴ آنلاک نشد.', false);
+                }
+            };
+
+            // سناریو ۴: شرط امتیاز برای آنلاک
+            document.getElementById('scenario4Btn').onclick = function() {
+                const score = parseInt(document.getElementById('scoreInput').value) || 0;
+                const canUnlock = unlockSystem.checkScoreRequirement(5, score);
+                
+                if (canUnlock) {
+                    showResult('result4', `✅ سناریو ۴: با امتیاز ${score}٪، شرط آنلاک درس ۵ برآورده می‌شود.`, true);
+                } else {
+                    showResult('result4', `❌ سناریو ۴: با امتیاز ${score}٪، شرط آنلاک درس ۵ برآورده نمی‌شود (نیاز ۶۰٪).`, false);
+                }
+            };
+
+            // سناریو ۵: قفل شدن مجدد
+            document.getElementById('scenario5Btn').onclick = function() {
+                unlockSystem.resetProgress();
+                renderLessons();
+                showResult('result5', '✅ سناریو ۵ موفق: تمام درس‌ها به جز درس ۱ قفل شدند.', true);
+            };
+
+            // سناریو ۶: آنلاک همزمان چند درس
+            document.getElementById('scenario6Btn').onclick = function() {
+                unlockSystem.resetProgress();
+                unlockSystem.completeLesson(1, 95);
+                unlockSystem.completeLesson(2, 92);
+                unlockSystem.completeLesson(3, 98);
+                renderLessons();
+                
+                const lesson5 = unlockSystem.getLessons().find(l => l.id === 5);
+                const lesson6 = unlockSystem.getLessons().find(l => l.id === 6);
+                
+                if (lesson5.unlocked && lesson6.unlocked) {
+                    showResult('result6', '✅ سناریو ۶ موفق: با امتیاز عالی، درس‌های ۵ و ۶ همزمان آنلاک شدند.', true);
+                } else {
+                    showResult('result6', '❌ سناریو ۶ ناموفق: آنلاک همزمان انجام نشد.', false);
+                }
+            };
+        };
+    </script>
+</body>
+  </html>
