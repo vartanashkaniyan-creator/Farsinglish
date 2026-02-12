@@ -1,0 +1,519 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.5, user-scalable=yes">
+    <title>تست دستی: ذخیره و بازیابی وضعیت - Farsinglish</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            font-family: 'Tahoma', 'Vazir', 'Segoe UI', sans-serif;
+        }
+        body {
+            margin: 0;
+            padding: 20px;
+            background: #f8fafc;
+            color: #1e293b;
+        }
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+        .header {
+            background: linear-gradient(145deg, #0f2a3f, #1a3a4f);
+            color: white;
+            padding: 25px 20px;
+            border-radius: 24px;
+            margin-bottom: 30px;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.15);
+            text-align: center;
+        }
+        .header h1 {
+            margin: 0;
+            font-size: 26px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+        .header p {
+            margin: 10px 0 0;
+            opacity: 0.9;
+            font-size: 15px;
+        }
+        .card {
+            background: white;
+            border-radius: 20px;
+            padding: 20px;
+            margin-bottom: 25px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+            border: 1px solid #e2e8f0;
+        }
+        .card-title {
+            font-size: 18px;
+            font-weight: bold;
+            margin-top: 0;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: #0f2a3f;
+            border-bottom: 2px solid #e2e8f0;
+            padding-bottom: 12px;
+        }
+        .grid-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+        .btn {
+            background: #e2e8f0;
+            border: none;
+            padding: 14px 18px;
+            border-radius: 14px;
+            font-size: 16px;
+            font-weight: 600;
+            color: #1e293b;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            cursor: pointer;
+            transition: 0.2s;
+            border: 1px solid transparent;
+            width: 100%;
+        }
+        .btn-primary {
+            background: #1e4a6b;
+            color: white;
+            box-shadow: 0 6px 0 #0f2a3f;
+        }
+        .btn-success {
+            background: #0f6e4a;
+            color: white;
+            box-shadow: 0 6px 0 #0a4a33;
+        }
+        .btn-warning {
+            background: #b45309;
+            color: white;
+            box-shadow: 0 6px 0 #7b2e0a;
+        }
+        .btn-outline {
+            background: transparent;
+            border: 2px solid #1e4a6b;
+            color: #1e4a6b;
+        }
+        .btn:active {
+            transform: translateY(4px);
+            box-shadow: 0 2px 0 #0f2a3f;
+        }
+        .state-box {
+            background: #f1f5f9;
+            border-radius: 16px;
+            padding: 18px;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            direction: ltr;
+            text-align: left;
+            white-space: pre-wrap;
+            word-break: break-word;
+            max-height: 250px;
+            overflow-y: auto;
+            border: 1px solid #cbd5e1;
+            margin: 15px 0;
+        }
+        .badge {
+            display: inline-block;
+            background: #1e4a6b;
+            color: white;
+            padding: 6px 14px;
+            border-radius: 30px;
+            font-size: 13px;
+            font-weight: 600;
+        }
+        .test-step {
+            background: #fef9c3;
+            border-right: 8px solid #eab308;
+            padding: 16px;
+            border-radius: 14px;
+            margin-bottom: 20px;
+        }
+        .success-message {
+            background: #d1fae5;
+            color: #065f46;
+            padding: 14px;
+            border-radius: 14px;
+            border-right: 8px solid #10b981;
+        }
+        .footer {
+            text-align: center;
+            margin-top: 30px;
+            color: #64748b;
+            font-size: 13px;
+        }
+        hr {
+            border: 1px dashed #cbd5e1;
+            margin: 25px 0;
+        }
+        @media (max-width: 600px) {
+            .grid-2 { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🧪 تست دستی · ذخیره و بازیابی State</h1>
+            <p>✅ شبیه‌سازی کامل ذخیره‌سازی، بازیابی، مهاجرت و مقاومت در برابر بسته شدن مرورگر</p>
+        </div>
+
+        <!-- کارت: وضعیت فعلی حافظه -->
+        <div class="card">
+            <div class="card-title">
+                <span>📦 ۱. وضعیت فعلی حافظه (State Snapshot)</span>
+            </div>
+            <div id="currentStateDisplay" class="state-box">
+                {/* حالت فعلی در اینجا نمایش داده می‌شود */}
+            </div>
+            <div class="grid-2" style="margin-top: 15px;">
+                <button id="btnRefreshState" class="btn btn-outline">🔄 به‌روزرسانی نمایش</button>
+                <button id="btnResetState" class="btn btn-warning">🧹 پاک کردن کامل State</button>
+            </div>
+        </div>
+
+        <!-- بخش سناریوهای تست دستی -->
+        <div class="test-step">
+            <span class="badge">📋 راهنمای تست دستی</span>
+            <p style="margin-bottom: 0; font-size: 15px; font-weight: 500; margin-top: 12px;">
+                ۱. دکمه‌های «ذخیره» را بزنید، سپس مرورگر را ببندید و دوباره باز کنید — State باید باقی بماند.<br>
+                ۲. دکمه «بازیابی» را برای برگرداندن آخرین ذخیره بزنید.<br>
+                ۳. دکمه «شبیه‌سازی کرش» را بزنید و پس از بازگشایی صفحه، گزینه «بازیابی خودکار» را تست کنید.
+            </p>
+        </div>
+
+        <div class="card">
+            <div class="card-title">
+                <span>💾 ۲. عملیات پایه ذخیره‌سازی</span>
+            </div>
+            <div class="grid-2">
+                <button id="btnSaveSimple" class="btn btn-primary">💾 ذخیره ساده (پیش‌فرض)</button>
+                <button id="btnLoadSimple" class="btn btn-success">📂 بازیابی آخرین ذخیره</button>
+            </div>
+            <div style="margin-top: 20px;">
+                <button id="btnCreateBackup" class="btn btn-outline" style="background: #f59e0b; color: white; border-color: #d97706;">📎 ایجاد نسخه پشتیبان (Backup)</button>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-title">
+                <span>🧩 ۳. ویرایشگر دستی State</span>
+            </div>
+            <div style="margin-bottom: 20px;">
+                <label style="font-weight: 600; display: block; margin-bottom: 8px;">✏️ محتوای State (JSON):</label>
+                <textarea id="manualStateInput" rows="6" style="width: 100%; padding: 15px; border-radius: 16px; border: 2px solid #cbd5e1; font-family: monospace; direction: ltr; font-size: 14px;">{
+  "user": {
+    "id": "usr_1",
+    "name": "کاربر آزمایشی",
+    "level": 5,
+    "xp": 1240,
+    "streakDays": 7
+  },
+  "settings": {
+    "theme": "dark",
+    "language": "fa",
+    "dailyGoal": 20
+  },
+  "lastLesson": "lesson_12",
+  "appVersion": "1.2.0"
+}</textarea>
+            </div>
+            <div class="grid-2">
+                <button id="btnSaveManual" class="btn btn-primary">💾 ذخیره State دستی</button>
+                <button id="btnValidateJson" class="btn btn-outline">✅ اعتبارسنجی JSON</button>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-title">
+                <span>🔄 ۴. سناریوهای پیشرفته</span>
+            </div>
+            <div class="grid-2">
+                <button id="btnSimulateCrash" class="btn btn-warning">💥 شبیه‌سازی کرش (پاک کردن حافظه)</button>
+                <button id="btnAutoRecover" class="btn btn-success" style="background: #7e5bef;">🛡️ بازیابی خودکار از آخرین نسخه</button>
+            </div>
+            <div style="margin-top: 20px;">
+                <button id="btnVersionMigration" class="btn btn-outline">📱 تست مهاجرت نسخه (v1 → v2)</button>
+                <span id="migrationResult" style="display: inline-block; margin-right: 15px; font-size: 14px;"></span>
+            </div>
+        </div>
+
+        <!-- گزارش عملیات -->
+        <div class="card" style="background: #f1f5f9;">
+            <div class="card-title">
+                <span>📋 ۵. گزارش رویدادها (Event Log)</span>
+            </div>
+            <div id="eventLog" style="background: #0f172a; color: #e2e8f0; border-radius: 16px; padding: 18px; font-family: 'Courier New', monospace; font-size: 13px; direction: ltr; text-align: left; max-height: 200px; overflow-y: auto;">
+                [SYSTEM] تست دستی State Persistence آماده است.
+            </div>
+            <button id="btnClearLog" style="margin-top: 15px; background: transparent; border: 1px solid #64748b; padding: 8px 16px; border-radius: 30px;">🧹 پاک کردن لاگ</button>
+        </div>
+
+        <div class="footer">
+            <p>📱 Farsinglish — تست دستی ماژول State Persistence | قابل اجرا در مرورگر موبایل</p>
+            <p style="font-size: 12px;">🟢 این فایل به‌صورت کاملاً دستی، ماندگاری داده را در LocalStorage/IndexedDB شبیه‌سازی می‌کند.</p>
+        </div>
+    </div>
+
+    <script>
+        // =============================
+        // ماژول مدیریت State Persistence (دستی و شبیه‌ساز)
+        // =============================
+        const StateManager = {
+            STORAGE_KEY: 'farsinglish_app_state_v2',
+            BACKUP_KEY: 'farsinglish_backup_state',
+            VERSION: '2.0.0',
+
+            // مقدار پیش‌فرض state
+            getDefaultState() {
+                return {
+                    user: { id: null, name: 'میهمان', level: 1, xp: 0, streakDays: 0 },
+                    settings: { theme: 'light', language: 'fa', dailyGoal: 10 },
+                    lastLesson: null,
+                    appVersion: this.VERSION,
+                    lastSaved: new Date().toISOString()
+                };
+            },
+
+            // ذخیره state
+            save(state, isBackup = false) {
+                try {
+                    const key = isBackup ? this.BACKUP_KEY : this.STORAGE_KEY;
+                    const stateWithMeta = {
+                        ...state,
+                        _meta: {
+                            version: this.VERSION,
+                            timestamp: Date.now(),
+                            isBackup: isBackup
+                        }
+                    };
+                    localStorage.setItem(key, JSON.stringify(stateWithMeta));
+                    this.log(`💾 ذخیره شد در ${isBackup ? 'پشتیبان' : 'اصلی'}`);
+                    return true;
+                } catch(e) {
+                    this.log(`❌ خطا در ذخیره: ${e.message}`, 'error');
+                    return false;
+                }
+            },
+
+            // بازیابی state
+            load(fromBackup = false) {
+                try {
+                    const key = fromBackup ? this.BACKUP_KEY : this.STORAGE_KEY;
+                    const data = localStorage.getItem(key);
+                    if (!data) {
+                        this.log(`📭 هیچ داده‌ای یافت نشد (${fromBackup ? 'پشتیبان' : 'اصلی'})`);
+                        return this.getDefaultState();
+                    }
+                    const parsed = JSON.parse(data);
+                    // حذف _meta از خروجی اصلی
+                    if (parsed._meta) delete parsed._meta;
+                    this.log(`📂 بازیابی از ${fromBackup ? 'پشتیبان' : 'اصلی'} موفق`);
+                    return parsed;
+                } catch(e) {
+                    this.log(`❌ خطا در بازیابی: ${e.message}`, 'error');
+                    return this.getDefaultState();
+                }
+            },
+
+            // مهاجرت نسخه
+            migrateFromV1() {
+                try {
+                    const oldData = localStorage.getItem('farsinglish_app_state_v1');
+                    if (!oldData) return { success: false, reason: 'نسخه v1 یافت نشد' };
+                    
+                    const oldParsed = JSON.parse(oldData);
+                    // مهاجرت به v2
+                    const newState = {
+                        user: oldParsed.user || { name: 'کاربر قدیمی', level: 1, xp: 0 },
+                        settings: oldParsed.settings || { theme: 'light', language: 'fa' },
+                        lastLesson: oldParsed.lastLesson || null,
+                        appVersion: this.VERSION,
+                        migratedFrom: 'v1',
+                        migratedAt: new Date().toISOString()
+                    };
+                    this.save(newState);
+                    this.log(`🆙 مهاجرت از v1 به v2 انجام شد`);
+                    return { success: true, state: newState };
+                } catch(e) {
+                    this.log(`❌ مهاجرت ناموفق: ${e.message}`, 'error');
+                    return { success: false, error: e.message };
+                }
+            },
+
+            // پاک کردن کامل state
+            clearAll() {
+                localStorage.removeItem(this.STORAGE_KEY);
+                localStorage.removeItem(this.BACKUP_KEY);
+                this.log('🧹 تمام stateها پاک شدند');
+            },
+
+            // اعتبارسنجی JSON
+            validateJSON(str) {
+                try {
+                    JSON.parse(str);
+                    return { valid: true };
+                } catch(e) {
+                    return { valid: false, error: e.message };
+                }
+            },
+
+            log(message, type = 'info') {
+                const logBox = document.getElementById('eventLog');
+                if (!logBox) return;
+                const time = new Date().toLocaleTimeString('fa-IR', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+                const color = type === 'error' ? '#f87171' : '#a5f3fc';
+                const entry = document.createElement('div');
+                entry.style.color = color;
+                entry.style.marginBottom = '4px';
+                entry.innerHTML = `⏱️ ${time} — ${message}`;
+                logBox.appendChild(entry);
+                logBox.scrollTop = logBox.scrollHeight;
+            }
+        };
+
+        // =============================
+        // کنترلرهای UI
+        // =============================
+        function refreshUIDisplay() {
+            const currentState = StateManager.load(false);
+            const displayEl = document.getElementById('currentStateDisplay');
+            displayEl.innerHTML = JSON.stringify(currentState, null, 2);
+        }
+
+        // لاگ اولیه
+        StateManager.log('🚀 موتور State Persistence راه‌اندازی شد.');
+        refreshUIDisplay();
+
+        // ========== اتصال رویدادها ==========
+        document.getElementById('btnRefreshState').addEventListener('click', function() {
+            refreshUIDisplay();
+            StateManager.log('🔄 نمایش state به‌روزرسانی شد');
+        });
+
+        document.getElementById('btnResetState').addEventListener('click', function() {
+            if (confirm('⚠️ آیا از پاک کردن کامل State مطمئن هستید؟')) {
+                StateManager.clearAll();
+                refreshUIDisplay();
+            }
+        });
+
+        document.getElementById('btnSaveSimple').addEventListener('click', function() {
+            const current = StateManager.load(false);
+            current.lastSaved = new Date().toISOString();
+            current.user.name = 'کاربر تست_' + Math.floor(Math.random() * 1000);
+            StateManager.save(current, false);
+            refreshUIDisplay();
+        });
+
+        document.getElementById('btnLoadSimple').addEventListener('click', function() {
+            const loaded = StateManager.load(false);
+            StateManager.log('📂 آخرین state بارگذاری و در نمایشگر منعکس شد');
+            refreshUIDisplay(); // نمایش state بازیابی شده
+        });
+
+        document.getElementById('btnCreateBackup').addEventListener('click', function() {
+            const current = StateManager.load(false);
+            StateManager.save(current, true);
+            StateManager.log('📎 نسخه پشتیبان با موفقیت ایجاد شد');
+        });
+
+        document.getElementById('btnSaveManual').addEventListener('click', function() {
+            const textarea = document.getElementById('manualStateInput');
+            const jsonStr = textarea.value;
+            const validation = StateManager.validateJSON(jsonStr);
+            if (!validation.valid) {
+                alert('❌ JSON نامعتبر است: ' + validation.error);
+                StateManager.log(`❌ ذخیره دستی ناموفق: ${validation.error}`, 'error');
+                return;
+            }
+            const manualState = JSON.parse(jsonStr);
+            StateManager.save(manualState, false);
+            refreshUIDisplay();
+            StateManager.log('✏️ State دستی با موفقیت ذخیره شد');
+        });
+
+        document.getElementById('btnValidateJson').addEventListener('click', function() {
+            const textarea = document.getElementById('manualStateInput');
+            const validation = StateManager.validateJSON(textarea.value);
+            if (validation.valid) {
+                alert('✅ JSON معتبر است');
+                StateManager.log('✅ اعتبارسنجی JSON: معتبر');
+            } else {
+                alert('❌ JSON نامعتبر: ' + validation.error);
+                StateManager.log(`❌ JSON نامعتبر: ${validation.error}`, 'error');
+            }
+        });
+
+        document.getElementById('btnSimulateCrash').addEventListener('click', function() {
+            // پاک کردن state و شبیه‌سازی کرش
+            localStorage.removeItem(StateManager.STORAGE_KEY);
+            refreshUIDisplay();
+            StateManager.log('💥 شبیه‌سازی کرش: state اصلی پاک شد (بازیابی از پشتیبان یا نسخه پیش‌فرض)');
+            alert('⚠️ کرش شبیه‌سازی شد. حالا دکمه "بازیابی خودکار" را بزنید.');
+        });
+
+        document.getElementById('btnAutoRecover').addEventListener('click', function() {
+            // ابتدا سعی کن از پشتیبان برگردونی
+            const backup = StateManager.load(true);
+            if (backup && backup.user && backup.user.id !== null) {
+                StateManager.save(backup, false);
+                StateManager.log('🛡️ بازیابی خودکار از پشتیبان انجام شد');
+            } else {
+                // درغیراینصورت state پیش‌فرض
+                const defaultState = StateManager.getDefaultState();
+                StateManager.save(defaultState, false);
+                StateManager.log('🛡️ پشتیبان موجود نبود، state پیش‌فرض ذخیره شد');
+            }
+            refreshUIDisplay();
+        });
+
+        document.getElementById('btnVersionMigration').addEventListener('click', function() {
+            // شبیه‌سازی ذخیره v1
+            const mockV1 = {
+                user: { name: 'ali_old', level: 3, xp: 550 },
+                settings: { theme: 'auto' },
+                lastLesson: 'greetings_1'
+            };
+            localStorage.setItem('farsinglish_app_state_v1', JSON.stringify(mockV1));
+            StateManager.log('📦 یک state آزمایشی v1 ایجاد شد');
+            
+            const migrationResult = StateManager.migrateFromV1();
+            if (migrationResult.success) {
+                document.getElementById('migrationResult').innerHTML = '✅ مهاجرت موفق';
+                document.getElementById('migrationResult').style.color = '#0f6e4a';
+                refreshUIDisplay();
+            } else {
+                document.getElementById('migrationResult').innerHTML = '❌ مهاجرت ناموفق';
+                document.getElementById('migrationResult').style.color = '#b45309';
+            }
+        });
+
+        document.getElementById('btnClearLog').addEventListener('click', function() {
+            const logBox = document.getElementById('eventLog');
+            logBox.innerHTML = '[SYSTEM] لاگ پاک شد.';
+            StateManager.log('🧹 لاگ رویدادها پاکسازی شد');
+        });
+
+        // ذخیره خودکار state در صورت بسته شدن صفحه (جهت شبیه‌سازی)
+        window.addEventListener('beforeunload', function() {
+            // این صرفاً یک شبیه‌سازی سبک است؛ ما از localStorage استفاده می‌کنیم که ماندگار است.
+            StateManager.log('⏏️ صفحه بسته شد. state در localStorage باقی می‌ماند.');
+        });
+
+        // افزودن قابلیت نمایش RTL صحیح در state-box
+        document.querySelectorAll('.state-box').forEach(el => {
+            el.setAttribute('dir', 'ltr');
+        });
+    </script>
+</body>
+</html>
