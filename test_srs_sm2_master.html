@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.5, user-scalable=yes">
+    <title>✅ SRS SM-2 Master - Farsinglish</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: 'Tahoma', 'Arial', sans-serif;
+            background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
+            min-height: 100vh;
+            padding: 20px;
+            color: #fff;
+        }
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: rgba(255,255,255,0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 30px;
+            padding: 25px;
+            border: 1px solid rgba(255,255,255,0.2);
+            box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+        }
+        h1 {
+            font-size: 28px;
+            color: #fff;
+            text-align: center;
+            margin-bottom: 20px;
+            text-shadow: 0 2px 10px rgba(0,0,0,0.3);
+        }
+        .badge {
+            background: #00b894;
+            color: white;
+            padding: 8px 20px;
+            border-radius: 50px;
+            display: inline-block;
+            margin-bottom: 20px;
+            font-weight: bold;
+        }
+        .scenario-card {
+            background: rgba(255,255,255,0.15);
+            backdrop-filter: blur(5px);
+            border: 1px solid rgba(255,255,255,0.2);
+            border-radius: 20px;
+            padding: 20px;
+            margin-bottom: 20px;
+            transition: 0.3s;
+        }
+        .status-pass { background: #00b894; color: white; padding: 5px 15px; border-radius: 50px; }
+        .status-fail { background: #d63031; color: white; padding: 5px 15px; border-radius: 50px; }
+        .status-pending { background: #fdcb6e; color: #2d3436; padding: 5px 15px; border-radius: 50px; }
+        button {
+            background: rgba(255,255,255,0.2);
+            border: 1px solid rgba(255,255,255,0.3);
+            color: white;
+            padding: 12px 25px;
+            border-radius: 50px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: 0.3s;
+            margin: 5px;
+        }
+        button:hover { background: rgba(255,255,255,0.3); transform: translateY(-2px); }
+        .result-box {
+            background: rgba(0,0,0,0.3);
+            border-radius: 15px;
+            padding: 15px;
+            margin-top: 15px;
+            direction: ltr;
+        }
+        .summary-box {
+            background: rgba(0,0,0,0.3);
+            border-radius: 20px;
+            padding: 20px;
+            margin-top: 20px;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧠 Farsinglish - SRS SM-2 Master</h1>
+        <div style="text-align: center;">
+            <span class="badge">✅ فرمول SM-2 دقیق (Anki/SuperMemo)</span>
+        </div>
+
+        <div id="scenarios-container"></div>
+        
+        <div style="display: flex; gap: 15px; margin: 25px 0;">
+            <button onclick="resetAllScenarios()" style="flex: 1; background: #636e72;">🔄 ریست همه</button>
+            <button onclick="exportLog()" style="flex: 1; background: #0984e3;">📥 خروجی لاگ</button>
+        </div>
+
+        <div id="summary" class="summary-box">
+            <h3>📊 آماده تست</h3>
+        </div>
+        <div id="log-panel" style="background: rgba(0,0,0,0.5); border-radius: 15px; padding: 15px; margin-top: 20px; font-family: monospace; direction: ltr;"></div>
+    </div>
+
+    <script>
+        // -------------------- کلاس SRS با فرمول SM-2 دقیق --------------------
+        class SRSScheduler {
+            calculateNextReview(quality, repetitions, easeFactor, interval = 0) {
+                // اعتبارسنجی
+                if (quality < 0 || quality > 5) throw new Error('کیفیت ۰-۵');
+                
+                // پاسخ نادرست (کیفیت < 3)
+                if (quality < 3) {
+                    return {
+                        interval: 1,
+                        repetitions: 0,
+                        easeFactor: Math.max(1.3, parseFloat((easeFactor - 0.2).toFixed(2)))
+                    };
+                }
+
+                // محاسبه فاصله
+                let newInterval;
+                if (repetitions === 0) newInterval = 1;
+                else if (repetitions === 1) newInterval = 6;
+                else newInterval = Math.round(interval * easeFactor);
+
+                // فرمول SM-2 برای EF (دقیقاً مطابق مستندات)
+                let newEaseFactor = easeFactor + (0.1 - (5 - quality) * (0.08 + (5 - quality) * 0.02));
+                
+                // محدودیت‌ها و گرد کردن
+                newEaseFactor = Math.max(1.3, Math.min(3.0, newEaseFactor));
+                newEaseFactor = Math.round(newEaseFactor * 100) / 100;
+
+                return {
+                    interval: newInterval,
+                    repetitions: repetitions + 1,
+                    easeFactor: newEaseFactor
+                };
+            }
+        }
+
+        // -------------------- سناریوهای تست (مقادیر صحیح SM-2) --------------------
+        const scenarios = [
+            { 
+                id: 1, title: '🌟 اولین مواجهه - کیفیت ۵', 
+                params: { q: 5, rep: 0, ef: 2.5, int: 0 },
+                exp: { interval: 1, repetitions: 1, easeFactor: 2.60 }
+            },
+            { 
+                id: 2, title: '📚 مرور اول - کیفیت ۴', 
+                params: { q: 4, rep: 1, ef: 2.5, int: 1 },
+                exp: { interval: 6, repetitions: 2, easeFactor: 2.50 }
+            },
+            { 
+                id: 3, title: '🔄 مرور دوم - کیفیت ۵', 
+                params: { q: 5, rep: 2, ef: 2.5, int: 6 },
+                exp: { interval: 15, repetitions: 3, easeFactor: 2.60 }
+            },
+            { 
+                id: 4, title: '❌ پاسخ نادرست - کیفیت ۱', 
+                params: { q: 1, rep: 3, ef: 2.6, int: 15 },
+                exp: { interval: 1, repetitions: 0, easeFactor: 2.40 }
+            },
+            { 
+                id: 5, title: '🔄 یادگیری مجدد - کیفیت ۳', 
+                params: { q: 3, rep: 0, ef: 2.5, int: 0 },
+                exp: { interval: 1, repetitions: 1, easeFactor: 2.36 }
+            },
+            { 
+                id: 6, title: '⚡ مرور طولانی - کیفیت ۵', 
+                params: { q: 5, rep: 10, ef: 2.8, int: 120 },
+                exp: { interval: 336, repetitions: 11, easeFactor: 2.90 }
+            },
+            { 
+                id: 7, title: '📉 افت کیفیت - کیفیت ۲', 
+                params: { q: 2, rep: 5, ef: 2.7, int: 30 },
+                exp: { interval: 1, repetitions: 0, easeFactor: 2.50 }
+            },
+            { 
+                id: 8, title: '🎯 مرور مرزی - کیفیت ۳', 
+                params: { q: 3, rep: 4, ef: 2.5, int: 20 },
+                exp: { interval: 50, repetitions: 5, easeFactor: 2.36 }
+            }
+        ];
+
+        const scheduler = new SRSScheduler();
+        let logEntries = [];
+        const STORAGE_KEY = 'srs_master_v1';
+
+        // -------------------- ذخیره/بازیابی وضعیت --------------------
+        function saveStatus(id, passed) {
+            const data = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
+            data[id] = passed ? 'pass' : 'fail';
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+        }
+
+        function getStatus(id) {
+            const data = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
+            return data[id] || 'pending';
+        }
+
+        // -------------------- رندر --------------------
+        function renderScenarios() {
+            let html = '';
+            scenarios.forEach(s => {
+                const status = getStatus(s.id);
+                let statusClass = 'status-pending';
+                let statusText = '⏳ در انتظار';
+                if (status === 'pass') { statusClass = 'status-pass'; statusText = '✅ تأیید'; }
+                else if (status === 'fail') { statusClass = 'status-fail'; statusText = '❌ خطا'; }
+
+                html += `<div class="scenario-card">
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 15px;">
+                        <span style="font-size: 18px; font-weight: bold;">🧪 سناریوی ${s.id}: ${s.title}</span>
+                        <span class="${statusClass}" id="status-${s.id}">${statusText}</span>
+                    </div>
+                    <div style="background: rgba(0,0,0,0.2); padding: 15px; border-radius: 15px; margin-bottom: 15px;">
+                        <div>📊 ورودی: کیفیت=${s.params.q}, تکرار=${s.params.rep}, EF=${s.params.ef}, فاصله=${s.params.int}</div>
+                        <div style="color: #81ecec; margin-top: 5px;">🎯 خروجی صحیح: فاصله=${s.exp.interval}, تکرار=${s.exp.repetitions}, EF=${s.exp.easeFactor}</div>
+                    </div>
+                    <div style="display: flex; gap: 10px;">
+                        <button onclick="runScenario(${s.id})" style="flex: 1;">⚡ اجرا</button>
+                        <button onclick="verifyScenario(${s.id})" style="flex: 1; background: #00b894;">✓ تأیید</button>
+                        <button onclick="resetScenario(${s.id})" style="flex: 0.3; background: #636e72;">🔄</button>
+                    </div>
+                    <div id="result-${s.id}" class="result-box" style="display: none;"></div>
+                </div>`;
+            });
+            document.getElementById('scenarios-container').innerHTML = html;
+            updateSummary();
+        }
+
+        // -------------------- اجرای سناریو --------------------
+        window.runScenario = function(id) {
+            const s = scenarios.find(x => x.id === id);
+            const res = scheduler.calculateNextReview(s.params.q, s.params.rep, s.params.ef, s.params.int);
+            
+            const div = document.getElementById(`result-${id}`);
+            div.style.display = 'block';
+            div.innerHTML = `
+                <div style="color: #00cec9; font-size: 18px; margin-bottom: 10px;">📌 نتیجه محاسبه:</div>
+                <div style="display: grid; grid-template-columns: repeat(3,1fr); gap: 10px;">
+                    <div><span style="color: #aaa;">فاصله</span><br><span style="font-size: 32px; font-weight: bold;">${res.interval}</span></div>
+                    <div><span style="color: #aaa;">تکرار</span><br><span style="font-size: 32px; font-weight: bold;">${res.repetitions}</span></div>
+                    <div><span style="color: #aaa;">EF</span><br><span style="font-size: 32px; font-weight: bold;">${res.easeFactor}</span></div>
+                </div>
+                <div style="margin-top: 15px; padding-top: 10px; border-top: 1px solid rgba(255,255,255,0.2);">
+                    <span style="color: ${res.interval === s.exp.interval ? '#00b894' : '#d63031'}">
+                        ${res.interval === s.exp.interval ? '✓' : '✗'} فاصله: ${res.interval} (هدف: ${s.exp.interval})
+                    </span><br>
+                    <span style="color: ${res.easeFactor === s.exp.easeFactor ? '#00b894' : '#d63031'}">
+                        ${res.easeFactor === s.exp.easeFactor ? '✓' : '✗'} EF: ${res.easeFactor} (هدف: ${s.exp.easeFactor})
+                    </span>
+                </div>
+            `;
+            addLog(`سناریوی ${id}: اجرا - فاصله=${res.interval}, EF=${res.easeFactor}`);
+        };
+
+        // -------------------- تأیید سناریو --------------------
+        window.verifyScenario = function(id) {
+            const s = scenarios.find(x => x.id === id);
+            const res = scheduler.calculateNextReview(s.params.q, s.params.rep, s.params.ef, s.params.int);
+            
+            const intervalOK = res.interval === s.exp.interval;
+            const repOK = res.repetitions === s.exp.repetitions;
+            const efOK = res.easeFactor === s.exp.easeFactor;
+            const passed = intervalOK && repOK && efOK;
+
+            const statusEl = document.getElementById(`status-${id}`);
+            statusEl.className = passed ? 'status-pass' : 'status-fail';
+            statusEl.textContent = passed ? '✅ تأیید' : '❌ خطا';
+            
+            saveStatus(id, passed);
+            
+            if (passed) addLog(`سناریوی ${id}: ✅ تأیید شد`, 'success');
+            else {
+                let reason = [];
+                if (!intervalOK) reason.push(`فاصله(${res.interval}≠${s.exp.interval})`);
+                if (!efOK) reason.push(`EF(${res.easeFactor}≠${s.exp.easeFactor})`);
+                addLog(`سناریوی ${id}: ❌ ${reason.join(', ')}`, 'error');
+            }
+            
+            updateSummary();
+        };
+
+        window.resetScenario = function(id) {
+            const data = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
+            delete data[id];
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+            
+            const statusEl = document.getElementById(`status-${id}`);
+            statusEl.className = 'status-pending';
+            statusEl.textContent = '⏳ در انتظار';
+            
+            document.getElementById(`result-${id}`).style.display = 'none';
+            addLog(`سناریوی ${id}: ریست شد`);
+            updateSummary();
+        };
+
+        window.resetAllScenarios = function() {
+            localStorage.removeItem(STORAGE_KEY);
+            renderScenarios();
+            addLog('🔄 همه سناریوها ریست شدند');
+        };
+
+        function updateSummary() {
+            let passed = 0, total = scenarios.length;
+            scenarios.forEach(s => { if (getStatus(s.id) === 'pass') passed++; });
+            document.getElementById('summary').innerHTML = `
+                <h3>📊 پیشرفت: ${passed}/${total}</h3>
+                <div style="background: rgba(0,0,0,0.3); height: 20px; border-radius: 10px; margin-top: 15px;">
+                    <div style="background: #00b894; width: ${(passed/total)*100}%; height: 20px; border-radius: 10px;"></div>
+                </div>
+                ${passed === total ? '<h2 style="color: #00b894; margin-top: 15px;">🎉 تمام سناریوها تأیید شدند!</h2>' : ''}
+            `;
+        }
+
+        function addLog(msg, type = 'info') {
+            const time = new Date().toLocaleTimeString('fa-IR');
+            logEntries.push({ time, msg, type });
+            const logHtml = logEntries.slice(-8).map(e => 
+                `<div style="color: ${e.type === 'success' ? '#00b894' : e.type === 'error' ? '#d63031' : '#fdcb6e'}">[${e.time}] ${e.msg}</div>`
+            ).join('');
+            document.getElementById('log-panel').innerHTML = logHtml;
+        }
+
+        window.exportLog = function() {
+            const text = logEntries.map(e => `[${e.time}] ${e.msg}`).join('\n');
+            const blob = new Blob([text], {type: 'text/plain'});
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = `srs-master-${Date.now()}.txt`;
+            a.click();
+            addLog('📥 لاگ خروجی گرفته شد');
+        };
+
+        window.onload = renderScenarios;
+    </script>
+</body>
+</html>
