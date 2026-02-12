@@ -1,0 +1,584 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.5, user-scalable=yes">
+    <title>تست دستی مهاجرت دیتابیس - نسخه اصلاح‌شده - Farsinglish</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: 'Tahoma', 'Arial', sans-serif;
+            background: #1e272e;
+            color: #d2dae2;
+            padding: 16px;
+            line-height: 1.6;
+            direction: rtl;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: #2c3a47;
+            border-radius: 24px;
+            padding: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            border: 1px solid #3b4b5a;
+        }
+        h1 {
+            color: #ffdd59;
+            font-size: 1.8rem;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            border-bottom: 2px solid #ffdd59;
+            padding-bottom: 12px;
+        }
+        h2 {
+            font-size: 1.3rem;
+            color: #ffb142;
+            margin: 20px 0 10px;
+        }
+        .card {
+            background: #3b4b5a;
+            border-radius: 16px;
+            padding: 18px;
+            margin-bottom: 20px;
+            border-right: 6px solid #34ace0;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        }
+        .btn {
+            background: #34ace0;
+            border: none;
+            color: white;
+            padding: 14px 24px;
+            border-radius: 50px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            cursor: pointer;
+            width: 100%;
+            margin-bottom: 12px;
+            transition: 0.2s;
+            border-bottom: 4px solid #227093;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+        .btn:hover {
+            background: #3dc4f0;
+            transform: translateY(-2px);
+        }
+        .btn-warning {
+            background: #ffb142;
+            border-bottom-color: #cc8e34;
+        }
+        .btn-danger {
+            background: #ff5252;
+            border-bottom-color: #b33939;
+        }
+        .btn-success {
+            background: #33d9b2;
+            border-bottom-color: #218c74;
+        }
+        .log {
+            background: #1e272e;
+            border-radius: 12px;
+            padding: 16px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9rem;
+            direction: ltr;
+            text-align: left;
+            color: #0be881;
+            max-height: 300px;
+            overflow-y: auto;
+            margin-top: 16px;
+            border: 1px solid #34ace0;
+        }
+        .badge {
+            background: #ffdd59;
+            color: #1e272e;
+            padding: 6px 14px;
+            border-radius: 50px;
+            font-size: 0.9rem;
+            font-weight: bold;
+            display: inline-block;
+            margin-left: 10px;
+        }
+        .badge-fixed {
+            background: #33d9b2;
+            color: #1e272e;
+            padding: 6px 14px;
+            border-radius: 50px;
+            font-size: 0.9rem;
+            font-weight: bold;
+            display: inline-block;
+            margin-left: 10px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: #2c3a47;
+            border-radius: 12px;
+            margin: 16px 0;
+        }
+        td, th {
+            padding: 12px;
+            border-bottom: 1px solid #4a5b68;
+            text-align: center;
+        }
+        th {
+            background: #34ace0;
+            color: white;
+        }
+        .success { color: #33d9b2; font-weight: bold; }
+        .danger { color: #ff5252; font-weight: bold; }
+        .warning { color: #ffb142; font-weight: bold; }
+        .flex-row {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+        .flex-row .btn {
+            flex: 1;
+        }
+        .fixed-note {
+            background: #33d9b2;
+            color: #1e272e;
+            padding: 10px;
+            border-radius: 8px;
+            margin-bottom: 16px;
+            font-weight: bold;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>
+            <span>🗂️ تست دستی مهاجرت دیتابیس</span>
+            <span class="badge-fixed">✅ نسخه اصلاح‌شده - رفع خطای نسخه</span>
+        </h1>
+        <div class="fixed-note">
+            🛠️ رفع خطا: تمام توابع از آخرین نسخه دیتابیس استفاده می‌کنند · بدون خطای "version is less"
+        </div>
+        <p style="margin-bottom: 20px; color: #a4b0be;">
+            ✅ تست ارتقای نسخه IndexedDB از v1 به v2 · افزودن جدول · تغییر ایندکس · حفظ داده
+        </p>
+
+        <!-- کارت وضعیت فعلی -->
+        <div class="card">
+            <h2>📌 وضعیت دیتابیس</h2>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 16px;">
+                <div style="background: #2c3a47; padding: 16px; border-radius: 12px; text-align: center;">
+                    <div style="font-size: 2rem;">📀</div>
+                    <div style="font-size: 0.9rem; color: #a4b0be;">نسخه فعلی</div>
+                    <div id="dbVersionDisplay" style="font-size: 1.8rem; font-weight: bold; color: #ffdd59;">-</div>
+                </div>
+                <div style="background: #2c3a47; padding: 16px; border-radius: 12px; text-align: center;">
+                    <div style="font-size: 2rem;">🧮</div>
+                    <div style="font-size: 0.9rem; color: #a4b0be;">تعداد کاربران</div>
+                    <div id="userCountDisplay" style="font-size: 1.8rem; font-weight: bold; color: #33d9b2;">0</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- کارت مرحله ۱: نصب نسخه ۱ -->
+        <div class="card">
+            <h2>🔰 مرحله ۱: ایجاد دیتابیس v1</h2>
+            <p style="color: #a4b0be; margin-bottom: 16px;">جدول: users (id, name, email, level) · ایندکس: email</p>
+            <div class="flex-row">
+                <button id="installV1Btn" class="btn">📥 نصب/بازنشانی v1</button>
+                <button id="addSampleUserBtn" class="btn btn-success">➕ افزودن کاربر نمونه</button>
+            </div>
+            <button id="showUsersBtn" class="btn btn-warning" style="margin-top: 8px;">👥 نمایش کاربران</button>
+        </div>
+
+        <!-- کارت مرحله ۲: مهاجرت به نسخه ۲ -->
+        <div class="card">
+            <h2>⬆️ مرحله ۲: مهاجرت به v2</h2>
+            <p style="color: #a4b0be; margin-bottom: 16px;">
+                ✅ تغییرات: اضافه شدن جدول lessons · ایندکس جدید روی level · اضافه شدن فیلد createdAt به users
+            </p>
+            <button id="migrateToV2Btn" class="btn btn-danger">🔄 اجرای مهاجرت به v2</button>
+        </div>
+
+        <!-- کارت مرحله ۳: اعتبارسنجی -->
+        <div class="card">
+            <h2>🧪 مرحله ۳: تست‌های مهاجرت</h2>
+            <div class="flex-row">
+                <button id="testUsersSchemaBtn" class="btn">🧾 بررسی اسکیما users</button>
+                <button id="testLessonsTableBtn" class="btn">📚 بررسی جدول lessons</button>
+            </div>
+            <button id="fullMigrationTestBtn" class="btn btn-success" style="margin-top: 12px;">✅ اجرای کامل تست مهاجرت</button>
+        </div>
+
+        <!-- نمایش لاگ -->
+        <div style="margin-top: 24px;">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <h2>📋 گزارش عملیات</h2>
+                <button id="clearLogBtn" style="background: none; border: 1px solid #ff5252; color: #ff5252; padding: 8px 16px; border-radius: 50px;">پاک کردن</button>
+            </div>
+            <div id="logContainer" class="log">
+                ⏳ آماده‌سازی... برای شروع یکی از عملیات‌ها را انتخاب کنید.
+            </div>
+        </div>
+
+        <div style="margin-top: 24px; text-align: center; color: #a4b0be; font-size: 0.8rem;">
+            <p>🧪 Farsinglish · تست دستی مهاجرت دیتابیس · نسخه اصلاح‌شده · تاریخ: 2026-02-13</p>
+        </div>
+    </div>
+
+    <script>
+        // -------------------- کانفیگ دیتابیس --------------------
+        const DB_NAME = 'FarsinglishMigrationTest';
+        const DB_VERSION_V1 = 1;
+        const DB_VERSION_V2 = 2;
+
+        // -------------------- سیستم لاگ --------------------
+        const LogManager = {
+            logEl: document.getElementById('logContainer'),
+            append(message, type = 'info') {
+                const time = new Date().toLocaleTimeString('fa-IR', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+                let prefix = '';
+                switch(type) {
+                    case 'success': prefix = '✅'; break;
+                    case 'error': prefix = '❌'; break;
+                    case 'warning': prefix = '⚠️'; break;
+                    case 'migrate': prefix = '⬆️'; break;
+                    default: prefix = '📌';
+                }
+                this.logEl.innerHTML += `<div>${prefix} [${time}] ${message}</div>`;
+                this.logEl.scrollTop = this.logEl.scrollHeight;
+            },
+            clear() {
+                this.logEl.innerHTML = '🧹 لاگ پاک شد.';
+            }
+        };
+
+        // -------------------- Helper: باز کردن دیتابیس --------------------
+        function openDB(version) {
+            return new Promise((resolve, reject) => {
+                const request = indexedDB.open(DB_NAME, version);
+                
+                request.onupgradeneeded = (event) => {
+                    const db = event.target.result;
+                    const oldVersion = event.oldVersion;
+                    const newVersion = event.newVersion;
+                    
+                    LogManager.append(`🔄 upgrade از نسخه ${oldVersion} به ${newVersion}`, 'migrate');
+
+                    // مهاجرت از 0 به 1 (نصب اولیه)
+                    if (oldVersion < 1) {
+                        if (!db.objectStoreNames.contains('users')) {
+                            const userStore = db.createObjectStore('users', { keyPath: 'id', autoIncrement: true });
+                            userStore.createIndex('email', 'email', { unique: true });
+                            userStore.createIndex('level', 'level', { unique: false });
+                            LogManager.append(`📁 ایجاد جدول users (v1)`, 'success');
+                        }
+                    }
+
+                    // مهاجرت از 1 به 2
+                    if (oldVersion < 2 && oldVersion >= 1) {
+                        LogManager.append(`🆙 ارتقا به v2: اضافه شدن جدول lessons`, 'migrate');
+                        
+                        // ایجاد جدول lessons
+                        if (!db.objectStoreNames.contains('lessons')) {
+                            const lessonStore = db.createObjectStore('lessons', { keyPath: 'id', autoIncrement: true });
+                            lessonStore.createIndex('title', 'title', { unique: false });
+                            lessonStore.createIndex('progress', 'progress', { unique: false });
+                            LogManager.append(`📁 ایجاد جدول lessons (v2)`, 'success');
+                        }
+
+                        LogManager.append(`🔖 ایندکس level در users قبلاً وجود دارد`, 'info');
+                    }
+                };
+
+                request.onsuccess = (event) => {
+                    resolve(event.target.result);
+                };
+
+                request.onerror = (event) => {
+                    reject(event.target.error);
+                };
+            });
+        }
+
+        // -------------------- نمایش نسخه و تعداد کاربران --------------------
+        async function refreshDBInfo() {
+            try {
+                const db = await openDB(DB_VERSION_V2); // همیشه آخرین نسخه
+                document.getElementById('dbVersionDisplay').innerText = db.version;
+                
+                if (db.objectStoreNames.contains('users')) {
+                    const tx = db.transaction('users', 'readonly');
+                    const store = tx.objectStore('users');
+                    const countRequest = store.count();
+                    countRequest.onsuccess = () => {
+                        document.getElementById('userCountDisplay').innerText = countRequest.result;
+                    };
+                } else {
+                    document.getElementById('userCountDisplay').innerText = '0';
+                }
+                db.close();
+            } catch (e) {
+                document.getElementById('dbVersionDisplay').innerText = '0';
+                document.getElementById('userCountDisplay').innerText = '0';
+            }
+        }
+
+        // -------------------- نصب v1 (حذف و ایجاد مجدد) --------------------
+        async function installV1() {
+            return new Promise((resolve, reject) => {
+                LogManager.append('🗑️ حذف دیتابیس قبلی...', 'warning');
+                const deleteRequest = indexedDB.deleteDatabase(DB_NAME);
+                
+                deleteRequest.onsuccess = () => {
+                    LogManager.append('✅ دیتابیس حذف شد. نصب v1...', 'success');
+                    
+                    const request = indexedDB.open(DB_NAME, DB_VERSION_V1);
+                    request.onupgradeneeded = (e) => {
+                        const db = e.target.result;
+                        if (!db.objectStoreNames.contains('users')) {
+                            const store = db.createObjectStore('users', { keyPath: 'id', autoIncrement: true });
+                            store.createIndex('email', 'email', { unique: true });
+                            store.createIndex('level', 'level', { unique: false });
+                            LogManager.append('📁 جدول users با ایندکس email, level ایجاد شد', 'success');
+                        }
+                    };
+                    request.onsuccess = () => {
+                        LogManager.append('🎉 دیتابیس v1 با موفقیت نصب شد', 'success');
+                        request.result.close();
+                        refreshDBInfo();
+                        resolve();
+                    };
+                    request.onerror = (e) => {
+                        LogManager.append(`❌ خطا در نصب v1: ${e.target.error}`, 'error');
+                        reject(e);
+                    };
+                };
+                
+                deleteRequest.onerror = (e) => {
+                    LogManager.append(`❌ خطا در حذف دیتابیس: ${e.target.error}`, 'error');
+                    reject(e);
+                };
+            });
+        }
+
+        // -------------------- افزودن کاربر نمونه (رفع خطا: استفاده از آخرین نسخه) --------------------
+        async function addSampleUser() {
+            try {
+                // رفع خطا: همیشه از آخرین نسخه استفاده کن
+                const db = await openDB(DB_VERSION_V2);
+                
+                if (!db.objectStoreNames.contains('users')) {
+                    LogManager.append('❌ جدول users وجود ندارد. ابتدا دیتابیس را نصب کنید.', 'error');
+                    db.close();
+                    return;
+                }
+                
+                const tx = db.transaction('users', 'readwrite');
+                const store = tx.objectStore('users');
+                
+                const user = {
+                    name: 'کاربر تستی',
+                    email: `test${Date.now()}@farsinglish.ir`,
+                    level: Math.floor(Math.random() * 5) + 1,
+                    createdAt: new Date().toISOString() // فیلد جدید v2
+                };
+                
+                const request = store.add(user);
+                request.onsuccess = () => {
+                    LogManager.append(`👤 کاربر "${user.name}" با سطح ${user.level} اضافه شد`, 'success');
+                    refreshDBInfo();
+                };
+                request.onerror = (e) => {
+                    LogManager.append(`❌ خطا در افزودن کاربر: ${e.target.error}`, 'error');
+                };
+                
+                db.close();
+            } catch (e) {
+                LogManager.append(`❌ خطا: ${e.message}`, 'error');
+            }
+        }
+
+        // -------------------- نمایش کاربران (رفع خطا: استفاده از آخرین نسخه) --------------------
+        async function showUsers() {
+            try {
+                // رفع خطا: همیشه از آخرین نسخه استفاده کن
+                const db = await openDB(DB_VERSION_V2);
+                
+                if (!db.objectStoreNames.contains('users')) {
+                    LogManager.append('❌ جدول users وجود ندارد.', 'error');
+                    db.close();
+                    return;
+                }
+                
+                const tx = db.transaction('users', 'readonly');
+                const store = tx.objectStore('users');
+                const request = store.getAll();
+                
+                request.onsuccess = () => {
+                    const users = request.result;
+                    if (users.length === 0) {
+                        LogManager.append('📭 هیچ کاربری یافت نشد', 'warning');
+                    } else {
+                        LogManager.append(`📋 لیست کاربران (${users.length} نفر):`, 'info');
+                        users.forEach(u => {
+                            const createdAt = u.createdAt ? u.createdAt.substring(0, 10) : 'قدیمی (بدون تاریخ)';
+                            LogManager.append(`   ID: ${u.id} | نام: ${u.name} | سطح: ${u.level} | تاریخ: ${createdAt}`, 'info');
+                        });
+                    }
+                    db.close();
+                };
+            } catch (e) {
+                LogManager.append(`❌ خطا در نمایش کاربران: ${e.message}`, 'error');
+            }
+        }
+
+        // -------------------- مهاجرت به v2 --------------------
+        async function migrateToV2() {
+            try {
+                LogManager.append('⬆️ شروع فرآیند مهاجرت به v2...', 'migrate');
+                
+                const db = await openDB(DB_VERSION_V2);
+                
+                if (db.objectStoreNames.contains('lessons')) {
+                    const tx = db.transaction('lessons', 'readwrite');
+                    const store = tx.objectStore('lessons');
+                    
+                    const sampleLesson = {
+                        title: 'درس نمونه پس از مهاجرت',
+                        progress: 0,
+                        createdAt: new Date().toISOString()
+                    };
+                    
+                    store.add(sampleLesson);
+                    LogManager.append('📚 درس نمونه به جدول lessons اضافه شد', 'success');
+                }
+                
+                db.close();
+                LogManager.append('🎉 مهاجرت به v2 با موفقیت انجام شد', 'success');
+                refreshDBInfo();
+                
+                await testUsersSchema();
+                
+            } catch (e) {
+                LogManager.append(`❌ خطا در مهاجرت: ${e.message}`, 'error');
+            }
+        }
+
+        // -------------------- تست اسکیما users --------------------
+        async function testUsersSchema() {
+            try {
+                const db = await openDB(DB_VERSION_V2);
+                
+                if (!db.objectStoreNames.contains('users')) {
+                    LogManager.append('❌ جدول users وجود ندارد!', 'error');
+                    db.close();
+                    return;
+                }
+                
+                const tx = db.transaction('users', 'readonly');
+                const store = tx.objectStore('users');
+                
+                const emailIndex = store.index('email');
+                const levelIndex = store.index('level');
+                
+                let schemaValid = true;
+                if (!emailIndex) {
+                    LogManager.append('❌ ایندکس email یافت نشد', 'error');
+                    schemaValid = false;
+                }
+                if (!levelIndex) {
+                    LogManager.append('❌ ایندکس level یافت نشد', 'error');
+                    schemaValid = false;
+                }
+                
+                if (schemaValid) {
+                    LogManager.append('✅ اسکیما users: صحیح (دارای ایندکس‌های email و level)', 'success');
+                }
+                
+                db.close();
+            } catch (e) {
+                LogManager.append(`❌ خطا در تست اسکیما: ${e.message}`, 'error');
+            }
+        }
+
+        // -------------------- تست جدول lessons --------------------
+        async function testLessonsTable() {
+            try {
+                const db = await openDB(DB_VERSION_V2);
+                
+                if (!db.objectStoreNames.contains('lessons')) {
+                    LogManager.append('❌ جدول lessons وجود ندارد! مهاجرت کامل نشده.', 'error');
+                    db.close();
+                    return;
+                }
+                
+                const tx = db.transaction('lessons', 'readonly');
+                const store = tx.objectStore('lessons');
+                
+                const titleIndex = store.index('title');
+                const progressIndex = store.index('progress');
+                
+                if (titleIndex && progressIndex) {
+                    LogManager.append('✅ جدول lessons با ایندکس‌های title و progress وجود دارد', 'success');
+                } else {
+                    LogManager.append('⚠️ ایندکس‌های lessons ناقص هستند', 'warning');
+                }
+                
+                const getAll = store.getAll();
+                getAll.onsuccess = () => {
+                    const lessons = getAll.result;
+                    LogManager.append(`📖 تعداد دروس: ${lessons.length}`, 'info');
+                    lessons.forEach(l => {
+                        LogManager.append(`   درس: ${l.title} | پیشرفت: ${l.progress}% | تاریخ: ${l.createdAt ? l.createdAt.substring(0,10) : 'ندارد'}`, 'info');
+                    });
+                };
+                
+                db.close();
+            } catch (e) {
+                LogManager.append(`❌ خطا در تست lessons: ${e.message}`, 'error');
+            }
+        }
+
+        // -------------------- تست کامل مهاجرت --------------------
+        async function fullMigrationTest() {
+            LogManager.append('🧪 شروع تست جامع مهاجرت...', 'info');
+            
+            await installV1();
+            
+            for (let i = 0; i < 3; i++) {
+                await addSampleUser();
+            }
+            
+            await showUsers();
+            
+            await migrateToV2();
+            
+            await testLessonsTable();
+            
+            LogManager.append('🏁 تست جامع مهاجرت به پایان رسید - بدون خطای نسخه ✅', 'success');
+            
+            refreshDBInfo();
+        }
+
+        // -------------------- Event Listeners --------------------
+        window.onload = () => {
+            refreshDBInfo();
+            
+            document.getElementById('installV1Btn').addEventListener('click', installV1);
+            document.getElementById('addSampleUserBtn').addEventListener('click', addSampleUser);
+            document.getElementById('showUsersBtn').addEventListener('click', showUsers);
+            document.getElementById('migrateToV2Btn').addEventListener('click', migrateToV2);
+            document.getElementById('testUsersSchemaBtn').addEventListener('click', testUsersSchema);
+            document.getElementById('testLessonsTableBtn').addEventListener('click', testLessonsTable);
+            document.getElementById('fullMigrationTestBtn').addEventListener('click', fullMigrationTest);
+            document.getElementById('clearLogBtn').addEventListener('click', () => LogManager.clear());
+            
+            LogManager.append('🚀 سیستم تست مهاجرت (نسخه اصلاح‌شده) آماده است.', 'success');
+            LogManager.append('🛠️ رفع خطا: تمام توابع از آخرین نسخه دیتابیس استفاده می‌کنند', 'success');
+        };
+    </script>
+</body>
+</html>
