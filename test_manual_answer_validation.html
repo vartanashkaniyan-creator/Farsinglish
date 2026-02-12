@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.5, user-scalable=yes">
+    <title>تست دستی اعتبارسنجی پاسخ - Farsinglish</title>
+    <style>
+        body { font-family: Tahoma, Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 15px; background: #f5f5f5; }
+        .header { background: #16a085; color: white; padding: 15px; border-radius: 15px; margin-bottom: 20px; text-align: center; }
+        .test-section { background: white; border-radius: 12px; padding: 20px; margin-bottom: 20px; box-shadow: 0 3px 10px rgba(0,0,0,0.08); }
+        h2 { font-size: 1.4rem; margin-top: 0; color: #2c3e50; border-bottom: 2px solid #ecf0f1; padding-bottom: 10px; }
+        .scenario { background: #f8f9fa; padding: 15px; border-radius: 10px; margin-bottom: 15px; border-right: 4px solid #3498db; }
+        button { background: #3498db; color: white; border: none; padding: 12px 20px; border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer; width: 100%; margin: 5px 0; transition: 0.2s; }
+        button:hover { background: #2980b9; transform: scale(0.98); }
+        .result-box { background: #e8f5e9; padding: 12px; border-radius: 8px; margin-top: 10px; font-size: 15px; }
+        input { width: 100%; padding: 12px; border: 2px solid #ddd; border-radius: 8px; font-size: 16px; box-sizing: border-box; }
+        .badge { display: inline-block; background: #e67e22; color: white; padding: 4px 10px; border-radius: 20px; font-size: 12px; margin-right: 10px; }
+        .summary { background: #2c3e50; color: white; padding: 15px; border-radius: 12px; margin-top: 25px; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>📝 Farsinglish - تست دستی اعتبارسنجی پاسخ</h1>
+        <p>بررسی case-insensitive، تایپو، لوناشتاین و خطاهای رایج</p>
+    </div>
+
+    <div class="test-section">
+        <h2>🧪 ۱. هسته اعتبارسنجی (Validator Engine)</h2>
+        
+        <div class="scenario">
+            <h3>✅ سناریو A: حساسیت به حروف بزرگ/کوچک</h3>
+            <p>پاسخ صحیح: <code>apple</code></p>
+            <input type="text" id="inputCase" placeholder="مثال: APPLE, Apple, aPpLe" value="APPLE">
+            <button onclick="testCaseInsensitive()">▶ تست اعتبارسنجی</button>
+            <div id="resultCase" class="result-box">منتظر اجرای تست...</div>
+        </div>
+
+        <div class="scenario">
+            <h3>🔤 سناریو B: تشخیص تایپو (لوناشتاین)</h3>
+            <p>پاسخ صحیح: <code>beautiful</code></p>
+            <input type="text" id="inputTypo" placeholder="مثال: beatiful, beautful, beutiful" value="beautful">
+            <button onclick="testTypo()">▶ تست تشخیص تایپو</button>
+            <div id="resultTypo" class="result-box">منتظر اجرای تست...</div>
+            <p style="font-size: 13px; color: #7f8c8d;">⚡ آستانه خطا: حداکثر ۲ کاراکتر اختلاف</p>
+        </div>
+
+        <div class="scenario">
+            <h3>🔄 سناریو C: فاصله‌های اضافی</h3>
+            <p>پاسخ صحیح: <code>hello world</code></p>
+            <input type="text" id="inputSpace" placeholder="مثال: hello  world ,  hello world" value="hello  world">
+            <button onclick="testExtraSpaces()">▶ تست حذف فاصله اضافی</button>
+            <div id="resultSpace" class="result-box">منتظر اجرای تست...</div>
+        </div>
+
+        <div class="scenario">
+            <h3>🔣 سناریو D: علائم نگارشی</h3>
+            <p>پاسخ صحیح: <code>don't</code></p>
+            <input type="text" id="inputPunctuation" placeholder="مثال: dont, don’t, dont" value="dont">
+            <button onclick="testPunctuation()">▶ تست نادیده گرفتن آپاستروف</button>
+            <div id="resultPunctuation" class="result-box">منتظر اجرای تست...</div>
+        </div>
+
+        <div class="scenario">
+            <h3>🎯 سناریو E: پاسخ کاملاً صحیح</h3>
+            <p>پاسخ صحیح: <code>university</code></p>
+            <input type="text" id="inputExact" placeholder="university" value="university">
+            <button onclick="testExactMatch()">▶ تست تطابق کامل</button>
+            <div id="resultExact" class="result-box">منتظر اجرای تست...</div>
+        </div>
+
+        <div class="scenario">
+            <h3>❌ سناریو F: پاسخ کاملاً غلط</h3>
+            <p>پاسخ صحیح: <code>mother</code></p>
+            <input type="text" id="inputWrong" placeholder="مثال: father, sister" value="father">
+            <button onclick="testWrongAnswer()">▶ تست رد پاسخ غلط</button>
+            <div id="resultWrong" class="result-box">منتظر اجرای تست...</div>
+        </div>
+    </div>
+
+    <div class="test-section">
+        <h2>📊 ۲. تست‌های ترکیبی و پیشرفته</h2>
+        
+        <div class="scenario">
+            <h3>⚡ سناریو G: تایپو + حروف بزرگ + فاصله</h3>
+            <p>پاسخ صحیح: <code>good morning</code></p>
+            <input type="text" id="inputComplex" placeholder="مثال: GOOD mornin , good  moring" value="GOOD mornin">
+            <button onclick="testComplexScenario()">▶ تست ترکیبی</button>
+            <div id="resultComplex" class="result-box">منتظر اجرای تست...</div>
+        </div>
+
+        <div class="scenario">
+            <h3>📏 سناریو H: تنظیم آستانه خطا</h3>
+            <p>پاسخ صحیح: <code>accommodation</code></p>
+            <label>حداکثر اختلاف مجاز: <input type="number" id="thresholdValue" min="1" max="5" value="2" style="width: 60px;"></label>
+            <input type="text" id="inputThreshold" placeholder="acommodation, accomodation" value="acomodation">
+            <button onclick="testThreshold()">▶ تست با آستانه دلخواه</button>
+            <div id="resultThreshold" class="result-box">منتظر اجرای تست...</div>
+        </div>
+    </div>
+
+    <div class="summary" id="summaryBox">
+        <h3>📋 گزارش تست دستی</h3>
+        <p>✅ سناریوهای موفق: ۰ | ❌ ناموفق: ۰ | 🧪 کل تست‌ها: ۰</p>
+        <p style="font-size: 14px;">روی دکمه هر سناریو کلیک کنید و نتیجه را مشاهده نمایید.</p>
+    </div>
+
+    <script>
+        // -------------------- هسته اعتبارسنجی (Validator Core) --------------------
+        class AnswerValidator {
+            // تطابق بدون در نظر گرفتن حروف بزرگ و کوچک
+            static isCaseInsensitiveMatch(userAnswer, correctAnswer) {
+                if (!userAnswer || !correctAnswer) return false;
+                return userAnswer.trim().toLowerCase() === correctAnswer.trim().toLowerCase();
+            }
+
+            // حذف فاصله‌های اضافی
+            static normalizeSpaces(text) {
+                return text.trim().replace(/\s+/g, ' ');
+            }
+
+            // نادیده گرفتن علائم نگارشی رایج
+            static removePunctuation(text) {
+                return text.replace(/[.,!?;:'"`‘’“”\-_()]/g, '');
+            }
+
+            // الگوریتم فاصله لوناشتاین (محاسبه تعداد تغییرات)
+            static levenshteinDistance(a, b) {
+                const matrix = [];
+                for (let i = 0; i <= b.length; i++) matrix[i] = [i];
+                for (let j = 0; j <= a.length; j++) matrix[0][j] = j;
+
+                for (let i = 1; i <= b.length; i++) {
+                    for (let j = 1; j <= a.length; j++) {
+                        if (b.charAt(i-1) === a.charAt(j-1)) {
+                            matrix[i][j] = matrix[i-1][j-1];
+                        } else {
+                            matrix[i][j] = Math.min(
+                                matrix[i-1][j-1] + 1,
+                                matrix[i][j-1] + 1,
+                                matrix[i-1][j] + 1
+                            );
+                        }
+                    }
+                }
+                return matrix[b.length][a.length];
+            }
+
+            // تشخیص تایپو با آستانه خطا
+            static isTypoMatch(userAnswer, correctAnswer, threshold = 2) {
+                if (!userAnswer || !correctAnswer) return false;
+                const normalizedUser = this.normalizeSpaces(userAnswer).toLowerCase();
+                const normalizedCorrect = this.normalizeSpaces(correctAnswer).toLowerCase();
+                const distance = this.levenshteinDistance(normalizedUser, normalizedCorrect);
+                return distance <= threshold;
+            }
+
+            // اعتبارسنجی نهایی (ترکیبی)
+            static validateAnswer(userAnswer, correctAnswer, options = {}) {
+                const { 
+                    caseInsensitive = true, 
+                    ignorePunctuation = true,
+                    typoThreshold = 2,
+                    normalizeSpaces = true 
+                } = options;
+
+                let processedUser = userAnswer || '';
+                let processedCorrect = correctAnswer || '';
+
+                if (normalizeSpaces) {
+                    processedUser = this.normalizeSpaces(processedUser);
+                    processedCorrect = this.normalizeSpaces(processedCorrect);
+                }
+
+                if (caseInsensitive) {
+                    processedUser = processedUser.toLowerCase();
+                    processedCorrect = processedCorrect.toLowerCase();
+                }
+
+                if (ignorePunctuation) {
+                    processedUser = this.removePunctuation(processedUser);
+                    processedCorrect = this.removePunctuation(processedCorrect);
+                }
+
+                // بررسی تطابق کامل
+                if (processedUser === processedCorrect) {
+                    return { isValid: true, method: 'exact', score: 100 };
+                }
+
+                // بررسی تایپو
+                const distance = this.levenshteinDistance(processedUser, processedCorrect);
+                if (distance <= typoThreshold) {
+                    return { 
+                        isValid: true, 
+                        method: 'typo', 
+                        score: Math.max(70, 100 - (distance * 15)),
+                        distance 
+                    };
+                }
+
+                return { isValid: false, method: 'wrong', score: 0, distance };
+            }
+        }
+
+        // -------------------- توابع تست دستی --------------------
+        function testCaseInsensitive() {
+            const input = document.getElementById('inputCase').value;
+            const isValid = AnswerValidator.isCaseInsensitiveMatch(input, 'apple');
+            const resultBox = document.getElementById('resultCase');
+            resultBox.innerHTML = `
+                <strong>🔍 نتیجه:</strong> ${isValid ? '✅ صحیح' : '❌ نادرست'}<br>
+                <strong>📝 پاسخ کاربر:</strong> "${input}"<br>
+                <strong>🎯 پاسخ صحیح:</strong> "apple"<br>
+                <strong>⚙️ روش:</strong> عدم حساسیت به حروف بزرگ/کوچک
+            `;
+            resultBox.style.background = isValid ? '#e8f5e9' : '#ffebee';
+            updateSummary();
+        }
+
+        function testTypo() {
+            const input = document.getElementById('inputTypo').value;
+            const result = AnswerValidator.validateAnswer(input, 'beautiful', { typoThreshold: 2 });
+            const resultBox = document.getElementById('resultTypo');
+            resultBox.innerHTML = `
+                <strong>🔍 نتیجه:</strong> ${result.isValid ? '✅ صحیح (با ارفاق)' : '❌ نادرست'}<br>
+                <strong>📝 پاسخ کاربر:</strong> "${input}"<br>
+                <strong>🎯 پاسخ صحیح:</strong> "beautiful"<br>
+                <strong>📏 فاصله لوناشتاین:</strong> ${result.distance || 0}<br>
+                <strong>💯 امتیاز:</strong> ${result.score || 0}
+            `;
+            resultBox.style.background = result.isValid ? '#e8f5e9' : '#ffebee';
+            updateSummary();
+        }
+
+        function testExtraSpaces() {
+            const input = document.getElementById('inputSpace').value;
+            const normalized = AnswerValidator.normalizeSpaces(input);
+            const isValid = normalized.toLowerCase() === 'hello world';
+            const resultBox = document.getElementById('resultSpace');
+            resultBox.innerHTML = `
+                <strong>🔍 نتیجه:</strong> ${isValid ? '✅ صحیح' : '❌ نادرست'}<br>
+                <strong>📝 پاسخ کاربر:</strong> "${input}"<br>
+                <strong>🧹 پس از نرمال‌سازی:</strong> "${normalized}"<br>
+                <strong>🎯 پاسخ صحیح:</strong> "hello world"
+            `;
+            resultBox.style.background = isValid ? '#e8f5e9' : '#ffebee';
+            updateSummary();
+        }
+
+        function testPunctuation() {
+            const input = document.getElementById('inputPunctuation').value;
+            const withoutPunct = AnswerValidator.removePunctuation(input).toLowerCase();
+            const isValid = withoutPunct === 'dont' || withoutPunct === 'don\'t' || withoutPunct === 'dont';
+            const resultBox = document.getElementById('resultPunctuation');
+            resultBox.innerHTML = `
+                <strong>🔍 نتیجه:</strong> ${isValid ? '✅ صحیح' : '❌ نادرست'}<br>
+                <strong>📝 پاسخ کاربر:</strong> "${input}"<br>
+                <strong>🧹 بدون علائم نگارشی:</strong> "${withoutPunct}"<br>
+                <strong>🎯 پاسخ صحیح:</strong> "don't"
+            `;
+            resultBox.style.background = isValid ? '#e8f5e9' : '#ffebee';
+            updateSummary();
+        }
+
+        function testExactMatch() {
+            const input = document.getElementById('inputExact').value;
+            const isValid = AnswerValidator.validateAnswer(input, 'university', { typoThreshold: 0 }).isValid;
+            const resultBox = document.getElementById('resultExact');
+            resultBox.innerHTML = `
+                <strong>🔍 نتیجه:</strong> ${isValid ? '✅ صحیح' : '❌ نادرست'}<br>
+                <strong>📝 پاسخ کاربر:</strong> "${input}"<br>
+                <strong>🎯 پاسخ صحیح:</strong> "university"
+            `;
+            resultBox.style.background = isValid ? '#e8f5e9' : '#ffebee';
+            updateSummary();
+        }
+
+        function testWrongAnswer() {
+            const input = document.getElementById('inputWrong').value;
+            const isValid = AnswerValidator.validateAnswer(input, 'mother', { typoThreshold: 1 }).isValid;
+            const resultBox = document.getElementById('resultWrong');
+            resultBox.innerHTML = `
+                <strong>🔍 نتیجه:</strong> ${isValid ? '⚠️ اشتباه (باید رد شود)' : '✅ رد شد (صحیح)'}<br>
+                <strong>📝 پاسخ کاربر:</strong> "${input}"<br>
+                <strong>🎯 پاسخ صحیح:</strong> "mother"
+            `;
+            resultBox.style.background = !isValid ? '#e8f5e9' : '#ffebee';
+            updateSummary();
+        }
+
+        function testComplexScenario() {
+            const input = document.getElementById('inputComplex').value;
+            const result = AnswerValidator.validateAnswer(input, 'good morning', { typoThreshold: 2 });
+            const resultBox = document.getElementById('resultComplex');
+            resultBox.innerHTML = `
+                <strong>🔍 نتیجه:</strong> ${result.isValid ? '✅ صحیح (ترکیبی)' : '❌ نادرست'}<br>
+                <strong>📝 پاسخ کاربر:</strong> "${input}"<br>
+                <strong>🎯 پاسخ صحیح:</strong> "good morning"<br>
+                <strong>📏 فاصله:</strong> ${result.distance || 0}<br>
+                <strong>⚙️ روش:</strong> ${result.method}
+            `;
+            resultBox.style.background = result.isValid ? '#e8f5e9' : '#ffebee';
+            updateSummary();
+        }
+
+        function testThreshold() {
+            const input = document.getElementById('inputThreshold').value;
+            const threshold = parseInt(document.getElementById('thresholdValue').value) || 2;
+            const result = AnswerValidator.validateAnswer(input, 'accommodation', { typoThreshold: threshold });
+            const resultBox = document.getElementById('resultThreshold');
+            resultBox.innerHTML = `
+                <strong>🔍 نتیجه:</strong> ${result.isValid ? '✅ صحیح' : '❌ نادرست'}<br>
+                <strong>📝 پاسخ کاربر:</strong> "${input}"<br>
+                <strong>🎯 پاسخ صحیح:</strong> "accommodation"<br>
+                <strong>📏 فاصله:</strong> ${result.distance || 0}<br>
+                <strong>⚙️ آستانه:</strong> ${threshold} کاراکتر
+            `;
+            resultBox.style.background = result.isValid ? '#e8f5e9' : '#ffebee';
+            updateSummary();
+        }
+
+        function updateSummary() {
+            const results = document.querySelectorAll('.result-box');
+            let success = 0, fail = 0;
+            results.forEach(r => {
+                if (r.style.background === 'rgb(232, 245, 233)' || r.innerHTML.includes('✅')) success++;
+                else if (r.style.background === 'rgb(255, 235, 238)') fail++;
+            });
+            
+            document.getElementById('summaryBox').innerHTML = `
+                <h3>📋 گزارش تست دستی</h3>
+                <p>✅ سناریوهای موفق: ${success} | ❌ ناموفق: ${fail} | 🧪 اجرا شده: ${success+fail}</p>
+                <p style="font-size: 14px;">🔹 هر سناریو را دستی تست کنید و نتیجه را مشاهده نمایید.</p>
+            `;
+        }
+
+        // اضافه کردن دکمه ریست
+        function resetAll() {
+            document.querySelectorAll('input').forEach(i => i.value = '');
+            document.querySelectorAll('.result-box').forEach(r => {
+                r.innerHTML = 'منتظر اجرای تست...';
+                r.style.background = '#e8f5e9';
+            });
+            updateSummary();
+        }
+    </script>
+
+    <div style="display: flex; gap: 10px; margin-top: 20px;">
+        <button onclick="resetAll()" style="background: #95a5a6;">🔄 ریست همه</button>
+        <button onclick="window.location.reload()" style="background: #e67e22;">🔄 بارگذاری مجدد</button>
+    </div>
+    
+    <div style="text-align: center; margin-top: 30px; color: #7f8c8d; font-size: 12px;">
+        Farsinglish - تست دستی اعتبارسنجی پاسخ | نسخه 1.0 | اجرا در مرورگر موبایل
+    </div>
+</body>
+</html>
