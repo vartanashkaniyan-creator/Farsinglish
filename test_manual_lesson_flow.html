@@ -1,0 +1,595 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.5, user-scalable=yes">
+    <title>تست دستی جریان درس - Farsinglish</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            font-family: 'Tahoma', 'Vazir', 'Segoe UI', sans-serif;
+        }
+        body {
+            margin: 0;
+            padding: 15px;
+            background: #f8fafc;
+            color: #1e293b;
+            line-height: 1.6;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 24px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.05);
+            padding: 20px;
+        }
+        h1 {
+            font-size: 1.8rem;
+            margin-top: 0;
+            margin-bottom: 8px;
+            color: #0f172a;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        h1 span {
+            background: #2563eb;
+            color: white;
+            font-size: 1rem;
+            padding: 4px 12px;
+            border-radius: 30px;
+        }
+        .badge {
+            background: #e2e8f0;
+            padding: 6px 14px;
+            border-radius: 30px;
+            font-size: 0.85rem;
+            display: inline-block;
+            margin-bottom: 20px;
+        }
+        .step-indicator {
+            display: flex;
+            justify-content: space-between;
+            margin: 30px 0 20px;
+            position: relative;
+        }
+        .step {
+            flex: 1;
+            text-align: center;
+            padding: 10px 5px;
+            background: #f1f5f9;
+            margin: 0 3px;
+            border-radius: 12px;
+            font-weight: bold;
+            color: #475569;
+            border: 1px solid #cbd5e1;
+        }
+        .step.active {
+            background: #2563eb;
+            color: white;
+            border-color: #1e40af;
+        }
+        .card {
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            border-radius: 20px;
+            padding: 20px;
+            margin-bottom: 25px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.02);
+        }
+        .lesson-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px dashed #cbd5e1;
+            padding-bottom: 12px;
+            margin-bottom: 16px;
+        }
+        .lesson-title {
+            font-size: 1.3rem;
+            font-weight: bold;
+            color: #0f172a;
+        }
+        .progress-area {
+            background: #f1f5f9;
+            border-radius: 16px;
+            padding: 15px;
+            margin-top: 15px;
+        }
+        .btn {
+            border: none;
+            padding: 14px 22px;
+            border-radius: 14px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.15s;
+            margin: 6px 4px;
+            border: 1px solid transparent;
+        }
+        .btn-primary {
+            background: #2563eb;
+            color: white;
+            box-shadow: 0 4px 6px -2px rgba(37,99,235,0.3);
+        }
+        .btn-success {
+            background: #16a34a;
+            color: white;
+        }
+        .btn-warning {
+            background: #ca8a04;
+            color: white;
+        }
+        .btn-outline {
+            background: white;
+            border: 1px solid #94a3b8;
+            color: #1e293b;
+        }
+        .btn:active {
+            transform: scale(0.97);
+        }
+        .exercise-box {
+            background: #fef9c3;
+            border-right: 6px solid #eab308;
+            padding: 18px;
+            border-radius: 14px;
+            margin: 20px 0;
+            direction: ltr;
+            text-align: left;
+            font-size: 1.2rem;
+        }
+        .options-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin: 15px 0;
+        }
+        .option-item {
+            background: white;
+            border: 2px solid #e2e8f0;
+            border-radius: 16px;
+            padding: 14px;
+            text-align: center;
+            font-weight: 500;
+            cursor: pointer;
+            transition: 0.08s;
+        }
+        .option-item.selected {
+            background: #2563eb;
+            color: white;
+            border-color: #1e40af;
+        }
+        .log-panel {
+            background: #0f172a;
+            color: #e2e8f0;
+            border-radius: 16px;
+            padding: 18px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.85rem;
+            margin-top: 25px;
+            max-height: 280px;
+            overflow-y: auto;
+            direction: ltr;
+            text-align: left;
+        }
+        .log-entry {
+            border-bottom: 1px solid #334155;
+            padding: 8px 0;
+            color: #cbd5e1;
+        }
+        .flex-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            align-items: center;
+        }
+        .stat-item {
+            background: #f8fafc;
+            border-radius: 12px;
+            padding: 10px 16px;
+            border: 1px solid #e2e8f0;
+            flex: 1 0 180px;
+        }
+        hr {
+            border: none;
+            border-top: 2px solid #e2e8f0;
+            margin: 25px 0;
+        }
+        .footer-note {
+            color: #64748b;
+            font-size: 0.75rem;
+            text-align: center;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>
+        📘 Farsinglish
+        <span>دستی</span>
+    </h1>
+    <div class="badge">🧪 تست جریان کامل درس | Manual Flow Test</div>
+    
+    <!-- نمایش گام‌ها -->
+    <div class="step-indicator">
+        <div class="step" id="step1">۱. بارگذاری</div>
+        <div class="step" id="step2">۲. نمایش درس</div>
+        <div class="step" id="step3">۳. تمرین</div>
+        <div class="step" id="step4">۴. پاسخ</div>
+        <div class="step" id="step5">۵. SRS</div>
+    </div>
+
+    <!-- کارت اصلی درس -->
+    <div class="card" id="lessonCard">
+        <div class="lesson-header">
+            <span class="lesson-title" id="lessonName">درس نمونه: مقدماتی ۱</span>
+            <span id="progressBadge" style="background: #dbeafe; padding: 6px 14px; border-radius: 30px; color: #1e40af;">📊 پیشرفت ۰٪</span>
+        </div>
+        
+        <!-- بخش اطلاعات ساختگی -->
+        <div id="lessonContent">
+            <p style="font-size: 1.1rem;">📖 واژگان این درس:</p>
+            <ul style="background: #f1f5f9; padding: 16px 30px; border-radius: 14px;">
+                <li><strong>Apple</strong> - سیب</li>
+                <li><strong>Cat</strong> - گربه</li>
+                <li><strong>Run</strong> - دویدن</li>
+                <li><strong>Blue</strong> - آبی</li>
+            </ul>
+        </div>
+
+        <!-- وضعیت SRS (نمایشی) -->
+        <div class="progress-area">
+            <div style="display: flex; justify-content: space-between;">
+                <span>🔄 وضعیت مرور:</span>
+                <span id="srsState">درس جدید • بدون مرور قبلی</span>
+            </div>
+            <div style="display: flex; justify-content: space-between; margin-top: 10px;">
+                <span>⚡ عامل سهولت:</span>
+                <span id="easeFactorValue">۲.۵۰</span>
+            </div>
+            <div style="display: flex; justify-content: space-between;">
+                <span>📅 فاصله مرور:</span>
+                <span id="intervalValue">۱ روز</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- بخش تمرین فعال -->
+    <div class="card" style="background: #f0f9ff; border: 1px solid #bae6fd;">
+        <h3 style="margin-top: 0; display: flex; gap: 10px;">✏️ تمرین فعال</h3>
+        <div id="exerciseArea">
+            <div class="exercise-box" id="questionText">
+                معنی کلمه 'Apple' چیست؟
+            </div>
+            <div class="options-grid" id="optionsContainer">
+                <div class="option-item" onclick="selectOption(this, 'سیب')">سیب</div>
+                <div class="option-item" onclick="selectOption(this, 'پرتقال')">پرتقال</div>
+                <div class="option-item" onclick="selectOption(this, 'موز')">موز</div>
+                <div class="option-item" onclick="selectOption(this, 'انگور')">انگور</div>
+            </div>
+            <div style="display: flex; gap: 12px; margin-top: 20px;">
+                <button class="btn btn-success" id="checkAnswerBtn" onclick="checkAnswer()" disabled>✅ بررسی پاسخ</button>
+                <button class="btn btn-outline" onclick="nextExercise()">⏩ تمرین بعدی</button>
+            </div>
+            <p id="feedbackMessage" style="font-size: 0.95rem; margin-top: 12px; padding: 8px; border-radius: 8px;"></p>
+        </div>
+    </div>
+
+    <!-- کنترل‌های دستی تستر -->
+    <div class="card" style="background: #fefce8;">
+        <h3 style="margin-top: 0;">🧪 ابزارهای تست دستی</h3>
+        <div class="flex-row">
+            <button class="btn btn-outline" onclick="loadSampleLesson()">📂 ۱. بارگذاری درس</button>
+            <button class="btn btn-outline" onclick="startExercise()">🔁 ۲. شروع تمرین</button>
+            <button class="btn btn-warning" onclick="simulateAnswer(5)">⭐ ۳. پاسخ عالی (کیفیت ۵)</button>
+            <button class="btn btn-warning" onclick="simulateAnswer(2)">⚠️ پاسخ ضعیف (کیفیت ۲)</button>
+            <button class="btn btn-primary" onclick="saveProgress()">💾 ۴. ذخیره پیشرفت</button>
+            <button class="btn btn-success" onclick="resetTest()">🔄 ریست کامل</button>
+        </div>
+        <p style="margin-bottom: 0; color: #713f12; font-size: 0.9rem; margin-top: 15px;">
+            ⚡ تست دستی: مراحل را به ترتیب انجام دهید و خروجی را در لاگ پایین بررسی کنید.
+        </p>
+    </div>
+
+    <!-- پنل لاگ رویدادها -->
+    <div class="log-panel" id="logPanel">
+        <div style="color: #facc15; margin-bottom: 10px;">📋 کنسول مجازی (Virtual Console)</div>
+        <div id="logContent">
+            <div class="log-entry">⏱️ آماده‌سازی تست جریان درس...</div>
+        </div>
+    </div>
+
+    <!-- وضعیت ذخیره‌شده -->
+    <div style="display: flex; justify-content: space-between; flex-wrap: wrap; margin-top: 15px;">
+        <div class="stat-item"><strong>🔢 تکرار:</strong> <span id="statReps">۰</span></div>
+        <div class="stat-item"><strong>🎯 EF:</strong> <span id="statEF">۲.۵۰</span></div>
+        <div class="stat-item"><strong>📆 فاصله:</strong> <span id="statInterval">۱</span> روز</div>
+        <div class="stat-item"><strong>✅ پاسخ‌ها:</strong> <span id="statCorrect">۰</span></div>
+    </div>
+    <hr>
+    <div class="footer-note">
+        🧪 تمامی عملیات به‌صورت دستی و شبیه‌سازی می‌شود. این فایل مخصوص تست جریان کاربر در مرورگر موبایل است.
+    </div>
+</div>
+
+<script>
+    // -------------------- حالت اپلیکیشن (شبیه‌سازی) --------------------
+    const AppState = {
+        lessonLoaded: false,
+        currentLesson: {
+            id: 'L001',
+            title: 'مقدماتی ۱ - حیوانات و اشیا',
+            vocabulary: [
+                { word: 'Apple', meaning: 'سیب', correct: 'سیب' },
+                { word: 'Cat', meaning: 'گربه', correct: 'گربه' },
+                { word: 'Run', meaning: 'دویدن', correct: 'دویدن' },
+                { word: 'Blue', meaning: 'آبی', correct: 'آبی' }
+            ]
+        },
+        progress: {
+            lessonId: 'L001',
+            repetitions: 0,
+            easeFactor: 2.5,
+            interval: 1,
+            nextReview: null,
+            correctCount: 0,
+            totalAttempts: 0
+        },
+        currentExercise: {
+            vocabIndex: 0,
+            question: 'معنی کلمه \'Apple\' چیست؟',
+            options: ['سیب', 'پرتقال', 'موز', 'انگور'],
+            correctAnswer: 'سیب',
+            selected: null
+        },
+        selectedOptionElement: null
+    };
+
+    // -------------------- ابزار لاگ --------------------
+    const VirtualLog = {
+        log: function(message, type = 'info') {
+            const logDiv = document.getElementById('logContent');
+            const entry = document.createElement('div');
+            entry.className = 'log-entry';
+            const time = new Date().toLocaleTimeString('fa-IR', { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' });
+            let icon = '📌';
+            if (type === 'success') icon = '✅';
+            if (type === 'error') icon = '❌';
+            if (type === 'warning') icon = '⚠️';
+            if (type === 'step') icon = '🚀';
+            entry.innerHTML = `${icon} [${time}] ${message}`;
+            logDiv.appendChild(entry);
+            logDiv.scrollTop = logDiv.scrollHeight;
+        },
+        clear: function() {
+            document.getElementById('logContent').innerHTML = '<div class="log-entry">⏱️ لاگ پاک شد. دوباره شروع کنید...</div>';
+            this.log('تست دستی جریان درس آغاز شد', 'step');
+        }
+    };
+
+    // -------------------- توابع اصلی --------------------
+    function loadSampleLesson() {
+        AppState.lessonLoaded = true;
+        AppState.progress = {
+            lessonId: 'L001',
+            repetitions: 0,
+            easeFactor: 2.5,
+            interval: 1,
+            nextReview: null,
+            correctCount: 0,
+            totalAttempts: 0
+        };
+        document.getElementById('lessonName').innerText = AppState.currentLesson.title;
+        document.getElementById('progressBadge').innerHTML = '📊 پیشرفت ۰٪';
+        document.getElementById('srsState').innerText = 'درس جدید • آماده مرور';
+        document.getElementById('easeFactorValue').innerText = AppState.progress.easeFactor.toFixed(2);
+        document.getElementById('intervalValue').innerText = AppState.progress.interval + ' روز';
+        updateStatsUI();
+        
+        // فعال‌سازی گام
+        document.querySelectorAll('.step').forEach(s => s.classList.remove('active'));
+        document.getElementById('step1').classList.add('active');
+        
+        VirtualLog.log('درس نمونه با موفقیت بارگذاری شد: ' + AppState.currentLesson.title, 'success');
+    }
+
+    function startExercise() {
+        if (!AppState.lessonLoaded) {
+            VirtualLog.log('ابتدا درس را بارگذاری کنید!', 'error');
+            alert('لطفاً ابتدا دکمه "بارگذاری درس" را بزنید.');
+            return;
+        }
+        // انتخاب اولین واژه
+        AppState.currentExercise.vocabIndex = 0;
+        const vocab = AppState.currentLesson.vocabulary[0];
+        AppState.currentExercise.question = `معنی کلمه '${vocab.word}' چیست؟`;
+        AppState.currentExercise.correctAnswer = vocab.correct;
+        AppState.currentExercise.options = [vocab.correct, 'پرتقال', 'موز', 'انگور'].sort(() => Math.random() - 0.5);
+        AppState.currentExercise.selected = null;
+        
+        // رندر سوال
+        document.getElementById('questionText').innerText = AppState.currentExercise.question;
+        const optsDiv = document.getElementById('optionsContainer');
+        optsDiv.innerHTML = '';
+        AppState.currentExercise.options.forEach(opt => {
+            const div = document.createElement('div');
+            div.className = 'option-item';
+            div.innerText = opt;
+            div.onclick = function() { selectOption(this, opt); };
+            optsDiv.appendChild(div);
+        });
+        
+        document.getElementById('checkAnswerBtn').disabled = true;
+        document.getElementById('feedbackMessage').innerHTML = '';
+        document.querySelectorAll('.step').forEach(s => s.classList.remove('active'));
+        document.getElementById('step2').classList.add('active');
+        document.getElementById('step3').classList.add('active');
+        
+        VirtualLog.log('تمرین جدید ساخته شد: ' + vocab.word, 'info');
+    }
+
+    // انتخاب گزینه
+    window.selectOption = function(element, value) {
+        if (AppState.currentExercise.selected === value) {
+            element.classList.remove('selected');
+            AppState.currentExercise.selected = null;
+            document.getElementById('checkAnswerBtn').disabled = true;
+        } else {
+            // پاک کردن انتخاب قبلی
+            document.querySelectorAll('.option-item').forEach(el => el.classList.remove('selected'));
+            element.classList.add('selected');
+            AppState.currentExercise.selected = value;
+            document.getElementById('checkAnswerBtn').disabled = false;
+        }
+    };
+
+    // بررسی پاسخ
+    window.checkAnswer = function() {
+        if (!AppState.currentExercise.selected) {
+            VirtualLog.log('لطفاً یک گزینه انتخاب کنید', 'warning');
+            return;
+        }
+        const isCorrect = (AppState.currentExercise.selected === AppState.currentExercise.correctAnswer);
+        const feedback = document.getElementById('feedbackMessage');
+        
+        if (isCorrect) {
+            feedback.innerHTML = '✅ پاسخ درست! آفرین.';
+            feedback.style.background = '#dcfce7';
+            feedback.style.color = '#166534';
+            VirtualLog.log(`پاسخ صحیح: ${AppState.currentExercise.selected}`, 'success');
+            AppState.progress.correctCount += 1;
+            // شبیه‌سازی کیفیت پاسخ خوب (4)
+            simulateAnswerQuality(4);
+        } else {
+            feedback.innerHTML = `❌ پاسخ نادرست. گزینه صحیح: ${AppState.currentExercise.correctAnswer}`;
+            feedback.style.background = '#fee2e2';
+            feedback.style.color = '#991b1b';
+            VirtualLog.log(`پاسخ نادرست: انتخاب ${AppState.currentExercise.selected}، صحیح: ${AppState.currentExercise.correctAnswer}`, 'error');
+            AppState.progress.totalAttempts += 1;
+            // کیفیت پایین
+            simulateAnswerQuality(2);
+        }
+        document.getElementById('checkAnswerBtn').disabled = true;
+        AppState.progress.totalAttempts += 1;
+        updateStatsUI();
+        document.getElementById('step4').classList.add('active');
+    };
+
+    // شبیه‌سازی پاسخ با کیفیت معین
+    function simulateAnswerQuality(quality) {
+        // الگوریتم ساده SRS (SM-2)
+        let { repetitions, easeFactor, interval } = AppState.progress;
+        if (quality < 3) {
+            interval = 1;
+            repetitions = 0;
+            easeFactor = Math.max(1.3, easeFactor - 0.2);
+        } else {
+            if (repetitions === 0) interval = 1;
+            else if (repetitions === 1) interval = 6;
+            else interval = Math.round(interval * easeFactor);
+            repetitions += 1;
+            easeFactor = easeFactor + (0.1 - (5 - quality) * (0.08 + (5 - quality) * 0.02));
+            easeFactor = Math.min(3.0, Math.max(1.3, easeFactor));
+        }
+        AppState.progress.interval = interval;
+        AppState.progress.repetitions = repetitions;
+        AppState.progress.easeFactor = easeFactor;
+        
+        // به‌روزرسانی UI
+        document.getElementById('easeFactorValue').innerText = easeFactor.toFixed(2);
+        document.getElementById('intervalValue').innerText = interval + ' روز';
+        document.getElementById('srsState').innerText = repetitions + ' تکرار | فاصله ' + interval + ' روز';
+        
+        VirtualLog.log(`SRS: کیفیت=${quality}, تکرار=${repetitions}, EF=${easeFactor.toFixed(2)}, فاصله=${interval}`, 'info');
+        document.getElementById('step5').classList.add('active');
+    }
+
+    // پاسخ سریع عالی/ضعیف
+    window.simulateAnswer = function(quality) {
+        if (!AppState.lessonLoaded) { alert('ابتدا درس را بارگذاری کنید'); return; }
+        simulateAnswerQuality(quality);
+        AppState.progress.correctCount += (quality >= 3 ? 1 : 0);
+        updateStatsUI();
+        VirtualLog.log(`شبیه‌سازی پاسخ با کیفت ${quality}`, 'warning');
+    };
+
+    // ذخیره پیشرفت (نمایشی)
+    window.saveProgress = function() {
+        VirtualLog.log('پیشرفت درس در IndexedDB (شبیه‌ساز) ذخیره شد.', 'success');
+        VirtualLog.log(`EF: ${AppState.progress.easeFactor.toFixed(2)}, تکرار: ${AppState.progress.repetitions}, فاصله: ${AppState.progress.interval}`, 'info');
+        alert('پیشرفت با موفقیت در حافظه مجازی ذخیره شد.');
+    };
+
+    // تمرین بعدی
+    window.nextExercise = function() {
+        let nextIdx = AppState.currentExercise.vocabIndex + 1;
+        if (nextIdx >= AppState.currentLesson.vocabulary.length) {
+            VirtualLog.log('تمام واژگان این درس تمرین شدند!', 'info');
+            alert('به پایان واژگان درس رسیدید.');
+            return;
+        }
+        AppState.currentExercise.vocabIndex = nextIdx;
+        const vocab = AppState.currentLesson.vocabulary[nextIdx];
+        AppState.currentExercise.question = `معنی کلمه '${vocab.word}' چیست؟`;
+        AppState.currentExercise.correctAnswer = vocab.correct;
+        AppState.currentExercise.options = [vocab.correct, 'پرتقال', 'موز', 'انگور'].sort(() => Math.random() - 0.5);
+        AppState.currentExercise.selected = null;
+        
+        document.getElementById('questionText').innerText = AppState.currentExercise.question;
+        const optsDiv = document.getElementById('optionsContainer');
+        optsDiv.innerHTML = '';
+        AppState.currentExercise.options.forEach(opt => {
+            const div = document.createElement('div');
+            div.className = 'option-item';
+            div.innerText = opt;
+            div.onclick = function() { selectOption(this, opt); };
+            optsDiv.appendChild(div);
+        });
+        document.getElementById('checkAnswerBtn').disabled = true;
+        document.getElementById('feedbackMessage').innerHTML = '';
+        VirtualLog.log('رفتن به تمرین بعدی: ' + vocab.word, 'info');
+    };
+
+    // ریست
+    window.resetTest = function() {
+        AppState.lessonLoaded = false;
+        AppState.progress = {
+            lessonId: 'L001',
+            repetitions: 0,
+            easeFactor: 2.5,
+            interval: 1,
+            nextReview: null,
+            correctCount: 0,
+            totalAttempts: 0
+        };
+        updateStatsUI();
+        document.getElementById('lessonName').innerText = 'درس نمونه: مقدماتی ۱';
+        document.getElementById('progressBadge').innerHTML = '📊 پیشرفت ۰٪';
+        document.getElementById('srsState').innerText = 'درس جدید • بدون مرور قبلی';
+        document.getElementById('easeFactorValue').innerText = '۲.۵۰';
+        document.getElementById('intervalValue').innerText = '۱ روز';
+        document.querySelectorAll('.step').forEach(s => s.classList.remove('active'));
+        VirtualLog.clear();
+        VirtualLog.log('تست به حالت اولیه برگردانده شد.', 'step');
+    };
+
+    function updateStatsUI() {
+        document.getElementById('statReps').innerText = AppState.progress.repetitions;
+        document.getElementById('statEF').innerText = AppState.progress.easeFactor.toFixed(2);
+        document.getElementById('statInterval').innerText = AppState.progress.interval;
+        document.getElementById('statCorrect').innerText = AppState.progress.correctCount;
+        
+        let percent = Math.min(100, Math.floor((AppState.progress.correctCount / 4) * 100));
+        document.getElementById('progressBadge').innerHTML = `📊 پیشرفت ${percent}٪`;
+    }
+
+    // مقداردهی اولیه
+    window.onload = function() {
+        VirtualLog.clear();
+        VirtualLog.log('✅ فایل تست دستی جریان درس آماده است. مراحل را گام‌به‌گام انجام دهید.', 'step');
+    };
+</script>
+</body>
+</html>
