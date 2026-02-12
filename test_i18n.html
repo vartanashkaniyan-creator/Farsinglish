@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>تست i18n</title>
+    <style>
+        body { font-family: Tahoma, sans-serif; max-width: 600px; margin: 0 auto; padding: 15px; background: #f5f5f5; }
+        .box { background: white; padding: 20px; border-radius: 12px; margin-bottom: 20px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        button { background: #0066cc; color: white; border: none; padding: 12px 20px; border-radius: 8px; margin: 5px; width: 100%; font-size: 16px; }
+        .lang { display: flex; gap: 10px; margin-bottom: 20px; }
+        .lang button { background: #e9ecef; color: #000; width: auto; flex: 1; }
+        .active { background: #0066cc !important; color: white !important; }
+        .result { background: #e3f2fd; padding: 15px; border-radius: 8px; margin-top: 15px; font-size: 18px; }
+    </style>
+</head>
+<body>
+    <div class="box">
+        <h1 style="text-align:center;">🌐 Farsinglish</h1>
+        <h3 style="text-align:center;">تست چندزبانه</h3>
+        
+        <div class="lang">
+            <button id="faBtn" class="active" onclick="setLang('fa')">فارسی</button>
+            <button id="enBtn" onclick="setLang('en')">English</button>
+            <button id="esBtn" onclick="setLang('es')">Español</button>
+        </div>
+        
+        <div style="text-align:center; margin:20px 0;">
+            <span style="background:#ffc107; padding:8px 25px; border-radius:30px;">
+                زبان فعلی: <strong id="currentLang">fa</strong>
+            </span>
+        </div>
+    </div>
+    
+    <div class="box">
+        <h2>📘 ترجمه کلمات</h2>
+        <div id="results" class="result">
+            appName = فرسینگلیش<br>
+            welcome = خوش آمدید<br>
+            start = شروع درس
+        </div>
+        
+        <button onclick="testTranslate()">🔍 نمایش ترجمه‌ها</button>
+        <button onclick="testFallback()">🔄 تست Fallback</button>
+        <button onclick="testMissing()">❓ تست کلید غلط</button>
+    </div>
+    
+    <div class="box">
+        <h2>📋 گزارش</h2>
+        <div id="log" style="background:#000; color:#0f0; padding:15px; border-radius:8px; font-family:monospace; direction:ltr; text-align:left; height:150px; overflow-y:auto;">
+        </div>
+        <button onclick="clearLog()" style="background:#dc3545;">🧹 پاک کردن</button>
+    </div>
+
+    <script>
+        // دیکشنری ساده
+        const dict = {
+            appName: { fa: 'فرسینگلیش', en: 'Farsinglish' },
+            welcome: { fa: 'خوش آمدید', en: 'Welcome' },
+            start: { fa: 'شروع درس', en: 'Start Lesson' },
+            review: { fa: 'مرور', en: 'Review' }
+        };
+        
+        let currentLang = 'fa';
+        let logs = [];
+        
+        function setLang(lang) {
+            currentLang = lang;
+            document.getElementById('currentLang').innerHTML = lang;
+            
+            document.getElementById('faBtn').classList.remove('active');
+            document.getElementById('enBtn').classList.remove('active');
+            document.getElementById('esBtn').classList.remove('active');
+            
+            if (lang === 'fa') document.getElementById('faBtn').classList.add('active');
+            if (lang === 'en') document.getElementById('enBtn').classList.add('active');
+            if (lang === 'es') document.getElementById('esBtn').classList.add('active');
+            
+            addLog('زبان تغییر کرد: ' + lang);
+        }
+        
+        function translate(key) {
+            if (!dict[key]) {
+                addLog('خطا: کلید "' + key + '" وجود ندارد');
+                return '??' + key + '??';
+            }
+            
+            if (dict[key][currentLang]) {
+                return dict[key][currentLang];
+            }
+            
+            // Fallback به انگلیسی
+            if (dict[key]['en']) {
+                addLog('Fallback: ' + currentLang + ' -> en برای ' + key);
+                return dict[key]['en'];
+            }
+            
+            return '???';
+        }
+        
+        function addLog(msg) {
+            let time = new Date().toLocaleTimeString();
+            logs.push('[' + time + '] ' + msg);
+            let logDiv = document.getElementById('log');
+            logDiv.innerHTML = logs.join('<br>');
+        }
+        
+        function clearLog() {
+            logs = [];
+            document.getElementById('log').innerHTML = '';
+            addLog('گزارش پاک شد');
+        }
+        
+        function testTranslate() {
+            addLog('--- اجرای تست ترجمه ---');
+            let app = translate('appName');
+            let wel = translate('welcome');
+            let start = translate('start');
+            
+            let html = '';
+            html += 'appName = ' + app + '<br>';
+            html += 'welcome = ' + wel + '<br>';
+            html += 'start = ' + start + '<br>';
+            document.getElementById('results').innerHTML = html;
+            
+            addLog('appName: ' + app);
+            addLog('welcome: ' + wel);
+            addLog('start: ' + start);
+        }
+        
+        function testFallback() {
+            addLog('--- تست Fallback (اسپانیایی) ---');
+            let old = currentLang;
+            setLang('es');
+            let val = translate('start');
+            document.getElementById('results').innerHTML = 'start با es = ' + val + ' (باید: Start Lesson)';
+            setLang(old);
+        }
+        
+        function testMissing() {
+            addLog('--- تست کلید غلط ---');
+            let val = translate('xyz123');
+            document.getElementById('results').innerHTML = 'xyz123 = ' + val;
+        }
+        
+        // شروع
+        window.onload = function() {
+            setLang('fa');
+            clearLog();
+            testTranslate();
+        };
+    </script>
+</body>
+</html>
