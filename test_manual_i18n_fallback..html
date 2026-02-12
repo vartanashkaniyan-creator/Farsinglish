@@ -2,573 +2,344 @@
 <html lang="fa" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.5, user-scalable=yes">
-    <title>تست دستی چندزبانه‌سازی - Farsinglish</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>تست i18n - فرسینگلیش</title>
     <style>
-        * { box-sizing: border-box; }
         body {
-            font-family: 'Tahoma', 'Arial', sans-serif;
-            max-width: 900px;
+            font-family: Tahoma, Arial, sans-serif;
+            max-width: 800px;
             margin: 0 auto;
-            padding: 20px 15px;
-            background: #f9fafc;
-            color: #1e293b;
-            line-height: 1.6;
+            padding: 15px;
+            background: #f0f2f5;
         }
-        h1, h2, h3 { margin-top: 0; }
         .header {
-            background: linear-gradient(145deg, #0f2b3d, #1a3a4e);
+            background: #1a3b4e;
             color: white;
-            padding: 25px 20px;
-            border-radius: 24px;
-            margin-bottom: 25px;
+            padding: 20px;
+            border-radius: 15px;
             text-align: center;
-            box-shadow: 0 10px 20px rgba(0,0,0,0.15);
+            margin-bottom: 20px;
         }
-        .header h1 { font-size: 1.9rem; margin-bottom: 8px; }
-        .header p { font-size: 1.1rem; opacity: 0.9; margin: 0; }
-        
         .card {
             background: white;
-            border-radius: 20px;
+            border-radius: 12px;
             padding: 20px;
-            margin-bottom: 25px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
-            border: 1px solid rgba(0,0,0,0.03);
-            transition: all 0.2s;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
         }
-        .card:hover { box-shadow: 0 8px 20px rgba(0,0,0,0.08); }
-        
-        .lang-bar {
+        .lang-panel {
             display: flex;
-            gap: 12px;
+            gap: 10px;
             flex-wrap: wrap;
-            margin-bottom: 25px;
-            background: #eef2f6;
-            padding: 18px;
-            border-radius: 18px;
+            margin-bottom: 20px;
             justify-content: center;
         }
         .lang-btn {
-            padding: 14px 28px;
+            padding: 12px 24px;
             border: none;
-            border-radius: 40px;
-            font-size: 1.1rem;
-            font-weight: 600;
-            background: white;
-            color: #1e293b;
-            box-shadow: 0 2px 6px rgba(0,0,0,0.04);
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            transition: 0.2s;
+            border-radius: 30px;
+            font-size: 16px;
+            font-weight: bold;
+            background: #e9ecef;
+            color: #1a3b4e;
             cursor: pointer;
             border: 2px solid transparent;
         }
         .lang-btn.active {
-            background: #1e3a5f;
+            background: #1a3b4e;
             color: white;
-            border-color: #94a3b8;
-            box-shadow: 0 6px 14px rgba(30,58,95,0.25);
+            border-color: #ffc107;
         }
-        .lang-btn i { font-style: normal; font-size: 1.3rem; }
-        
-        .test-section {
+        .test-row {
+            display: flex;
+            align-items: center;
+            margin-bottom: 15px;
+            padding: 10px;
             background: #f8fafc;
-            border-radius: 20px;
-            padding: 20px;
-            border: 1px solid #e2e8f0;
-            margin-bottom: 20px;
-        }
-        .test-title {
-            font-size: 1.3rem;
-            font-weight: 700;
-            margin-bottom: 18px;
-            padding-bottom: 10px;
-            border-bottom: 3px solid #cbd5e1;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-        .row {
-            display: flex;
+            border-radius: 10px;
             flex-wrap: wrap;
-            gap: 20px;
-            margin-bottom: 20px;
-            align-items: center;
         }
-        .key-box {
-            background: #e9f0f5;
-            padding: 14px 18px;
-            border-radius: 14px;
-            font-family: 'Courier New', monospace;
-            direction: ltr;
-            font-size: 1.1rem;
-            border: 1px solid #b9c7d4;
-            flex: 1 0 200px;
+        .key {
+            background: #dee2e6;
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-family: monospace;
+            font-size: 15px;
+            margin-left: 15px;
         }
-        .value-box {
-            background: #d9eaf5;
-            padding: 14px 20px;
-            border-radius: 14px;
-            font-size: 1.2rem;
-            font-weight: 500;
-            flex: 1 0 200px;
-            border: 1px solid #7aa3b8;
-            color: #0c4a6e;
-            word-break: break-word;
-        }
-        .fallback-badge {
-            background: #fef9c3;
-            color: #854d0e;
-            padding: 6px 14px;
-            border-radius: 30px;
-            font-size: 0.85rem;
-            font-weight: 700;
-            display: inline-block;
-            margin-right: 12px;
-            border: 1px solid #eab308;
+        .value {
+            background: #d1e7dd;
+            padding: 8px 20px;
+            border-radius: 20px;
+            color: #0a3622;
+            font-weight: bold;
+            flex: 1;
+            min-width: 150px;
         }
         button {
-            background: #2d5a7a;
+            background: #2c5f73;
             color: white;
             border: none;
-            padding: 16px 28px;
-            border-radius: 50px;
-            font-size: 1.2rem;
-            font-weight: 700;
+            padding: 12px 20px;
+            border-radius: 30px;
+            font-size: 16px;
             cursor: pointer;
+            margin: 5px;
             transition: 0.2s;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            gap: 10px;
-            border: 1px solid rgba(255,255,255,0.2);
-            box-shadow: 0 6px 0 #0f2a3b;
-            width: 100%;
-            margin: 10px 0;
         }
-        button:active {
-            transform: translateY(6px);
-            box-shadow: 0 2px 0 #0f2a3b;
+        button:hover {
+            background: #1e4454;
         }
-        .result-panel {
-            background: #0f1a24;
-            color: #e2e8f0;
-            padding: 18px;
-            border-radius: 16px;
-            font-family: 'Courier New', monospace;
+        .log {
+            background: #212529;
+            color: #adb5bd;
+            padding: 15px;
+            border-radius: 10px;
+            font-family: monospace;
+            font-size: 14px;
             direction: ltr;
-            font-size: 1rem;
-            margin-top: 20px;
-            border-left: 8px solid #38bdf8;
-            overflow-x: auto;
-            white-space: pre-wrap;
-            word-break: break-word;
-        }
-        .test-log {
-            background: #1e293b;
-            color: #b9f3f0;
-            padding: 16px;
-            border-radius: 14px;
-            font-size: 0.95rem;
-            margin-top: 20px;
-            max-height: 300px;
+            text-align: left;
+            max-height: 200px;
             overflow-y: auto;
-            direction: ltr;
+            margin-top: 20px;
         }
-        .flag { font-size: 1.7rem; margin-left: 5px; }
-        .summary-badge {
+        .badge {
             display: inline-block;
-            background: #334155;
-            padding: 10px 18px;
-            border-radius: 40px;
-            color: white;
-            font-size: 0.95rem;
-            margin: 8px 4px;
+            padding: 5px 12px;
+            border-radius: 20px;
+            background: #ffc107;
+            color: #000;
+            font-size: 12px;
+            margin-right: 10px;
         }
-        hr { opacity: 0.3; margin: 25px 0; }
-        .footer { text-align: center; color: #64748b; margin-top: 30px; }
     </style>
 </head>
 <body>
 
 <div class="header">
-    <h1>🌍 Farsinglish • تست دستی چندزبانه‌سازی</h1>
-    <p>پشتیبانی از زبان‌های فارسی / انگلیسی • مکانیزم Fallback هوشمند</p>
+    <h1>🌐 Farsinglish - i18n Fallback</h1>
+    <p>تست دستی چندزبانه‌سازی | موبایل/وب</p>
 </div>
 
-<!-- ========== پنل انتخاب زبان فعال ========= -->
 <div class="card">
-    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
-        <h2 style="margin:0; display: flex; gap: 10px;"><span class="flag">🗣️</span> زبان فعال برنامه</h2>
-        <span id="activeLangDisplay" style="background: #1e3a5f; color: white; padding: 10px 22px; border-radius: 50px; font-size: 1.3rem; font-weight: bold;">fa-IR</span>
-    </div>
+    <h2 style="margin-top:0; text-align:center;">زبان فعال: <span id="currentLang" style="background: #ffc107; color: #000; padding: 5px 15px; border-radius: 30px;">fa-IR</span></h2>
     
-    <div class="lang-bar">
-        <button id="btnLangFa" class="lang-btn active" onclick="setLanguage('fa-IR')">
-            <span class="flag">🇮🇷</span> فارسی - فارسی
-        </button>
-        <button id="btnLangEn" class="lang-btn" onclick="setLanguage('en-US')">
-            <span class="flag">🇺🇸</span> English - انگلیسی
-        </button>
-        <button id="btnLangEs" class="lang-btn" onclick="setLanguage('es-ES')">
-            <span class="flag">🇪🇸</span> Español (بدون پشتیبانی)
-        </button>
-        <button id="btnLangAr" class="lang-btn" onclick="setLanguage('ar-SA')">
-            <span class="flag">🇸🇦</span> العربية (بدون پشتیبانی)
-        </button>
+    <div class="lang-panel">
+        <button class="lang-btn active" id="faBtn" onclick="setLang('fa-IR')">🇮🇷 فارسی</button>
+        <button class="lang-btn" id="enBtn" onclick="setLang('en-US')">🇺🇸 English</button>
+        <button class="lang-btn" id="esBtn" onclick="setLang('es-ES')">🇪🇸 Español</button>
+        <button class="lang-btn" id="arBtn" onclick="setLang('ar-SA')">🇸🇦 العربية</button>
     </div>
-    <p style="color: #475569; margin-top: 8px; font-size: 0.95rem;">
-        ⚡ زبان‌های fa-IR و en-US کاملاً پشتیبانی می‌شوند. سایر زبان‌ها باید به fallback (en-US) برگردند.
-    </p>
 </div>
 
-<!-- ========== دیکشنری نمونه ========= -->
 <div class="card">
-    <h2 style="display: flex; gap: 10px;">📖 دیکشنری داخلی (آیتم‌های تست)</h2>
-    <div style="background: #eef2f6; padding: 15px; border-radius: 16px; font-size: 1.1rem; direction: ltr; text-align: left;">
-        <pre style="margin:0; background: transparent; border: none; color: #0b3b4b;">
-{
-  "appName": { "fa-IR": "فرسینگلیش", "en-US": "Farsinglish" },
-  "welcome": { "fa-IR": "خوش آمدید!", "en-US": "Welcome!" },
-  "startLesson": { "fa-IR": "شروع درس", "en-US": "Start Lesson" },
-  "review": { "fa-IR": "مرور امروز", "en-US": "Today's Review" },
-  "score": { "fa-IR": "امتیاز", "en-US": "Score" },
-  "streak": { "fa-IR": "روزهای متوالی", "en-US": "Streak" },
-  "setting": { "fa-IR": "تنظیمات", "en-US": "Settings" },
-  "loading": { "fa-IR": "در حال بارگذاری...", "en-US": "Loading..." },
-  "success": { "fa-IR": "عملیات موفق", "en-US": "Success" },
-  "error": { "fa-IR": "خطا", "en-US": "Error" }
-}
-        </pre>
+    <h3>📋 ۱. ترجمه کلیدهای اصلی</h3>
+    <div class="test-row">
+        <span class="key">appName</span>
+        <span id="valAppName" class="value">-</span>
     </div>
-    <p style="color: #3b5a6d; margin-top: 10px;"><span class="fallback-badge">🛡️ استراتژی Fallback</span> در صورت نبود کلید → کلید خالی برگردد. در صورت نبود زبان → en-US برگردد. در صورت نبود en-US → کلید خالی.</p>
+    <div class="test-row">
+        <span class="key">welcome</span>
+        <span id="valWelcome" class="value">-</span>
+    </div>
+    <div class="test-row">
+        <span class="key">startLesson</span>
+        <span id="valStartLesson" class="value">-</span>
+    </div>
+    <button onclick="testBasicKeys()">🔍 تست کلیدهای پایه</button>
 </div>
 
-<!-- ========== بخش اصلی تست ========= -->
 <div class="card">
-    <div style="display: flex; justify-content: space-between; align-items: center;">
-        <h2 style="margin:0;">🧪 تست‌های دستی چندزبانه</h2>
-        <button id="runAllTestsBtn" onclick="runAllManualTests()" style="width: auto; padding: 12px 30px; background: #0e5a6b; box-shadow: 0 4px 0 #06323d;">▶ اجرای همگانی</button>
+    <h3>🔄 ۲. تست Fallback (زبان‌های پشتیبانی‌نشده)</h3>
+    <p><span class="badge">آزمایش</span> زبان اسپانیایی و عربی باید به انگلیسی برگردد</p>
+    <div class="test-row">
+        <span class="key">startLesson با es-ES</span>
+        <span id="valFallback" class="value">-</span>
     </div>
-    
-    <!-- تست 1: نمایش کلیدهای اصلی -->
-    <div class="test-section">
-        <div class="test-title">🧪 تست ۱: ترجمه کلیدهای ثابت</div>
-        <div class="row">
-            <span class="key-box">appName</span>
-            <span id="test1Value" class="value-box">...</span>
-        </div>
-        <div class="row">
-            <span class="key-box">welcome</span>
-            <span id="test1Value2" class="value-box">...</span>
-        </div>
-        <button onclick="testStaticKeys()" style="background: #2b5f4a; box-shadow: 0 4px 0 #1d4032;">🔍 تست کلیدهای ثابت</button>
-    </div>
-    
-    <!-- تست 2: Fallback برای زبان نامعتبر -->
-    <div class="test-section">
-        <div class="test-title">🧪 تست ۲: Fallback زبان (es-ES / ar-SA) → en-US</div>
-        <div class="row">
-            <span class="key-box">startLesson (زبان فعلی: <span id="currentLangFallback">fa-IR</span>)</span>
-            <span id="test2Value" class="value-box">...</span>
-        </div>
-        <button onclick="testFallbackLanguage()" style="background: #7a4d3a; box-shadow: 0 4px 0 #5a3729;">🔁 تست Fallback</button>
-    </div>
-    
-    <!-- تست 3: کلید غیرموجود -->
-    <div class="test-section">
-        <div class="test-title">🧪 تست ۳: کلید ناموجود (بازگشت کلید خالی)</div>
-        <div class="row">
-            <span class="key-box">nonexistentKey</span>
-            <span id="test3Value" class="value-box">...</span>
-        </div>
-        <button onclick="testMissingKey()" style="background: #7a4f6a; box-shadow: 0 4px 0 #543a49;">❓ تست کلید ناموجود</button>
-    </div>
-    
-    <!-- تست 4: Fallback زنجیره‌ای - حذف en-US -->
-    <div class="test-section">
-        <div class="test-title">🧪 تست ۴: سناریوی حذف en-US (بازگشت به رشته خالی)</div>
-        <div class="row">
-            <span class="key-box">someFutureKey (فقط در fa-IR موجود نیست)</span>
-            <span id="test4Value" class="value-box">...</span>
-        </div>
-        <button onclick="testChainFallback()" style="background: #4a5c7a; box-shadow: 0 4px 0 #2f3c52;">⛓️ تست زنجیره fallback</button>
-    </div>
-    
-    <!-- تست 5: بارگذاری پویا (شبیه‌سازی افزودن کلید جدید) -->
-    <div class="test-section">
-        <div class="test-title">🧪 تست ۵: افزودن پویای کلید جدید و ترجمه</div>
-        <div class="row">
-            <span class="key-box">newFeature</span>
-            <span id="test5Value" class="value-box">...</span>
-        </div>
-        <button onclick="testDynamicKey()" style="background: #4a6670; box-shadow: 0 4px 0 #2f474e;">➕ افزودن کلید جدید و تست</button>
-    </div>
-    
-    <!-- نمایش لاگ کامل -->
-    <div style="margin-top: 25px;">
-        <h3>📋 گزارش تست‌ها:</h3>
-        <div id="testLog" class="test-log">
-            -- تست‌ها را اجرا کنید. --
-        </div>
-    </div>
+    <button onclick="testFallback()">🔄 تست Fallback</button>
 </div>
 
-<!-- خلاصه وضعیت -->
-<div class="card" id="summaryCard">
-    <h2>📊 جمع‌بندی دستی</h2>
-    <div id="summaryContent">
-        <span class="summary-badge">✅ تست ۱: اجرا نشده</span>
-        <span class="summary-badge">✅ تست ۲: اجرا نشده</span>
-        <span class="summary-badge">✅ تست ۳: اجرا نشده</span>
-        <span class="summary-badge">✅ تست ۴: اجرا نشده</span>
-        <span class="summary-badge">✅ تست ۵: اجرا نشده</span>
+<div class="card">
+    <h3>❓ ۳. کلید ناموجود</h3>
+    <div class="test-row">
+        <span class="key">unknownKey</span>
+        <span id="valMissing" class="value">-</span>
     </div>
-    <button onclick="resetAllTests()" style="background: #475569; box-shadow: 0 4px 0 #1e293b; margin-top: 15px;">🧹 ریست کردن همه تست‌ها</button>
+    <button onclick="testMissingKey()">❓ تست کلید ناموجود</button>
 </div>
 
-<div class="footer">
-    <p>Farsinglish • تست دستی i18n و Fallback • موبایل/وب • تمام سناریوها دستی</p>
+<div class="card">
+    <h3>➕ ۴. افزودن کلید جدید</h3>
+    <div class="test-row">
+        <span class="key">newFeature</span>
+        <span id="valNewKey" class="value">-</span>
+    </div>
+    <button onclick="testNewKey()">➕ تست کلید جدید</button>
+</div>
+
+<div class="card">
+    <h3>📝 گزارش تست</h3>
+    <div id="logPanel" class="log">
+        -- برای شروع یکی از تست‌ها را اجرا کنید --
+    </div>
+    <button onclick="clearLog()" style="background: #6c757d; margin-top: 10px;">🧹 پاک کردن گزارش</button>
+    <button onclick="runAllTests()" style="background: #198754;">🚀 اجرای همه تست‌ها</button>
 </div>
 
 <script>
-    // ==================== هسته چندزبانه (i18n) ====================
-    const I18nEngine = {
-        // دیکشنری اصلی
-        dictionary: {
-            "appName": { "fa-IR": "فرسینگلیش", "en-US": "Farsinglish" },
-            "welcome": { "fa-IR": "خوش آمدید!", "en-US": "Welcome!" },
-            "startLesson": { "fa-IR": "شروع درس", "en-US": "Start Lesson" },
-            "review": { "fa-IR": "مرور امروز", "en-US": "Today's Review" },
-            "score": { "fa-IR": "امتیاز", "en-US": "Score" },
-            "streak": { "fa-IR": "روزهای متوالی", "en-US": "Streak" },
-            "setting": { "fa-IR": "تنظیمات", "en-US": "Settings" },
-            "loading": { "fa-IR": "در حال بارگذاری...", "en-US": "Loading..." },
-            "success": { "fa-IR": "عملیات موفق", "en-US": "Success" },
-            "error": { "fa-IR": "خطا", "en-US": "Error" }
+    // ---------- دیکشنری ساده ----------
+    const dictionary = {
+        appName: {
+            'fa-IR': 'فرسینگلیش',
+            'en-US': 'Farsinglish'
         },
-        
-        currentLanguage: 'fa-IR',  // پیش‌فرض فارسی
-        
-        setLanguage(lang) {
-            if (lang && typeof lang === 'string') {
-                this.currentLanguage = lang;
-            }
-            return this.currentLanguage;
+        welcome: {
+            'fa-IR': 'خوش آمدید!',
+            'en-US': 'Welcome!'
         },
-        
-        // تابع اصلی مترجم با Fallback هوشمند
-        translate(key, lang = null) {
-            const targetLang = lang || this.currentLanguage;
-            
-            // 1. آیا کلید وجود دارد؟
-            if (!this.dictionary.hasOwnProperty(key)) {
-                this.log(`⚠️ کلید "${key}" وجود ندارد. Fallback: رشته خالی.`);
-                return '';  // کلید ناموجود → خالی
-            }
-            
-            const entry = this.dictionary[key];
-            
-            // 2. آیا زبان مقصد مستقیماً موجود است؟
-            if (entry[targetLang] && entry[targetLang].trim() !== '') {
-                return entry[targetLang];
-            }
-            
-            // 3. Fallback به en-US (در صورت موجود بودن)
-            if (entry['en-US'] && entry['en-US'].trim() !== '') {
-                this.log(`🔄 Fallback: زبان "${targetLang}" برای کلید "${key}" پیدا نشد. → بازگشت به en-US.`);
-                return entry['en-US'];
-            }
-            
-            // 4. Fallback نهایی: رشته خالی
-            this.log(`❌ هیچ ترجمه‌ای برای کلید "${key}" حتی در en-US یافت نشد. → خالی.`);
+        startLesson: {
+            'fa-IR': 'شروع درس',
+            'en-US': 'Start Lesson'
+        },
+        review: {
+            'fa-IR': 'مرور امروز',
+            'en-US': 'Today\'s Review'
+        },
+        score: {
+            'fa-IR': 'امتیاز',
+            'en-US': 'Score'
+        },
+        streak: {
+            'fa-IR': 'روزهای متوالی',
+            'en-US': 'Streak'
+        }
+    };
+
+    // ---------- وضعیت ----------
+    let currentLanguage = 'fa-IR';
+    let logEntries = [];
+
+    // ---------- توابع ترجمه ----------
+    function translate(key, lang = currentLanguage) {
+        // کلید وجود ندارد؟
+        if (!dictionary[key]) {
+            log('⚠️ کلید "' + key + '" یافت نشد → خالی');
             return '';
-        },
-        
-        // افزودن پویای کلید جدید
-        addKey(key, translations) {
-            if (!key || typeof translations !== 'object') return false;
-            this.dictionary[key] = translations;
-            return true;
-        },
-        
-        log(message) {
-            // اینجا فقط برای دیباگ؛ ما از Log آرایه جدا استفاده می‌کنیم
         }
-    };
-
-    // ==================== متغیرهای全局 ====================
-    let testLogs = [];
-    let testStatus = {
-        test1: false, test2: false, test3: false, test4: false, test5: false
-    };
-
-    // ==================== توابع کمکی ====================
-    function addLog(message, type = 'info') {
-        const timestamp = new Date().toLocaleTimeString('fa-IR', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-        testLogs.push(`[${timestamp}] ${message}`);
-        const logDiv = document.getElementById('testLog');
-        if (logDiv) {
-            logDiv.innerHTML = testLogs.map(log => `📌 ${log}`).join('<br>');
-            logDiv.scrollTop = logDiv.scrollHeight;
+        
+        // ترجمه مستقیم
+        if (dictionary[key][lang] && dictionary[key][lang].trim() !== '') {
+            return dictionary[key][lang];
         }
+        
+        // Fallback به انگلیسی
+        if (dictionary[key]['en-US'] && dictionary[key]['en-US'].trim() !== '') {
+            log('🔄 Fallback: ' + lang + ' → en-US برای کلید "' + key + '"');
+            return dictionary[key]['en-US'];
+        }
+        
+        // هیچ ترجمه‌ای نیست
+        log('❌ هیچ ترجمه‌ای برای "' + key + '" موجود نیست');
+        return '';
     }
 
-    function clearLogs() {
-        testLogs = [];
-        document.getElementById('testLog').innerHTML = '-- تست‌ها را اجرا کنید. --';
-    }
-
-    function updateUILanguage() {
-        const currentLang = I18nEngine.currentLanguage;
-        document.getElementById('activeLangDisplay').innerText = currentLang;
+    function setLang(lang) {
+        currentLanguage = lang;
+        document.getElementById('currentLang').innerHTML = lang;
         
-        // به‌روزرسانی کلاس active دکمه‌ها
+        // آپدیت دکمه‌ها
         document.querySelectorAll('.lang-btn').forEach(btn => btn.classList.remove('active'));
-        if (currentLang === 'fa-IR') document.getElementById('btnLangFa').classList.add('active');
-        else if (currentLang === 'en-US') document.getElementById('btnLangEn').classList.add('active');
-        else if (currentLang === 'es-ES') document.getElementById('btnLangEs').classList.add('active');
-        else if (currentLang === 'ar-SA') document.getElementById('btnLangAr').classList.add('active');
+        if (lang === 'fa-IR') document.getElementById('faBtn').classList.add('active');
+        else if (lang === 'en-US') document.getElementById('enBtn').classList.add('active');
+        else if (lang === 'es-ES') document.getElementById('esBtn').classList.add('active');
+        else if (lang === 'ar-SA') document.getElementById('arBtn').classList.add('active');
         
-        document.getElementById('currentLangFallback').innerText = currentLang;
-        addLog(`🌐 زبان برنامه به "${currentLang}" تغییر یافت.`);
+        log('🌐 زبان تغییر کرد به: ' + lang);
     }
 
-    function setLanguage(lang) {
-        I18nEngine.setLanguage(lang);
-        updateUILanguage();
+    function log(msg) {
+        const time = new Date().toLocaleTimeString('fa-IR');
+        logEntries.push('[' + time + '] ' + msg);
+        const logPanel = document.getElementById('logPanel');
+        if (logPanel) {
+            logPanel.innerHTML = logEntries.map(entry => '📌 ' + entry).join('<br>');
+            logPanel.scrollTop = logPanel.scrollHeight;
+        }
     }
 
-    // ============== تست‌های دستی ==============
-    function testStaticKeys() {
-        addLog('🧪 اجرای تست ۱: کلیدهای ثابت');
-        const val1 = I18nEngine.translate('appName');
-        const val2 = I18nEngine.translate('welcome');
-        document.getElementById('test1Value').innerText = val1;
-        document.getElementById('test1Value2').innerText = val2;
-        
-        const expectedFa = (I18nEngine.currentLanguage === 'fa-IR') ? 'فرسینگلیش' : 'Farsinglish';
-        const status = (val1.includes('فرسینگ') || val1.includes('Farsing')) ? '✅' : '⚠️';
-        addLog(`   appName → "${val1}"`);
-        addLog(`   welcome → "${val2}"`);
-        testStatus.test1 = true;
-        updateSummary();
+    function clearLog() {
+        logEntries = [];
+        document.getElementById('logPanel').innerHTML = '-- گزارش پاک شد --';
     }
 
-    function testFallbackLanguage() {
-        addLog('🧪 تست ۲: Fallback زبان (حالت es-ES و ar-SA)');
-        // ذخیره زبان فعلی
-        const originalLang = I18nEngine.currentLanguage;
+    // ---------- تست‌ها ----------
+    function testBasicKeys() {
+        log('🧪 تست کلیدهای پایه (زبان: ' + currentLanguage + ')');
         
-        // تست با اسپانیایی
-        I18nEngine.setLanguage('es-ES');
-        const valEs = I18nEngine.translate('startLesson');
-        document.getElementById('test2Value').innerText = `${valEs} (Fallback از es-ES)`;
-        addLog(`   زبان es-ES: startLesson → "${valEs}" (باید: Start Lesson)`);
+        const appName = translate('appName');
+        const welcome = translate('welcome');
+        const startLesson = translate('startLesson');
         
-        // تست با عربی
-        I18nEngine.setLanguage('ar-SA');
-        const valAr = I18nEngine.translate('startLesson');
-        addLog(`   زبان ar-SA: startLesson → "${valAr}" (باید: Start Lesson)`);
+        document.getElementById('valAppName').innerHTML = appName;
+        document.getElementById('valWelcome').innerHTML = welcome;
+        document.getElementById('valStartLesson').innerHTML = startLesson;
         
-        // برگشت به زبان اصلی
-        I18nEngine.setLanguage(originalLang);
-        updateUILanguage();
-        testStatus.test2 = true;
-        updateSummary();
+        log('   appName = "' + appName + '"');
+        log('   welcome = "' + welcome + '"');
+        log('   startLesson = "' + startLesson + '"');
+    }
+
+    function testFallback() {
+        log('🧪 تست Fallback - تغییر به es-ES');
+        const originalLang = currentLanguage;
+        
+        setLang('es-ES');
+        const value = translate('startLesson');
+        document.getElementById('valFallback').innerHTML = value + ' (از es-ES)';
+        log('   startLesson با es-ES = "' + value + '" (باید: Start Lesson)');
+        
+        setLang(originalLang);
     }
 
     function testMissingKey() {
-        addLog('🧪 تست ۳: کلید ناموجود');
-        const val = I18nEngine.translate('nonexistentKey');
-        document.getElementById('test3Value').innerText = val === '' ? '(خالی - صحیح)' : val;
-        addLog(`   کلید nonexistentKey → "${val}" (باید خالی باشد)`);
-        testStatus.test3 = true;
-        updateSummary();
+        log('🧪 تست کلید ناموجود');
+        const value = translate('unknownKey');
+        document.getElementById('valMissing').innerHTML = value === '' ? '(خالی - صحیح)' : value;
+        log('   unknownKey = "' + value + '" (باید خالی باشد)');
     }
 
-    function testChainFallback() {
-        addLog('🧪 تست ۴: سناریوی حذف en-US');
-        // اضافه کردن کلید جدید که فقط en-US دارد
-        I18nEngine.addKey('someFutureKey', { 'en-US': 'Future Feature' });
+    function testNewKey() {
+        log('🧪 افزودن کلید جدید');
         
-        const originalLang = I18nEngine.currentLanguage;
-        I18nEngine.setLanguage('fa-IR'); // فعلاً فارسی
-        
-        // حذف موقت entry en-US برای شبیه‌سازی
-        const backup = I18nEngine.dictionary['someFutureKey']['en-US'];
-        delete I18nEngine.dictionary['someFutureKey']['en-US'];
-        
-        const val = I18nEngine.translate('someFutureKey'); // باید خالی برگردد
-        document.getElementById('test4Value').innerText = val === '' ? '(خالی - fallback درست)' : val;
-        addLog(`   someFutureKey (بدون en-US) → "${val}" (باید خالی باشد)`);
-        
-        // بازیابی
-        I18nEngine.dictionary['someFutureKey']['en-US'] = backup;
-        I18nEngine.setLanguage(originalLang);
-        updateUILanguage();
-        testStatus.test4 = true;
-        updateSummary();
-    }
-
-    function testDynamicKey() {
-        addLog('🧪 تست ۵: افزودن کلید جدید پویا');
-        I18nEngine.addKey('newFeature', {
+        // اضافه کردن کلید جدید به دیکشنری
+        dictionary.newFeature = {
             'fa-IR': 'ویژگی جدید: مرور هوشمند',
             'en-US': 'New Feature: Smart Review'
-        });
-        const val = I18nEngine.translate('newFeature');
-        document.getElementById('test5Value').innerText = val;
-        addLog(`   newFeature → "${val}" (باید متناسب با زبان فعلی باشد)`);
-        testStatus.test5 = true;
-        updateSummary();
+        };
+        
+        const value = translate('newFeature');
+        document.getElementById('valNewKey').innerHTML = value;
+        log('   newFeature = "' + value + '"');
     }
 
-    function runAllManualTests() {
-        clearLogs();
-        addLog('🚀 اجرای همگانی تمام تست‌های چندزبانه...');
-        testStaticKeys();
-        testFallbackLanguage();
+    function runAllTests() {
+        clearLog();
+        log('🚀 اجرای تمام تست‌ها...');
+        
+        setLang('fa-IR');
+        testBasicKeys();
+        testFallback();
         testMissingKey();
-        testChainFallback();
-        testDynamicKey();
-        addLog('🎯 تمام تست‌ها اجرا شدند. صحت خروجی را بررسی کنید.');
-    }
-
-    function updateSummary() {
-        let html = '';
-        html += `<span class="summary-badge" style="background: ${testStatus.test1 ? '#0a5c3b' : '#5f3b4c'};">✅ تست ۱: ${testStatus.test1 ? 'اجرا شده' : 'اجرا نشده'}</span>`;
-        html += `<span class="summary-badge" style="background: ${testStatus.test2 ? '#0a5c3b' : '#5f3b4c'};">✅ تست ۲: ${testStatus.test2 ? 'اجرا شده' : 'اجرا نشده'}</span>`;
-        html += `<span class="summary-badge" style="background: ${testStatus.test3 ? '#0a5c3b' : '#5f3b4c'};">✅ تست ۳: ${testStatus.test3 ? 'اجرا شده' : 'اجرا نشده'}</span>`;
-        html += `<span class="summary-badge" style="background: ${testStatus.test4 ? '#0a5c3b' : '#5f3b4c'};">✅ تست ۴: ${testStatus.test4 ? 'اجرا شده' : 'اجرا نشده'}</span>`;
-        html += `<span class="summary-badge" style="background: ${testStatus.test5 ? '#0a5c3b' : '#5f3b4c'};">✅ تست ۵: ${testStatus.test5 ? 'اجرا شده' : 'اجرا نشده'}</span>`;
-        document.getElementById('summaryContent').innerHTML = html;
-    }
-
-    function resetAllTests() {
-        I18nEngine.currentLanguage = 'fa-IR';
-        updateUILanguage();
-        clearLogs();
-        testStatus = { test1: false, test2: false, test3: false, test4: false, test5: false };
-        updateSummary();
-        document.getElementById('test1Value').innerText = '...';
-        document.getElementById('test1Value2').innerText = '...';
-        document.getElementById('test2Value').innerText = '...';
-        document.getElementById('test3Value').innerText = '...';
-        document.getElementById('test4Value').innerText = '...';
-        document.getElementById('test5Value').innerText = '...';
-        addLog('🔄 همه تست‌ها ریست شدند.');
+        testNewKey();
+        
+        log('✅ تمام تست‌ها اجرا شدند. خروجی را بررسی کنید.');
     }
 
     // مقداردهی اولیه
     window.onload = function() {
-        setLanguage('fa-IR');
-        clearLogs();
-        updateSummary();
-        addLog('🌍 ماژول i18n آماده است. زبان فارسی فعال می‌باشد.');
-        addLog('👆 دکمه‌های تست را به ترتیب فشار دهید و خروجی را بررسی کنید.');
+        setLang('fa-IR');
+        clearLog();
+        log('🌐 ماژول i18n آماده است. زبان فارسی فعال است.');
     };
 </script>
 
