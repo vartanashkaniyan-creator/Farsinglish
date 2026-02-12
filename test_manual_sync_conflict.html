@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.5, user-scalable=yes">
+    <title>تست دستی همگام‌سازی و حل تعارض - Farsinglish</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: 'Tahoma', 'Arial', sans-serif;
+            background: #f0f2f5;
+            padding: 16px;
+            color: #1e293b;
+            line-height: 1.6;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        .header {
+            background: linear-gradient(145deg, #0f172a, #1e293b);
+            color: white;
+            padding: 24px 20px;
+            border-radius: 28px;
+            margin-bottom: 24px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+            text-align: center;
+        }
+        .header h1 { font-size: 1.9rem; margin-bottom: 8px; }
+        .header h2 { font-size: 1.2rem; font-weight: 400; opacity: 0.9; }
+        .card {
+            background: white;
+            border-radius: 24px;
+            padding: 22px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+            border: 1px solid rgba(255,255,255,0.3);
+        }
+        .badge {
+            display: inline-block;
+            background: #e2e8f0;
+            padding: 6px 14px;
+            border-radius: 30px;
+            font-size: 0.85rem;
+            font-weight: bold;
+            color: #334155;
+            margin-bottom: 15px;
+        }
+        .scenario {
+            background: #f8fafc;
+            border-right: 6px solid #3b82f6;
+            padding: 18px;
+            border-radius: 16px;
+            margin-bottom: 20px;
+        }
+        .btn {
+            background: #2563eb;
+            color: white;
+            border: none;
+            padding: 14px 20px;
+            border-radius: 40px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            cursor: pointer;
+            width: 100%;
+            margin-top: 12px;
+            transition: 0.2s;
+            box-shadow: 0 4px 6px rgba(37,99,235,0.3);
+            border: 1px solid rgba(255,255,255,0.2);
+        }
+        .btn:hover { background: #1d4ed8; transform: scale(0.98); }
+        .btn-secondary { background: #64748b; box-shadow: 0 4px 6px rgba(100,116,139,0.3); }
+        .btn-success { background: #059669; }
+        .btn-warning { background: #d97706; }
+        .log {
+            background: #0f172a;
+            color: #e2e8f0;
+            padding: 18px;
+            border-radius: 16px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9rem;
+            direction: ltr;
+            text-align: left;
+            max-height: 300px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+            word-break: break-word;
+            border: 2px solid #334155;
+            margin-top: 20px;
+        }
+        .conflict-box {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            margin-top: 15px;
+        }
+        .conflict-item {
+            flex: 1;
+            background: #fff7ed;
+            padding: 16px;
+            border-radius: 18px;
+            border: 2px dashed #f97316;
+            min-width: 200px;
+        }
+        .success { color: #10b981; font-weight: bold; }
+        .error { color: #ef4444; font-weight: bold; }
+        .warning { color: #f59e0b; }
+        hr { margin: 25px 0; border: 1px solid #e2e8f0; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🔄 Farsinglish</h1>
+            <h2>تست دستی همگام‌سازی و حل تعارض (Conflict Resolution)</h2>
+            <div style="margin-top: 12px; background: rgba(255,255,255,0.1); padding: 8px 16px; border-radius: 40px; display: inline-block;">
+                ⚡ اولویت ۲ | سناریوهای واقعی آفلاین/آنلاین
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="badge">📦 ۱. وضعیت فعلی</div>
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <div>
+                    <p><strong>🟢 وضعیت شبکه:</strong> <span id="networkStatus" style="color: #059669; background: #d1fae5; padding: 4px 14px; border-radius: 30px;">آنلاین (فرضی)</span></p>
+                    <p><strong>📤 صف همگام‌سازی:</strong> <span id="syncQueueCount" style="background: #fef3c7; padding: 4px 14px; border-radius: 30px;">۰ عملیات</span></p>
+                    <p><strong>🏷️ نسخه محلی:</strong> <span id="localVersion">v2.3.1</span> | <strong>🌐 نسخه سرور:</strong> <span id="serverVersion">v2.3.5</span></p>
+                </div>
+                <div style="font-size: 2.5rem;">⚔️</div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="badge">🧪 ۲. سناریوهای تست تعارض</div>
+            
+            <!-- سناریو ۱ -->
+            <div class="scenario">
+                <h3 style="display: flex; align-items: center; gap: 10px; margin-bottom: 16px;">🔹 سناریو ۱: ویرایش همزمان یک درس</h3>
+                <p><strong>کاربر A (آفلاین):</strong> ویرایش درس "حروف الفبا" - اضافه کردن ۱۰ کارت جدید ⏳</p>
+                <p><strong>کاربر B (آنلاین):</strong> ویرایش همان درس - تغییر توضیحات و حذف ۳ کارت ✅</p>
+                <div class="conflict-box">
+                    <div class="conflict-item">
+                        <span style="background: #f97316; color: white; padding: 4px 10px; border-radius: 20px;">📱 دستگاه شما</span>
+                        <p style="margin-top: 12px;"><strong>آخرین ویرایش:</strong> ۱۲ بهمن ۱۴۰۴ - ۱۵:۲۳<br>✅ کارت‌ها: ۴۲ عدد<br>📝 توضیحات: "آموزش حروف با تصویر"</p>
+                    </div>
+                    <div class="conflict-item">
+                        <span style="background: #3b82f6; color: white; padding: 4px 10px; border-radius: 20px;">☁️ سرور</span>
+                        <p style="margin-top: 12px;"><strong>آخرین ویرایش:</strong> ۱۲ بهمن ۱۴۰۴ - ۱۵:۴۵<br>✅ کارت‌ها: ۳۹ عدد<br>📝 توضیحات: "آموزش حروف + مثال"</p>
+                    </div>
+                </div>
+                <button id="scenario1Btn" class="btn btn-warning" style="margin-top: 20px;" onclick="runScenario1()">⚔️ شبیه‌سازی تعارض و حل</button>
+                <p id="scenario1Result" style="margin-top: 16px; padding: 12px; background: #f1f5f9; border-radius: 12px;"></p>
+            </div>
+
+            <!-- سناریو ۲ -->
+            <div class="scenario">
+                <h3 style="display: flex; align-items: center; gap: 10px; margin-bottom: 16px;">🔸 سناریو ۲: ثبت‌پیشرفت هم‌زمان</h3>
+                <p><strong>دستگاه A:</strong> ارسال پیشرفت درس ۵ (۸۰٪) - ۵ ثانیه تأخیر</p>
+                <p><strong>دستگاه B:</strong> ارسال پیشرفت همان درس (۹۵٪) - ۲ ثانیه تأخیر (زودتر ثبت شد)</p>
+                <p><strong>❓ کدام مقدار باید باقی بماند؟</strong></p>
+                <div style="display: flex; gap: 15px; margin-top: 15px; flex-wrap: wrap;">
+                    <button id="progressKeepHighestBtn" class="btn btn-secondary" style="width: auto; flex:1;" onclick="runScenario2('highest')">📈 نگه‌داشتن بیشترین</button>
+                    <button id="progressKeepLatestBtn" class="btn btn-secondary" style="width: auto; flex:1;" onclick="runScenario2('latest')">⏱️ نگه‌داشتن آخرین</button>
+                    <button id="progressMergeBtn" class="btn btn-secondary" style="width: auto; flex:1;" onclick="runScenario2('merge')">🤝 ادغام هوشمند</button>
+                </div>
+                <p id="scenario2Result" style="margin-top: 16px; padding: 12px; background: #f1f5f9; border-radius: 12px;"></p>
+            </div>
+
+            <!-- سناریو ۳ -->
+            <div class="scenario">
+                <h3 style="display: flex; align-items: center; gap: 10px; margin-bottom: 16px;">🔹 سناریو ۳: حذف در حالت آفلاین</h3>
+                <p><strong>📱 کاربر:</strong> درس "اصطلاحات روزمره" را در حالت آفلاین حذف می‌کند.</p>
+                <p><strong>☁️ سرور:</strong> همان درس ۲ روز قبل ویرایش شده و در صف ارسال است.</p>
+                <p><strong>⚠️ هنگام اتصال مجدد چه باید کرد؟</strong></p>
+                <div style="display: flex; gap: 15px; margin-top: 15px;">
+                    <button class="btn btn-secondary" style="width: auto; flex:1;" onclick="runScenario3('delete')">🗑️ اولویت حذف</button>
+                    <button class="btn btn-secondary" style="width: auto; flex:1;" onclick="runScenario3('keep')">💾 اولویت ویرایش</button>
+                    <button class="btn btn-secondary" style="width: auto; flex:1;" onclick="runScenario3('flag')">🚩 پرچم‌گذاری</button>
+                </div>
+                <p id="scenario3Result" style="margin-top: 16px; padding: 12px; background: #f1f5f9; border-radius: 12px;"></p>
+            </div>
+
+            <!-- سناریو ۴: تست جامع صف همگام‌سازی -->
+            <div class="scenario">
+                <h3 style="display: flex; align-items: center; gap: 10px; margin-bottom: 16px;">📤 سناریو ۴: مدیریت صف همگام‌سازی</h3>
+                <p>۳ عملیات در صف: ویرایش درس (ID: 5) - اضافه کارت (ID: 12) - حذف درس (ID: 8)</p>
+                <p>🔌 اینترنت قطع و وصل می‌شود. ترتیب اجرا و مدیریت خطا.</p>
+                <button class="btn btn-success" onclick="runScenario4()">⚡ اجرای صف همگام‌سازی</button>
+                <div id="syncQueueVisual" style="margin-top: 20px; background: #1e293b; padding: 16px; border-radius: 14px; color: white;">
+                    <pre id="syncQueueLog" style="color: #a5f3fc; font-size: 0.85rem;">⏳ صف آماده است...</pre>
+                </div>
+            </div>
+        </div>
+
+        <!-- کارگاه تصمیم‌گیری دستی -->
+        <div class="card">
+            <div class="badge">🧑‍⚖️ ۳. کارگاه حل تعارض دستی</div>
+            <p style="margin-bottom: 18px;">شبیه‌سازی تعارض واقعی - شما تصمیم بگیرید:</p>
+            <div style="background: #fef2f2; padding: 18px; border-radius: 18px; border-right: 6px solid #b91c1c;">
+                <p><strong>📌 مورد تعارض:</strong> درس "افعال بی‌قاعده"</p>
+                <div style="display: flex; justify-content: space-between; margin-top: 16px;">
+                    <div style="background: white; padding: 14px; border-radius: 14px; width: 48%;">
+                        <span style="color: #b45309;">📱 محلی</span>
+                        <p style="margin-top: 10px; font-size: 1.1rem;">تعداد کارت: ۲۴<br>آخرین مرور: دیروز<br>وضعیت: ✏️ ویرایش نشده</p>
+                    </div>
+                    <div style="background: white; padding: 14px; border-radius: 14px; width: 48%;">
+                        <span style="color: #2563eb;">🌐 سرور</span>
+                        <p style="margin-top: 10px; font-size: 1.1rem;">تعداد کارت: ۲۸<br>آخرین مرور: ۳ روز پیش<br>وضعیت: ✏️ ۴ کارت جدید</p>
+                    </div>
+                </div>
+                <div style="display: flex; gap: 12px; margin-top: 20px; flex-wrap: wrap;">
+                    <button class="btn" style="background: #b45309; width: auto; flex:1;" onclick="manualResolve('local')">📱 اولویت با محلی</button>
+                    <button class="btn" style="background: #2563eb; width: auto; flex:1;" onclick="manualResolve('server')">☁️ اولویت با سرور</button>
+                    <button class="btn" style="background: #059669; width: auto; flex:1;" onclick="manualResolve('merge')">✨ ادغام هوشمند</button>
+                </div>
+                <p id="manualResolveResult" style="margin-top: 16px;"></p>
+            </div>
+        </div>
+
+        <!-- لاگ کامل رویدادها -->
+        <div class="card">
+            <div class="badge">📋 ۴. لاگ همگام‌سازی</div>
+            <div class="log" id="logPanel">
+[SYSTEM] تست دستی همگام‌سازی و حل تعارض آماده است.
+[INFO] برای شروع یکی از سناریوها را اجرا کنید.
+            </div>
+            <button class="btn btn-secondary" style="margin-top: 12px; background: #334155;" onclick="clearLog()">🧹 پاک کردن لاگ</button>
+        </div>
+
+        <div style="text-align: center; margin: 30px 0; color: #64748b;">
+            <span>✅ تمام سناریوها به صورت دستی قابل آزمایش هستند</span>
+            <br><span style="font-size: 0.9rem;">Farsinglish - آزمون همگام‌سازی و تعارض نسخه ۱.۰</span>
+        </div>
+    </div>
+
+    <script>
+        // ---------- سیستم لاگ ----------
+        const logPanel = document.getElementById('logPanel');
+        function addLog(message, type = 'INFO') {
+            const time = new Date().toLocaleTimeString('fa-IR', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+            let coloredMsg = '';
+            if (type === 'SUCCESS') coloredMsg = `✅ [${time}] ${message}`;
+            else if (type === 'ERROR') coloredMsg = `❌ [${time}] ${message}`;
+            else if (type === 'WARN') coloredMsg = `⚠️ [${time}] ${message}`;
+            else if (type === 'CONFLICT') coloredMsg = `⚔️ [${time}] ${message}`;
+            else coloredMsg = `ℹ️ [${time}] ${message}`;
+            
+            logPanel.innerHTML += `\n${coloredMsg}`;
+            logPanel.scrollTop = logPanel.scrollHeight;
+        }
+
+        function clearLog() {
+            logPanel.innerHTML = '[SYSTEM] لاگ پاک شد.\n[INFO] تست دستی همگام‌سازی آماده است.';
+            addLog('لاگ رویدادها پاکسازی شد', 'INFO');
+        }
+
+        // ---------- آپدیت وضعیت UI ----------
+        function updateSyncQueue(count = null) {
+            const queueSpan = document.getElementById('syncQueueCount');
+            if (count !== null) {
+                queueSpan.innerText = `${count} عملیات`;
+                queueSpan.style.background = count > 0 ? '#fef3c7' : '#d1fae5';
+            }
+        }
+
+        // ---------- سناریو ۱: ویرایش همزمان درس ----------
+        window.runScenario1 = function() {
+            addLog('سناریو ۱: تعارض ویرایش همزمان درس "حروف الفبا"', 'CONFLICT');
+            
+            // شبیه‌سازی منطق حل تعارض
+            const localVersion = { cards: 42, desc: 'آموزش حروف با تصویر', time: '2026-02-12T15:23:00' };
+            const serverVersion = { cards: 39, desc: 'آموزش حروف + مثال', time: '2026-02-12T15:45:00' };
+            
+            // استراتژی: آخرین ویرایش برنده است + ادغام کارت‌ها
+            const mergedCards = Math.max(localVersion.cards, serverVersion.cards);
+            const mergedDesc = serverVersion.desc; // جدیدتر
+            
+            const resultDiv = document.getElementById('scenario1Result');
+            resultDiv.innerHTML = `
+                <span style="color: #059669; font-weight: bold;">✅ راه‌حل انتخاب شده: ادغام هوشمند</span><br>
+                📊 کارت‌های نهایی: ${mergedCards} (ادغام ${localVersion.cards} و ${serverVersion.cards})<br>
+                📝 توضیحات: "${mergedDesc}" (آخرین ویرایش)<br>
+                ⏱️ بر اساس زمان: سرور جدیدتر بود
+            `;
+            
+            addLog(`تعارض درس "حروف الفبا" حل شد. کارت‌ها: ${mergedCards}، توضیحات: "${mergedDesc}"`, 'SUCCESS');
+            updateSyncQueue(2); // کاهش صف
+        };
+
+        // ---------- سناریو ۲: ثبت پیشرفت هم‌زمان ----------
+        window.runScenario2 = function(strategy) {
+            const progressA = 80; // دستگاه A
+            const progressB = 95; // دستگاه B (زودتر ثبت شد)
+            
+            let finalProgress;
+            let strategyName = '';
+            
+            if (strategy === 'highest') {
+                finalProgress = Math.max(progressA, progressB);
+                strategyName = 'نگه‌داشتن بیشترین مقدار';
+            } else if (strategy === 'latest') {
+                finalProgress = progressB; // آخرین ثبت شده (B)
+                strategyName = 'نگه‌داشتن آخرین ویرایش';
+            } else {
+                finalProgress = Math.max(progressA, progressB); // ادغام = بیشترین
+                strategyName = 'ادغام هوشمند (بیشترین پیشرفت)';
+            }
+            
+            document.getElementById('scenario2Result').innerHTML = `
+                <span style="color: #2563eb;">✅ استراتژی: ${strategyName}</span><br>
+                📈 پیشرفت نهایی درس: ${finalProgress}%<br>
+                🎯 دستگاه A: ${progressA}% | دستگاه B: ${progressB}%
+            `;
+            
+            addLog(`پیشرفت درس: استراتژی "${strategyName}" → ${finalProgress}%`, 'SUCCESS');
+        };
+
+        // ---------- سناریو ۳: حذف در حالت آفلاین ----------
+        window.runScenario3 = function(strategy) {
+            let resolution = '';
+            if (strategy === 'delete') {
+                resolution = '🗑️ اولویت با حذف: درس از سرور و دستگاه حذف می‌شود.';
+                addLog('تعارض حذف/ویرایش: اولویت با حذف - درس حذف شد', 'WARN');
+            } else if (strategy === 'keep') {
+                resolution = '💾 اولویت با ویرایش: درس حفظ می‌شود، عملیات حذف لغو می‌گردد.';
+                addLog('تعارض حذف/ویرایش: اولویت با ویرایش - درس باقی ماند', 'SUCCESS');
+            } else {
+                resolution = '🚩 پرچم‌گذاری: درس با برچسب "تعارض" ذخیره و نیاز به بررسی دستی دارد.';
+                addLog('تعارض حذف/ویرایش: پرچم‌گذاری شد - نیاز به بررسی کاربر', 'CONFLICT');
+            }
+            
+            document.getElementById('scenario3Result').innerHTML = `
+                <span style="font-weight: bold;">🔧 راه‌حل انتخابی:</span> ${resolution}
+            `;
+        };
+
+        // ---------- سناریو ۴: صف همگام‌سازی ----------
+        window.runScenario4 = function() {
+            addLog('اجرای صف همگام‌سازی با ۳ عملیات...', 'INFO');
+            
+            const queueLog = document.getElementById('syncQueueLog');
+            queueLog.innerHTML = '';
+            
+            setTimeout(() => {
+                queueLog.innerHTML += '⏳ [1/3] ویرایش درس (ID: 5)... ✅ موفق\n';
+                addLog('عملیات ۱: ویرایش درس ۵ - موفق', 'SUCCESS');
+            }, 400);
+            
+            setTimeout(() => {
+                queueLog.innerHTML += '⏳ [2/3] اضافه کارت (ID: 12)... ✅ موفق\n';
+                addLog('عملیات ۲: اضافه کارت ۱۲ - موفق', 'SUCCESS');
+            }, 1000);
+            
+            setTimeout(() => {
+                queueLog.innerHTML += '⏳ [3/3] حذف درس (ID: 8)... ⚠️ تعارض (درس دارای وابستگی)\n';
+                queueLog.innerHTML += '🔄 راه‌حل: پرچم‌گذاری برای بررسی دستی\n';
+                addLog('عملیات ۳: حذف درس ۸ - تعارض، پرچم‌گذاری شد', 'WARN');
+                updateSyncQueue(1); // یک مورد باقی می‌ماند
+            }, 1800);
+            
+            setTimeout(() => {
+                queueLog.innerHTML += '\n📊 وضعیت نهایی: ۲ عملیات موفق، ۱ تعارض.';
+                addLog('صف همگام‌سازی کامل شد. ۱ تعارض نیاز به بررسی دارد.', 'INFO');
+            }, 2500);
+            
+            updateSyncQueue(3);
+        };
+
+        // ---------- حل تعارض دستی ----------
+        window.manualResolve = function(choice) {
+            let resultText = '';
+            if (choice === 'local') {
+                resultText = '📱 اولویت با داده محلی: ۲۴ کارت، آخرین مرور دیروز حفظ می‌شود.';
+                addLog('تعارض دستی: اولویت با محلی - نسخه محلی برنده شد', 'SUCCESS');
+            } else if (choice === 'server') {
+                resultText = '☁️ اولویت با سرور: ۲۸ کارت با ۴ کارت جدید ذخیره می‌شود.';
+                addLog('تعارض دستی: اولویت با سرور - نسخه سرور برنده شد', 'SUCCESS');
+            } else {
+                resultText = '✨ ادغام هوشمند: ۲۸ کارت (از سرور) + حفظ تاریخچه مرور محلی.';
+                addLog('تعارض دستی: ادغام هوشمند - ترکیب داده‌ها', 'SUCCESS');
+            }
+            document.getElementById('manualResolveResult').innerHTML = `✅ تصمیم شما: ${resultText}`;
+        };
+
+        // ---------- مقداردهی اولیه ----------
+        window.onload = function() {
+            addLog('سیستم تست تعارض آماده است. سناریوها را یکی یکی اجرا کنید.', 'INFO');
+            updateSyncQueue(3); // فرضاً ۳ عملیات در صف
+            document.getElementById('localVersion').innerText = 'v2.3.1 (۱۴۰۴/۱۱/۱۲)';
+            document.getElementById('serverVersion').innerText = 'v2.3.5 (۱۴۰۴/۱۱/۱۴)';
+        };
+    </script>
+</body>
+</html>
