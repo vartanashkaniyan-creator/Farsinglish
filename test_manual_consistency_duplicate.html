@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>تست دستی: جلوگیری از داده تکراری - Farsinglish</title>
+    <style>
+        body { font-family: Tahoma, Arial, sans-serif; max-width: 900px; margin: 0 auto; padding: 15px; background: #f5f5f5; }
+        .header { background: #2c3e50; color: white; padding: 20px; border-radius: 10px; margin-bottom: 20px; text-align: center; }
+        .card { background: white; border-radius: 10px; padding: 20px; margin-bottom: 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        button { background: #3498db; color: white; border: none; padding: 12px 25px; border-radius: 6px; font-size: 16px; cursor: pointer; margin: 5px; }
+        .success { background: #27ae60; }
+        .danger { background: #e74c3c; }
+        .log { background: #f8f9fa; padding: 15px; border-radius: 8px; max-height: 300px; overflow-y: auto; font-family: monospace; }
+        .badge { padding: 5px 10px; border-radius: 4px; color: white; font-size: 12px; }
+        .badge-blue { background: #3498db; }
+        .badge-green { background: #27ae60; }
+        .badge-red { background: #e74c3c; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🗃️ Farsinglish - تست جلوگیری از داده تکراری</h1>
+        <h3>Consistency & Duplicate Prevention</h3>
+    </div>
+
+    <div class="card">
+        <h2>📋 وضعیت دیتابیس</h2>
+        <div id="dbStatus" style="background: #ecf0f1; padding: 15px; border-radius: 8px;">
+            ⏳ در حال راه‌اندازی IndexedDB...
+        </div>
+    </div>
+
+    <div class="card">
+        <h2>🧪 ۱. تست Unique Constraint - درس</h2>
+        <p>افزودن درس با ID تکراری باید رد شود</p>
+        <button onclick="testDuplicateLessonId()" class="success">▶ افزودن درس اول</button>
+        <button onclick="testDuplicateLessonIdDuplicate()" class="danger">➕ افزودن درس تکراری</button>
+    </div>
+
+    <div class="card">
+        <h2>🧪 ۲. تست Unique Constraint - کاربر</h2>
+        <p>افزودن کاربر با ایمیل تکراری باید رد شود</p>
+        <button onclick="testDuplicateUserEmail()" class="success">▶ افزودن کاربر اول</button>
+        <button onclick="testDuplicateUserEmailDuplicate()" class="danger">📧 افزودن ایمیل تکراری</button>
+    </div>
+
+    <div class="card">
+        <h2>🧪 ۳. تست Bulk Insert با کلید تکراری</h2>
+        <p>افزودن چندین درس همزمان با ID تکراری - تراکنش باید کامل رد شود</p>
+        <button onclick="testBulkInsertWithDuplicate()" class="danger">📦 Bulk Insert تکراری</button>
+    </div>
+
+    <div class="card">
+        <h2>🧪 ۴. تست به‌روزرسانی بدون ایجاد duplicate</h2>
+        <p>آپدیت درس بدون تغییر ID - باید موفق باشد</p>
+        <button onclick="testUpdateWithoutDuplicate()" class="success">✏️ آپدیت درس</button>
+    </div>
+
+    <div class="card">
+        <h2>📜 لاگ رویدادها</h2>
+        <div id="logContainer" class="log">
+            <p>⏳ منتظر اجرای تست‌ها...</p>
+        </div>
+    </div>
+
+    <div class="card">
+        <h2>📊 خلاصه تست‌ها</h2>
+        <div id="summary"></div>
+        <button onclick="clearDatabase()" class="danger">🗑️ پاک کردن دیتابیس</button>
+        <button onclick="initDB()" style="background: #95a5a6;">🔄 بازنشانی</button>
+    </div>
+
+    <script>
+        // ---------- تنظیمات IndexedDB ----------
+        const DB_NAME = 'FarsinglishTestDB';
+        const DB_VERSION = 1;
+        const LESSON_STORE = 'lessons';
+        const USER_STORE = 'users';
+
+        let db = null;
+        const logEntries = [];
+        const testResults = [];
+
+        // ---------- لاگ ----------
+        function addLog(message, type = 'info') {
+            const time = new Date().toLocaleTimeString('fa-IR');
+            logEntries.push({ time, message, type });
+            renderLog();
+        }
+
+        function renderLog() {
+            const container = document.getElementById('logContainer');
+            let html = '';
+            logEntries.slice(-15).forEach(entry => {
+                const color = entry.type === 'success' ? '#27ae60' : entry.type === 'error' ? '#e74c3c' : '#3498db';
+                html += `<p style="border-bottom: 1px solid #eee; padding: 5px; margin: 0;"><span style="color: ${color}; font-weight: bold;">[${entry.time}]</span> ${entry.message}</p>`;
+            });
+            container.innerHTML = html || '<p>📭 لاگ خالی است</p>';
+        }
+
+        // ---------- مقداردهی اولیه دیتابیس ----------
+        function initDB() {
+            return new Promise((resolve, reject) => {
+                addLog('🔄 در حال راه‌اندازی IndexedDB...');
+                
+                const request = indexedDB.open(DB_NAME, DB_VERSION);
+                
+                request.onupgradeneeded = (event) => {
+                    const db = event.target.result;
+                    
+                    // استور درس‌ها با کلید lessonId
+                    if (!db.objectStoreNames.contains(LESSON_STORE)) {
+                        const lessonStore = db.createObjectStore(LESSON_STORE, { keyPath: 'id' });
+                        lessonStore.createIndex('title', 'title', { unique: false });
+                        addLog('✅ استور درس‌ها ایجاد شد (کلید: id)');
+                    }
+                    
+                    // استور کاربران با کلید userId و ایندکس یکتا روی ایمیل
+                    if (!db.objectStoreNames.contains(USER_STORE)) {
+                        const userStore = db.createObjectStore(USER_STORE, { keyPath: 'id', autoIncrement: true });
+                        userStore.createIndex('email', 'email', { unique: true }); // Unique Constraint روی ایمیل
+                        userStore.createIndex('username', 'username', { unique: false });
+                        addLog('✅ استور کاربران ایجاد شد + ایندکس یکتا روی ایمیل');
+                    }
+                };
+                
+                request.onsuccess = (event) => {
+                    db = event.target.result;
+                    addLog('✅ دیتابیس راه‌اندازی شد', 'success');
+                    document.getElementById('dbStatus').innerHTML = '✅ دیتابیس فعال است - آماده تست';
+                    resolve(db);
+                };
+                
+                request.onerror = (event) => {
+                    addLog('❌ خطا در راه‌اندازی دیتابیس: ' + event.target.error, 'error');
+                    reject(event.target.error);
+                };
+            });
+        }
+
+        // ---------- ۱. تست درس تکراری ----------
+        async function testDuplicateLessonId() {
+            const lesson = {
+                id: 'lesson-101',
+                title: 'درس مقدماتی',
+                level: 1,
+                createdAt: new Date()
+            };
+            
+            try {
+                const tx = db.transaction(LESSON_STORE, 'readwrite');
+                const store = tx.objectStore(LESSON_STORE);
+                
+                await new Promise((resolve, reject) => {
+                    const request = store.add(lesson);
+                    request.onsuccess = () => {
+                        addLog('✅ درس با ID: ' + lesson.id + ' اضافه شد', 'success');
+                        testResults.push({ test: 'افزودن درس اول', result: 'موفق', id: lesson.id });
+                        resolve();
+                    };
+                    request.onerror = () => {
+                        addLog('❌ خطا در افزودن درس: ' + request.error, 'error');
+                        reject(request.error);
+                    };
+                });
+            } catch(e) {
+                addLog('❌ استثنا: ' + e, 'error');
+            }
+            updateSummary();
+        }
+
+        async function testDuplicateLessonIdDuplicate() {
+            const duplicateLesson = {
+                id: 'lesson-101', // ID تکراری
+                title: 'درس تکراری',
+                level: 2
+            };
+            
+            try {
+                const tx = db.transaction(LESSON_STORE, 'readwrite');
+                const store = tx.objectStore(LESSON_STORE);
+                
+                await new Promise((resolve, reject) => {
+                    const request = store.add(duplicateLesson);
+                    request.onsuccess = () => {
+                        addLog('⚠️ هشدار: درس تکراری ذخیره شد! (مشکل)', 'error');
+                        testResults.push({ test: 'افزودن درس تکراری', result: 'ناموفق (داده تکراری ذخیره شد)', id: duplicateLesson.id });
+                        resolve();
+                    };
+                    request.onerror = (e) => {
+                        addLog('✅ تست موفق: درس تکراری رد شد - ' + e.target.error, 'success');
+                        testResults.push({ test: 'افزودن درس تکراری', result: 'موفق (رد شد)', error: e.target.error.name });
+                        resolve();
+                    };
+                });
+            } catch(e) {
+                addLog('✅ تست موفق: خطا دریافت شد', 'success');
+            }
+            updateSummary();
+        }
+
+        // ---------- ۲. تست ایمیل تکراری (Unique Index) ----------
+        async function testDuplicateUserEmail() {
+            const user = {
+                name: 'علی رضایی',
+                email: 'ali@example.com',
+                username: 'ali_r'
+            };
+            
+            try {
+                const tx = db.transaction(USER_STORE, 'readwrite');
+                const store = tx.objectStore(USER_STORE);
+                
+                await new Promise((resolve, reject) => {
+                    const request = store.add(user);
+                    request.onsuccess = () => {
+                        addLog('✅ کاربر با ایمیل ' + user.email + ' اضافه شد', 'success');
+                        testResults.push({ test: 'افزودن کاربر اول', result: 'موفق', email: user.email });
+                        resolve();
+                    };
+                    request.onerror = () => reject(request.error);
+                });
+            } catch(e) {
+                addLog('❌ خطا: ' + e, 'error');
+            }
+            updateSummary();
+        }
+
+        async function testDuplicateUserEmailDuplicate() {
+            const duplicateUser = {
+                name: 'علی محمدی',
+                email: 'ali@example.com', // ایمیل تکراری
+                username: 'ali_m'
+            };
+            
+            try {
+                const tx = db.transaction(USER_STORE, 'readwrite');
+                const store = tx.objectStore(USER_STORE);
+                
+                await new Promise((resolve, reject) => {
+                    const request = store.add(duplicateUser);
+                    request.onsuccess = () => {
+                        addLog('⚠️ هشدار: کاربر با ایمیل تکراری ذخیره شد! (مشکل)', 'error');
+                        testResults.push({ test: 'افزودن ایمیل تکراری', result: 'ناموفق (ذخیره شد)' });
+                        resolve();
+                    };
+                    request.onerror = (e) => {
+                        addLog('✅ تست موفق: ایمیل تکراری رد شد - ' + e.target.error, 'success');
+                        testResults.push({ test: 'افزودن ایمیل تکراری', result: 'موفق (رد شد)', error: e.target.error.name });
+                        resolve();
+                    };
+                });
+            } catch(e) {
+                addLog('✅ تست موفق: خطا دریافت شد', 'success');
+            }
+            updateSummary();
+        }
+
+        // ---------- ۳. تست Bulk Insert با داده تکراری ----------
+        async function testBulkInsertWithDuplicate() {
+            const lessons = [
+                { id: 'bulk-1', title: 'درس یک', level: 1 },
+                { id: 'bulk-2', title: 'درس دو', level: 1 },
+                { id: 'lesson-101', title: 'درس تکراری', level: 2 }, // تکراری
+                { id: 'bulk-3', title: 'درس سه', level: 1 }
+            ];
+            
+            addLog('🔄 شروع Bulk Insert با ۴ درس (یکی تکراری)...');
+            
+            const tx = db.transaction(LESSON_STORE, 'readwrite');
+            const store = tx.objectStore(LESSON_STORE);
+            
+            try {
+                for (const lesson of lessons) {
+                    await new Promise((resolve, reject) => {
+                        const request = store.add(lesson);
+                        request.onsuccess = resolve;
+                        request.onerror = () => reject(request.error);
+                    });
+                }
+                
+                addLog('⚠️ همه درس‌ها ذخیره شدند! (تراکنش باید رد می‌شد)', 'error');
+                testResults.push({ test: 'Bulk Insert با تکراری', result: 'ناموفق (تراکنش کامل شد)' });
+            } catch(e) {
+                addLog('✅ تست موفق: تراکنش به دلیل داده تکراری رد شد', 'success');
+                testResults.push({ test: 'Bulk Insert با تکراری', result: 'موفق (تراکنش لغو شد)', error: e.message });
+            }
+            updateSummary();
+        }
+
+        // ---------- ۴. تست آپدیت بدون ایجاد duplicate ----------
+        async function testUpdateWithoutDuplicate() {
+            try {
+                const tx = db.transaction(LESSON_STORE, 'readwrite');
+                const store = tx.objectStore(LESSON_STORE);
+                
+                // دریافت درس موجود
+                const getRequest = store.get('lesson-101');
+                getRequest.onsuccess = () => {
+                    const lesson = getRequest.result;
+                    if (lesson) {
+                        lesson.title = 'درس مقدماتی - ویرایش شده';
+                        lesson.level = 3;
+                        
+                        const updateRequest = store.put(lesson); // put برای آپدیت
+                        updateRequest.onsuccess = () => {
+                            addLog('✅ درس با موفقیت به‌روزرسانی شد (بدون duplicate)', 'success');
+                            testResults.push({ test: 'آپدیت درس', result: 'موفق' });
+                            updateSummary();
+                        };
+                    } else {
+                        addLog('❌ درس یافت نشد', 'error');
+                    }
+                };
+            } catch(e) {
+                addLog('❌ خطا: ' + e, 'error');
+            }
+        }
+
+        // ---------- پاک کردن دیتابیس ----------
+        async function clearDatabase() {
+            const request = indexedDB.deleteDatabase(DB_NAME);
+            request.onsuccess = () => {
+                addLog('🗑️ دیتابیس پاک شد', 'success');
+                testResults.length = 0;
+                initDB();
+                updateSummary();
+            };
+        }
+
+        // ---------- خلاصه تست‌ها ----------
+        function updateSummary() {
+            const summary = document.getElementById('summary');
+            const success = testResults.filter(t => t.result.includes('موفق')).length;
+            const failed = testResults.filter(t => t.result.includes('ناموفق')).length;
+            
+            summary.innerHTML = `
+                <p>✅ تست‌های موفق: ${success}</p>
+                <p>❌ تست‌های ناموفق: ${failed}</p>
+                <p>📋 کل تست‌ها: ${testResults.length}</p>
+                <hr>
+                <pre style="background: #34495e; color: white; padding: 10px; border-radius: 5px;">${JSON.stringify(testResults.slice(-5), null, 2)}</pre>
+            `;
+        }
+
+        // ---------- راه‌اندازی اولیه ----------
+        window.onload = async function() {
+            await initDB();
+            addLog('🚀 آماده اجرای تست‌های Consistency', 'success');
+        };
+    </script>
+</body>
+</html>
