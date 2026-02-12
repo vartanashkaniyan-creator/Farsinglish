@@ -1,0 +1,490 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.5, user-scalable=yes">
+    <title>تست دستی Persistence Recovery - Farsinglish (رفع خطا)</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: 'Tahoma', 'Vazir', sans-serif;
+            background: linear-gradient(145deg, #f0f2f5 0%, #e9ecef 100%);
+            padding: 20px;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .container {
+            max-width: 900px;
+            width: 100%;
+            background: rgba(255,255,255,0.9);
+            backdrop-filter: blur(10px);
+            border-radius: 32px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.12);
+            padding: 25px;
+            border: 1px solid rgba(255,255,255,0.3);
+        }
+        h1 {
+            color: #1e3c5c;
+            font-size: 1.9rem;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            border-bottom: 3px solid #ffb74d;
+            padding-bottom: 15px;
+        }
+        .sub {
+            color: #2c3e50;
+            margin-bottom: 25px;
+            background: #e3f2fd;
+            padding: 12px 20px;
+            border-radius: 50px;
+            font-size: 0.95rem;
+            display: inline-block;
+        }
+        .card {
+            background: white;
+            border-radius: 24px;
+            padding: 20px;
+            margin-bottom: 25px;
+            box-shadow: 0 6px 18px rgba(0,0,0,0.04);
+            border: 1px solid #f1f3f5;
+        }
+        .badge {
+            background: #1e3c5c;
+            color: white;
+            padding: 6px 16px;
+            border-radius: 40px;
+            font-size: 0.8rem;
+            display: inline-block;
+            margin-bottom: 12px;
+            letter-spacing: 1px;
+        }
+        .btn-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin: 20px 0;
+            justify-content: center;
+        }
+        .btn {
+            border: none;
+            background: white;
+            padding: 14px 24px;
+            border-radius: 60px;
+            font-size: 1rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.02);
+            transition: 0.2s;
+            border: 1px solid #dee2e6;
+            cursor: pointer;
+            color: #1e3c5c;
+            flex: 1 1 160px;
+            justify-content: center;
+        }
+        .btn-primary {
+            background: #1e3c5c;
+            color: white;
+            border: none;
+        }
+        .btn-warning {
+            background: #ff9800;
+            color: white;
+            border: none;
+        }
+        .btn-success {
+            background: #2e7d32;
+            color: white;
+            border: none;
+        }
+        .btn:active { transform: scale(0.96); }
+        .state-box {
+            background: #1a2634;
+            color: #e9f1f7;
+            padding: 18px;
+            border-radius: 18px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9rem;
+            direction: ltr;
+            text-align: left;
+            white-space: pre-wrap;
+            word-break: break-word;
+            max-height: 220px;
+            overflow-y: auto;
+            margin: 15px 0;
+            border-left: 6px solid #ffb74d;
+        }
+        .log {
+            background: #f8fbfd;
+            border-radius: 16px;
+            padding: 15px;
+            font-size: 0.9rem;
+            border-right: 5px solid #4caf50;
+            color: #0a2f44;
+            max-height: 200px;
+            overflow-y: auto;
+            font-family: 'Courier New', monospace;
+        }
+        .flex-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        .timestamp {
+            color: #6c757d;
+            font-size: 0.75rem;
+            font-family: monospace;
+        }
+        .recovery-sim {
+            background: #fff3e0;
+            border-radius: 20px;
+            padding: 20px;
+            margin-top: 10px;
+        }
+        hr {
+            margin: 25px 0 15px;
+            border: 1px dashed #adb5bd;
+        }
+        .fixed-badge {
+            background: #27ae60;
+            color: white;
+            padding: 4px 12px;
+            border-radius: 30px;
+            font-size: 0.75rem;
+            display: inline-block;
+            margin-right: 10px;
+        }
+        @media (max-width: 600px) {
+            .container { padding: 18px; }
+            h1 { font-size: 1.6rem; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>
+            <span>🔄 Persistence & Recovery</span>
+            <span class="fixed-badge">رفع خطای btoa</span>
+        </h1>
+        <div class="sub">
+            ⚡ تست دستی ذخیره‌سازی، بازیابی state و مقاومت در برابر بسته شدن صفحه
+        </div>
+
+        <!-- کارت ۱: شبیه‌ساز State با LocalStorage -->
+        <div class="card">
+            <div class="badge">📦 ۱. موتور persistence (رفع خطای یونیکد)</div>
+            
+            <div class="flex-row">
+                <span style="font-weight:700;">🧠 وضعیت فعلی حافظه:</span>
+                <span class="timestamp" id="timeDisplay"></span>
+            </div>
+            <div id="stateViewer" class="state-box">
+                { "user": null, "progress": {}, "settings": {}, "timestamp": "--" }
+            </div>
+            
+            <div class="btn-group">
+                <button class="btn btn-primary" id="saveUserProgressBtn">
+                    💾 ۱. ذخیره پیشرفت کاربر (نمونه)
+                </button>
+                <button class="btn" id="loadFromStorageBtn">
+                    📂 ۲. بارگذاری از حافظه
+                </button>
+                <button class="btn btn-warning" id="simulatePageCloseBtn">
+                    🧪 ۳. شبیه‌سازی بسته شدن صفحه
+                </button>
+                <button class="btn btn-success" id="simulateRecoveryBtn">
+                    🔁 ۴. بازیابی پس از بازگشایی
+                </button>
+            </div>
+            <p style="color: #444; margin-top: 12px; background: #e8f5e9; padding: 10px; border-radius: 12px;">
+                ✅ گام پیشنهادی: ذخیره ← بستن شبیه‌سازی ← بازیابی ← بررسی یکپارچگی state
+            </p>
+        </div>
+
+        <!-- کارت ۲: سناریوهای تست دستی -->
+        <div class="card recovery-sim">
+            <div style="display:flex; align-items:center; gap:10px; margin-bottom:12px;">
+                <span style="background: #2c3e50; color:white; padding:5px 18px; border-radius:30px;">🧪 سناریوهای تست دستی</span>
+            </div>
+            
+            <div style="display:grid; gap:20px;">
+                <div style="background:white; border-radius:16px; padding:16px;">
+                    <strong style="color:#d32f2f;">🔴 تست ۱ - بازیابی پس از بستن اجباری</strong>
+                    <p style="margin-top:6px;">۱. دکمه "ذخیره پیشرفت کاربر" را بزنید.<br>۲. دکمه "شبیه‌سازی بسته شدن صفحه" را بزنید (حافظه پاک می‌شود).<br>۳. دکمه "بازیابی پس از بازگشایی" را بزنید.<br>📌 بررسی: آیا state قبلی با تمام فیلدها بازگشته است؟</p>
+                </div>
+                <div style="background:white; border-radius:16px; padding:16px;">
+                    <strong style="color:#1565c0;">🔵 تست ۲ - قطع ناگهانی برق/کرش</strong>
+                    <p>۱. یک state دلخواه بسازید (مثلاً درس ۵ با نمره ۴).<br>۲. بدون ذخیره‌سازی، صفحه را رفرش کنید (خود مرورگر).<br>۳. دکمه "بارگذاری از حافظه" را بزنید.<br>📌 آیا مقدار ذخیره‌شده‌مانند قبل باقی مانده؟ (persistence واقعی)</p>
+                </div>
+                <div style="background:white; border-radius:16px; padding:16px;">
+                    <strong style="color:#ff6d00;">🟠 تست ۳ - مهاجرت نسخه state (رفع شده)</strong>
+                    <p>۱. دکمه ذخیره را بزنید (نسخه ۱).<br>۲. دکمه "شبیه‌سازی مهاجرت v1→v2" را بزنید.<br>۳. بازیابی انجام دهید: فیلدهای dailyGoal و newFeature اضافه می‌شود.<br>✅ بدون خطای btoa</p>
+                    <button id="simulateMigrationBtn" style="background: #ffb74d; border:none; padding:8px 20px; border-radius:40px; margin-top:6px; color:black; font-weight:bold;">🧬 شبیه‌سازی مهاجرت v1 → v2</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- کارت ۳: وقایع و لاگ عملیات -->
+        <div class="card">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <span class="badge" style="background: #2a4d69;">📋 لاگ رویدادهای Persistence</span>
+                <button id="clearLogBtn" style="background: none; border:1px solid gray; padding:5px 15px; border-radius:30px;">🧹 پاک کردن لاگ</button>
+            </div>
+            <div id="logPanel" class="log">
+                -- لاگ خالی -- آماده دریافت دستورات
+            </div>
+        </div>
+
+        <!-- راهنمای سریع -->
+        <div style="background: #d4edc9; padding: 14px; border-radius: 24px; color: #14532d; text-align: center; font-size: 0.85rem;">
+            💡 خطای btoa رفع شد. اکنون تمام متون فارسی و یونیکد به درستی ذخیره می‌شوند.
+        </div>
+    </div>
+
+    <script>
+        // -------------------- 🌐 Persistence Manager (رفع خطای btoa) --------------------
+        const PERSISTENCE_KEY = 'farsinglish_persistence_recovery_test';
+        const VERSION_KEY = 'farsinglish_state_version';
+        
+        // مدل state پایه با timestamp
+        let currentState = {
+            user: { id: null, name: 'کاربر مهمان', xp: 0, level: 1 },
+            progress: {
+                lastLessonId: null,
+                completedLessons: [],
+                srsReviews: {},
+                streak: 0
+            },
+            settings: { darkMode: false, language: 'fa', notifications: true },
+            version: 1,
+            lastSaved: null
+        };
+
+        // لاگ حافظه
+        let actionLog = [];
+
+        // -------------------- توابع کمکی (رفع خطای یونیکد) --------------------
+        function addLog(message, type = 'info') {
+            const timestamp = new Date().toLocaleTimeString('fa-IR', { hour12: false });
+            const logEntry = `[${timestamp}] ${message}`;
+            actionLog.unshift(logEntry);
+            if (actionLog.length > 8) actionLog.pop();
+            renderLog();
+        }
+
+        function renderLog() {
+            const logEl = document.getElementById('logPanel');
+            logEl.innerHTML = actionLog.length ? actionLog.map(l => `📌 ${l}`).join('<br>') : '-- لاگ خالی --';
+        }
+
+        // تابع ایمن برای btoa با پشتیبانی از یونیکد/فارسی
+        function safeBtoa(str) {
+            try {
+                // تبدیل کاراکترهای یونیکد به لاتین1
+                return btoa(unescape(encodeURIComponent(str)));
+            } catch(e) {
+                console.warn('btoa failed, using fallback', e);
+                // فال‌بک: return string ساده
+                return 'checksum-' + Date.now();
+            }
+        }
+
+        // ذخیره state در localStorage (رفع خطای btoa)
+        function persistState(state) {
+            try {
+                const stateWithMeta = {
+                    ...state,
+                    lastSaved: new Date().toISOString(),
+                    // استفاده از تابع ایمن
+                    checksum: safeBtoa(JSON.stringify(state)).slice(-10)
+                };
+                localStorage.setItem(PERSISTENCE_KEY, JSON.stringify(stateWithMeta));
+                localStorage.setItem(VERSION_KEY, String(state.version || 1));
+                addLog(`💾 ذخیره شد | نسخه: ${state.version} | checksum: ${stateWithMeta.checksum}`);
+                return true;
+            } catch(e) {
+                addLog(`❌ خطا در ذخیره: ${e.message}`, 'error');
+                return false;
+            }
+        }
+
+        // بارگذاری state از localStorage
+        function loadPersistedState() {
+            try {
+                const raw = localStorage.getItem(PERSISTENCE_KEY);
+                if (!raw) {
+                    addLog('📂 هیچ state ذخیره‌شده‌ای یافت نشد');
+                    return null;
+                }
+                const parsed = JSON.parse(raw);
+                addLog(`📂 بارگذاری موفق | نسخه: ${parsed.version || 1} | آخرین ذخیره: ${parsed.lastSaved?.slice(0,10) || 'نامشخص'}`);
+                return parsed;
+            } catch(e) {
+                addLog(`❌ خطا در بارگذاری: ${e.message}`);
+                return null;
+            }
+        }
+
+        // به‌روزرسانی نمایش state در UI
+        function renderState(stateToShow = currentState) {
+            const viewer = document.getElementById('stateViewer');
+            const displayObj = {
+                user: stateToShow.user,
+                progress: {
+                    lastLesson: stateToShow.progress.lastLessonId,
+                    completed: stateToShow.progress.completedLessons.length + ' درس',
+                    srsItems: Object.keys(stateToShow.progress.srsReviews || {}).length + ' کارت',
+                    streak: stateToShow.progress.streak,
+                    ...(stateToShow.progress.dailyGoal && { dailyGoal: stateToShow.progress.dailyGoal })
+                },
+                settings: {
+                    ...stateToShow.settings,
+                    ...(stateToShow.settings.newFeature !== undefined && { newFeature: stateToShow.settings.newFeature })
+                },
+                version: stateToShow.version,
+                lastSaved: stateToShow.lastSaved ? stateToShow.lastSaved.slice(0,19).replace('T',' ') : '---'
+            };
+            viewer.textContent = JSON.stringify(displayObj, null, 2);
+            document.getElementById('timeDisplay').innerHTML = `🕒 آخرین به‌روز: ${new Date().toLocaleTimeString('fa')}`;
+        }
+
+        // -------------------- سناریوهای دستی --------------------
+        function handleSaveSampleProgress() {
+            // ساخت یک پیشرفت نمونه با متن فارسی
+            currentState.user = { id: 'user_123', name: 'علی رضایی', xp: 1250, level: 4 };
+            currentState.progress = {
+                lastLessonId: 'lesson_7',
+                completedLessons: ['lesson_1','lesson_2','lesson_3','lesson_4','lesson_7'],
+                srsReviews: {
+                    'vocab_22': { interval: 6, ease: 2.5, due: '2026-02-18' },
+                    'vocab_45': { interval: 12, ease: 2.7, due: '2026-02-24' }
+                },
+                streak: 12
+            };
+            currentState.settings = { darkMode: true, language: 'fa', notifications: false };
+            currentState.version = 1;
+            currentState.lastSaved = new Date().toISOString();
+            
+            persistState(currentState);
+            renderState(currentState);
+            addLog('👤 پیشرفت کاربر علی رضایی ذخیره شد (درس ۷، استریک ۱۲)');
+        }
+
+        function handleLoadFromStorage() {
+            const loaded = loadPersistedState();
+            if (loaded) {
+                currentState = { ...currentState, ...loaded, progress: { ...currentState.progress, ...loaded.progress } };
+                renderState(currentState);
+                addLog('✅ state از حافظه بازیابی و در UI اعمال شد');
+            } else {
+                addLog('⚠️ هیچ داده‌ای برای بارگذاری موجود نیست');
+            }
+        }
+
+        function handleSimulatePageClose() {
+            // شبیه‌سازی بسته شدن صفحه: پاک کردن state موقت ولی حفظ localStorage
+            const tempState = { ...currentState };
+            // ریست currentState به حالت اولیه (شبیه از دست رفتن حافظه موقت)
+            currentState = {
+                user: { id: null, name: 'کاربر مهمان', xp: 0, level: 1 },
+                progress: { lastLessonId: null, completedLessons: [], srsReviews: {}, streak: 0 },
+                settings: { darkMode: false, language: 'fa', notifications: true },
+                version: 1,
+                lastSaved: null
+            };
+            renderState(currentState);
+            addLog('💀 شبیه‌سازی بسته شدن صفحه: state موقت پاک شد (localStorage همچنان محفوظ است)');
+        }
+
+        function handleSimulateRecovery() {
+            // بازیابی پس از بازگشایی: از localStorage بخوان و currentState را بازنشانی کن
+            const recovered = loadPersistedState();
+            if (recovered) {
+                currentState = { ...currentState, ...recovered, progress: { ...currentState.progress, ...recovered.progress } };
+                renderState(currentState);
+                addLog('🔥 بازیابی اضطراری انجام شد: state از localStorage بازگردانده شد');
+            } else {
+                addLog('⚠️ داده‌ای برای بازیابی موجود نیست');
+            }
+        }
+
+        function handleSimulateMigration() {
+            // ارتقاء نسخه ۱ به ۲ (افزودن فیلد newFeature) - بدون خطا
+            const loaded = loadPersistedState();
+            if (loaded) {
+                if (loaded.version === 1) {
+                    loaded.version = 2;
+                    loaded.settings.newFeature = true;  // فیلد جدید در نسخه ۲
+                    loaded.progress.dailyGoal = 20;     // فیلد جدید
+                    // ذخیره مجدد با متد اصلاح‌شده
+                    localStorage.setItem(PERSISTENCE_KEY, JSON.stringify(loaded));
+                    localStorage.setItem(VERSION_KEY, '2');
+                    addLog('🆙 مهاجرت از نسخه ۱ به ۲ انجام شد: فیلدهای dailyGoal و newFeature اضافه شد');
+                    currentState = { ...currentState, ...loaded };
+                    renderState(currentState);
+                } else {
+                    addLog(`✅ نسخه فعلی ${loaded.version} است. نیازی به مهاجرت نیست.`);
+                }
+            } else {
+                addLog('⚠️ ابتدا یک state ذخیره کنید');
+            }
+        }
+
+        // -------------------- پاکسازی --------------------
+        function handleClearAll() {
+            localStorage.removeItem(PERSISTENCE_KEY);
+            localStorage.removeItem(VERSION_KEY);
+            currentState = {
+                user: { id: null, name: 'کاربر مهمان', xp: 0, level: 1 },
+                progress: { lastLessonId: null, completedLessons: [], srsReviews: {}, streak: 0 },
+                settings: { darkMode: false, language: 'fa', notifications: true },
+                version: 1,
+                lastSaved: null
+            };
+            renderState(currentState);
+            actionLog = [];
+            renderLog();
+            addLog('🧹 تمام داده‌های ذخیره‌شده پاک شد');
+        }
+
+        // -------------------- مقداردهی اولیه و event listeners --------------------
+        window.onload = function() {
+            // تلاش برای بازیابی خودکار state از localStorage در شروع
+            const autoRecover = loadPersistedState();
+            if (autoRecover) {
+                currentState = { ...currentState, ...autoRecover, progress: { ...currentState.progress, ...autoRecover.progress } };
+                addLog('🔄 بازیابی خودکار در بارگذاری صفحه');
+            } else {
+                addLog('🆕 state پیش‌فرض اولیه');
+            }
+            renderState(currentState);
+
+            // دکمه‌ها
+            document.getElementById('saveUserProgressBtn').addEventListener('click', handleSaveSampleProgress);
+            document.getElementById('loadFromStorageBtn').addEventListener('click', handleLoadFromStorage);
+            document.getElementById('simulatePageCloseBtn').addEventListener('click', handleSimulatePageClose);
+            document.getElementById('simulateRecoveryBtn').addEventListener('click', handleSimulateRecovery);
+            document.getElementById('simulateMigrationBtn').addEventListener('click', handleSimulateMigration);
+            document.getElementById('clearLogBtn').addEventListener('click', function() {
+                actionLog = [];
+                renderLog();
+                addLog('🧹 لاگ پاک شد');
+            });
+
+            // دکمه مخفی برای پاکسازی کامل (با دوبار کلیک روی هدر)
+            let clickCount = 0;
+            document.querySelector('h1').addEventListener('dblclick', function(e) {
+                if (clickCount++ % 2 === 0) {
+                    handleClearAll();
+                }
+            });
+        };
+    </script>
+</body>
+</html>
