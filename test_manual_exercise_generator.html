@@ -1,0 +1,546 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.5, user-scalable=yes">
+    <title>تست دستی: تولید تمرین تصادفی با Seed ثابت - Farsinglish</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: 'Tahoma', 'Vazir', 'Arial', sans-serif;
+            background: linear-gradient(145deg, #f6f9fc 0%, #e9f2f8 100%);
+            padding: 20px 16px;
+            color: #1a3e50;
+            line-height: 1.6;
+        }
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+        h1 {
+            font-size: 1.9rem;
+            background: #0b4f6c;
+            color: white;
+            padding: 18px 22px;
+            border-radius: 40px 40px 20px 20px;
+            box-shadow: 0 10px 20px rgba(0,20,30,0.2);
+            text-align: center;
+            letter-spacing: 1px;
+            margin-bottom: 25px;
+            border-bottom: 6px solid #ffb74d;
+            word-break: break-word;
+        }
+        .card {
+            background: rgba(255,255,255,0.85);
+            backdrop-filter: blur(8px);
+            border-radius: 28px;
+            padding: 22px 20px;
+            margin-bottom: 25px;
+            box-shadow: 0 8px 24px rgba(0,50,70,0.12);
+            border: 1px solid rgba(255,255,255,0.6);
+        }
+        h2 {
+            font-size: 1.5rem;
+            color: #0a3142;
+            border-right: 8px solid #ff9800;
+            padding-right: 16px;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        button {
+            background: #0e5c6b;
+            border: none;
+            color: white;
+            font-size: 1.2rem;
+            font-weight: bold;
+            padding: 16px 24px;
+            border-radius: 50px;
+            width: 100%;
+            margin: 12px 0;
+            cursor: pointer;
+            transition: 0.2s;
+            box-shadow: 0 6px 0 #06323b;
+            border-bottom: 3px solid #ffb74d;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 10px;
+        }
+        button:hover, button:active {
+            background: #136f82;
+            transform: translateY(4px);
+            box-shadow: 0 2px 0 #06323b;
+        }
+        .seed-panel {
+            background: #263238;
+            color: #e2f0f9;
+            padding: 18px;
+            border-radius: 18px;
+            margin: 20px 0;
+            direction: ltr;
+            text-align: left;
+            font-family: 'Courier New', monospace;
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .seed-value {
+            background: #37474f;
+            padding: 10px 18px;
+            border-radius: 40px;
+            color: #ffb74d;
+            font-weight: bold;
+            font-size: 1.3rem;
+            letter-spacing: 3px;
+            direction: ltr;
+        }
+        .row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 18px;
+            justify-content: space-between;
+        }
+        .col {
+            flex: 1 1 260px;
+            background: #ffffffdd;
+            padding: 16px;
+            border-radius: 20px;
+            box-shadow: inset 0 1px 4px #0000001a;
+        }
+        .exercise-box {
+            background: #fdf8e7;
+            border: 2px dashed #2a7f6e;
+            border-radius: 24px;
+            padding: 24px 16px;
+            margin-top: 12px;
+        }
+        .badge {
+            display: inline-block;
+            background: #00acc1;
+            color: white;
+            padding: 6px 16px;
+            border-radius: 40px;
+            font-size: 0.9rem;
+            margin-bottom: 12px;
+        }
+        .option-btn {
+            background: white;
+            border: 2px solid #2e7d73;
+            color: #034748;
+            padding: 14px;
+            border-radius: 16px;
+            margin: 8px 0;
+            text-align: right;
+            font-size: 1.1rem;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+        .console {
+            background: #0d1c24;
+            color: #bebebe;
+            padding: 18px;
+            border-radius: 16px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9rem;
+            direction: ltr;
+            text-align: left;
+            max-height: 250px;
+            overflow-y: auto;
+            margin-top: 18px;
+            border-left: 6px solid #ffb74d;
+        }
+        .success { color: #a5d6a5; }
+        .fail { color: #ffab91; }
+        hr { margin: 30px 0 10px; border: 2px dotted #80cbc4; }
+    </style>
+</head>
+<body>
+<div class="container">
+
+    <h1>🧪🎲 تست دستی: مولد تمرین تصادفی<br>با Seed ثابت</h1>
+
+    <div class="card" style="background:#e0f2fe;">
+        <div style="display:flex; gap:12px; align-items:center; flex-wrap:wrap;">
+            <span style="background: #004d40; padding:10px 18px; border-radius:50px; color:white;">🔢 SEED فعلی:</span>
+            <span id="seedDisplay" class="seed-value">12345</span>
+            <button id="newSeedBtn" style="width:auto; padding:12px 25px; background:#2a5c5a;">🎲 تغییر Seed</button>
+            <button id="resetSeedBtn" style="width:auto; padding:12px 25px; background:#5f4330;">↩️ بازنشانی به 12345</button>
+        </div>
+        <p style="margin-top:16px; background: #fff3e0; padding:14px; border-radius:20px;">
+        📌 <strong>خاصیت seed ثابت:</strong> اگر Seed یکسان باشد، ترتیب و گزینه‌های تمرین باید <strong style="color:#b3431b;">دقیقاً یکسان</strong> تولید شوند. این تست دستی این ویژگی را بررسی می‌کند.
+        </p>
+    </div>
+
+    <!-- ==========  کنترل‌های اصلی ========== -->
+    <div class="card">
+        <h2>🧷 ۱. کنترل مولد تمرین</h2>
+        <div class="row">
+            <div class="col">
+                <span class="badge">📘 نوع تمرین ۱</span>
+                <button id="genMultipleChoiceBtn" style="background:#00796b;">❓ تولید چندگزینه‌ای</button>
+                <button id="genFillBlankBtn" style="background:#5d4037;">✏️ تولید جای‌خالی</button>
+            </div>
+            <div class="col">
+                <span class="badge">🔁 نوع تمرین ۲</span>
+                <button id="genTranslationBtn" style="background:#4a6c6f;">🌐 تولید ترجمه</button>
+                <button id="genMatchingBtn" style="background:#6a4e7a;">🔗 تولید تطبیق</button>
+            </div>
+        </div>
+        <button id="seedBasedComparisonBtn" style="background:#b06e36; margin-top:25px;">🔄 اجرای دو تمرین با SEED یکسان (مقایسه)</button>
+    </div>
+
+    <!-- ==========  نمایش تمرین تولید شده ========== -->
+    <div class="card exercise-box" id="exerciseDisplayArea">
+        <div style="display:flex; justify-content:space-between;">
+            <span style="background: #004d40; padding:8px 18px; border-radius: 30px; color:white;">🧾 آخرین تمرین تولید شده</span>
+            <span id="exerciseTypeTag" style="background: #ab8b5a; padding:8px 20px; border-radius:30px; color:white;">-</span>
+        </div>
+        <div id="exerciseContent" style="font-size:1.5rem; padding:30px 10px; text-align:center; background:#fff9c4; border-radius:28px; margin-top:15px;">
+            برای تولید تمرین دکمه‌ها را فشار دهید
+        </div>
+        <div id="exerciseOptions" style="margin-top:20px;">
+            <!-- گزینه‌ها به صورت داینامیک قرار می‌گیرند -->
+        </div>
+        <div id="metaInfo" style="margin-top:18px; color:#37474f; background:#eceff1; padding:12px; border-radius:18px; font-size:0.9rem;"></div>
+    </div>
+
+    <!-- ==========  لاگ تست‌های دستی ========== -->
+    <div class="card">
+        <h2>📋 گزارش تست دستی</h2>
+        <div style="display:flex; gap:10px; margin-bottom:15px;">
+            <button id="clearLogBtn" style="background:#4e5b66;">🧹 پاک کردن لاگ</button>
+            <button id="compareTwoSeedsBtn" style="background:#6d4c41;">⚖️ مقایسه با Seed متفاوت</button>
+        </div>
+        <div id="logConsole" class="console">
+            ⏱️ منتظر عملیات...
+        </div>
+    </div>
+
+    <hr>
+    <div style="text-align:center; color:#2c3e50; padding:20px;">
+        ✅ Farsinglish — تست دستی تصادفی‌سازی کنترل‌شده با Seed
+    </div>
+</div>
+
+<script>
+// =======================================================
+// 🎲  کلاس مولد تمرین تصادفی با قابلیت Seed ثابت
+// =======================================================
+class ExerciseGenerator {
+    constructor(seed = 12345) {
+        this.seed = seed;
+        // کتابخانه واژگان نمونه
+        this.vocabBank = [
+            { id: 1, word: "apple", meaning: "سیب", phonetic: "/ˈæp.əl/" },
+            { id: 2, word: "dog", meaning: "سگ", phonetic: "/dɒɡ/" },
+            { id: 3, word: "cat", meaning: "گربه", phonetic: "/kæt/" },
+            { id: 4, word: "book", meaning: "کتاب", phonetic: "/bʊk/" },
+            { id: 5, word: "car", meaning: "ماشین", phonetic: "/kɑːr/" },
+            { id: 6, word: "house", meaning: "خانه", phonetic: "/haʊs/" },
+            { id: 7, word: "tree", meaning: "درخت", phonetic: "/triː/" },
+            { id: 8, word: "sun", meaning: "خورشید", phonetic: "/sʌn/" },
+            { id: 9, word: "moon", meaning: "ماه", phonetic: "/muːn/" },
+            { id: 10, word: "star", meaning: "ستاره", phonetic: "/stɑːr/" },
+            { id: 11, word: "water", meaning: "آب", phonetic: "/ˈwɔː.tər/" },
+            { id: 12, word: "fire", meaning: "آتش", phonetic: "/faɪər/" },
+            { id: 13, word: "blue", meaning: "آبی", phonetic: "/bluː/" },
+            { id: 14, word: "red", meaning: "قرمز", phonetic: "/red/" },
+            { id: 15, word: "green", meaning: "سبز", phonetic: "/ɡriːn/" }
+        ];
+    }
+
+    // مولد اعداد شبه تصادفی با seed (Linear Congruential Generator)
+    random() {
+        const a = 1664525;
+        const c = 1013904223;
+        const m = Math.pow(2, 32);
+        this.seed = (a * this.seed + c) % m;
+        return this.seed / m;
+    }
+
+    // تنظیم Seed جدید
+    setSeed(seed) {
+        this.seed = seed;
+    }
+
+    // انتخاب تصادفی یک آیتم از آرایه با وزن یکسان
+    randomItem(array) {
+        const idx = Math.floor(this.random() * array.length);
+        return array[idx];
+    }
+
+    // تولید آرایه‌ای از آیتم‌های تصادفی (بدون تکرار)
+    randomDistinctItems(array, count) {
+        const shuffled = [...array];
+        for (let i = shuffled.length - 1; i > 0; i--) {
+            const j = Math.floor(this.random() * (i + 1));
+            [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+        }
+        return shuffled.slice(0, count);
+    }
+
+    // --- ۱. تولید سوال چندگزینه‌ای ---
+    generateMultipleChoice(correctVocab = null) {
+        const target = correctVocab || this.randomItem(this.vocabBank);
+        // انتخاب ۳ گزینه اشتباه از بین بقیه واژه‌ها
+        const otherVocabs = this.vocabBank.filter(v => v.id !== target.id);
+        const wrongChoices = this.randomDistinctItems(otherVocabs, 3).map(v => v.meaning);
+        const choices = [target.meaning, ...wrongChoices];
+        // به هم زدن ترتیب گزینه‌ها (دوباره با seed)
+        for (let i = choices.length - 1; i > 0; i--) {
+            const j = Math.floor(this.random() * (i + 1));
+            [choices[i], choices[j]] = [choices[j], choices[i]];
+        }
+        return {
+            type: 'multiple-choice',
+            question: `معنی کلمه "${target.word}" چیست؟`,
+            correctAnswer: target.meaning,
+            choices: choices,
+            phonetic: target.phonetic,
+            vocabId: target.id
+        };
+    }
+
+    // --- ۲. تولید سوال جای‌خالی ---
+    generateFillBlank(correctVocab = null) {
+        const target = correctVocab || this.randomItem(this.vocabBank);
+        const sentenceTemplates = [
+            `I have a ___ .`,
+            `Look at that ___ .`,
+            `The ___ is beautiful.`,
+            `This ___ is new.`,
+            `She likes the ___ .`
+        ];
+        const template = this.randomItem(sentenceTemplates);
+        return {
+            type: 'fill-blank',
+            question: template.replace('___', '______'),
+            correctAnswer: target.word,
+            meaning: target.meaning,
+            vocabId: target.id
+        };
+    }
+
+    // --- ۳. تولید سوال ترجمه ---
+    generateTranslation(correctVocab = null) {
+        const target = correctVocab || this.randomItem(this.vocabBank);
+        const dir = this.random() > 0.5 ? 'en2fa' : 'fa2en';
+        if (dir === 'en2fa') {
+            return {
+                type: 'translation',
+                direction: 'انگلیسی → فارسی',
+                question: `معنی "${target.word}" به فارسی چیست؟`,
+                correctAnswer: target.meaning,
+                vocabId: target.id
+            };
+        } else {
+            return {
+                type: 'translation',
+                direction: 'فارسی → انگلیسی',
+                question: `معنی "${target.meaning}" به انگلیسی چیست؟`,
+                correctAnswer: target.word,
+                vocabId: target.id
+            };
+        }
+    }
+
+    // --- ۴. تولید سوال تطبیق (ساده‌شده) ---
+    generateMatching() {
+        const pairs = this.randomDistinctItems(this.vocabBank, 4);
+        const left = pairs.map(p => p.word);
+        const right = pairs.map(p => p.meaning);
+        // جابه‌جایی تصادفی ستون راست
+        for (let i = right.length - 1; i > 0; i--) {
+            const j = Math.floor(this.random() * (i + 1));
+            [right[i], right[j]] = [right[j], right[i]];
+        }
+        return {
+            type: 'matching',
+            question: 'کلمات را به معانی صحیح متصل کنید.',
+            leftItems: left,
+            rightItems: right,
+            correctPairs: pairs.map(p => ({ word: p.word, meaning: p.meaning }))
+        };
+    }
+
+    // دریافت وضعیت کامل مولد برای دیباگ
+    getState() {
+        return { seed: this.seed };
+    }
+}
+
+// =======================================================
+// 🧪  سیستم تست دستی
+// =======================================================
+
+// نمونه اصلی مولد تمرین
+const generator = new ExerciseGenerator(12345);
+
+// عناصر DOM
+const seedDisplay = document.getElementById('seedDisplay');
+const exerciseContent = document.getElementById('exerciseContent');
+const exerciseOptions = document.getElementById('exerciseOptions');
+const exerciseTypeTag = document.getElementById('exerciseTypeTag');
+const metaInfo = document.getElementById('metaInfo');
+const logConsole = document.getElementById('logConsole');
+
+// به‌روزرسانی نمایش Seed
+function updateSeedUI() {
+    seedDisplay.innerText = generator.seed;
+}
+updateSeedUI();
+
+// افزودن پیام به لاگ
+function log(message, type = 'info') {
+    const p = document.createElement('div');
+    p.innerHTML = `⏱️ ${new Date().toLocaleTimeString('fa-IR')} — ${message}`;
+    p.style.color = type === 'success' ? '#a5d6a5' : (type === 'error' ? '#ffab91' : '#bebebe');
+    logConsole.appendChild(p);
+    logConsole.scrollTop = logConsole.scrollHeight;
+}
+
+// پاک کردن لاگ
+document.getElementById('clearLogBtn').addEventListener('click', function(){
+    logConsole.innerHTML = '🧹 لاگ پاک شد.';
+    log('لاگ توسط کاربر پاک شد');
+});
+
+// تغییر Seed جدید (تصادفی)
+document.getElementById('newSeedBtn').addEventListener('click', function(){
+    const newSeed = Math.floor(Math.random() * 100000);
+    generator.setSeed(newSeed);
+    updateSeedUI();
+    log(`🔀 Seed تغییر یافت: ${newSeed}`, 'success');
+});
+
+// بازنشانی Seed به 12345
+document.getElementById('resetSeedBtn').addEventListener('click', function(){
+    generator.setSeed(12345);
+    updateSeedUI();
+    log(`↩️ Seed بازنشانی به 12345`, 'success');
+});
+
+// ==========  توابع تولید و نمایش تمرین ==========
+function displayExercise(exercise) {
+    exerciseContent.innerText = exercise.question || 'سوال';
+    exerciseTypeTag.innerText = 
+        exercise.type === 'multiple-choice' ? 'چندگزینه‌ای' :
+        exercise.type === 'fill-blank' ? 'جای‌خالی' :
+        exercise.type === 'translation' ? 'ترجمه' : 'تطبیق';
+    
+    let optionsHtml = '';
+    if (exercise.choices) {
+        optionsHtml = '<div style="margin-top:18px;">';
+        exercise.choices.forEach((ch, idx) => {
+            optionsHtml += `<div class="option-btn">🔸 ${ch}</div>`;
+        });
+        optionsHtml += '</div>';
+        optionsHtml += `<p style="margin-top:8px;">✅ پاسخ صحیح: <strong>${exercise.correctAnswer}</strong></p>`;
+    } else if (exercise.type === 'fill-blank') {
+        optionsHtml = `<p style="background:#e0f2f1; padding:14px; border-radius:20px;">🔤 پاسخ صحیح: <strong>${exercise.correctAnswer}</strong> (${exercise.meaning})</p>`;
+    } else if (exercise.type === 'translation') {
+        optionsHtml = `<p style="background:#ede7f6; padding:14px; border-radius:20px;">🌍 پاسخ صحیح: <strong>${exercise.correctAnswer}</strong></p>`;
+    } else if (exercise.type === 'matching') {
+        optionsHtml = '<div style="display:flex; gap:18px; justify-content:center;">';
+        optionsHtml += '<div><strong>کلمات:</strong><br>' + exercise.leftItems.join('<br>') + '</div>';
+        optionsHtml += '<div><strong>معانی:</strong><br>' + exercise.rightItems.join('<br>') + '</div>';
+        optionsHtml += '</div>';
+    }
+
+    exerciseOptions.innerHTML = optionsHtml;
+    
+    let meta = `🆔 vocabId: ${exercise.vocabId || '-'} | `;
+    if (exercise.phonetic) meta += `🔊 ${exercise.phonetic}`;
+    if (exercise.direction) meta += ` | جهت: ${exercise.direction}`;
+    metaInfo.innerText = meta;
+}
+
+// تولید چندگزینه‌ای
+document.getElementById('genMultipleChoiceBtn').addEventListener('click', function(){
+    const ex = generator.generateMultipleChoice();
+    displayExercise(ex);
+    log(`📘 تولید چندگزینه‌ای | پاسخ: ${ex.correctAnswer} | seed: ${generator.seed}`, 'success');
+});
+
+// تولید جای‌خالی
+document.getElementById('genFillBlankBtn').addEventListener('click', function(){
+    const ex = generator.generateFillBlank();
+    displayExercise(ex);
+    log(`✏️ تولید جای‌خالی | پاسخ: ${ex.correctAnswer} | seed: ${generator.seed}`);
+});
+
+// تولید ترجمه
+document.getElementById('genTranslationBtn').addEventListener('click', function(){
+    const ex = generator.generateTranslation();
+    displayExercise(ex);
+    log(`🌐 تولید ترجمه (${ex.direction}) | پاسخ: ${ex.correctAnswer}`);
+});
+
+// تولید تطبیق
+document.getElementById('genMatchingBtn').addEventListener('click', function(){
+    const ex = generator.generateMatching();
+    displayExercise(ex);
+    log(`🔗 تولید تطبیق | ${ex.leftItems.length} جفت`);
+});
+
+// ==========  تست Seed ثابت (مقایسه) ==========
+document.getElementById('seedBasedComparisonBtn').addEventListener('click', function(){
+    // ذخیره seed فعلی
+    const currentSeed = generator.seed;
+    log(`🔬 شروع تست Seed ثابت | seed: ${currentSeed}`, 'info');
+    
+    // تولید دو تمرین متوالی با یک seed (بدون تغییر)
+    const ex1 = generator.generateMultipleChoice();
+    const ex2 = generator.generateMultipleChoice();
+    
+    // بررسی یکسان بودن گزینه‌ها و سوال
+    let isIdentical = ex1.question === ex2.question && 
+                      JSON.stringify(ex1.choices) === JSON.stringify(ex2.choices);
+    
+    if (isIdentical) {
+        log(`✅ تست Seed ثابت: دو تمرین متوالی کاملاً یکسان تولید شدند.`, 'success');
+    } else {
+        log(`❌ تست Seed ثابت: تمرین‌ها با وجود seed یکسان متفاوت شدند!`, 'error');
+    }
+    
+    // نمایش هر دو در لاگ
+    log(`  ۱: "${ex1.question}" گزینه‌ها: [${ex1.choices}]`);
+    log(`  ۲: "${ex2.question}" گزینه‌ها: [${ex2.choices}]`);
+    
+    // فعلاً نمایش آخرین تمرین
+    displayExercise(ex2);
+});
+
+// ==========  مقایسه با Seed متفاوت ==========
+document.getElementById('compareTwoSeedsBtn').addEventListener('click', function(){
+    const seed1 = 12345;
+    const seed2 = 99999;
+    
+    const g1 = new ExerciseGenerator(seed1);
+    const g2 = new ExerciseGenerator(seed2);
+    
+    const ex1 = g1.generateMultipleChoice();
+    const ex2 = g2.generateMultipleChoice();
+    
+    log(`⚖️ مقایسه seed=${seed1} و seed=${seed2}`, 'info');
+    log(`  Seed1: سوال "${ex1.question}" | گزینه: [${ex1.choices}]`);
+    log(`  Seed2: سوال "${ex2.question}" | گزینه: [${ex2.choices}]`);
+    
+    if (ex1.question === ex2.question && JSON.stringify(ex1.choices) === JSON.stringify(ex2.choices)) {
+        log(`⚠️  با وجود Seed متفاوت، تمرین‌ها یکسان شدند (تصادفی‌سازی ضعیف)`);
+    } else {
+        log(`✅ Seed متفاوت → تمرین‌های متفاوت (طبیعی)`);
+    }
+});
+
+// اجرای اولیه یک نمونه برای نمایش
+window.addEventListener('load', function(){
+    const ex = generator.generateMultipleChoice();
+    displayExercise(ex);
+    log('🚀 مولد تمرین با Seed=12345 آماده است');
+});
+</script>
+</body>
+  </html>
