@@ -1,0 +1,538 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.5, user-scalable=yes">
+    <title>تست دستی - جریان درس، تمرین و نتیجه | Farsinglish</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: 'Tahoma', 'Vazir', 'Arial', sans-serif;
+            background: #f8fafc;
+            color: #0f172a;
+            padding: 16px;
+            line-height: 1.6;
+        }
+        .container {
+            max-width: 650px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 28px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.05);
+            padding: 24px 20px;
+            border: 1px solid #e2e8f0;
+        }
+        h1 {
+            font-size: 1.7rem;
+            font-weight: 700;
+            color: #1e293b;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            border-bottom: 3px solid #38bdf8;
+            padding-bottom: 16px;
+            margin-bottom: 24px;
+        }
+        h1 span { background: #0ea5e9; color: white; padding: 4px 12px; border-radius: 40px; font-size: 0.9rem; }
+        .step-indicator {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        .step {
+            background: #f1f5f9;
+            padding: 10px 16px;
+            border-radius: 40px;
+            font-size: 0.85rem;
+            font-weight: 500;
+            color: #475569;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            flex: 1 1 auto;
+            justify-content: center;
+            border: 1px solid transparent;
+        }
+        .step.active {
+            background: #0284c7;
+            color: white;
+            border-color: #0369a1;
+        }
+        .step.completed {
+            background: #bbf7d0;
+            color: #166534;
+            border-color: #4ade80;
+        }
+        .card {
+            background: #ffffff;
+            border: 1.5px solid #e2e8f0;
+            border-radius: 20px;
+            padding: 24px 20px;
+            margin-bottom: 24px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.02);
+        }
+        .lesson-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            background: #f0f9ff;
+            padding: 14px 18px;
+            border-radius: 16px;
+        }
+        .badge {
+            background: #0284c7;
+            color: white;
+            padding: 6px 16px;
+            border-radius: 30px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+        .exercise-box {
+            background: #fef9c3;
+            border-right: 8px solid #eab308;
+            padding: 20px;
+            border-radius: 18px;
+            margin-bottom: 20px;
+        }
+        .options {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin: 20px 0;
+        }
+        .option-btn {
+            background: white;
+            border: 2px solid #cbd5e1;
+            padding: 16px 8px;
+            border-radius: 18px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #0f172a;
+            transition: all 0.1s ease;
+            cursor: pointer;
+        }
+        .option-btn.selected {
+            background: #0284c7;
+            border-color: #075985;
+            color: white;
+        }
+        .option-btn.correct-answer {
+            background: #22c55e;
+            border-color: #15803d;
+            color: white;
+        }
+        .option-btn.wrong-answer {
+            background: #ef4444;
+            border-color: #b91c1c;
+            color: white;
+        }
+        .btn {
+            background: #0f172a;
+            color: white;
+            border: none;
+            padding: 16px 28px;
+            border-radius: 40px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            width: 100%;
+            margin-top: 12px;
+            cursor: pointer;
+            transition: 0.15s;
+            border: 1px solid #1e293b;
+        }
+        .btn:active { transform: scale(0.98); background: #1e293b; }
+        .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+        .result-area {
+            background: #f1f5f9;
+            border-radius: 18px;
+            padding: 20px;
+            margin-top: 25px;
+            border-left: 6px solid #94a3b8;
+        }
+        .log-console {
+            background: #0b1120;
+            color: #e2e8f0;
+            padding: 16px;
+            border-radius: 16px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.85rem;
+            max-height: 220px;
+            overflow-y: auto;
+            direction: ltr;
+            text-align: left;
+            margin-top: 16px;
+        }
+        .flex-row { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+        .mt-4 { margin-top: 24px; }
+        .text-success { color: #16a34a; font-weight: bold; }
+        .text-warning { color: #ca8a04; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>
+        📘 جریان کامل درس، تمرین و نتیجه
+        <span>دستی</span>
+    </h1>
+
+    <!-- مراحل گام به گام -->
+    <div class="step-indicator" id="stepIndicator">
+        <div class="step active" id="step1">۱️⃣ انتخاب درس</div>
+        <div class="step" id="step2">۲️⃣ تمرین</div>
+        <div class="step" id="step3">۳️⃣ پاسخ‌دهی</div>
+        <div class="step" id="step4">۴️⃣ نتیجه و SRS</div>
+    </div>
+
+    <!-- کارت درس جاری -->
+    <div class="card" id="lessonCard">
+        <div class="lesson-header">
+            <div>
+                <h2 id="lessonTitle">درس مقدماتی ۱: Greetings</h2>
+                <p id="lessonMeta" style="color: #475569;">✅ ۰ از ۵ لغت یادگرفته شده</p>
+            </div>
+            <div class="badge" id="levelBadge">سطح A1</div>
+        </div>
+
+        <!-- دکمه شروع درس (فقط در گام ۱) -->
+        <div id="startSection">
+            <p style="margin-bottom: 16px;">📌 برای شروع، درس نمونه را بارگیری کنید.</p>
+            <button class="btn" id="startLessonBtn">🚀 شروع درس و بارگیری تمرین اول</button>
+        </div>
+
+        <!-- بخش تمرین (پس از شروع) -->
+        <div id="exerciseSection" style="display: none;">
+            <div class="exercise-box">
+                <p style="color: #854d0e; font-weight: 600; margin-bottom: 12px;">📝 تمرین:</p>
+                <p id="exerciseQuestion" style="font-size: 1.5rem; font-weight: 700; direction: ltr; text-align: center;">Hello</p>
+                <p id="exerciseType" style="color: #92400e; text-align: center;">معادل فارسی را انتخاب کنید</p>
+            </div>
+
+            <div class="options" id="optionsContainer"></div>
+
+            <div class="flex-row">
+                <button class="btn" id="submitAnswerBtn" style="flex:2;" disabled>✅ ثبت پاسخ</button>
+                <button class="btn" id="nextExerciseBtn" style="flex:1; background: #64748b;" disabled>⏩ بعدی</button>
+            </div>
+            <p id="feedbackMessage" style="margin-top: 12px; font-weight: 500;"></p>
+        </div>
+    </div>
+
+    <!-- بخش نتیجه و پیشرفت -->
+    <div class="result-area" id="resultSection" style="display: none;">
+        <h3 style="display: flex; gap: 10px; align-items: center;">📊 نتیجه تمرین</h3>
+        <div id="resultContent"></div>
+        <button class="btn" id="restartFlowBtn" style="background: #0f172a;">🔄 شروع مجدد جریان</button>
+    </div>
+
+    <!-- کنسول وضعیت (گزارش کامل) -->
+    <div style="margin-top: 30px;">
+        <details open>
+            <summary style="font-weight: 700; background: #e2e8f0; padding: 12px; border-radius: 12px; cursor: pointer;">📋 لاگ وضعیت - جریان کاربر</summary>
+            <div class="log-console" id="logConsole">
+                [سیستم] آماده‌سازی تست دستی جریان درس، تمرین و نتیجه<br>
+                [راهنما] مراحل را به ترتیب طی کنید و پاسخ صحیح را انتخاب کنید.
+            </div>
+        </details>
+    </div>
+</div>
+
+<script>
+    (function(){
+        "use strict";
+
+        // ---------- مدل‌های داده (شبیه‌سازی) ----------
+        const mockLesson = {
+            id: 'lesson_greetings_1',
+            title: 'درس مقدماتی ۱: سلام و احوالپرسی',
+            level: 'A1',
+            vocabulary: [
+                { id: 'v1', word: 'Hello', translation: 'سلام', options: ['سلام', 'خداحافظ', 'صبح بخیر', 'شب بخیر'] },
+                { id: 'v2', word: 'Goodbye', translation: 'خداحافظ', options: ['خداحافظ', 'سلام', 'بعداً', 'می‌بینمت'] },
+                { id: 'v3', word: 'Morning', translation: 'صبح', options: ['صبح', 'ظهر', 'عصر', 'شب'] },
+                { id: 'v4', word: 'Night', translation: 'شب', options: ['شب', 'روز', 'صبح', 'عصر'] },
+                { id: 'v5', word: 'Friend', translation: 'دوست', options: ['دوست', 'برادر', 'خواهر', 'همکلاسی'] }
+            ],
+            currentIndex: 0,
+            progress: { correct: 0, total: 5 }
+        };
+
+        // ---------- وضعیت جریان ----------
+        const FlowState = {
+            step: 1,                // 1: انتخاب/شروع, 2: تمرین, 3: پاسخ‌دهی, 4: نتیجه
+            lesson: null,
+            currentExercise: null,
+            selectedOption: null,
+            answerSubmitted: false,
+            exerciseHistory: [],
+            srsResult: null
+        };
+
+        // ---------- ابزار لاگ ----------
+        const Logger = {
+            logs: [],
+            log(level, message, data = null) {
+                const time = new Date().toLocaleTimeString('fa-IR', { hour12: false });
+                const logEntry = `[${time}] [${level}] ${message}`;
+                this.logs.push(logEntry);
+                const consoleDiv = document.getElementById('logConsole');
+                if (consoleDiv) {
+                    consoleDiv.innerHTML += `<br>${logEntry}` + (data ? ` ${JSON.stringify(data)}` : '');
+                    consoleDiv.scrollTop = consoleDiv.scrollHeight;
+                }
+            },
+            clear() {
+                this.logs = [];
+                const consoleDiv = document.getElementById('logConsole');
+                if (consoleDiv) consoleDiv.innerHTML = '[سیستم] لاگ پاک شد.';
+            }
+        };
+
+        // ---------- الگوریتم SRS ساده (شبیه‌سازی) ----------
+        function simulateSRS(quality) {
+            const easeFactor = 2.5;
+            let interval = 1;
+            if (quality >= 4) interval = 6;
+            if (quality === 5) interval = 10;
+            if (quality < 3) interval = 1;
+            return {
+                interval,
+                easeFactor: easeFactor + (quality - 3) * 0.1,
+                quality,
+                nextReviewDate: new Date(Date.now() + interval * 24 * 60 * 60 * 1000).toLocaleDateString('fa-IR')
+            };
+        }
+
+        // ---------- بارگیری درس ----------
+        function loadLesson() {
+            FlowState.lesson = JSON.parse(JSON.stringify(mockLesson));
+            FlowState.lesson.currentIndex = 0;
+            FlowState.step = 1;
+            FlowState.answerSubmitted = false;
+            FlowState.selectedOption = null;
+            FlowState.exerciseHistory = [];
+            updateUIForStep(1);
+            Logger.log('INFO', 'درس بارگذاری شد', { title: FlowState.lesson.title, vocabCount: FlowState.lesson.vocabulary.length });
+        }
+
+        // ---------- شروع تمرین اول ----------
+        function startExercise() {
+            if (!FlowState.lesson) loadLesson();
+            FlowState.step = 2;
+            FlowState.lesson.currentIndex = 0;
+            FlowState.answerSubmitted = false;
+            FlowState.selectedOption = null;
+            loadCurrentExercise();
+            updateUIForStep(2);
+            Logger.log('INFO', 'شروع تمرین', { word: FlowState.currentExercise?.word });
+        }
+
+        // ---------- بارگیری تمرین جاری ----------
+        function loadCurrentExercise() {
+            if (!FlowState.lesson) return;
+            const idx = FlowState.lesson.currentIndex;
+            if (idx >= FlowState.lesson.vocabulary.length) {
+                // پایان درس
+                endLesson();
+                return;
+            }
+            FlowState.currentExercise = { ...FlowState.lesson.vocabulary[idx] };
+            FlowState.selectedOption = null;
+            FlowState.answerSubmitted = false;
+
+            // نمایش در UI
+            document.getElementById('exerciseQuestion').innerText = FlowState.currentExercise.word;
+            document.getElementById('exerciseType').innerText = '✅ معادل فارسی را انتخاب کنید';
+            
+            const optsContainer = document.getElementById('optionsContainer');
+            optsContainer.innerHTML = '';
+            FlowState.currentExercise.options.forEach((opt, index) => {
+                const btn = document.createElement('button');
+                btn.className = 'option-btn';
+                btn.innerText = opt;
+                btn.dataset.option = opt;
+                btn.onclick = () => selectOption(btn, opt);
+                optsContainer.appendChild(btn);
+            });
+
+            document.getElementById('submitAnswerBtn').disabled = true;
+            document.getElementById('nextExerciseBtn').disabled = true;
+            document.getElementById('feedbackMessage').innerText = '';
+        }
+
+        // انتخاب گزینه
+        function selectOption(el, opt) {
+            if (FlowState.answerSubmitted) return;
+            // حذف حالت selected قبلی
+            document.querySelectorAll('.option-btn').forEach(btn => btn.classList.remove('selected'));
+            el.classList.add('selected');
+            FlowState.selectedOption = opt;
+            document.getElementById('submitAnswerBtn').disabled = false;
+        }
+
+        // ثبت پاسخ
+        function submitAnswer() {
+            if (!FlowState.selectedOption || FlowState.answerSubmitted) return;
+            const exercise = FlowState.currentExercise;
+            const isCorrect = (FlowState.selectedOption === exercise.translation);
+            FlowState.answerSubmitted = true;
+
+            // نمایش درست/غلط بودن روی دکمه‌ها
+            document.querySelectorAll('.option-btn').forEach(btn => {
+                if (btn.innerText === exercise.translation) {
+                    btn.classList.add('correct-answer');
+                } else if (btn.innerText === FlowState.selectedOption && !isCorrect) {
+                    btn.classList.add('wrong-answer');
+                }
+            });
+
+            const quality = isCorrect ? 5 : 1;  // 5=عالی, 1=ضعیف
+            const srs = simulateSRS(quality);
+            FlowState.srsResult = srs;
+
+            // ذخیره در تاریخچه
+            FlowState.exerciseHistory.push({
+                word: exercise.word,
+                selected: FlowState.selectedOption,
+                correct: exercise.translation,
+                isCorrect,
+                srs: srs
+            });
+
+            // به‌روزرسانی پیشرفت درس
+            if (isCorrect) FlowState.lesson.progress.correct++;
+            FlowState.lesson.currentIndex++;
+
+            // نمایش بازخورد
+            const feedback = document.getElementById('feedbackMessage');
+            feedback.innerHTML = isCorrect ? 
+                `✅ پاسخ درست! (کیفیت ${quality}) - مرور بعدی: ${srs.interval} روز دیگر` : 
+                `❌ پاسخ نادرست. پاسخ صحیح: "${exercise.translation}" (کیفیت ${quality})`;
+            feedback.style.color = isCorrect ? '#16a34a' : '#b91c1c';
+
+            document.getElementById('submitAnswerBtn').disabled = true;
+            
+            // فعال کردن دکمه بعدی
+            if (FlowState.lesson.currentIndex < FlowState.lesson.vocabulary.length) {
+                document.getElementById('nextExerciseBtn').disabled = false;
+            } else {
+                // درس تمام شده
+                document.getElementById('nextExerciseBtn').innerText = '🏁 نمایش نتیجه';
+                document.getElementById('nextExerciseBtn').disabled = false;
+            }
+
+            Logger.log('TEST', 'پاسخ ثبت شد', { word: exercise.word, isCorrect, quality, interval: srs.interval });
+        }
+
+        // رفتن به تمرین بعدی یا نمایش نتیجه
+        function nextExercise() {
+            if (FlowState.lesson.currentIndex >= FlowState.lesson.vocabulary.length) {
+                // پایان درس
+                endLesson();
+            } else {
+                loadCurrentExercise();
+                document.getElementById('nextExerciseBtn').disabled = true;
+            }
+        }
+
+        // پایان درس و نمایش نتیجه
+        function endLesson() {
+            FlowState.step = 4;
+            updateUIForStep(4);
+            
+            const correctCount = FlowState.lesson.progress.correct;
+            const total = FlowState.lesson.vocabulary.length;
+            const percent = Math.round((correctCount / total) * 100);
+            
+            let resultHtml = `
+                <p style="font-size: 1.6rem; font-weight: 700; color: #0f172a;">${correctCount}/${total}</p>
+                <p>درصد پاسخ صحیح: <strong>${percent}%</strong></p>
+                <p>⭐ امتیاز کسب شده: ${correctCount * 10}</p>
+                <p>📅 دروس نیازمند مرور: ${total - correctCount} لغت</p>
+                <hr style="margin: 16px 0;">
+                <h4>نمونه خروجی SRS (آخرین لغت):</h4>
+                <p>فاصله مرور: ${FlowState.srsResult?.interval || 1} روز</p>
+                <p>تاریخ مرور بعدی: ${FlowState.srsResult?.nextReviewDate || 'فردا'}</p>
+            `;
+            
+            document.getElementById('resultContent').innerHTML = resultHtml;
+            document.getElementById('resultSection').style.display = 'block';
+            document.getElementById('exerciseSection').style.display = 'none';
+            document.getElementById('startSection').style.display = 'none';
+            
+            Logger.log('INFO', 'درس به پایان رسید', { correct: correctCount, total, percent: percent + '%' });
+        }
+
+        // به‌روزرسانی UI بر اساس گام
+        function updateUIForStep(step) {
+            FlowState.step = step;
+            // آپدیت استپ‌ها
+            document.querySelectorAll('.step').forEach(el => el.classList.remove('active', 'completed'));
+            document.getElementById('step1').classList.add(step >= 1 ? (step > 1 ? 'completed' : 'active') : '');
+            document.getElementById('step2').classList.add(step >= 2 ? (step > 2 ? 'completed' : 'active') : '');
+            document.getElementById('step3').classList.add(step >= 3 ? (step > 3 ? 'completed' : 'active') : '');
+            document.getElementById('step4').classList.add(step >= 4 ? 'active' : '');
+
+            // نمایش بخش‌ها
+            if (step === 1) {
+                document.getElementById('startSection').style.display = 'block';
+                document.getElementById('exerciseSection').style.display = 'none';
+                document.getElementById('resultSection').style.display = 'none';
+            } else if (step === 2 || step === 3) {
+                document.getElementById('startSection').style.display = 'none';
+                document.getElementById('exerciseSection').style.display = 'block';
+                document.getElementById('resultSection').style.display = 'none';
+            } else if (step === 4) {
+                document.getElementById('startSection').style.display = 'none';
+                document.getElementById('exerciseSection').style.display = 'none';
+                document.getElementById('resultSection').style.display = 'block';
+            }
+
+            // به‌روزرسانی متا درس
+            if (FlowState.lesson) {
+                document.getElementById('lessonTitle').innerText = FlowState.lesson.title;
+                document.getElementById('lessonMeta').innerHTML = `✅ ${FlowState.lesson.progress.correct} از ${FlowState.lesson.vocabulary.length} لغت یادگرفته شده`;
+                document.getElementById('levelBadge').innerText = `سطح ${FlowState.lesson.level}`;
+            }
+        }
+
+        // ریست کامل
+        function restartFlow() {
+            Logger.clear();
+            loadLesson();
+            document.getElementById('resultSection').style.display = 'none';
+            document.getElementById('startSection').style.display = 'block';
+            document.getElementById('exerciseSection').style.display = 'none';
+            FlowState.step = 1;
+            updateUIForStep(1);
+            Logger.log('INFO', 'جریان کاربر ریست شد');
+        }
+
+        // ---------- رویدادها و بایند ----------
+        window.onload = function() {
+            loadLesson();
+
+            document.getElementById('startLessonBtn').addEventListener('click', function(e) {
+                startExercise();
+            });
+
+            document.getElementById('submitAnswerBtn').addEventListener('click', function(e) {
+                submitAnswer();
+            });
+
+            document.getElementById('nextExerciseBtn').addEventListener('click', function(e) {
+                nextExercise();
+            });
+
+            document.getElementById('restartFlowBtn').addEventListener('click', function(e) {
+                restartFlow();
+            });
+
+            Logger.log('INFO', 'تست دستی جریان درس، تمرین و نتیجه آماده است. دکمه "شروع درس" را بزنید.');
+        };
+    })();
+</script>
+</body>
+</html>
