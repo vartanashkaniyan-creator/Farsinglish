@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
+    <title>تست دستی کلیک و ناوبری - Farsinglish</title>
+    <style>
+        * { box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Arial, sans-serif; }
+        body { background: #f0f2f5; margin: 0; padding: 15px; padding-bottom: 80px; }
+        .header { background: #2c3e50; color: white; padding: 20px; border-radius: 15px; margin-bottom: 20px; text-align: center; }
+        .test-card { background: white; border-radius: 15px; padding: 20px; margin-bottom: 20px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); border: 1px solid #ddd; }
+        h2 { margin-top: 0; color: #2c3e50; border-bottom: 2px solid #3498db; padding-bottom: 10px; }
+        h3 { color: #34495e; margin-bottom: 15px; }
+        .btn-group { display: flex; flex-wrap: wrap; gap: 12px; margin: 20px 0; }
+        .btn { 
+            padding: 14px 22px; border: none; border-radius: 40px; font-size: 16px; font-weight: bold;
+            cursor: pointer; transition: all 0.2s; box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            flex: 1 1 auto; min-width: 140px; color: white; display: inline-flex; align-items: center; justify-content: center;
+        }
+        .btn-primary { background: #3498db; }
+        .btn-primary:hover { background: #2980b9; transform: scale(1.02); }
+        .btn-success { background: #2ecc71; }
+        .btn-success:hover { background: #27ae60; }
+        .btn-danger { background: #e74c3c; }
+        .btn-danger:hover { background: #c0392b; }
+        .btn-warning { background: #f39c12; color: #2c3e50; }
+        .btn-warning:hover { background: #e67e22; }
+        .btn-outline { background: white; color: #3498db; border: 2px solid #3498db; }
+        .btn-outline:hover { background: #3498db; color: white; }
+        .btn:active { transform: scale(0.95); }
+        
+        .log-panel { 
+            background: #1e272e; color: #d3dae3; padding: 15px; border-radius: 12px; 
+            font-family: 'Courier New', monospace; height: 180px; overflow-y: auto; 
+            margin: 15px 0; font-size: 14px; direction: ltr; text-align: left;
+        }
+        .log-entry { border-bottom: 1px solid #3a4a5a; padding: 6px 0; }
+        .log-time { color: #f39c12; margin-left: 8px; }
+        .success-badge { background: #2ecc71; color: white; padding: 4px 12px; border-radius: 20px; font-size: 14px; }
+        .warning-badge { background: #f39c12; color: #2c3e50; padding: 4px 12px; border-radius: 20px; }
+        .info-box { background: #e8f0fe; padding: 15px; border-radius: 10px; border-right: 5px solid #3498db; margin: 20px 0; }
+        .counter { font-size: 24px; font-weight: bold; color: #2c3e50; text-align: center; background: #f8f9fa; padding: 10px; border-radius: 30px; }
+        .nav-indicator { background: #34495e; color: white; padding: 12px; border-radius: 10px; text-align: center; font-size: 18px; }
+        .footer { 
+            position: fixed; bottom: 0; left: 0; right: 0; background: white; 
+            padding: 12px 15px; box-shadow: 0 -4px 10px rgba(0,0,0,0.1); 
+            display: flex; gap: 10px; z-index: 1000;
+        }
+        .footer button { flex: 1; padding: 12px; border: none; border-radius: 30px; font-weight: bold; }
+        .btn-reset { background: #95a5a6; color: white; }
+        .btn-check { background: #27ae60; color: white; }
+        .scenario-box { background: #fdf5e6; padding: 15px; border-radius: 10px; border-right: 5px solid #f39c12; margin: 15px 0; }
+        .step { display: flex; align-items: center; gap: 10px; margin: 10px 0; padding: 10px; background: #f8f9fa; border-radius: 8px; }
+        .step-number { background: #3498db; color: white; width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; }
+    </style>
+</head>
+<body>
+
+<div class="header">
+    <h1>🧪 تست دستی کلیک و ناوبری</h1>
+    <p>بررسی صحت عملکرد دکمه‌ها، کلیک‌ها و جریان ناوبری</p>
+</div>
+
+<!-- صفحه مجازی ناوبری -->
+<div class="nav-indicator" id="currentPage">🏠 صفحه اصلی (خانه)</div>
+
+<div class="test-card">
+    <h2>🔘 ۱. تست انواع دکمه‌ها</h2>
+    <p>هر دکمه را کلیک کن و لاگ را بررسی کن</p>
+    
+    <div class="btn-group">
+        <button class="btn btn-primary" onclick="logEvent('کلیک روی دکمه PRIMARY', 'primary')">Primary</button>
+        <button class="btn btn-success" onclick="logEvent('کلیک روی دکمه SUCCESS', 'success')">Success</button>
+        <button class="btn btn-danger" onclick="logEvent('کلیک روی دکمه DANGER', 'danger')">Danger</button>
+        <button class="btn btn-warning" onclick="logEvent('کلیک روی دکمه WARNING', 'warning')">Warning</button>
+        <button class="btn btn-outline" onclick="logEvent('کلیک روی دکمه OUTLINE', 'outline')">Outline</button>
+    </div>
+    
+    <div style="margin-top: 20px;">
+        <button class="btn btn-primary" style="width: 100%;" onclick="simulateLongPress()">📱 شبیه‌سازی لمس طولانی (۳ ثانیه)</button>
+    </div>
+</div>
+
+<div class="test-card">
+    <h2>🧭 ۲. تست ناوبری بین صفحات</h2>
+    <p>با کلیک روی دکمه‌ها، صفحه فعلی تغییر می‌کند</p>
+    
+    <div class="btn-group">
+        <button class="btn btn-primary" onclick="navigateTo('home')">🏠 صفحه اصلی</button>
+        <button class="btn btn-success" onclick="navigateTo('lessons')">📚 صفحه درس‌ها</button>
+        <button class="btn btn-warning" onclick="navigateTo('profile')">👤 پروفایل</button>
+        <button class="btn btn-danger" onclick="navigateTo('settings')">⚙️ تنظیمات</button>
+    </div>
+    
+    <div class="btn-group" style="margin-top: 10px;">
+        <button class="btn btn-outline" onclick="simulateBack()">🔙 بازگشت (Back)</button>
+        <button class="btn btn-outline" onclick="simulateForward()">🔜 رفتن به جلو (Forward)</button>
+        <button class="btn btn-outline" onclick="resetNavigation()">🔄 بازنشانی ناوبری</button>
+    </div>
+    
+    <div class="info-box">
+        <strong>📌 تاریخچه ناوبری:</strong>
+        <div id="navHistory">هیچ صفحه‌ای</div>
+    </div>
+</div>
+
+<div class="test-card">
+    <h2>🔄 ۳. تست کلیک‌های هم‌زمان و سریع</h2>
+    
+    <div class="counter" id="clickCounter">۰</div>
+    
+    <div class="btn-group">
+        <button class="btn btn-primary" onclick="incrementCounter()">➕ افزایش شمارنده</button>
+        <button class="btn btn-danger" onclick="resetCounter()">🔄 reset</button>
+    </div>
+    
+    <p>⬇️ دکمه زیر را سریع چند بار کلیک کن (debounce تست شود)</p>
+    <button class="btn btn-warning" id="debounceBtn" onclick="debouncedClick()">⏱️ کلیک با Debounce (آخرین کلیک)</button>
+    
+    <div class="scenario-box">
+        <h3>📋 سناریوی تست چندبار کلیک:</h3>
+        <div class="step"><span class="step-number">۱</span> ۵ بار سریع روی دکمه افزایش کلیک کن → شمارنده باید ۵ شود</div>
+        <div class="step"><span class="step-number">۲</span> دکمه Debounce را ۳ بار سریع کلیک کن → فقط ۱ لاگ ثبت شود</div>
+    </div>
+</div>
+
+<div class="test-card">
+    <h2>🧪 ۴. تست رویدادهای لمسی (موبایل)</h2>
+    
+    <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+        <div style="flex: 1; min-width: 120px;">
+            <button class="btn btn-primary" style="width: 100%;" ontouchstart="logEvent('touchstart', 'touch')">touchstart</button>
+        </div>
+        <div style="flex: 1; min-width: 120px;">
+            <button class="btn btn-success" style="width: 100%;" ontouchend="logEvent('touchend', 'touch')">touchend</button>
+        </div>
+        <div style="flex: 1; min-width: 120px;">
+            <button class="btn btn-warning" style="width: 100%;" ontouchmove="logEvent('touchmove (لغزش)', 'touch')">touchmove</button>
+        </div>
+        <div style="flex: 1; min-width: 120px;">
+            <button class="btn btn-danger" style="width: 100%;" ontouchcancel="logEvent('touchcancel', 'touch')">touchcancel</button>
+        </div>
+    </div>
+    
+    <p style="margin-top: 15px;">📱 دکمه‌های بالا را با لمس انگشت روی موبایل تست کن</p>
+</div>
+
+<div class="test-card">
+    <h2>✅ ۵. چک‌لیست تست دستی</h2>
+    
+    <div style="display: flex; flex-direction: column; gap: 12px;">
+        <label style="display: flex; align-items: center; gap: 10px; background: #f0f9ff; padding: 12px; border-radius: 8px;">
+            <input type="checkbox" onchange="updateChecklist(this, 'item1')"> دکمه PRIMARY کلیک شد و لاگ ثبت شد
+        </label>
+        <label style="display: flex; align-items: center; gap: 10px; background: #f0f9ff; padding: 12px; border-radius: 8px;">
+            <input type="checkbox" onchange="updateChecklist(this, 'item2')"> ناوبری به درس‌ها کار کرد
+        </label>
+        <label style="display: flex; align-items: center; gap: 10px; background: #f0f9ff; padding: 12px; border-radius: 8px;">
+            <input type="checkbox" onchange="updateChecklist(this, 'item3')"> دکمه بازگشت (Back) صفحه را عوض کرد
+        </label>
+        <label style="display: flex; align-items: center; gap: 10px; background: #f0f9ff; padding: 12px; border-radius: 8px;">
+            <input type="checkbox" onchange="updateChecklist(this, 'item4')"> شمارنده با کلیک افزایش یافت
+        </label>
+        <label style="display: flex; align-items: center; gap: 10px; background: #f0f9ff; padding: 12px; border-radius: 8px;">
+            <input type="checkbox" onchange="updateChecklist(this, 'item5')"> رویداد لمسی (touch) کار کرد
+        </label>
+    </div>
+    
+    <div id="checklistProgress" style="margin-top: 15px; padding: 10px; background: #2ecc71; color: white; border-radius: 8px; text-align: center; font-weight: bold;">
+        ✅ 0 از 5 تست تکمیل شده
+    </div>
+</div>
+
+<div class="test-card">
+    <h2>📋 لاگ رویدادها</h2>
+    <div class="log-panel" id="logPanel">
+        <div class="log-entry">⏱️ برای شروع دکمه‌ها را کلیک کن...</div>
+    </div>
+    <button class="btn btn-outline" style="width: 100%; margin-top: 10px;" onclick="clearLog()">🧹 پاک کردن لاگ</button>
+</div>
+
+<div class="footer">
+    <button class="btn-reset" onclick="resetAllTests()">🔄 ریست همه</button>
+    <button class="btn-check" onclick="checkAllTests()">✓ بررسی نهایی</button>
+</div>
+
+<script>
+    // لاگ سیستم
+    let logEntries = [];
+    let clickCount = 0;
+    let currentPage = 'home';
+    let navStack = ['home'];
+    let navIndex = 0;
+    let checklist = { item1: false, item2: false, item3: false, item4: false, item5: false };
+    let debounceTimer;
+
+    function logEvent(message, type = 'info') {
+        const time = new Date().toLocaleTimeString('fa-IR');
+        const entry = `[${time}] ${message}`;
+        logEntries.push(entry);
+        
+        const logPanel = document.getElementById('logPanel');
+        const div = document.createElement('div');
+        div.className = 'log-entry';
+        div.innerHTML = `<span class="log-time">⏱️ ${time}</span> ${message}`;
+        logPanel.appendChild(div);
+        logPanel.scrollTop = logPanel.scrollHeight;
+        
+        console.log(`[UI Test] ${message}`);
+    }
+
+    function clearLog() {
+        logEntries = [];
+        document.getElementById('logPanel').innerHTML = '<div class="log-entry">⏱️ لاگ پاک شد...</div>';
+        logEvent('لاگ پاک شد');
+    }
+
+    // ناوبری
+    function navigateTo(page) {
+        const pageNames = {
+            'home': '🏠 صفحه اصلی',
+            'lessons': '📚 صفحه درس‌ها',
+            'profile': '👤 پروفایل',
+            'settings': '⚙️ تنظیمات'
+        };
+        
+        currentPage = page;
+        document.getElementById('currentPage').innerHTML = `📍 ${pageNames[page]}`;
+        
+        // بروزرسانی تاریخچه
+        navStack = navStack.slice(0, navIndex + 1);
+        navStack.push(page);
+        navIndex = navStack.length - 1;
+        
+        document.getElementById('navHistory').innerHTML = navStack.map(p => pageNames[p] || p).join(' → ');
+        
+        logEvent(`ناوبری به ${pageNames[page]}`, 'navigation');
+    }
+
+    function simulateBack() {
+        if (navIndex > 0) {
+            navIndex--;
+            const page = navStack[navIndex];
+            currentPage = page;
+            const pageNames = {
+                'home': '🏠 صفحه اصلی',
+                'lessons': '📚 صفحه درس‌ها',
+                'profile': '👤 پروفایل',
+                'settings': '⚙️ تنظیمات'
+            };
+            document.getElementById('currentPage').innerHTML = `📍 ${pageNames[page]}`;
+            logEvent(`بازگشت به ${pageNames[page]}`, 'navigation');
+        } else {
+            logEvent('⚠️ در ابتدای تاریخچه هستید', 'warning');
+        }
+    }
+
+    function simulateForward() {
+        if (navIndex < navStack.length - 1) {
+            navIndex++;
+            const page = navStack[navIndex];
+            currentPage = page;
+            const pageNames = {
+                'home': '🏠 صفحه اصلی',
+                'lessons': '📚 صفحه درس‌ها',
+                'profile': '👤 پروفایل',
+                'settings': '⚙️ تنظیمات'
+            };
+            document.getElementById('currentPage').innerHTML = `📍 ${pageNames[page]}`;
+            logEvent(`رفتن به جلو به ${pageNames[page]}`, 'navigation');
+        } else {
+            logEvent('⚠️ در انتهای تاریخچه هستید', 'warning');
+        }
+    }
+
+    function resetNavigation() {
+        navStack = ['home'];
+        navIndex = 0;
+        currentPage = 'home';
+        document.getElementById('currentPage').innerHTML = '🏠 صفحه اصلی (خانه)';
+        document.getElementById('navHistory').innerHTML = 'خانه';
+        logEvent('🔄 تاریخچه ناوبری ریست شد');
+    }
+
+    // شمارنده
+    function incrementCounter() {
+        clickCount++;
+        document.getElementById('clickCounter').innerHTML = clickCount;
+        logEvent(`کلیک افزایش شمارنده → ${clickCount}`);
+    }
+
+    function resetCounter() {
+        clickCount = 0;
+        document.getElementById('clickCounter').innerHTML = '۰';
+        logEvent('🔄 شمارنده ریست شد');
+    }
+
+    // Debounce
+    function debouncedClick() {
+        clearTimeout(debounceTimer);
+        debounceTimer = setTimeout(() => {
+            logEvent('✅ کلیک با Debounce اجرا شد (آخرین کلیک)');
+        }, 300);
+        logEvent('⏳ کلیک ثبت شد (منتظر debounce)');
+    }
+
+    // لمس طولانی
+    function simulateLongPress() {
+        logEvent('📱 شبیه‌سازی لمس طولانی شروع شد');
+        setTimeout(() => {
+            logEvent('✅ لمس طولانی کامل شد (۳ ثانیه)');
+        }, 3000);
+    }
+
+    // چک‌لیست
+    function updateChecklist(checkbox, itemId) {
+        checklist[itemId] = checkbox.checked;
+        const completed = Object.values(checklist).filter(v => v).length;
+        document.getElementById('checklistProgress').innerHTML = `✅ ${completed} از 5 تست تکمیل شده`;
+        
+        if (completed === 5) {
+            logEvent('🎉 تمام تست‌های دستی با موفقیت انجام شد!');
+        }
+    }
+
+    function resetAllTests() {
+        resetCounter();
+        resetNavigation();
+        clearLog();
+        clickCount = 0;
+        checklist = { item1: false, item2: false, item3: false, item4: false, item5: false };
+        
+        // ریست چک‌باکس‌ها
+        document.querySelectorAll('input[type=checkbox]').forEach(cb => cb.checked = false);
+        document.getElementById('checklistProgress').innerHTML = '✅ 0 از 5 تست تکمیل شده';
+        
+        logEvent('🔄 همه تست‌ها ریست شدند');
+    }
+
+    function checkAllTests() {
+        const completed = Object.values(checklist).filter(v => v).length;
+        if (completed === 5) {
+            alert('🎉 تبریک! تمام تست‌های دستی با موفقیت انجام شد.');
+        } else {
+            alert(`⚠️ هنوز ${5 - completed} تست باقی مونده. چک‌لیست رو کامل کن.`);
+        }
+    }
+</script>
+
+</body>
+</html>
