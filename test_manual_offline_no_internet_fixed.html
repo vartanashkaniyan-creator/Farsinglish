@@ -1,0 +1,628 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
+    <title>تست آفلاین - Farsinglish</title>
+    <style>
+        body {
+            font-family: 'Tahoma', 'Arial', sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 15px;
+            background: #f5f7fa;
+            color: #2c3e50;
+            line-height: 1.6;
+        }
+        .header {
+            background: linear-gradient(135deg, #34495e, #2c3e50);
+            color: white;
+            padding: 20px;
+            border-radius: 15px;
+            margin-bottom: 25px;
+            text-align: center;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        .header h1 { margin: 0; font-size: 24px; }
+        .header p { margin: 10px 0 0; opacity: 0.9; }
+        
+        .status-bar {
+            display: flex;
+            justify-content: space-between;
+            background: white;
+            padding: 15px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+        .status-item {
+            text-align: center;
+            flex: 1;
+        }
+        .status-label {
+            font-size: 13px;
+            color: #7f8c8d;
+            display: block;
+        }
+        .status-value {
+            font-size: 18px;
+            font-weight: bold;
+            color: #2c3e50;
+        }
+        
+        .test-grid {
+            display: grid;
+            gap: 15px;
+            margin-bottom: 25px;
+        }
+        .test-card {
+            background: white;
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+            border: 1px solid #e0e7e9;
+        }
+        .test-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #f0f3f5;
+        }
+        .test-icon {
+            font-size: 24px;
+            margin-left: 12px;
+        }
+        .test-title {
+            font-size: 18px;
+            font-weight: bold;
+            color: #2c3e50;
+        }
+        .test-desc {
+            font-size: 14px;
+            color: #7f8c8d;
+            margin-bottom: 15px;
+        }
+        
+        .btn {
+            background: #3498db;
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 8px;
+            font-size: 15px;
+            font-weight: bold;
+            cursor: pointer;
+            width: 100%;
+            margin-bottom: 10px;
+            transition: all 0.2s;
+        }
+        .btn:hover { background: #2980b9; }
+        .btn.offline { background: #95a5a6; }
+        .btn.online { background: #27ae60; }
+        .btn.warning { background: #e67e22; }
+        .btn.danger { background: #e74c3c; }
+        
+        .console {
+            background: #1e272b;
+            color: #d1d8e0;
+            padding: 15px;
+            border-radius: 10px;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            margin-top: 20px;
+            max-height: 300px;
+            overflow-y: auto;
+            direction: ltr;
+            text-align: left;
+        }
+        .console p { margin: 5px 0; }
+        .success { color: #2ecc71; }
+        .error { color: #e74c3c; }
+        .warning { color: #f39c12; }
+        .info { color: #3498db; }
+        
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: #ecf0f1;
+            border-radius: 4px;
+            margin: 15px 0;
+            overflow: hidden;
+        }
+        .progress-fill {
+            height: 100%;
+            background: #3498db;
+            width: 0%;
+            transition: width 0.3s;
+        }
+        
+        @media (max-width: 600px) {
+            .status-bar { flex-direction: column; gap: 10px; }
+            .test-card { padding: 15px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>📶 تست آفلاین و همگام‌سازی</h1>
+        <p>Farsinglish - Offline Sync Test</p>
+    </div>
+
+    <!-- وضعیت فعلی -->
+    <div class="status-bar">
+        <div class="status-item">
+            <span class="status-label">وضعیت اینترنت</span>
+            <span id="onlineStatus" class="status-value" style="color: #27ae60;">آنلاین</span>
+        </div>
+        <div class="status-item">
+            <span class="status-label">صف همگام‌سازی</span>
+            <span id="syncQueueCount" class="status-value">0</span>
+        </div>
+        <div class="status-item">
+            <span class="status-label">درس‌های ذخیره</span>
+            <span id="savedLessonsCount" class="status-value">0</span>
+        </div>
+    </div>
+
+    <!-- دکمه‌های کنترل اینترنت -->
+    <div class="test-grid">
+        <div class="test-card">
+            <div class="test-header">
+                <span class="test-icon">🌐</span>
+                <span class="test-title">کنترل اتصال</span>
+            </div>
+            <div class="test-desc">
+                وضعیت اینترنت را به صورت دستی تغییر دهید. عملیات آفلاین ابتدا در IndexedDB ذخیره و پس از اتصال همگام می‌شوند.
+            </div>
+            <button id="goOfflineBtn" class="btn offline">📴 قطع اینترنت (آفلاین)</button>
+            <button id="goOnlineBtn" class="btn online">📶 وصل اینترنت (آنلاین)</button>
+        </div>
+
+        <!-- تست ۱: ذخیره درس در حالت آفلاین -->
+        <div class="test-card">
+            <div class="test-header">
+                <span class="test-icon">💾</span>
+                <span class="test-title">تست ۱: ذخیره آفلاین درس</span>
+            </div>
+            <div class="test-desc">
+                درس جدید را در حالت آفلاین ذخیره کنید. درس در IndexedDB ذخیره و به صف همگام‌سازی اضافه می‌شود.
+            </div>
+            <button id="saveOfflineLessonBtn" class="btn">📥 ذخیره درس آفلاین</button>
+            <div id="offlineLessonResult" style="margin-top: 10px; padding: 10px; background: #f8f9fa; border-radius: 5px; display: none;"></div>
+        </div>
+
+        <!-- تست ۲: ثبت پیشرفت آفلاین -->
+        <div class="test-card">
+            <div class="test-header">
+                <span class="test-icon">📊</span>
+                <span class="test-title">تست ۲: ثبت پیشرفت آفلاین</span>
+            </div>
+            <div class="test-desc">
+                پیشرفت درس را در حالت آفلاین ثبت کنید. عملیات در صف انتظار می‌ماند تا اینترنت وصل شود.
+            </div>
+            <button id="saveOfflineProgressBtn" class="btn">📈 ثبت پیشرفت آفلاین</button>
+            <div id="offlineProgressResult" style="margin-top: 10px; padding: 10px; background: #f8f9fa; border-radius: 5px; display: none;"></div>
+        </div>
+
+        <!-- تست ۳: همگام‌سازی دستی -->
+        <div class="test-card">
+            <div class="test-header">
+                <span class="test-icon">🔄</span>
+                <span class="test-title">تست ۳: همگام‌سازی دستی</span>
+            </div>
+            <div class="test-desc">
+                اجرای دستی همگام‌سازی. عملیات‌های موجود در صف با سرور (Mock) همگام می‌شوند.
+            </div>
+            <button id="manualSyncBtn" class="btn warning">🔄 اجرای همگام‌سازی</button>
+            <div id="syncResult" style="margin-top: 10px; padding: 10px; background: #f8f9fa; border-radius: 5px; display: none;"></div>
+        </div>
+
+        <!-- تست ۴: بازیابی خودکار پس از اتصال -->
+        <div class="test-card">
+            <div class="test-header">
+                <span class="test-icon">⚡</span>
+                <span class="test-title">تست ۴: بازیابی خودکار</span>
+            </div>
+            <div class="test-desc">
+                با وصل کردن اینترنت، همگام‌سازی خودکار اجرا می‌شود. این تست شبیه‌سازی قطع/وصل خودکار است.
+            </div>
+            <button id="testAutoRecoveryBtn" class="btn">🔄 شبیه‌سازی قطع و وصل</button>
+            <div id="autoRecoveryResult" style="margin-top: 10px; padding: 10px; background: #f8f9fa; border-radius: 5px; display: none;"></div>
+        </div>
+
+        <!-- تست ۵: پاکسازی صف -->
+        <div class="test-card">
+            <div class="test-header">
+                <span class="test-icon">🧹</span>
+                <span class="test-title">تست ۵: پاکسازی صف</span>
+            </div>
+            <div class="test-desc">
+                پاکسازی کامل صف همگام‌سازی و دیتابیس محلی.
+            </div>
+            <button id="clearSyncQueueBtn" class="btn danger">🗑️ پاکسازی صف</button>
+        </div>
+    </div>
+
+    <!-- نوار پیشرفت همگام‌سازی -->
+    <div style="margin: 20px 0;">
+        <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
+            <span>پیشرفت همگام‌سازی</span>
+            <span id="syncProgressPercent">0٪</span>
+        </div>
+        <div class="progress-bar">
+            <div id="syncProgressFill" class="progress-fill" style="width: 0%;"></div>
+        </div>
+    </div>
+
+    <!-- کنسول لاگ -->
+    <div class="console" id="console"></div>
+
+    <script>
+        // -------------------- جایگزین console اصلی --------------------
+        const consoleLog = window.console.log.bind(window.console);
+        const consoleError = window.console.error.bind(window.console);
+        const consoleWarn = window.console.warn.bind(window.console);
+        
+        // -------------------- شبیه‌ساز IndexedDB و صف همگام‌سازی --------------------
+        class OfflineSyncManager {
+            constructor() {
+                this.dbName = 'FarsinglishOfflineDB';
+                this.dbVersion = 1;
+                this.db = null;
+                this.syncQueue = [];
+                this.lessons = [];
+                this.progress = [];
+                this.isOnline = true;
+                this.init();
+            }
+
+            async init() {
+                try {
+                    this.loadFromStorage();
+                    this.log('✅ دیتابیس آفلاین راه‌اندازی شد', 'success');
+                    this.updateUI();
+                } catch (error) {
+                    this.log(`❌ خطا در راه‌اندازی دیتابیس: ${error.message}`, 'error');
+                }
+            }
+
+            loadFromStorage() {
+                try {
+                    const savedQueue = localStorage.getItem('offlineSyncQueue');
+                    this.syncQueue = savedQueue ? JSON.parse(savedQueue) : [];
+                    
+                    const savedLessons = localStorage.getItem('offlineLessons');
+                    this.lessons = savedLessons ? JSON.parse(savedLessons) : [];
+                    
+                    const savedProgress = localStorage.getItem('offlineProgress');
+                    this.progress = savedProgress ? JSON.parse(savedProgress) : [];
+                } catch (e) {
+                    this.syncQueue = [];
+                    this.lessons = [];
+                    this.progress = [];
+                }
+            }
+
+            saveToStorage() {
+                localStorage.setItem('offlineSyncQueue', JSON.stringify(this.syncQueue));
+                localStorage.setItem('offlineLessons', JSON.stringify(this.lessons));
+                localStorage.setItem('offlineProgress', JSON.stringify(this.progress));
+            }
+
+            setOnlineStatus(status) {
+                this.isOnline = status;
+                this.log(status ? '📶 وضعیت: آنلاین' : '📴 وضعیت: آفلاین', status ? 'success' : 'warning');
+                this.updateUI();
+                
+                if (status && this.syncQueue.length > 0) {
+                    this.log('🔄 اینترنت وصل شد - شروع همگام‌سازی خودکار...', 'info');
+                    this.syncWithServer();
+                }
+            }
+
+            async saveLessonOffline(lesson) {
+                const newLesson = {
+                    id: lesson.id || Date.now(),
+                    title: lesson.title,
+                    content: lesson.content,
+                    timestamp: new Date().toISOString(),
+                    synced: false
+                };
+
+                this.lessons.push(newLesson);
+                
+                this.syncQueue.push({
+                    id: Date.now(),
+                    type: 'CREATE_LESSON',
+                    data: newLesson,
+                    timestamp: new Date().toISOString(),
+                    retryCount: 0
+                });
+
+                this.saveToStorage();
+                this.log(`📥 درس "${lesson.title}" در حافظه آفلاین ذخیره شد`, 'success');
+                this.updateUI();
+                
+                if (this.isOnline) {
+                    this.syncWithServer();
+                }
+                
+                return newLesson;
+            }
+
+            async saveProgressOffline(progress) {
+                const newProgress = {
+                    id: progress.id || Date.now(),
+                    lessonId: progress.lessonId,
+                    score: progress.score,
+                    timestamp: new Date().toISOString(),
+                    synced: false
+                };
+
+                this.progress.push(newProgress);
+                
+                this.syncQueue.push({
+                    id: Date.now(),
+                    type: 'UPDATE_PROGRESS',
+                    data: newProgress,
+                    timestamp: new Date().toISOString(),
+                    retryCount: 0
+                });
+
+                this.saveToStorage();
+                this.log(`📈 پیشرفت درس ${progress.lessonId} ذخیره شد`, 'success');
+                this.updateUI();
+                
+                if (this.isOnline) {
+                    this.syncWithServer();
+                }
+                
+                return newProgress;
+            }
+
+            async syncWithServer() {
+                if (!this.isOnline) {
+                    this.log('⛔ در حالت آفلاین امکان همگام‌سازی وجود ندارد', 'warning');
+                    return;
+                }
+
+                if (this.syncQueue.length === 0) {
+                    this.log('✅ صف همگام‌سازی خالی است', 'success');
+                    return;
+                }
+
+                this.log(`🔄 شروع همگام‌سازی ${this.syncQueue.length} عملیات...`, 'info');
+                
+                let successCount = 0;
+                let failCount = 0;
+                
+                for (let i = 0; i < this.syncQueue.length; i++) {
+                    const item = this.syncQueue[i];
+                    this.updateProgress((i + 1) / this.syncQueue.length * 100);
+                    
+                    try {
+                        await this.mockServerRequest(item);
+                        
+                        if (item.type === 'CREATE_LESSON') {
+                            const lesson = this.lessons.find(l => l.id === item.data.id);
+                            if (lesson) lesson.synced = true;
+                        } else if (item.type === 'UPDATE_PROGRESS') {
+                            const progress = this.progress.find(p => p.id === item.data.id);
+                            if (progress) progress.synced = true;
+                        }
+                        
+                        successCount++;
+                        this.log(`✅ ${item.type} با موفقیت همگام شد`, 'success');
+                    } catch (error) {
+                        failCount++;
+                        item.retryCount++;
+                        this.log(`❌ خطا در همگام‌سازی ${item.type}: ${error.message}`, 'error');
+                    }
+                    
+                    await new Promise(resolve => setTimeout(resolve, 300));
+                }
+
+                this.syncQueue = this.syncQueue.filter(item => {
+                    const isLessonSynced = item.type === 'CREATE_LESSON' && 
+                        this.lessons.find(l => l.id === item.data.id)?.synced;
+                    const isProgressSynced = item.type === 'UPDATE_PROGRESS' && 
+                        this.progress.find(p => p.id === item.data.id)?.synced;
+                    return !(isLessonSynced || isProgressSynced);
+                });
+
+                this.saveToStorage();
+                this.updateUI();
+                this.updateProgress(0);
+                
+                this.log(`📊 نتیجه همگام‌سازی: ${successCount} موفق, ${failCount} ناموفق`, 
+                    failCount === 0 ? 'success' : 'warning');
+            }
+
+            async mockServerRequest(item) {
+                return new Promise((resolve, reject) => {
+                    setTimeout(() => {
+                        if (Math.random() < 0.9) {
+                            resolve({ status: 200, data: item.data });
+                        } else {
+                            reject(new Error('خطای سرور (شبیه‌سازی)'));
+                        }
+                    }, 200);
+                });
+            }
+
+            getStats() {
+                return {
+                    syncQueueLength: this.syncQueue.length,
+                    savedLessons: this.lessons.length,
+                    syncedLessons: this.lessons.filter(l => l.synced).length,
+                    savedProgress: this.progress.length,
+                    syncedProgress: this.progress.filter(p => p.synced).length
+                };
+            }
+
+            clearQueue() {
+                this.syncQueue = [];
+                this.lessons = [];
+                this.progress = [];
+                this.saveToStorage();
+                this.log('🧹 صف همگام‌سازی و دیتابیس پاکسازی شد', 'warning');
+                this.updateUI();
+            }
+
+            updateProgress(percent) {
+                const fill = document.getElementById('syncProgressFill');
+                const percentText = document.getElementById('syncProgressPercent');
+                if (fill) fill.style.width = `${percent}%`;
+                if (percentText) percentText.textContent = `${Math.round(percent)}٪`;
+            }
+
+            log(message, type = 'info') {
+                const console = document.getElementById('console');
+                if (console) {
+                    const p = document.createElement('p');
+                    p.className = type;
+                    
+                    let time = new Date();
+                    let hours = time.getHours().toString().padStart(2, '0');
+                    let minutes = time.getMinutes().toString().padStart(2, '0');
+                    let seconds = time.getSeconds().toString().padStart(2, '0');
+                    let timeString = `${hours}:${minutes}:${seconds}`;
+                    
+                    p.textContent = `[${timeString}] ${message}`;
+                    console.appendChild(p);
+                    console.scrollTop = console.scrollHeight;
+                }
+                
+                // استفاده از console اصلی با try/catch
+                try {
+                    if (type === 'error') consoleError(message);
+                    else if (type === 'warning') consoleWarn(message);
+                    else consoleLog(message);
+                } catch (e) {
+                    // ignore console errors
+                }
+            }
+
+            updateUI() {
+                const stats = this.getStats();
+                
+                const onlineEl = document.getElementById('onlineStatus');
+                if (onlineEl) {
+                    onlineEl.textContent = this.isOnline ? 'آنلاین' : 'آفلاین';
+                    onlineEl.style.color = this.isOnline ? '#27ae60' : '#e74c3c';
+                }
+                
+                const queueEl = document.getElementById('syncQueueCount');
+                if (queueEl) queueEl.textContent = stats.syncQueueLength;
+                
+                const lessonsEl = document.getElementById('savedLessonsCount');
+                if (lessonsEl) lessonsEl.textContent = stats.savedLessons;
+            }
+        }
+
+        // -------------------- نمونه‌سازی و اتصال به UI --------------------
+        try {
+            window.offlineManager = new OfflineSyncManager();
+        } catch (e) {
+            document.getElementById('console').innerHTML += `<p class="error">[${new Date().toLocaleTimeString()}] ❌ خطا: ${e.message}</p>`;
+        }
+
+        // دکمه قطع اینترنت
+        document.getElementById('goOfflineBtn').addEventListener('click', () => {
+            if (window.offlineManager) window.offlineManager.setOnlineStatus(false);
+        });
+
+        // دکمه وصل اینترنت
+        document.getElementById('goOnlineBtn').addEventListener('click', () => {
+            if (window.offlineManager) window.offlineManager.setOnlineStatus(true);
+        });
+
+        // دکمه ذخیره درس آفلاین
+        document.getElementById('saveOfflineLessonBtn').addEventListener('click', async () => {
+            if (!window.offlineManager) return;
+            
+            const lesson = {
+                id: Date.now(),
+                title: `درس آزمایش ${window.offlineManager.lessons.length + 1}`,
+                content: 'این یک درس آزمایشی برای تست آفلاین است.'
+            };
+            
+            await window.offlineManager.saveLessonOffline(lesson);
+            
+            const resultDiv = document.getElementById('offlineLessonResult');
+            resultDiv.style.display = 'block';
+            resultDiv.innerHTML = `✅ درس "${lesson.title}" ذخیره شد<br>📤 وضعیت همگام‌سازی: ${window.offlineManager.isOnline ? 'در صف انتظار' : 'آفلاین'}`;
+        });
+
+        // دکمه ثبت پیشرفت آفلاین
+        document.getElementById('saveOfflineProgressBtn').addEventListener('click', async () => {
+            if (!window.offlineManager) return;
+            
+            const progress = {
+                id: Date.now(),
+                lessonId: window.offlineManager.lessons.length > 0 ? window.offlineManager.lessons[0].id : 1001,
+                score: Math.floor(Math.random() * 100)
+            };
+            
+            await window.offlineManager.saveProgressOffline(progress);
+            
+            const resultDiv = document.getElementById('offlineProgressResult');
+            resultDiv.style.display = 'block';
+            resultDiv.innerHTML = `📊 پیشرفت: امتیاز ${progress.score} برای درس ${progress.lessonId}<br>📤 وضعیت: ${window.offlineManager.isOnline ? 'در صف انتظار' : 'آفلاین'}`;
+        });
+
+        // دکمه همگام‌سازی دستی
+        document.getElementById('manualSyncBtn').addEventListener('click', async () => {
+            if (!window.offlineManager) return;
+            
+            if (!window.offlineManager.isOnline) {
+                window.offlineManager.log('⛔ لطفاً ابتدا اینترنت را وصل کنید', 'warning');
+                return;
+            }
+            await window.offlineManager.syncWithServer();
+            
+            const resultDiv = document.getElementById('syncResult');
+            resultDiv.style.display = 'block';
+            resultDiv.innerHTML = `🔄 همگام‌سازی انجام شد. ${window.offlineManager.syncQueue.length} عملیات در صف باقی‌مانده.`;
+        });
+
+        // دکمه تست بازیابی خودکار
+        document.getElementById('testAutoRecoveryBtn').addEventListener('click', async () => {
+            if (!window.offlineManager) return;
+            
+            window.offlineManager.log('🔄 شبیه‌سازی قطع و وصل اینترنت...', 'info');
+            
+            window.offlineManager.setOnlineStatus(false);
+            
+            await window.offlineManager.saveLessonOffline({
+                id: Date.now(),
+                title: 'درس بازیابی خودکار',
+                content: 'این درس برای تست بازیابی خودکار ذخیره شده است.'
+            });
+            
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            
+            window.offlineManager.setOnlineStatus(true);
+            
+            const resultDiv = document.getElementById('autoRecoveryResult');
+            resultDiv.style.display = 'block';
+            resultDiv.innerHTML = '✅ قطع و وصل شبیه‌سازی شد. همگام‌سازی خودکار اجرا می‌شود.';
+        });
+
+        // دکمه پاکسازی صف
+        document.getElementById('clearSyncQueueBtn').addEventListener('click', () => {
+            if (window.offlineManager) window.offlineManager.clearQueue();
+        });
+
+        // لاگ اولیه
+        if (window.offlineManager) {
+            window.offlineManager.log('📱 تست آفلاین - آماده اجرای سناریوها', 'info');
+            window.offlineManager.log('🔧 مراحل پیشنهادی:', 'info');
+            window.offlineManager.log('  1. قطع اینترنت و ذخیره درس آفلاین', 'info');
+            window.offlineManager.log('  2. ثبت پیشرفت آفلاین', 'info');
+            window.offlineManager.log('  3. وصل اینترنت و مشاهده همگام‌سازی خودکار', 'info');
+        }
+    </script>
+</body>
+</html>
