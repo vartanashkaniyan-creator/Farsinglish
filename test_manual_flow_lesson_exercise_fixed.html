@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.5, user-scalable=yes">
+    <title>تست دستی جریان درس - نسخه سریع | Farsinglish</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: 'Tahoma', 'Vazir', 'Segoe UI', sans-serif;
+            background: #f0f3f5;
+            padding: 16px;
+            min-height: 100vh;
+        }
+        .container { max-width: 700px; margin: 0 auto; }
+        .header {
+            background: #1a3b5c;
+            color: white;
+            padding: 20px;
+            border-radius: 24px;
+            margin-bottom: 20px;
+        }
+        .btn {
+            border: none;
+            background: #2e7d5e;
+            color: white;
+            padding: 14px 20px;
+            border-radius: 40px;
+            font-size: 1rem;
+            font-weight: bold;
+            cursor: pointer;
+            width: 100%;
+            margin: 8px 0;
+            border-bottom: 4px solid #1e4f3a;
+            transition: 0.05s;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .btn:active {
+            transform: scale(0.98);
+            border-bottom-width: 2px;
+        }
+        .btn.orange { background: #e67e22; border-bottom-color: #b85e1a; }
+        .btn.blue { background: #2980b9; border-bottom-color: #1c5a7a; }
+        .btn.purple { background: #8e44ad; border-bottom-color: #6c3483; }
+        .card {
+            background: white;
+            border-radius: 24px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+        }
+        .log-console {
+            background: #0a1a1f;
+            color: #b0e0e6;
+            font-family: monospace;
+            padding: 16px;
+            border-radius: 16px;
+            font-size: 0.9rem;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+        .flex-row {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        .flex-row .btn { width: auto; flex: 1; }
+        input {
+            width: 100%;
+            padding: 14px;
+            border-radius: 40px;
+            border: 2px solid #ddd;
+            font-size: 1rem;
+            margin: 8px 0;
+        }
+        .step {
+            display: inline-block;
+            padding: 8px 16px;
+            background: #ecf0f1;
+            border-radius: 40px;
+            margin: 4px;
+            font-size: 0.9rem;
+        }
+        .step.active { background: #ffb74d; color: black; font-weight: bold; }
+    </style>
+</head>
+<body>
+<div class="container">
+
+    <div class="header">
+        <h1 style="font-size: 1.6rem;">⚡ تست سریع جریان درس</h1>
+        <p>✅ دکمه‌ها با عملکرد بهینه - Farsinglish</p>
+    </div>
+
+    <!-- وضعیت مراحل -->
+    <div class="card" style="padding: 16px;">
+        <div id="stepContainer">
+            <span class="step active" id="step1">📘 انتخاب درس</span>
+            <span class="step" id="step2">✏️ تمرین</span>
+            <span class="step" id="step3">📨 پاسخ</span>
+            <span class="step" id="step4">📊 نتیجه SRS</span>
+        </div>
+    </div>
+
+    <!-- سناریوها - بدون onclick در HTML -->
+    <div class="card">
+        <h3>🎯 ۱. سناریو</h3>
+        <div class="flex-row">
+            <button class="btn orange" id="btnScenario1">✅ عالی (کیفیت ۵)</button>
+            <button class="btn blue" id="btnScenario2">👍 خوب (کیفیت ۴)</button>
+            <button class="btn purple" id="btnScenario3">⚠️ ضعیف (کیفیت ۲)</button>
+        </div>
+        <div class="flex-row">
+            <button class="btn" style="background:#16a085;" id="btnScenario4">🔄 مرور مجدد</button>
+            <button class="btn gray" id="btnReset">🔄 ریست کامل</button>
+        </div>
+    </div>
+
+    <!-- درس و تمرین -->
+    <div class="card">
+        <h3>📖 ۲. درس جاری</h3>
+        <div style="background: #f8f9fa; padding: 16px; border-radius: 16px;">
+            <div style="display: flex; justify-content: space-between;">
+                <span id="lessonTitle">درس ۵: افعال</span>
+                <span id="cardProgress" style="background: #3498db; color: white; padding: 6px 16px; border-radius: 40px;">۱ از ۴</span>
+            </div>
+            <div style="margin-top: 16px; font-size: 1.3rem; direction: ltr; text-align: center;" id="questionDisplay">"run" → ؟</div>
+            <div style="margin-top: 8px; color: #27ae60; display: none;" id="correctAnswerDisplay">پاسخ: دویدن</div>
+        </div>
+    </div>
+
+    <!-- پاسخ‌دهی -->
+    <div class="card">
+        <h3>✍️ ۳. پاسخ</h3>
+        <input type="text" id="answerInput" placeholder="پاسخ را وارد کنید..." value="دویدن">
+        <div class="flex-row">
+            <button class="btn" id="btnSubmitAnswer">📨 ارسال پاسخ</button>
+            <button class="btn" style="background:#7f8c8d;" id="btnRandomAnswer">🎲 تصادفی</button>
+            <button class="btn" style="background:#95a5a6;" id="btnSkip">⏭️ رد کردن</button>
+        </div>
+    </div>
+
+    <!-- نتیجه SRS -->
+    <div class="card" id="resultCard">
+        <h3>📊 ۴. نتیجه</h3>
+        <div id="srsResult" style="min-height: 80px; background: #fef9e7; padding: 16px; border-radius: 16px;">
+            👈 پس از ارسال پاسخ، نتیجه نمایش داده می‌شود.
+        </div>
+    </div>
+
+    <!-- لاگ -->
+    <div class="log-console" id="logPanel">
+        <div style="color: #f1c40f;">📋 رویدادها</div>
+        <div id="logContent">✅ سیستم آماده است.</div>
+    </div>
+</div>
+
+<script>
+    // ---------- مدل SRS ----------
+    const SRS = {
+        calculate(quality, reps, ef, interval = 1) {
+            if (quality < 3) {
+                return { interval: 1, reps: 0, ef: Math.max(1.3, ef - 0.2) };
+            }
+            let newInterval;
+            if (reps === 0) newInterval = 1;
+            else if (reps === 1) newInterval = 6;
+            else newInterval = Math.round(interval * ef);
+            let newEf = ef + (0.1 - (5 - quality) * (0.08 + (5 - quality) * 0.02));
+            newEf = Math.max(1.3, Math.min(3.0, newEf));
+            return { interval: newInterval, reps: reps + 1, ef: newEf };
+        }
+    };
+
+    // ---------- داده ----------
+    const lesson = {
+        id: 'L5',
+        title: 'درس ۵: افعال روزمره',
+        cards: [
+            { id: 1, front: 'run', back: 'دویدن' },
+            { id: 2, front: 'eat', back: 'خوردن' },
+            { id: 3, front: 'drink', back: 'نوشیدن' },
+            { id: 4, front: 'sleep', back: 'خوابیدن' }
+        ]
+    };
+
+    // ---------- state ----------
+    const state = {
+        currentIndex: 0,
+        total: 4,
+        reps: 0,
+        ef: 2.5,
+        interval: 1,
+        results: [],
+        scenario: 'پیش‌فرض'
+    };
+
+    // لاگ
+    const logEl = document.getElementById('logContent');
+    function log(msg) {
+        const div = document.createElement('div');
+        div.textContent = `${new Date().toLocaleTimeString('fa-IR')} - ${msg}`;
+        logEl.appendChild(div);
+        logEl.scrollTop = logEl.scrollHeight;
+    }
+
+    // بروزرسانی UI
+    function updateUI() {
+        const card = lesson.cards[state.currentIndex];
+        document.getElementById('lessonTitle').textContent = lesson.title;
+        document.getElementById('cardProgress').textContent = `${state.currentIndex + 1} از ${state.total}`;
+        document.getElementById('questionDisplay').textContent = `"${card.front}" → ؟`;
+        document.getElementById('correctAnswerDisplay').textContent = `پاسخ: ${card.back}`;
+        
+        // آپدیت مراحل
+        document.querySelectorAll('.step').forEach(s => s.classList.remove('active'));
+        document.getElementById('step1').classList.add('active');
+        document.getElementById('step2').classList.add('active');
+        if (state.results.length > state.currentIndex) {
+            document.getElementById('step3').classList.add('active');
+            document.getElementById('step4').classList.add('active');
+        }
+    }
+
+    // ریست
+    function reset() {
+        state.currentIndex = 0;
+        state.reps = 0;
+        state.ef = 2.5;
+        state.interval = 1;
+        state.results = [];
+        document.getElementById('answerInput').value = 'دویدن';
+        document.getElementById('srsResult').innerHTML = '👈 پس از ارسال پاسخ، نتیجه نمایش داده می‌شود.';
+        updateUI();
+        log('🔄 ریست شد');
+    }
+
+    // ارسال پاسخ
+    function submitAnswer() {
+        const card = lesson.cards[state.currentIndex];
+        const userAnswer = document.getElementById('answerInput').value.trim();
+        const isCorrect = userAnswer.toLowerCase() === card.back.toLowerCase();
+        
+        let quality = 1;
+        if (isCorrect) {
+            if (state.scenario.includes('عالی')) quality = 5;
+            else if (state.scenario.includes('خوب')) quality = 4;
+            else if (state.scenario.includes('ضعیف')) quality = 2;
+            else quality = 4;
+        }
+
+        const srsResult = SRS.calculate(quality, state.reps, state.ef, state.interval);
+        
+        // ذخیره نتیجه
+        state.results.push({
+            cardId: card.id,
+            answer: userAnswer,
+            correct: isCorrect,
+            quality,
+            srs: srsResult
+        });
+        
+        state.reps = srsResult.reps;
+        state.ef = srsResult.ef;
+        state.interval = srsResult.interval;
+
+        // نمایش نتیجه
+        document.getElementById('srsResult').innerHTML = `
+            <div style="display: flex; justify-content: space-between; flex-wrap: wrap;">
+                <span style="color: ${isCorrect ? '#27ae60' : '#e74c3c'}; font-weight: bold;">
+                    ${isCorrect ? '✓ صحیح' : '✗ غلط'}
+                </span>
+                <span>کیفیت: ${quality}</span>
+                <span>📅 فاصله: ${srsResult.interval} روز</span>
+                <span>🔄 تکرار: ${srsResult.reps}</span>
+                <span>📊 EF: ${srsResult.ef.toFixed(2)}</span>
+            </div>
+        `;
+
+        log(`📨 پاسخ: "${userAnswer}" - ${isCorrect ? '✓' : '✗'} - کیفیت ${quality} - فاصله ${srsResult.interval} روز`);
+
+        // حرکت به کارت بعدی
+        if (state.currentIndex < state.total - 1) {
+            state.currentIndex++;
+            updateUI();
+            document.getElementById('answerInput').value = lesson.cards[state.currentIndex].back;
+        } else {
+            log('🏁 درس کامل شد!');
+        }
+    }
+
+    // ---------- اتصال دکمه‌ها (یکبار) ----------
+    function initButtons() {
+        // سناریوها
+        document.getElementById('btnScenario1').onclick = () => { reset(); state.scenario = 'عالی'; log('🔥 سناریو: پاسخ عالی'); };
+        document.getElementById('btnScenario2').onclick = () => { reset(); state.scenario = 'خوب'; log('👍 سناریو: پاسخ خوب'); };
+        document.getElementById('btnScenario3').onclick = () => { reset(); state.scenario = 'ضعیف'; log('⚠️ سناریو: پاسخ ضعیف'); };
+        document.getElementById('btnScenario4').onclick = () => { reset(); state.scenario = 'مرور'; log('🔄 سناریو: مرور مجدد'); };
+        document.getElementById('btnReset').onclick = () => { reset(); };
+        
+        // پاسخ
+        document.getElementById('btnSubmitAnswer').onclick = () => { submitAnswer(); };
+        document.getElementById('btnRandomAnswer').onclick = () => {
+            const answers = ['دویدن', 'خوردن', 'نوشیدن', 'خوابیدن', 'دوید', 'run'];
+            document.getElementById('answerInput').value = answers[Math.floor(Math.random() * answers.length)];
+        };
+        document.getElementById('btnSkip').onclick = () => {
+            if (state.currentIndex < state.total - 1) {
+                state.currentIndex++;
+                updateUI();
+                document.getElementById('answerInput').value = lesson.cards[state.currentIndex].back;
+                log(`⏭️ رد شد → کارت ${state.currentIndex + 1}`);
+            }
+        };
+    }
+
+    // شروع
+    window.onload = () => {
+        initButtons();
+        reset();
+        log('⚡ نسخه سریع - دکمه‌ها بهینه شدند');
+    };
+</script>
+</body>
+</html>
