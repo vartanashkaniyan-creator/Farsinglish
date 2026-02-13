@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>تست دستی درخواست‌های همزمان - Farsinglish</title>
+    <style>
+        body { font-family: Tahoma, Arial, sans-serif; max-width: 900px; margin: 0 auto; padding: 15px; background: #f5f5f5; }
+        .header { background: #2c3e50; color: white; padding: 15px; border-radius: 10px; margin-bottom: 20px; text-align: center; }
+        .header h1 { margin: 0; font-size: 1.8em; }
+        .header p { margin: 5px 0 0; opacity: 0.9; }
+        .section { background: white; border-radius: 12px; padding: 20px; margin-bottom: 25px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+        .section h2 { margin-top: 0; color: #2c3e50; border-bottom: 2px solid #ecf0f1; padding-bottom: 10px; }
+        .btn-group { display: flex; flex-wrap: wrap; gap: 12px; margin: 20px 0; }
+        .btn { padding: 12px 20px; border: none; border-radius: 8px; font-size: 15px; font-weight: bold; cursor: pointer; transition: 0.2s; flex: 1 0 200px; }
+        .btn-primary { background: #3498db; color: white; }
+        .btn-primary:hover { background: #2980b9; }
+        .btn-success { background: #27ae60; color: white; }
+        .btn-success:hover { background: #229954; }
+        .btn-warning { background: #f39c12; color: white; }
+        .btn-warning:hover { background: #e67e22; }
+        .btn-danger { background: #e74c3c; color: white; }
+        .btn-danger:hover { background: #c0392b; }
+        .btn-info { background: #1abc9c; color: white; }
+        .btn-info:hover { background: #16a085; }
+        .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+        
+        .log-container { background: #1e272e; color: #d3dae0; padding: 15px; border-radius: 8px; font-family: 'Courier New', monospace; height: 300px; overflow-y: auto; font-size: 13px; line-height: 1.6; margin-top: 20px; direction: ltr; text-align: left; }
+        .log-entry { border-bottom: 1px solid #3a4a5a; padding: 5px 0; }
+        .log-success { color: #2ecc71; }
+        .log-error { color: #e74c3c; }
+        .log-warning { color: #f39c12; }
+        .log-info { color: #3498db; }
+        
+        .result-badge { display: inline-block; padding: 4px 10px; border-radius: 20px; font-size: 13px; font-weight: bold; margin: 0 5px 5px 0; }
+        .badge-success { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .badge-danger { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+        .badge-warning { background: #fff3cd; color: #856404; border: 1px solid #ffeeba; }
+        
+        .request-item { background: #f8f9fa; padding: 12px; border-radius: 8px; margin-bottom: 10px; border-right: 4px solid #3498db; }
+        .stats { display: flex; gap: 20px; flex-wrap: wrap; margin-top: 15px; }
+        .stat-card { background: #ecf0f1; border-radius: 8px; padding: 15px; flex: 1; min-width: 120px; text-align: center; }
+        .stat-number { font-size: 28px; font-weight: bold; color: #2c3e50; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🔄 تست دستی درخواست‌های همزمان (Concurrent Requests)</h1>
+        <p>شبیه‌سازی ۵ درخواست همزمان با زمان‌های پاسخ متفاوت | اولویت ۲ - شبکه</p>
+    </div>
+
+    <div class="section">
+        <h2>🧪 سناریوهای تست</h2>
+        <div class="btn-group">
+            <button class="btn btn-primary" onclick="runConcurrentRequests()">🚀 اجرای ۵ درخواست همزمان</button>
+            <button class="btn btn-info" onclick="runSequentialRequests()">⏱️ اجرای ترتیبی (مقایسه)</button>
+            <button class="btn btn-warning" onclick="runWithPriority()">⚡ درخواست با اولویت</button>
+            <button class="btn btn-danger" onclick="clearLogs()">🗑️ پاک کردن لاگ</button>
+        </div>
+        
+        <div class="stats">
+            <div class="stat-card">
+                <div class="stat-number" id="totalRequests">۰</div>
+                <div>کل درخواست‌ها</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="successCount">۰</div>
+                <div>موفق</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="failedCount">۰</div>
+                <div>ناموفق</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="avgTime">۰</div>
+                <div>میانگین زمان (ms)</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="section">
+        <h2>📋 جزئیات درخواست‌ها</h2>
+        <div id="requestDetails"></div>
+    </div>
+
+    <div class="section">
+        <h2>📜 لاگ رویدادها</h2>
+        <div class="log-container" id="logContainer">
+            <div class="log-entry log-info">⚡ منتظر اجرای تست...</div>
+        </div>
+    </div>
+
+    <script>
+        // ---------- Mock Request Simulator ----------
+        class ConcurrentRequestTester {
+            constructor() {
+                this.logs = [];
+                this.requests = [];
+                this.stats = { total: 0, success: 0, failed: 0, totalTime: 0 };
+                this.requestId = 0;
+            }
+
+            // شبیه‌سازی درخواست با زمان پاسخ متغیر
+            mockRequest(id, delay, shouldFail = false, priority = 1) {
+                return new Promise((resolve, reject) => {
+                    const startTime = Date.now();
+                    this.addLog(`🔄 درخواست ${id} شروع شد (delay: ${delay}ms, priority: ${priority})`, 'info');
+                    
+                    setTimeout(() => {
+                        const endTime = Date.now();
+                        const responseTime = endTime - startTime;
+                        
+                        if (shouldFail) {
+                            this.stats.failed++;
+                            this.addLog(`❌ درخواست ${id} ناموفق (خطای شبیه‌سازی شده)`, 'error');
+                            reject({ id, error: 'شبیه‌سازی خطا', time: responseTime });
+                        } else {
+                            this.stats.success++;
+                            this.addLog(`✅ درخواست ${id} موفق در ${responseTime}ms`, 'success');
+                            
+                            // داده‌های مختلف برای هر درخواست
+                            const mockData = {
+                                1: { lesson: "مقدماتی", words: 10 },
+                                2: { lesson: "متوسط", words: 15 },
+                                3: { lesson: "پیشرفته", words: 20 },
+                                4: { lesson: "اصطلاحات", words: 12 },
+                                5: { lesson: "گرامر", words: 8 }
+                            }[id] || { lesson: "عمومی", words: 5 };
+                            
+                            resolve({ 
+                                id, 
+                                data: mockData, 
+                                time: responseTime,
+                                priority 
+                            });
+                        }
+                        
+                        this.updateStats();
+                        this.renderRequests();
+                    }, delay);
+                });
+            }
+
+            // اجرای درخواست‌های همزمان
+            async runConcurrent() {
+                this.addLog('🚀 شروع اجرای ۵ درخواست همزمان...', 'warning');
+                this.stats.total += 5;
+                
+                const promises = [
+                    this.mockRequest(1, 300).catch(e => ({ id: 1, error: e, failed: true })),
+                    this.mockRequest(2, 600).catch(e => ({ id: 2, error: e, failed: true })),
+                    this.mockRequest(3, 200).catch(e => ({ id: 3, error: e, failed: true })),
+                    this.mockRequest(4, 800).catch(e => ({ id: 4, error: e, failed: true })),
+                    this.mockRequest(5, 400, true).catch(e => ({ id: 5, error: e, failed: true })) // این یکی خطا می‌دهد
+                ];
+
+                const results = await Promise.allSettled(promises);
+                
+                // بررسی ترتیب اتمام
+                const completionOrder = results.map((r, i) => {
+                    const value = r.status === 'fulfilled' ? r.value : r.reason;
+                    return { id: value?.id || i+1, status: r.status };
+                });
+                
+                this.addLog('📊 ترتیب اتمام درخواست‌ها:', 'info');
+                completionOrder.sort((a, b) => a.id - b.id).forEach(item => {
+                    this.addLog(`   - درخواست ${item.id}: ${item.status === 'fulfilled' ? 'موفق' : 'ناموفق'}`, item.status === 'fulfilled' ? 'success' : 'error');
+                });
+                
+                this.renderRequests();
+            }
+
+            // اجرای ترتیبی (برای مقایسه)
+            async runSequential() {
+                this.addLog('⏱️ شروع اجرای ترتیبی ۳ درخواست...', 'warning');
+                this.stats.total += 3;
+                
+                await this.mockRequest(1, 300);
+                await this.mockRequest(2, 600);
+                await this.mockRequest(3, 200).catch(e => ({ failed: true }));
+                
+                this.addLog('✅ اجرای ترتیبی کامل شد', 'success');
+            }
+
+            // اجرا با اولویت (با Promise.race)
+            async runWithPriority() {
+                this.addLog('⚡ اجرای درخواست‌ها با اولویت (سریع‌ترین برنده)', 'warning');
+                this.stats.total += 3;
+                
+                const promises = [
+                    this.mockRequest(1, 500, false, 1),
+                    this.mockRequest(2, 300, false, 2),
+                    this.mockRequest(3, 700, false, 3)
+                ];
+
+                try {
+                    const fastest = await Promise.race(promises);
+                    this.addLog(`🏆 سریع‌ترین درخواست: درخواست ${fastest.id} در ${fastest.time}ms`, 'success');
+                } catch (error) {
+                    this.addLog(`❌ خطا در مسابقه: ${error}`, 'error');
+                }
+            }
+
+            addLog(message, type = 'info') {
+                const timestamp = new Date().toLocaleTimeString('fa-IR');
+                const logEntry = { message, type, timestamp };
+                this.logs.unshift(logEntry);
+                this.renderLogs();
+            }
+
+            renderLogs() {
+                const container = document.getElementById('logContainer');
+                container.innerHTML = this.logs.map(log => 
+                    `<div class="log-entry log-${log.type}">[${log.timestamp}] ${log.message}</div>`
+                ).join('');
+            }
+
+            updateStats() {
+                document.getElementById('totalRequests').textContent = this.stats.total;
+                document.getElementById('successCount').textContent = this.stats.success;
+                document.getElementById('failedCount').textContent = this.stats.failed;
+                
+                const avg = this.stats.success > 0 ? (this.stats.totalTime / this.stats.success).toFixed(0) : 0;
+                document.getElementById('avgTime').textContent = avg;
+            }
+
+            renderRequests() {
+                // این بخش می‌تواند برای نمایش جزئیات درخواست‌ها توسعه یابد
+            }
+
+            clearLogs() {
+                this.logs = [{ message: '🧹 لاگ پاک شد', type: 'info', timestamp: new Date().toLocaleTimeString('fa-IR') }];
+                this.stats = { total: 0, success: 0, failed: 0, totalTime: 0 };
+                this.updateStats();
+                this.renderLogs();
+                document.getElementById('requestDetails').innerHTML = '';
+            }
+        }
+
+        // ---------- نمونه تست‌های اضافی ----------
+        function testRaceCondition() {
+            const log = document.getElementById('logContainer');
+            log.innerHTML += '<div class="log-entry log-warning">🧪 تست شرط مسابقه (Race Condition):</div>';
+            
+            let sharedData = { value: 0 };
+            
+            // شبیه‌سازی دو درخواست همزمان که داده مشترک را تغییر می‌دهند
+            const requestA = new Promise(resolve => {
+                setTimeout(() => {
+                    sharedData.value += 5;
+                    resolve('A');
+                }, 100);
+            });
+            
+            const requestB = new Promise(resolve => {
+                setTimeout(() => {
+                    sharedData.value *= 2;
+                    resolve('B');
+                }, 50);
+            });
+            
+            Promise.all([requestA, requestB]).then(() => {
+                log.innerHTML += `<div class="log-entry log-info">   نتیجه شرط مسابقه: مقدار نهایی = ${sharedData.value} (وابسته به ترتیب)</div>`;
+            });
+        }
+
+        // ---------- راه‌اندازی ----------
+        const tester = new ConcurrentRequestTester();
+
+        function runConcurrentRequests() {
+            tester.runConcurrent();
+        }
+
+        function runSequentialRequests() {
+            tester.runSequential();
+        }
+
+        function runWithPriority() {
+            tester.runWithPriority();
+        }
+
+        function clearLogs() {
+            tester.clearLogs();
+        }
+
+        // تست اضافی با دکمه مجازی (می‌توانید دکمه جدا برای آن بسازید)
+        window.testRaceCondition = testRaceCondition;
+    </script>
+
+    <!-- دکمه تست شرط مسابقه -->
+    <div class="section">
+        <h2>🧪 تست اضافی: شرط مسابقه (Race Condition)</h2>
+        <button class="btn btn-info" onclick="testRaceCondition()">🏁 اجرای تست شرط مسابقه</button>
+    </div>
+</body>
+</html>
