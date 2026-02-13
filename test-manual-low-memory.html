@@ -1,0 +1,484 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>تست دستی حافظه کم - Farsinglish</title>
+    <style>
+        body {
+            font-family: 'Tahoma', Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 15px;
+            background: #f5f5f5;
+            direction: rtl;
+        }
+        .header {
+            background: #2c3e50;
+            color: white;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        .warning {
+            background: #f39c12;
+            color: #2c3e50;
+            padding: 10px;
+            border-radius: 5px;
+            margin: 15px 0;
+            font-weight: bold;
+        }
+        .test-card {
+            background: white;
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 15px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        .scenario-pass {
+            border-right: 5px solid #27ae60;
+            background: #f0fff0;
+        }
+        .scenario-fail {
+            border-right: 5px solid #e74c3c;
+            background: #fff0f0;
+        }
+        .scenario-pending {
+            border-right: 5px solid #f39c12;
+            background: #fff8e7;
+        }
+        button {
+            background: #3498db;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            font-size: 14px;
+            cursor: pointer;
+            margin: 5px;
+            transition: 0.3s;
+        }
+        button:hover {
+            opacity: 0.9;
+            transform: translateY(-2px);
+        }
+        button.danger {
+            background: #e74c3c;
+        }
+        button.warning {
+            background: #f39c12;
+        }
+        button.success {
+            background: #27ae60;
+        }
+        pre {
+            background: #f8f9fa;
+            padding: 10px;
+            border-radius: 5px;
+            overflow-x: auto;
+            font-size: 13px;
+            direction: ltr;
+            text-align: left;
+        }
+        .memory-bar {
+            width: 100%;
+            height: 30px;
+            background: #ecf0f1;
+            border-radius: 15px;
+            margin: 10px 0;
+            overflow: hidden;
+        }
+        .memory-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #27ae60, #f39c12, #e74c3c);
+            transition: width 0.3s;
+            color: white;
+            line-height: 30px;
+            text-align: center;
+            font-weight: bold;
+        }
+        .status-badge {
+            display: inline-block;
+            padding: 5px 10px;
+            border-radius: 15px;
+            font-size: 12px;
+            font-weight: bold;
+            margin: 5px 0;
+        }
+        .badge-success { background: #27ae60; color: white; }
+        .badge-warning { background: #f39c12; color: white; }
+        .badge-danger { background: #e74c3c; color: white; }
+        .badge-info { background: #3498db; color: white; }
+        .summary {
+            background: #34495e;
+            color: white;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🧪 تست دستی حافظه کم (Low Memory)</h1>
+        <h2>شبیه‌سازی شرایط بحرانی و بازیابی</h2>
+    </div>
+
+    <div class="warning">
+        ⚠️ این تست شرایط حافظه کم را شبیه‌سازی می‌کند. ممکن است مرورگر کند شود یا هشدار دهد.
+    </div>
+
+    <div class="test-card">
+        <h3>📊 وضعیت حافظه</h3>
+        <div id="memoryBar" class="memory-bar">
+            <div id="memoryFill" class="memory-fill" style="width: 0%">۰%</div>
+        </div>
+        <p id="memoryInfo">در حال محاسبه...</p>
+        <button onclick="checkMemory()" class="success">🔍 بررسی حافظه</button>
+        <button onclick="simulateLowMemory()" class="warning">⚠️ شبیه‌سازی حافظه کم</button>
+        <button onclick="simulateCriticalMemory()" class="danger">🔥 شبیه‌سازی بحرانی</button>
+        <button onclick="clearMemory()" class="success">🧹 پاکسازی حافظه</button>
+    </div>
+
+    <div class="test-card">
+        <h3>📦 تولید داده سنگین</h3>
+        <button onclick="generateLargeData()" class="warning">📊 تولید ۱۰۰۰ درس</button>
+        <button onclick="generateHugeData()" class="danger">📈 تولید ۱۰۰۰۰ درس</button>
+        <button onclick="clearData()" class="success">🗑️ پاکسازی داده</button>
+        <pre id="dataStatus">هیچ داده‌ای تولید نشده</pre>
+    </div>
+
+    <div id="scenariosContainer"></div>
+
+    <div class="test-card">
+        <h3>🔄 سناریوهای تست دستی</h3>
+        <button onclick="runScenario1()">🧪 سناریو ۱: بارگذاری و حافظه</button>
+        <button onclick="runScenario2()">🧪 سناریو ۲: ذخیره‌سازی</button>
+        <button onclick="runScenario3()">🧪 سناریو ۳: بازیابی</button>
+        <button onclick="runScenario4()">🧪 سناریو ۴: Crash Recovery</button>
+        <button onclick="runAllScenarios()">▶ اجرای همه سناریوها</button>
+        <button onclick="resetScenarios()" class="danger">🔄 ریست سناریوها</button>
+    </div>
+
+    <div id="summary" class="summary"></div>
+
+    <script>
+        // -------------------- مدیریت حافظه --------------------
+        let memoryData = {
+            timestamp: null,
+            usage: 0,
+            limit: 0,
+            percent: 0,
+            isLow: false
+        };
+
+        let largeData = [];
+        let scenarios = [
+            { id: 1, name: 'بارگذاری اولیه', status: 'pending', steps: [] },
+            { id: 2, name: 'ذخیره‌سازی در حافظه کم', status: 'pending', steps: [] },
+            { id: 3, name: 'بازیابی اطلاعات', status: 'pending', steps: [] },
+            { id: 4, name: 'Crash Recovery', status: 'pending', steps: [] }
+        ];
+
+        function checkMemory() {
+            if (performance && performance.memory) {
+                const memory = performance.memory;
+                memoryData = {
+                    timestamp: new Date().toLocaleTimeString('fa-IR'),
+                    usage: Math.round(memory.usedJSHeapSize / (1024 * 1024)),
+                    limit: Math.round(memory.jsHeapSizeLimit / (1024 * 1024)),
+                    percent: Math.round((memory.usedJSHeapSize / memory.jsHeapSizeLimit) * 100),
+                    isLow: (memory.usedJSHeapSize / memory.jsHeapSizeLimit) > 0.8
+                };
+                
+                document.getElementById('memoryFill').style.width = memoryData.percent + '%';
+                document.getElementById('memoryFill').innerText = memoryData.percent + '%';
+                document.getElementById('memoryInfo').innerHTML = `
+                    <strong>📊 آمار حافظه:</strong><br>
+                    استفاده شده: ${memoryData.usage} MB<br>
+                    محدودیت: ${memoryData.limit} MB<br>
+                    درصد: ${memoryData.percent}%<br>
+                    وضعیت: ${memoryData.isLow ? '⚠️ حافظه کم' : '✅ نرمال'}<br>
+                    زمان: ${memoryData.timestamp}
+                `;
+
+                if (memoryData.isLow) {
+                    document.getElementById('memoryFill').style.background = 'linear-gradient(90deg, #f39c12, #e74c3c)';
+                } else {
+                    document.getElementById('memoryFill').style.background = 'linear-gradient(90deg, #27ae60, #f39c12)';
+                }
+            } else {
+                document.getElementById('memoryInfo').innerHTML = `
+                    ⚠️ API حافظه در این مرورگر پشتیبانی نمی‌شود.<br>
+                    از Chrome/Edge استفاده کنید.
+                `;
+            }
+        }
+
+        // شبیه‌سازی حافظه کم
+        function simulateLowMemory() {
+            const warning = confirm('⚠️ شبیه‌سازی حافظه کم؟ ممکن است مرورگر کند شود.');
+            if (!warning) return;
+            
+            // تولید داده سنگین
+            for (let i = 0; i < 5000; i++) {
+                largeData.push({
+                    id: i,
+                    data: new Array(1000).join('x'),
+                    timestamp: Date.now()
+                });
+            }
+            
+            checkMemory();
+            updateDataStatus();
+            logScenario('simulate', 'شبیه‌سازی حافظه کم انجام شد');
+        }
+
+        function simulateCriticalMemory() {
+            const warning = confirm('🔥 شبیه‌سازی حافظه بحرانی؟ ممکن است مرورگر کرش کند!');
+            if (!warning) return;
+            
+            // تولید داده بسیار سنگین
+            for (let i = 0; i < 20000; i++) {
+                largeData.push({
+                    id: i,
+                    data: new Array(5000).join('x'),
+                    timestamp: Date.now()
+                });
+            }
+            
+            checkMemory();
+            updateDataStatus();
+            logScenario('simulate', 'شبیه‌سازی حافظه بحرانی انجام شد');
+        }
+
+        function clearMemory() {
+            largeData = [];
+            if (window.gc) {
+                window.gc();
+            }
+            checkMemory();
+            updateDataStatus();
+            logScenario('clear', 'حافظه پاکسازی شد');
+        }
+
+        function generateLargeData() {
+            largeData = [];
+            for (let i = 0; i < 1000; i++) {
+                largeData.push({
+                    id: i,
+                    title: `درس ${i}`,
+                    words: new Array(50).fill('word').map((w, idx) => ({
+                        id: idx,
+                        text: `کلمه ${idx}`,
+                        meaning: `معنی ${idx}`
+                    })),
+                    progress: Math.random()
+                });
+            }
+            checkMemory();
+            updateDataStatus();
+            logScenario('generate', '۱۰۰۰ درس تولید شد');
+        }
+
+        function generateHugeData() {
+            largeData = [];
+            for (let i = 0; i < 10000; i++) {
+                largeData.push({
+                    id: i,
+                    title: `درس سنگین ${i}`,
+                    data: new Array(100).join('x')
+                });
+            }
+            checkMemory();
+            updateDataStatus();
+            logScenario('generate', '۱۰۰۰۰ درس تولید شد');
+        }
+
+        function clearData() {
+            largeData = [];
+            updateDataStatus();
+            logScenario('clear', 'داده‌ها پاک شدند');
+        }
+
+        function updateDataStatus() {
+            const status = document.getElementById('dataStatus');
+            status.innerHTML = `
+                تعداد درس‌ها: ${largeData.length}<br>
+                حجم تقریبی: ${Math.round(JSON.stringify(largeData).length / (1024 * 1024))} MB<br>
+                آخرین بروزرسانی: ${new Date().toLocaleTimeString('fa-IR')}
+            `;
+        }
+
+        // -------------------- سناریوهای تست --------------------
+        function logScenario(scenarioId, message) {
+            const scenario = scenarios.find(s => s.id === scenarioId || s.name.includes(scenarioId));
+            if (scenario) {
+                scenario.steps.push({
+                    time: new Date().toLocaleTimeString('fa-IR'),
+                    message: message
+                });
+            }
+            updateScenarios();
+        }
+
+        function updateScenarios() {
+            const container = document.getElementById('scenariosContainer');
+            let html = '';
+            
+            scenarios.forEach(scenario => {
+                const statusClass = scenario.status === 'pass' ? 'scenario-pass' : 
+                                   scenario.status === 'fail' ? 'scenario-fail' : 'scenario-pending';
+                
+                html += `
+                    <div class="test-card ${statusClass}">
+                        <h4>🧪 سناریو ${scenario.id}: ${scenario.name}</h4>
+                        <div>
+                            <span class="status-badge ${scenario.status === 'pass' ? 'badge-success' : 
+                                                      scenario.status === 'fail' ? 'badge-danger' : 'badge-warning'}">
+                                ${scenario.status === 'pass' ? '✅ موفق' : 
+                                  scenario.status === 'fail' ? '❌ ناموفق' : '⏳ در انتظار'}
+                            </span>
+                        </div>
+                        <h5>مراحل اجرا شده:</h5>
+                        <ul>
+                            ${scenario.steps.map(step => `<li>⏱️ ${step.time} - ${step.message}</li>`).join('') || '<li>هنوز مرحله‌ای اجرا نشده</li>'}
+                        </ul>
+                    </div>
+                `;
+            });
+            
+            container.innerHTML = html;
+            updateSummary();
+        }
+
+        function runScenario1() {
+            logScenario(1, 'شروع سناریو ۱: بارگذاری اولیه');
+            generateLargeData();
+            checkMemory();
+            
+            if (memoryData.percent < 50) {
+                scenarios[0].status = 'pass';
+                logScenario(1, '✅ بارگذاری موفق - حافظه نرمال');
+            } else {
+                scenarios[0].status = 'fail';
+                logScenario(1, '⚠️ مصرف حافظه بالا');
+            }
+            updateScenarios();
+        }
+
+        function runScenario2() {
+            logScenario(2, 'شروع سناریو ۲: ذخیره‌سازی در حافظه کم');
+            
+            // شبیه‌سازی حافظه کم
+            simulateLowMemory();
+            
+            try {
+                // تلاش برای ذخیره در localStorage
+                localStorage.setItem('test_data', JSON.stringify(largeData.slice(0, 100)));
+                logScenario(2, '✅ ذخیره در localStorage موفق');
+                scenarios[1].status = 'pass';
+            } catch(e) {
+                logScenario(2, `❌ خطا در ذخیره‌سازی: ${e.message}`);
+                scenarios[1].status = 'fail';
+            }
+            
+            updateScenarios();
+        }
+
+        function runScenario3() {
+            logScenario(3, 'شروع سناریو ۳: بازیابی اطلاعات');
+            
+            try {
+                const data = localStorage.getItem('test_data');
+                if (data) {
+                    logScenario(3, '✅ بازیابی از localStorage موفق');
+                    scenarios[2].status = 'pass';
+                } else {
+                    logScenario(3, '⚠️ داده‌ای برای بازیابی وجود ندارد');
+                    scenarios[2].status = 'pending';
+                }
+            } catch(e) {
+                logScenario(3, `❌ خطا در بازیابی: ${e.message}`);
+                scenarios[2].status = 'fail';
+            }
+            
+            updateScenarios();
+        }
+
+        function runScenario4() {
+            logScenario(4, 'شروع سناریو ۴: Crash Recovery');
+            
+            // ذخیره state فعلی
+            const currentState = {
+                data: largeData.length,
+                memory: memoryData,
+                timestamp: Date.now()
+            };
+            
+            sessionStorage.setItem('crash_recovery', JSON.stringify(currentState));
+            logScenario(4, '💾 state ذخیره شد');
+            
+            // شبیه‌سازی رفرش صفحه (با تأخیر)
+            logScenario(4, '🔄 شبیه‌سازی رفرش صفحه...');
+            
+            setTimeout(() => {
+                const recovered = sessionStorage.getItem('crash_recovery');
+                if (recovered) {
+                    logScenario(4, '✅ بازیابی پس از رفرش موفق');
+                    scenarios[3].status = 'pass';
+                } else {
+                    logScenario(4, '❌ بازیابی ناموفق');
+                    scenarios[3].status = 'fail';
+                }
+                updateScenarios();
+            }, 2000);
+            
+            updateScenarios();
+        }
+
+        function runAllScenarios() {
+            runScenario1();
+            setTimeout(runScenario2, 1000);
+            setTimeout(runScenario3, 2000);
+            setTimeout(runScenario4, 3000);
+        }
+
+        function resetScenarios() {
+            scenarios = [
+                { id: 1, name: 'بارگذاری اولیه', status: 'pending', steps: [] },
+                { id: 2, name: 'ذخیره‌سازی در حافظه کم', status: 'pending', steps: [] },
+                { id: 3, name: 'بازیابی اطلاعات', status: 'pending', steps: [] },
+                { id: 4, name: 'Crash Recovery', status: 'pending', steps: [] }
+            ];
+            clearData();
+            clearMemory();
+            updateScenarios();
+        }
+
+        function updateSummary() {
+            const summary = document.getElementById('summary');
+            const passed = scenarios.filter(s => s.status === 'pass').length;
+            const failed = scenarios.filter(s => s.status === 'fail').length;
+            const pending = scenarios.filter(s => s.status === 'pending').length;
+            
+            summary.innerHTML = `
+                <h3>📊 خلاصه تست‌ها</h3>
+                <p>✅ موفق: ${passed} | ❌ ناموفق: ${failed} | ⏳ در انتظار: ${pending} | 📋 کل: ${scenarios.length}</p>
+                <p>⏰ آخرین بروزرسانی: ${new Date().toLocaleDateString('fa-IR')} - ${new Date().toLocaleTimeString('fa-IR')}</p>
+                <p>${memoryData.isLow ? '⚠️ هشدار: حافظه در وضعیت بحرانی' : '✅ وضعیت حافظه نرمال'}</p>
+            `;
+        }
+
+        // بررسی خودکار هنگام بارگذاری
+        window.onload = function() {
+            checkMemory();
+            updateScenarios();
+        };
+
+        // بررسی دوره‌ای حافظه
+        setInterval(checkMemory, 5000);
+    </script>
+</body>
+</html>
