@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>تست دستی چرخش صفحه - Farsinglish</title>
+    <style>
+        body { font-family: Tahoma, Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 15px; background: #f5f5f5; }
+        .header { background: #2c3e50; color: white; padding: 15px; border-radius: 10px; margin-bottom: 20px; text-align: center; }
+        .card { background: white; border-radius: 10px; padding: 15px; margin-bottom: 15px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        button { background: #3498db; color: white; border: none; padding: 12px 25px; border-radius: 6px; font-size: 16px; cursor: pointer; margin: 5px; width: calc(50% - 10px); }
+        .btn-group { display: flex; gap: 10px; flex-wrap: wrap; }
+        .state-box { background: #f8f9fa; padding: 15px; border-radius: 8px; font-family: monospace; margin-top: 15px; }
+        .success { background: #27ae60; color: white; padding: 10px; border-radius: 6px; }
+        .warning { background: #f39c12; color: white; padding: 10px; border-radius: 6px; }
+        input, select { padding: 10px; margin: 5px 0; width: 100%; border: 1px solid #ddd; border-radius: 6px; box-sizing: border-box; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🔄 تست دستی چرخش صفحه (Rotation)</h1>
+        <h2>بررسی حفظ State در تغییر پیکربندی</h2>
+    </div>
+
+    <div class="card">
+        <h3>📝 فرم ورود اطلاعات</h3>
+        <input type="text" id="nameInput" placeholder="نام کاربری" value="علی محمدی">
+        <input type="number" id="scoreInput" placeholder="امتیاز" value="1250">
+        <select id="levelSelect">
+            <option value="1">مبتدی ۱</option>
+            <option value="2" selected>مبتدی ۲</option>
+            <option value="3">متوسط ۱</option>
+            <option value="4">متوسط ۲</option>
+        </select>
+        
+        <div class="btn-group">
+            <button onclick="saveState()">💾 ذخیره State</button>
+            <button onclick="loadState()">📂 بازیابی State</button>
+            <button onclick="simulateRotation()">🔄 شبیه‌سازی چرخش</button>
+            <button onclick="clearState()">🗑️ پاک کردن</button>
+        </div>
+    </div>
+
+    <div class="card">
+        <h3>📊 وضعیت فعلی (Current State)</h3>
+        <div id="currentState" class="state-box">
+            نام: علی محمدی | امتیاز: ۱۲۵۰ | سطح: مبتدی ۲
+        </div>
+    </div>
+
+    <div class="card">
+        <h3>🧪 سناریوهای تست دستی</h3>
+        
+        <div style="margin-bottom: 20px; padding: 10px; background: #e8f4f8; border-radius: 8px;">
+            <h4>✅ تست ۱: ذخیره و بازیابی دستی</h4>
+            <p>۱. اطلاعات فرم را تغییر دهید</p>
+            <p>۲. دکمه "ذخیره State" را بزنید</p>
+            <p>۳. صفحه را رفرش کنید (F5)</p>
+            <p>۴. دکمه "بازیابی State" را بزنید</p>
+            <button onclick="manualTest1()">📋 ثبت نتیجه تست ۱</button>
+        </div>
+
+        <div style="margin-bottom: 20px; padding: 10px; background: #e8f4f8; border-radius: 8px;">
+            <h4>✅ تست ۲: چرخش واقعی صفحه</h4>
+            <p>۱. اطلاعات فرم را ذخیره کنید</p>
+            <p>۲. گوشی را بچرخانید (Portrait ↔ Landscape)</p>
+            <p>۳. بررسی کنید اطلاعات حفظ شده است</p>
+            <button onclick="manualTest2()">📋 ثبت نتیجه تست ۲</button>
+        </div>
+
+        <div style="margin-bottom: 20px; padding: 10px; background: #e8f4f8; border-radius: 8px;">
+            <h4>✅ تست ۳: شبیه‌سازی چرخش</h4>
+            <p>۱. اطلاعات فرم را ذخیره کنید</p>
+            <p>۲. دکمه "شبیه‌سازی چرخش" را بزنید</p>
+            <p>۳. بررسی کنید اطلاعات از SessionStorage بازیابی شد</p>
+            <button onclick="manualTest3()">📋 ثبت نتیجه تست ۳</button>
+        </div>
+
+        <div style="margin-bottom: 20px; padding: 10px; background: #e8f4f8; border-radius: 8px;">
+            <h4>✅ تست ۴: بازیابی پس از کرش فرضی</h4>
+            <p>۱. دکمه "شبیه‌سازی کرش" را بزنید</p>
+            <p>۲. صفحه رفرش می‌شود</p>
+            <p>۳. دکمه "بازیابی خودکار" را بزنید</p>
+            <button onclick="simulateCrash()">💥 شبیه‌سازی کرش</button>
+            <button onclick="autoRecovery()">🔄 بازیابی خودکار</button>
+        </div>
+    </div>
+
+    <div class="card">
+        <h3>📋 گزارش تست‌ها</h3>
+        <div id="testLog" style="background: #2c3e50; color: #fff; padding: 15px; border-radius: 8px; max-height: 200px; overflow-y: auto;">
+            <p>⏳ منتظر اجرای تست‌ها...</p>
+        </div>
+        <button onclick="exportLog()" style="background: #27ae60; margin-top: 10px;">📤 خروجی گزارش</button>
+    </div>
+
+    <script>
+        // ---------- مدیریت State با SessionStorage ----------
+        const STATE_KEY = 'farsinglish_rotation_test';
+        
+        // ذخیره state
+        function saveState() {
+            const state = {
+                name: document.getElementById('nameInput').value,
+                score: document.getElementById('scoreInput').value,
+                level: document.getElementById('levelSelect').value,
+                levelText: document.getElementById('levelSelect').selectedOptions[0].text,
+                timestamp: new Date().toLocaleString('fa-IR'),
+                version: '1.0'
+            };
+            
+            sessionStorage.setItem(STATE_KEY, JSON.stringify(state));
+            localStorage.setItem(STATE_KEY + '_backup', JSON.stringify(state));
+            updateCurrentState(state);
+            addLog('✅ State با موفقیت ذخیره شد', 'success');
+            return state;
+        }
+
+        // بازیابی state
+        function loadState() {
+            let saved = sessionStorage.getItem(STATE_KEY);
+            if (!saved) {
+                saved = localStorage.getItem(STATE_KEY + '_backup');
+                addLog('⚠️ بازیابی از localStorage (پشتیبان)', 'warning');
+            }
+            
+            if (saved) {
+                try {
+                    const state = JSON.parse(saved);
+                    document.getElementById('nameInput').value = state.name || '';
+                    document.getElementById('scoreInput').value = state.score || 0;
+                    document.getElementById('levelSelect').value = state.level || '2';
+                    
+                    updateCurrentState(state);
+                    addLog('✅ State با موفقیت بازیابی شد', 'success');
+                    return state;
+                } catch(e) {
+                    addLog('❌ خطا در بازیابی State: ' + e.message, 'error');
+                }
+            } else {
+                addLog('❌ هیچ State ذخیره شده‌ای یافت نشد', 'error');
+            }
+        }
+
+        // به‌روزرسانی نمایش state
+        function updateCurrentState(state) {
+            const el = document.getElementById('currentState');
+            if (state) {
+                el.innerHTML = `
+                    <strong>👤 نام:</strong> ${state.name || '---'}<br>
+                    <strong>⭐ امتیاز:</strong> ${state.score || '۰'}<br>
+                    <strong>📊 سطح:</strong> ${state.levelText || '---'}<br>
+                    <strong>⏰ آخرین ذخیره:</strong> ${state.timestamp || '---'}<br>
+                    <strong>🔖 نسخه:</strong> ${state.version || '1.0'}
+                `;
+            }
+        }
+
+        // شبیه‌سازی چرخش صفحه
+        function simulateRotation() {
+            addLog('🔄 شبیه‌سازی چرخش صفحه...', 'info');
+            const savedState = saveState();
+            
+            // شبیه‌سازی تخریب و بازسازی
+            setTimeout(() => {
+                const recovered = loadState();
+                if (recovered) {
+                    addLog('✅ چرخش شبیه‌سازی‌شده: State سالم ماند', 'success');
+                } else {
+                    addLog('❌ چرخش شبیه‌سازی‌شده: State از دست رفت', 'error');
+                }
+            }, 100);
+        }
+
+        // شبیه‌سازی کرش
+        function simulateCrash() {
+            addLog('💥 شبیه‌سازی کرش برنامه...', 'warning');
+            saveState();
+            setTimeout(() => {
+                if (confirm('صفحه رفرش شود؟ (شبیه‌سازی کرش)')) {
+                    location.reload();
+                }
+            }, 500);
+        }
+
+        // بازیابی خودکار
+        function autoRecovery() {
+            addLog('🔄 تلاش برای بازیابی خودکار...', 'info');
+            loadState();
+        }
+
+        // پاک کردن state
+        function clearState() {
+            sessionStorage.removeItem(STATE_KEY);
+            localStorage.removeItem(STATE_KEY + '_backup');
+            document.getElementById('nameInput').value = '';
+            document.getElementById('scoreInput').value = '';
+            document.getElementById('levelSelect').value = '2';
+            updateCurrentState({
+                name: '---',
+                score: '۰',
+                levelText: '---',
+                timestamp: '---',
+                version: '1.0'
+            });
+            addLog('🗑️ State پاک شد', 'info');
+        }
+
+        // ---------- سیستم لاگ ----------
+        const logEntries = [];
+
+        function addLog(message, type = 'info') {
+            const time = new Date().toLocaleTimeString('fa-IR');
+            const entry = { time, message, type };
+            logEntries.push(entry);
+            
+            const logEl = document.getElementById('testLog');
+            const color = {
+                success: '#27ae60',
+                error: '#e74c3c',
+                warning: '#f39c12',
+                info: '#3498db'
+            }[type] || '#fff';
+            
+            logEl.innerHTML += `<p style="color: ${color}; margin: 3px 0;">⏱️ ${time} - ${message}</p>`;
+            logEl.scrollTop = logEl.scrollHeight;
+        }
+
+        // ---------- تست‌های دستی ----------
+        function manualTest1() {
+            addLog('🧪 تست ۱: ذخیره و بازیابی دستی انجام شد', 'success');
+            saveState();
+        }
+
+        function manualTest2() {
+            addLog('🧪 تست ۲: چرخش واقعی - لطفاً گوشی را بچرخانید', 'info');
+            saveState();
+        }
+
+        function manualTest3() {
+            addLog('🧪 تست ۳: شبیه‌سازی چرخش', 'info');
+            simulateRotation();
+        }
+
+        // خروجی گزارش
+        function exportLog() {
+            let report = '📋 گزارش تست چرخش صفحه - Farsinglish\n';
+            report += '====================================\n';
+            report += `📅 تاریخ: ${new Date().toLocaleDateString('fa-IR')}\n`;
+            report += `⏰ زمان: ${new Date().toLocaleTimeString('fa-IR')}\n`;
+            report += '====================================\n\n';
+            
+            logEntries.forEach(entry => {
+                report += `[${entry.time}] ${entry.message}\n`;
+            });
+            
+            report += '\n✅ نتایج نهایی:\n';
+            const success = logEntries.filter(e => e.type === 'success').length;
+            const error = logEntries.filter(e => e.type === 'error').length;
+            report += `موفق: ${success} | خطا: ${error} | کل: ${logEntries.length}\n`;
+            
+            alert(report);
+            
+            // ذخیره در فایل متنی
+            const blob = new Blob([report], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `rotation_test_${Date.now()}.txt`;
+            a.click();
+        }
+
+        // بررسی خودکار هنگام بارگذاری صفحه
+        window.onload = function() {
+            addLog('✅ صفحه بارگذاری شد - بررسی وجود State ذخیره‌شده', 'info');
+            const saved = sessionStorage.getItem(STATE_KEY);
+            if (saved) {
+                addLog('ℹ️ State ذخیره‌شده یافت شد', 'info');
+                if (confirm('State ذخیره‌شده یافت شد. بازیابی شود؟')) {
+                    loadState();
+                }
+            }
+        };
+
+        // ذخیره خودکار قبل از بسته شدن
+        window.onbeforeunload = function() {
+            const state = {
+                name: document.getElementById('nameInput').value,
+                score: document.getElementById('scoreInput').value,
+                level: document.getElementById('levelSelect').value,
+                levelText: document.getElementById('levelSelect').selectedOptions[0].text,
+                timestamp: new Date().toLocaleString('fa-IR'),
+                version: '1.0'
+            };
+            sessionStorage.setItem(STATE_KEY, JSON.stringify(state));
+        };
+    </script>
+</body>
+</html>
