@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.5, user-scalable=yes">
+    <title>تست بازیابی کرش - Farsinglish</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: 'Tahoma', 'Arial', sans-serif;
+            background: linear-gradient(145deg, #1a2634 0%, #0f1419 100%);
+            min-height: 100vh;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            color: #e6e9f0;
+        }
+        .container {
+            max-width: 800px;
+            width: 100%;
+            background: rgba(255,255,255,0.08);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border-radius: 32px;
+            padding: 25px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.5);
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+        h1 {
+            font-size: 1.9rem;
+            font-weight: 600;
+            color: #ffd966;
+            text-shadow: 0 2px 5px rgba(255,217,102,0.2);
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .badge {
+            background: #ff6b4a;
+            padding: 8px 18px;
+            border-radius: 40px;
+            font-size: 0.9rem;
+            font-weight: bold;
+            color: white;
+            display: inline-block;
+            margin-bottom: 25px;
+            box-shadow: 0 5px 0 #902e1e;
+        }
+        .card {
+            background: rgba(10, 15, 22, 0.8);
+            border-radius: 24px;
+            padding: 22px;
+            margin-bottom: 25px;
+            border: 1px solid #3a4a5a;
+            box-shadow: 0 8px 0 #0b0e11;
+        }
+        .scenario {
+            background: #1e2a36;
+            border-radius: 20px;
+            padding: 18px;
+            margin-bottom: 20px;
+            border-right: 8px solid #ffaa5e;
+        }
+        button {
+            background: #3b8cbf;
+            border: none;
+            color: white;
+            font-size: 1.1rem;
+            font-weight: bold;
+            padding: 16px 24px;
+            border-radius: 50px;
+            width: 100%;
+            margin: 12px 0;
+            box-shadow: 0 9px 0 #1f4e6b;
+            transition: 0.08s linear;
+            border: 1px solid #7fc1e0;
+            cursor: pointer;
+        }
+        button:active {
+            transform: translateY(8px);
+            box-shadow: 0 2px 0 #1f4e6b;
+        }
+        .danger-btn {
+            background: #c44536;
+            box-shadow: 0 9px 0 #712b21;
+            border-color: #ff8a7a;
+        }
+        .success-btn {
+            background: #2e7d5e;
+            box-shadow: 0 9px 0 #1a4633;
+            border-color: #7ec8a6;
+        }
+        pre {
+            background: #0d1117;
+            padding: 16px;
+            border-radius: 16px;
+            border-left: 6px solid #ffaa5e;
+            color: #b9f3ff;
+            font-size: 0.95rem;
+            overflow-x: auto;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            margin-top: 15px;
+            direction: ltr;
+            text-align: left;
+        }
+        .state-view {
+            background: #0f1a1f;
+            border-radius: 18px;
+            padding: 18px;
+            border: 1px solid #3f6a7a;
+            font-family: 'Courier New', monospace;
+        }
+        .footer {
+            margin-top: 25px;
+            font-size: 0.85rem;
+            color: #a0b8cc;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>🧯 بازیابی پس از کرش</h1>
+    <div class="badge">🧪 تست دستی · شبیه‌سازی Crash & Recovery</div>
+    
+    <!-- سناریو ۱: حافظه موقت -->
+    <div class="card">
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+            <h2 style="color: #ffb980; font-size: 1.6rem;">📦 ۱. ذخیره‌سازی نشست (Session)</h2>
+            <span id="sessionBadge1" style="background: #3a3f4a; padding: 8px 16px; border-radius: 30px;">وضعیت: --</span>
+        </div>
+        <div class="scenario">
+            <p style="font-size: 1.1rem; margin-bottom: 10px;">🔹 کاربر در حال انجام درس ۷: «حروف اضافه» است.</p>
+            <p>✅ پاسخ‌های داده شده: ۸ از ۱۲</p>
+            <p>⏳ زمان باقی‌مانده: ۴:۲۲</p>
+        </div>
+        <button id="simulateCrash1" class="danger-btn">💥 شبیه‌سازی کرش ناگهانی (Session)</button>
+        <button id="recoverSession" class="success-btn">🔄 بازیابی از کرش (بارگذاری خودکار)</button>
+        <div id="sessionOutput" class="state-view" style="margin-top: 20px;">
+            ⏸️ منتظر شبیه‌سازی...
+        </div>
+    </div>
+
+    <!-- سناریو ۲: پیشرفت دائمی (IndexedDB) -->
+    <div class="card">
+        <div style="display: flex; justify-content: space-between;">
+            <h2 style="color: #a6e3a1; font-size: 1.6rem;">🗂️ ۲. ذخیره پایدار (IndexedDB)</h2>
+            <span id="dbBadge" style="background: #2e5c4b; padding: 8px 16px; border-radius: 30px;">آفلاین</span>
+        </div>
+        <p style="margin: 15px 0;">📚 درس «افعال بی‌قاعده» - سطح ۲</p>
+        <p>💯 نمره نهایی: ۸۵٪ · مرور بعدی: ۳ روز دیگر</p>
+        <button id="simulateCrash2" class="danger-btn">⚠️ قطع ناگهانی + خاموشی</button>
+        <button id="recoverFromDB" class="success-btn">📀 بازیابی از دیتابیس محلی</button>
+        <div id="dbOutput" class="state-view">⏳ دیتابیس آماده نیست</div>
+    </div>
+
+    <!-- سناریو ۳: بازگشت پس از Low Memory / Background Kill -->
+    <div class="card">
+        <h2 style="color: #f6c2b3; font-size: 1.6rem;">📱 ۳. کشته شدن توسط سیستم (Low Memory)</h2>
+        <p style="background: #2c1a1f; padding: 14px; border-radius: 16px;">⚡ حافظه پایین · اپ در پس‌زمینه بسته شد</p>
+        <button id="simulateLowMemory" class="danger-btn">🧠 شبیه‌سازی Low Memory Kill</button>
+        <button id="restoreAfterKill" class="success-btn">📂 بازگشت به صفحه قبل از کرش</button>
+        <div id="memoryOutput" style="margin-top: 18px; background: #1e272b; padding: 14px; border-radius: 18px;">
+            آخرین صفحه: <span id="lastScreenSpan">—</span>
+        </div>
+    </div>
+
+    <!-- گزارش جامع -->
+    <div style="margin-top: 30px; background: #202c33; border-radius: 28px; padding: 22px;">
+        <h3 style="color: #ffcf8a;">📋 گزارش بازیابی</h3>
+        <pre id="recoveryLog" style="height: 150px; overflow-y: auto;">[سیستم] تست بازیابی آماده است.</pre>
+        <button id="clearLog" style="background: #4a5c66; box-shadow: 0 9px 0 #2f3b42;">🧹 پاک کردن لاگ</button>
+    </div>
+</div>
+
+<script>
+    (function() {
+        "use strict";
+
+        // ---------- شبیه‌ساز ذخیره‌سازی ----------
+        const STORAGE_KEYS = {
+            SESSION_LESSON: 'crashTest_sessionLesson',
+            SESSION_PROGRESS: 'crashTest_progress',
+            DB_LESSON: 'crashTest_dbLesson',
+            LAST_SCREEN: 'crashTest_lastScreen'
+        };
+
+        // ---- سناریو ۱ : Session Storage ----
+        function saveSessionState() {
+            const state = {
+                lessonId: 7,
+                title: 'حروف اضافه',
+                answered: 8,
+                total: 12,
+                timeLeft: '4:22',
+                timestamp: Date.now()
+            };
+            sessionStorage.setItem(STORAGE_KEYS.SESSION_LESSON, JSON.stringify(state));
+            document.getElementById('sessionOutput').innerText = '💾 ذخیره شد:\n' + JSON.stringify(state, null, 2);
+            document.getElementById('sessionBadge1').innerHTML = '✅ ذخیره شده';
+            document.getElementById('sessionBadge1').style.background = '#1d6f42';
+            logEvent('Session state ذخیره شد (درس ۷)');
+        }
+
+        function loadSessionState() {
+            const data = sessionStorage.getItem(STORAGE_KEYS.SESSION_LESSON);
+            if (data) {
+                try {
+                    const parsed = JSON.parse(data);
+                    document.getElementById('sessionOutput').innerHTML = '✅ بازیابی موفق از SessionStorage:<br>' + 
+                        `📖 درس: ${parsed.title} | پاسخ: ${parsed.answered}/${parsed.total} | زمان: ${parsed.timeLeft}`;
+                    document.getElementById('sessionBadge1').innerHTML = '🔄 بازیابی شد';
+                    document.getElementById('sessionBadge1').style.background = '#285f8a';
+                    logEvent('Session بازیابی شد - ادامه درس');
+                } catch(e) {
+                    document.getElementById('sessionOutput').innerText = '❌ خطا در بازیابی';
+                }
+            } else {
+                document.getElementById('sessionOutput').innerText = '⚠️ داده‌ای برای بازیابی یافت نشد. ابتدا کرش را شبیه‌سازی کنید.';
+                logEvent('بازیابی: هیچ داده session یافت نشد');
+            }
+        }
+
+        // ---- سناریو ۲ : IndexedDB شبیه‌سازی شده ----
+        function saveToDBMock() {
+            const progress = {
+                lessonName: 'افعال بی‌قاعده',
+                level: 2,
+                score: 85,
+                nextReviewDays: 3,
+                lastPracticed: new Date().toISOString()
+            };
+            localStorage.setItem(STORAGE_KEYS.DB_LESSON, JSON.stringify(progress));
+            document.getElementById('dbOutput').innerText = '📀 ذخیره در IndexedDB (شبیه‌ساز):\n' + JSON.stringify(progress, null, 2);
+            document.getElementById('dbBadge').innerHTML = '✅ داده پایدار';
+            document.getElementById('dbBadge').style.background = '#1f6e4a';
+            logEvent('پیشرفت درس در IndexedDB ذخیره شد');
+        }
+
+        function recoverFromDB() {
+            const data = localStorage.getItem(STORAGE_KEYS.DB_LESSON);
+            if (data) {
+                const p = JSON.parse(data);
+                document.getElementById('dbOutput').innerHTML = '♻️ بازیابی از دیتابیس محلی:<br>' +
+                    `📕 ${p.lessonName} | سطح ${p.level} | نمره ${p.score}% | مرور: ${p.nextReviewDays} روز`;
+                document.getElementById('dbBadge').innerHTML = '📀 بازیابی شد';
+                document.getElementById('dbBadge').style.background = '#3a6ea5';
+                logEvent('IndexedDB بازیابی شد - ' + p.lessonName);
+            } else {
+                document.getElementById('dbOutput').innerText = '⛔ داده‌ای یافت نشد!';
+                logEvent('شکست بازیابی: دیتابیس خالی');
+            }
+        }
+
+        // ---- سناریو ۳ : Low memory / Last screen ----
+        function simulateLowMemoryKill() {
+            const screenInfo = 'صفحه تمرین: فلش‌کارت‌ها - کارت ۱۴ از ۲۰';
+            localStorage.setItem(STORAGE_KEYS.LAST_SCREEN, screenInfo);
+            document.getElementById('lastScreenSpan').innerText = screenInfo;
+            document.getElementById('memoryOutput').style.background = '#3a2a2a';
+            logEvent('⚠️ low memory kill شبیه‌سازی شد. آخرین صفحه ذخیره شد.');
+        }
+
+        function restoreLastScreen() {
+            const last = localStorage.getItem(STORAGE_KEYS.LAST_SCREEN);
+            if (last) {
+                document.getElementById('lastScreenSpan').innerText = last + ' (بازیابی)';
+                document.getElementById('memoryOutput').style.background = '#1e4a3b';
+                logEvent('بازگشت به صفحه: ' + last);
+            } else {
+                document.getElementById('lastScreenSpan').innerText = 'صفحه اصلی (پیش‌فرض)';
+                logEvent('صفحه پیش‌فرض پس از کرش');
+            }
+        }
+
+        // ---- لاگ مرکزی ----
+        function logEvent(msg) {
+            const logEl = document.getElementById('recoveryLog');
+            const time = new Date().toLocaleTimeString('fa-IR', { hour12: false });
+            logEl.innerHTML += `\n[${time}] ${msg}`;
+            logEl.scrollTop = logEl.scrollHeight;
+        }
+
+        function clearLog() {
+            document.getElementById('recoveryLog').innerHTML = '[سیستم] لاگ پاک شد.';
+            logEvent('تست بازیابی مجدد آغاز شد');
+        }
+
+        // ---- مقداردهی اولیه ----
+        function init() {
+            // سناریو ۱
+            document.getElementById('simulateCrash1').addEventListener('click', function() {
+                saveSessionState();
+                logEvent('💥 کرش session شبیه‌سازی شد (داده ذخیره شد)');
+            });
+            document.getElementById('recoverSession').addEventListener('click', function() {
+                loadSessionState();
+            });
+
+            // سناریو ۲
+            document.getElementById('simulateCrash2').addEventListener('click', function() {
+                saveToDBMock();
+                logEvent('⚡ قطع ناگهانی برق -> داده در IndexedDB');
+            });
+            document.getElementById('recoverFromDB').addEventListener('click', function() {
+                recoverFromDB();
+            });
+
+            // سناریو ۳
+            document.getElementById('simulateLowMemory').addEventListener('click', function() {
+                simulateLowMemoryKill();
+            });
+            document.getElementById('restoreAfterKill').addEventListener('click', function() {
+                restoreLastScreen();
+            });
+
+            // پاک کردن لاگ
+            document.getElementById('clearLog').addEventListener('click', function() {
+                clearLog();
+            });
+
+            // بررسی وجود داده در start
+            if (localStorage.getItem(STORAGE_KEYS.DB_LESSON)) {
+                document.getElementById('dbBadge').innerHTML = '📦 داده موجود';
+                document.getElementById('dbBadge').style.background = '#3a5f6e';
+            }
+            logEvent('🚀 صفحه تست بازیابی کرش آماده است.');
+        }
+
+        window.onload = init;
+    })();
+</script>
+<div class="footer">
+    ⚡ تست دستی · شبیه‌سازی کرش، بازیابی از Session/LocalStorage · هر دکمه یک سناریو
+</div>
+</body>
+</html>
