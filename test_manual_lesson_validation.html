@@ -1,0 +1,428 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>تست دستی اعتبارسنجی درس | Farsinglish</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: 'Tahoma', 'Vazir', sans-serif;
+            background: #f0f2f5;
+            padding: 16px;
+            max-width: 800px;
+            margin: 0 auto;
+            color: #1e293b;
+        }
+        .header {
+            background: linear-gradient(135deg, #2563eb, #1e40af);
+            color: white;
+            padding: 20px;
+            border-radius: 24px;
+            margin-bottom: 20px;
+            text-align: center;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.15);
+        }
+        .header h1 { font-size: 1.6rem; margin-bottom: 5px; }
+        .header h2 { font-size: 1rem; opacity: 0.9; font-weight: normal; }
+        .test-card {
+            background: white;
+            border-radius: 20px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+            border: 1px solid #e9eef2;
+        }
+        .test-title {
+            font-size: 1.2rem;
+            font-weight: bold;
+            margin-bottom: 15px;
+            padding-bottom: 8px;
+            border-bottom: 2px solid #2563eb;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .test-title span { background: #2563eb; color: white; padding: 4px 12px; border-radius: 40px; font-size: 0.8rem; }
+        .scenario-buttons {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin: 15px 0;
+        }
+        button {
+            background: white;
+            border: 2px solid #cbd5e1;
+            color: #1e293b;
+            padding: 12px 16px;
+            border-radius: 40px;
+            font-size: 0.95rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            flex: 1 1 auto;
+            min-width: 140px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.02);
+        }
+        button:hover { background: #f8fafc; border-color: #2563eb; }
+        button.primary { background: #2563eb; border-color: #2563eb; color: white; }
+        button.primary:hover { background: #1d4ed8; }
+        .result-box {
+            background: #f8fafc;
+            border-radius: 16px;
+            padding: 16px;
+            margin-top: 15px;
+            border: 1px solid #e2e8f0;
+            font-family: 'Courier New', monospace;
+            direction: ltr;
+            text-align: left;
+            white-space: pre-wrap;
+            word-break: break-word;
+            max-height: 200px;
+            overflow: auto;
+        }
+        .result-box.pass { border-right: 6px solid #22c55e; background: #f0fdf4; }
+        .result-box.fail { border-right: 6px solid #ef4444; background: #fef2f2; }
+        .summary {
+            background: #1e293b;
+            color: white;
+            padding: 20px;
+            border-radius: 20px;
+            margin-top: 25px;
+            text-align: center;
+        }
+        .badge {
+            display: inline-block;
+            background: #334155;
+            padding: 6px 14px;
+            border-radius: 40px;
+            font-size: 0.85rem;
+            margin: 3px;
+            color: #e2e8f0;
+        }
+        hr { border: none; border-top: 1px dashed #cbd5e1; margin: 20px 0; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>📋 Farsinglish · اعتبارسنجی درس</h1>
+        <h2>تست دستی · سناریوهای edge-case · اولویت A6</h2>
+    </div>
+
+    <!-- کارت اصلی تست -->
+    <div class="test-card" id="mainCard">
+        <div class="test-title">
+            <span>🧪 A6</span> تست اعتبارسنجی Lesson (خالی، ناقص، تکراری، نوع داده)
+        </div>
+
+        <!-- دکمه‌های سناریو -->
+        <div class="scenario-buttons">
+            <button id="btnEmptyTitle" class="primary">📭 عنوان خالی</button>
+            <button id="btnMissingFields" class="primary">🧩 فیلدهای ناقص</button>
+            <button id="btnDuplicateId" class="primary">🔁 شناسه تکراری</button>
+            <button id="btnInvalidType" class="primary">⚠️ نوع داده اشتباه</button>
+            <button id="btnEmptyArray" class="primary">📦 آرایه خالی</button>
+            <button id="btnNullLesson" class="primary">🚫 lesson = null</button>
+            <button id="btnValidLesson" class="primary">✅ درس سالم (کنترل)</button>
+            <button id="btnReset" style="background:#e2e8f0;">⟲ ریست</button>
+        </div>
+
+        <!-- نمایش آخرین نتیجه -->
+        <div id="resultDisplay" class="result-box pass">
+            برای شروع یکی از دکمه‌ها را بزنید.
+        </div>
+
+        <!-- توضیح مختصر -->
+        <div style="margin-top: 16px; background: #e6f7ff; padding: 12px; border-radius: 12px; font-size: 0.9rem; border: 1px solid #91caff;">
+            <strong>🔍 هدف:</strong> شبیه‌سازی تابع validateLesson(lesson) — ورودی‌های نامعتبر باید خطای مشخص برگردانند.
+        </div>
+    </div>
+
+    <!-- تاریخچه آخرین تست‌ها -->
+    <div class="test-card">
+        <div class="test-title">
+            <span>📜</span> آخرین نتایج (تا ۵ تست)
+        </div>
+        <div id="historyBox" style="font-size:0.9rem; max-height:150px; overflow-y:auto;">
+            <span class="badge">—</span>
+        </div>
+    </div>
+
+    <!-- خلاصه دستی -->
+    <div class="summary" id="summary">
+        <div style="display: flex; justify-content: space-around; font-size:1.1rem;">
+            <span>✅ موفق: <span id="passCount">۰</span></span>
+            <span>❌ ناموفق: <span id="failCount">۰</span></span>
+            <span>📋 کل: <span id="totalCount">۰</span></span>
+        </div>
+        <div style="margin-top: 10px; font-size:0.85rem; opacity:0.8;">
+            تست‌ها دستی و بر اساس بازخورد شما ثبت می‌شوند.
+        </div>
+    </div>
+
+    <script>
+        (function() {
+            // ---------- کلاس اعتبارسنجی درس (مشابه core) ----------
+            class LessonValidator {
+                static validate(lesson) {
+                    // مرحله 1: وجود درس
+                    if (lesson === null || lesson === undefined) {
+                        return { isValid: false, error: 'درس null یا undefined است' };
+                    }
+                    if (typeof lesson !== 'object') {
+                        return { isValid: false, error: 'درس باید یک شیء باشد' };
+                    }
+
+                    // مرحله 2: شناسه
+                    if (!lesson.hasOwnProperty('id')) {
+                        return { isValid: false, error: 'فیلد id وجود ندارد' };
+                    }
+                    if (typeof lesson.id !== 'string' && typeof lesson.id !== 'number') {
+                        return { isValid: false, error: 'نوع id باید string یا number باشد' };
+                    }
+                    if (String(lesson.id).trim() === '') {
+                        return { isValid: false, error: 'id نمی‌تواند خالی باشد' };
+                    }
+
+                    // مرحله 3: عنوان
+                    if (!lesson.hasOwnProperty('title')) {
+                        return { isValid: false, error: 'فیلد title وجود ندارد' };
+                    }
+                    if (typeof lesson.title !== 'string') {
+                        return { isValid: false, error: 'title باید string باشد' };
+                    }
+                    if (lesson.title.trim() === '') {
+                        return { isValid: false, error: 'title نمی‌تواند خالی باشد' };
+                    }
+
+                    // مرحله 4: سطح (اختیاری اما اگر باشد باید number مثبت باشد)
+                    if (lesson.hasOwnProperty('level')) {
+                        if (typeof lesson.level !== 'number' || lesson.level < 1) {
+                            return { isValid: false, error: 'level باید عدد مثبت باشد' };
+                        }
+                    }
+
+                    // مرحله 5: کلمات (words) باید آرایه باشد و حداقل یک کلمه داشته باشد
+                    if (!lesson.hasOwnProperty('words')) {
+                        return { isValid: false, error: 'فیلد words وجود ندارد' };
+                    }
+                    if (!Array.isArray(lesson.words)) {
+                        return { isValid: false, error: 'words باید آرایه باشد' };
+                    }
+                    if (lesson.words.length === 0) {
+                        return { isValid: false, error: 'words نمی‌تواند خالی باشد (حداقل یک کلمه)' };
+                    }
+
+                    // بررسی هر کلمه (ساده شده)
+                    for (let i = 0; i < lesson.words.length; i++) {
+                        const w = lesson.words[i];
+                        if (!w || typeof w !== 'object') {
+                            return { isValid: false, error: `کلمه ${i} نامعتبر است` };
+                        }
+                        if (!w.original || !w.translation) {
+                            return { isValid: false, error: `کلمه ${i}: original یا translation ندارد` };
+                        }
+                    }
+
+                    // مرحله 6: جلوگیری از ID تکراری (در اینجا شبیه‌سازی با یک Set سراسری)
+                    // برای تست، از یک static Set استفاده می‌کنیم (در محیط واقعی از DB می‌آید)
+                    if (!LessonValidator._idSet) LessonValidator._idSet = new Set();
+                    const idStr = String(lesson.id);
+                    if (LessonValidator._idSet.has(idStr)) {
+                        return { isValid: false, error: `id تکراری: ${idStr}` };
+                    }
+                    // اگر valid بود، id را به Set اضافه می‌کنیم (برای تست‌های بعدی)
+                    LessonValidator._idSet.add(idStr);
+
+                    return { isValid: true, error: null };
+                }
+
+                // ریست Set (برای تست)
+                static resetIdSet() {
+                    LessonValidator._idSet = new Set();
+                }
+            }
+            LessonValidator.resetIdSet(); // شروع با Set خالی
+
+            // ---------- مدیریت تست و نمایش ----------
+            const resultDiv = document.getElementById('resultDisplay');
+            const historyBox = document.getElementById('historyBox');
+            const passSpan = document.getElementById('passCount');
+            const failSpan = document.getElementById('failCount');
+            const totalSpan = document.getElementById('totalCount');
+
+            let pass = 0, fail = 0;
+            let history = []; // ذخیره آخرین پیام‌ها
+
+            function addToHistory(message, isSuccess) {
+                history.unshift({ message, isSuccess, time: new Date().toLocaleTimeString('fa-IR') });
+                if (history.length > 5) history.pop();
+                renderHistory();
+            }
+
+            function renderHistory() {
+                let html = '';
+                history.forEach(item => {
+                    html += `<span class="badge" style="background:${item.isSuccess ? '#14532d' : '#7f1d1d'}">${item.time} - ${item.message.substring(0,35)}...</span>`;
+                });
+                if (history.length === 0) html = '<span class="badge">تستی اجرا نشده</span>';
+                historyBox.innerHTML = html;
+            }
+
+            function updateSummary() {
+                passSpan.innerText = pass;
+                failSpan.innerText = fail;
+                totalSpan.innerText = pass + fail;
+            }
+
+            function runTest(description, lessonInput) {
+                // ریست result box
+                let result;
+                try {
+                    result = LessonValidator.validate(lessonInput);
+                } catch (e) {
+                    result = { isValid: false, error: 'استثنا: ' + e.message };
+                }
+
+                // نمایش
+                const isSuccess = result.isValid === true; // اگر isValid:true یعنی موفق (درس سالم)
+                let outputText = `🧪 ${description}\n`;
+                outputText += `ورودی: ${JSON.stringify(lessonInput, null, 2)}\n`;
+                outputText += `✅ معتبر: ${result.isValid}\n`;
+                outputText += `❌ خطا: ${result.error || 'ندارد'}\n`;
+                outputText += `⏱️ ${new Date().toLocaleTimeString('fa-IR')}`;
+
+                resultDiv.className = 'result-box ' + (isSuccess ? 'pass' : 'fail');
+                resultDiv.innerText = outputText;
+
+                // آمار: اگر isValid true یعنی تست موفق (درس درست را پذیرفته)
+                // اما در سناریوهای نامعتبر، توقع داریم isValid false و پیام خطا
+                // بنابراین موفقیت تست را خودمان باید تعیین کنیم (دستی)
+                // در اینجا فقط نمایش می‌دهیم، کاربر دکمه "موفق/ناموفق" می‌زند.
+
+                // ذخیره context برای ثبت دستی
+                window._lastTest = { description, lessonInput, result, raw: outputText };
+                addToHistory(description, true); // فعلا موقت
+            }
+
+            // ثبت دستی نتیجه توسط کاربر (دکمه‌های + و -)
+            window.recordTest = function(success) {
+                if (!window._lastTest) {
+                    alert('ابتدا یک تست اجرا کنید');
+                    return;
+                }
+                if (success) {
+                    pass++;
+                } else {
+                    fail++;
+                }
+                updateSummary();
+                // ثبت در تاریخچه با وضعیت نهایی
+                const msg = window._lastTest.description + (success ? ' ✓' : ' ✗');
+                addToHistory(msg, success);
+                // آپدیت رنگ result box نهایی
+                if (success) {
+                    resultDiv.className = 'result-box pass';
+                } else {
+                    resultDiv.className = 'result-box fail';
+                }
+            };
+
+            // ---------- سناریوهای از پیش تعریف شده ----------
+            const scenarios = {
+                emptyTitle: {
+                    id: 'L001',
+                    title: '   ',
+                    words: [{ original: 'hello', translation: 'سلام' }]
+                },
+                missingFields: {
+                    id: 'L002'
+                    // title و words نداریم
+                },
+                duplicateId: {
+                    id: 'duplicate',
+                    title: 'درس تکراری',
+                    words: [{ original: 'test', translation: 'تست' }]
+                },
+                invalidType: {
+                    id: 12345,
+                    title: 456, // title باید string باشد
+                    words: ['not an object'] // کلمه باید شیء باشد
+                },
+                emptyArray: {
+                    id: 'L003',
+                    title: 'درس بدون کلمه',
+                    words: []
+                },
+                nullLesson: null,
+                validLesson: {
+                    id: 'L999',
+                    title: 'درس سالم',
+                    level: 2,
+                    words: [
+                        { original: 'apple', translation: 'سیب' },
+                        { original: 'book', translation: 'کتاب' }
+                    ]
+                }
+            };
+
+            // اضافه کردن id تکراری به Set (برای تست duplicate)
+            LessonValidator._idSet.add('duplicate'); // الان duplicate وجود دارد
+
+            // رویداد دکمه‌ها
+            document.getElementById('btnEmptyTitle').addEventListener('click', () => {
+                runTest('عنوان خالی', scenarios.emptyTitle);
+            });
+            document.getElementById('btnMissingFields').addEventListener('click', () => {
+                runTest('فیلدهای ناقص (بدون title و words)', scenarios.missingFields);
+            });
+            document.getElementById('btnDuplicateId').addEventListener('click', () => {
+                runTest('شناسه تکراری', scenarios.duplicateId);
+            });
+            document.getElementById('btnInvalidType').addEventListener('click', () => {
+                runTest('نوع داده اشتباه', scenarios.invalidType);
+            });
+            document.getElementById('btnEmptyArray').addEventListener('click', () => {
+                runTest('آرایه کلمات خالی', scenarios.emptyArray);
+            });
+            document.getElementById('btnNullLesson').addEventListener('click', () => {
+                runTest('درس null', scenarios.nullLesson);
+            });
+            document.getElementById('btnValidLesson').addEventListener('click', () => {
+                runTest('درس سالم (کنترل)', scenarios.validLesson);
+            });
+            document.getElementById('btnReset').addEventListener('click', () => {
+                LessonValidator.resetIdSet();
+                // اضافه کردن مجدد duplicate برای تست بعدی
+                LessonValidator._idSet.add('duplicate');
+                resultDiv.innerText = 'ریست شد. می‌توانید دوباره تست کنید.';
+                resultDiv.className = 'result-box';
+                // آمار را ریست نمی‌کنیم (دستی)
+            });
+
+            // دکمه‌های ثبت موفقیت/شکست (می‌توانید دو دکمه به UI اضافه کنید)
+            // برای سادگی، با دو دکمه شناور در پایین صفحه
+            const floatingDiv = document.createElement('div');
+            floatingDiv.style.position = 'sticky';
+            floatingDiv.style.bottom = '10px';
+            floatingDiv.style.display = 'flex';
+            floatingDiv.style.gap = '10px';
+            floatingDiv.style.justifyContent = 'center';
+            floatingDiv.style.marginTop = '20px';
+            floatingDiv.style.padding = '10px';
+            floatingDiv.style.background = 'white';
+            floatingDiv.style.borderRadius = '60px';
+            floatingDiv.style.boxShadow = '0 4px 15px rgba(0,0,0,0.2)';
+            floatingDiv.style.border = '1px solid #ddd';
+            floatingDiv.innerHTML = `
+                <button style="background:#22c55e; color:white; border:none; padding:12px 30px; border-radius:40px; font-weight:bold; flex:1;" onclick="recordTest(true)">✅ موفق</button>
+                <button style="background:#ef4444; color:white; border:none; padding:12px 30px; border-radius:40px; font-weight:bold; flex:1;" onclick="recordTest(false)">❌ ناموفق</button>
+            `;
+            document.body.appendChild(floatingDiv);
+
+            // مقدار اولیه summary
+            updateSummary();
+        })();
+    </script>
+</body>
+</html>
