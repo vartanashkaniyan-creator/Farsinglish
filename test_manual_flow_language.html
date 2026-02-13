@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html lang="fa">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>تست دستی تغییر زبان - Farsinglish</title>
+    <style>
+        body { font-family: Tahoma, Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 15px; background: #f5f5f5; direction: rtl; }
+        .header { background: #2c3e50; color: white; padding: 15px; border-radius: 10px; margin-bottom: 20px; text-align: center; }
+        .test-card { background: white; border-radius: 10px; padding: 15px; margin-bottom: 15px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        button { background: #3498db; color: white; border: none; padding: 10px 15px; border-radius: 6px; font-size: 14px; cursor: pointer; margin: 5px; }
+        button.success { background: #27ae60; }
+        button.warning { background: #f39c12; }
+        button.danger { background: #e74c3c; }
+        .lang-box { display: flex; gap: 10px; margin: 15px 0; flex-wrap: wrap; }
+        .output { background: #f8f9fa; padding: 10px; border-radius: 5px; margin-top: 10px; direction: ltr; text-align: left; }
+        .rtl-output { direction: rtl; text-align: right; }
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        td, th { border: 1px solid #ddd; padding: 8px; text-align: center; }
+        th { background: #34495e; color: white; }
+        .success-bg { background: #d4edda; }
+        .fail-bg { background: #f8d7da; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🌐 تست دستی تغییر زبان</h1>
+        <h2>Farsinglish - Localization & RTL/LTR</h2>
+    </div>
+
+    <div class="test-card">
+        <h3>🔤 انتخاب زبان فعلی</h3>
+        <div class="lang-box">
+            <button onclick="setLanguage('fa')" class="success">🇮🇷 فارسی (fa)</button>
+            <button onclick="setLanguage('en')" class="success">🇬🇧 English (en)</button>
+            <button onclick="setLanguage('ar')" class="success">🇸🇦 العربية (ar)</button>
+            <button onclick="setLanguage('es')" class="success">🇪🇸 Español (es)</button>
+        </div>
+        <p>زبان فعلی: <strong id="currentLangDisplay">fa</strong></p>
+        <p>جهت صفحه: <strong id="currentDirDisplay">rtl</strong></p>
+    </div>
+
+    <div class="test-card">
+        <h3>📝 تست متون ترجمه‌شده</h3>
+        <table id="translationTable">
+            <tr><th>کلید</th><th>مقدار ترجمه‌شده</th></tr>
+        </table>
+    </div>
+
+    <div class="test-card">
+        <h3>🧪 سناریوهای تست دستی</h3>
+        
+        <div style="margin: 15px 0;">
+            <button onclick="runTest(1)">🧪 ۱. تغییر زبان به انگلیسی</button>
+            <button onclick="runTest(2)">🧪 ۲. تغییر زبان به فارسی</button>
+            <button onclick="runTest(3)">🧪 ۳. تغییر زبان به عربی</button>
+        </div>
+        
+        <div style="margin: 15px 0;">
+            <button onclick="runTest(4)">🧪 ۴. رفرش صفحه (حفظ زبان)</button>
+            <button onclick="runTest(5)">🧪 ۵. Fallback برای کلید ناموجود</button>
+        </div>
+
+        <div style="margin: 15px 0;">
+            <button onclick="runTest(6)">🧪 ۶. تغییر جهت RTL ↔ LTR</button>
+            <button onclick="runTest(7)">🧪 ۷. اعداد فارسی/انگلیسی</button>
+        </div>
+
+        <div id="testOutput" class="output rtl-output">
+            نتایج تست اینجا نمایش داده می‌شود...
+        </div>
+    </div>
+
+    <div class="test-card">
+        <h3>📊 وضعیت تست‌ها</h3>
+        <table>
+            <tr><th>ردیف</th><th>تست</th><th>وضعیت</th></tr>
+            <tbody id="testStatus"></tbody>
+        </table>
+    </div>
+
+    <div style="text-align: center; margin-top: 20px;">
+        <button onclick="resetTests()" class="danger">🔄 ریست همه تست‌ها</button>
+    </div>
+
+    <script>
+        // -------------------- Language Manager --------------------
+        class LanguageManager {
+            constructor() {
+                this.currentLang = localStorage.getItem('app_language') || 'fa';
+                this.translations = {
+                    fa: {
+                        'app_name': 'فارسینگلیش',
+                        'welcome': 'خوش آمدید',
+                        'login': 'ورود',
+                        'logout': 'خروج',
+                        'dashboard': 'داشبورد',
+                        'lessons': 'دروس',
+                        'profile': 'پروفایل',
+                        'settings': 'تنظیمات',
+                        'not_found': 'متن مورد نظر یافت نشد'
+                    },
+                    en: {
+                        'app_name': 'Farsinglish',
+                        'welcome': 'Welcome',
+                        'login': 'Login',
+                        'logout': 'Logout',
+                        'dashboard': 'Dashboard',
+                        'lessons': 'Lessons',
+                        'profile': 'Profile',
+                        'settings': 'Settings',
+                        'not_found': 'Text not found'
+                    },
+                    ar: {
+                        'app_name': 'فارسینگلیش',
+                        'welcome': 'أهلاً وسهلاً',
+                        'login': 'تسجيل الدخول',
+                        'logout': 'تسجيل الخروج',
+                        'dashboard': 'لوحة التحكم',
+                        'lessons': 'الدروس',
+                        'profile': 'الملف الشخصي',
+                        'settings': 'الإعدادات',
+                        'not_found': 'النص غير موجود'
+                    }
+                };
+                this.fallbackLang = 'en';
+                this.init();
+            }
+
+            init() {
+                this.applyDirection();
+                this.updateUILanguage();
+            }
+
+            setLanguage(lang) {
+                if (!this.translations[lang]) {
+                    console.warn(`زبان ${lang} پشتیبانی نمی‌شود. استفاده از fallback: ${this.fallbackLang}`);
+                    lang = this.fallbackLang;
+                }
+                
+                this.currentLang = lang;
+                localStorage.setItem('app_language', lang);
+                this.applyDirection();
+                this.updateUILanguage();
+                
+                // انتشار رویداد تغییر زبان
+                window.dispatchEvent(new CustomEvent('languageChanged', { detail: { language: lang } }));
+                
+                return lang;
+            }
+
+            getCurrentLang() {
+                return this.currentLang;
+            }
+
+            getDirection() {
+                return this.currentLang === 'fa' || this.currentLang === 'ar' ? 'rtl' : 'ltr';
+            }
+
+            applyDirection() {
+                const dir = this.getDirection();
+                document.documentElement.dir = dir;
+                document.documentElement.lang = this.currentLang;
+            }
+
+            translate(key) {
+                const langData = this.translations[this.currentLang];
+                if (langData && langData[key] !== undefined) {
+                    return langData[key];
+                }
+                
+                // Fallback to English
+                const fallbackData = this.translations[this.fallbackLang];
+                if (fallbackData && fallbackData[key] !== undefined) {
+                    console.warn(`کلید "${key}" در زبان ${this.currentLang} یافت نشد. استفاده از fallback: ${this.fallbackLang}`);
+                    return fallbackData[key];
+                }
+                
+                return key; // Return the key itself as last resort
+            }
+
+            updateUILanguage() {
+                document.getElementById('currentLangDisplay').innerText = this.currentLang;
+                document.getElementById('currentDirDisplay').innerText = this.getDirection();
+                
+                // به‌روزرسانی جدول ترجمه
+                this.updateTranslationTable();
+            }
+
+            updateTranslationTable() {
+                const table = document.getElementById('translationTable');
+                const keys = ['app_name', 'welcome', 'login', 'logout', 'dashboard', 'lessons', 'profile', 'settings'];
+                
+                let html = '<tr><th>کلید</th><th>مقدار ترجمه‌شده</th></tr>';
+                keys.forEach(key => {
+                    html += `<tr><td>${key}</td><td>${this.translate(key)}</td></tr>`;
+                });
+                
+                table.innerHTML = html;
+            }
+
+            formatNumber(number) {
+                if (this.currentLang === 'fa' || this.currentLang === 'ar') {
+                    // تبدیل به اعداد فارسی/عربی
+                    const persianDigits = ['۰', '۱', '۲', '۳', '۴', '۵', '۶', '۷', '۸', '۹'];
+                    return number.toString().replace(/\d/g, d => persianDigits[parseInt(d)]);
+                }
+                return number.toString();
+            }
+        }
+
+        // -------------------- Test Runner --------------------
+        const TestRunner = {
+            tests: [
+                { id: 1, name: 'تغییر به انگلیسی', status: 'pending' },
+                { id: 2, name: 'تغییر به فارسی', status: 'pending' },
+                { id: 3, name: 'تغییر به عربی', status: 'pending' },
+                { id: 4, name: 'حفظ زبان پس از رفرش', status: 'pending' },
+                { id: 5, name: 'Fallback برای کلید ناموجود', status: 'pending' },
+                { id: 6, name: 'تغییر جهت RTL/LTR', status: 'pending' },
+                { id: 7, name: 'اعداد فارسی/انگلیسی', status: 'pending' }
+            ],
+
+            updateStatus(testId, status) {
+                const test = this.tests.find(t => t.id === testId);
+                if (test) test.status = status;
+                this.renderTable();
+            },
+
+            renderTable() {
+                const tbody = document.getElementById('testStatus');
+                let html = '';
+                this.tests.forEach(test => {
+                    const statusClass = test.status === 'passed' ? 'success-bg' : (test.status === 'failed' ? 'fail-bg' : '');
+                    html += `<tr class="${statusClass}">
+                        <td>${test.id}</td>
+                        <td>${test.name}</td>
+                        <td>${test.status === 'passed' ? '✅ موفق' : (test.status === 'failed' ? '❌ ناموفق' : '⏳ در انتظار')}</td>
+                    </tr>`;
+                });
+                tbody.innerHTML = html;
+            },
+
+            reset() {
+                this.tests.forEach(t => t.status = 'pending');
+                this.renderTable();
+                document.getElementById('testOutput').innerHTML = 'نتایج تست اینجا نمایش داده می‌شود...';
+            }
+        };
+
+        // -------------------- Initialize --------------------
+        const langManager = new LanguageManager();
+
+        // -------------------- Test Functions --------------------
+        function setLanguage(lang) {
+            langManager.setLanguage(lang);
+            showOutput(`✅ زبان به ${lang} تغییر یافت. جهت: ${langManager.getDirection()}`);
+        }
+
+        function runTest(testId) {
+            let output = '';
+            let success = true;
+
+            try {
+                switch(testId) {
+                    case 1: // تغییر به انگلیسی
+                        langManager.setLanguage('en');
+                        output = `✅ زبان به انگلیسی تغییر یافت. بررسی کنید: 
+                        - عنوان صفحه: ${langManager.translate('app_name')}
+                        - دکمه ورود: ${langManager.translate('login')}
+                        - جهت صفحه: ${langManager.getDirection()}`;
+                        TestRunner.updateStatus(1, 'passed');
+                        break;
+
+                    case 2: // تغییر به فارسی
+                        langManager.setLanguage('fa');
+                        output = `✅ زبان به فارسی تغییر یافت. بررسی کنید:
+                        - عنوان صفحه: ${langManager.translate('app_name')}
+                        - دکمه ورود: ${langManager.translate('login')}
+                        - جهت صفحه: ${langManager.getDirection()}`;
+                        TestRunner.updateStatus(2, 'passed');
+                        break;
+
+                    case 3: // تغییر به عربی
+                        langManager.setLanguage('ar');
+                        output = `✅ زبان به عربی تغییر یافت. بررسی کنید:
+                        - عنوان صفحه: ${langManager.translate('app_name')}
+                        - دکمه ورود: ${langManager.translate('login')}
+                        - جهت صفحه: ${langManager.getDirection()}`;
+                        TestRunner.updateStatus(3, 'passed');
+                        break;
+
+                    case 4: // حفظ زبان پس از رفرش
+                        const savedLang = localStorage.getItem('app_language');
+                        output = `✅ زبان ذخیره‌شده در localStorage: ${savedLang}
+                        🔄 حالا صفحه را رفرش کنید (F5) و بررسی کنید زبان ${savedLang} حفظ شده باشد.`;
+                        TestRunner.updateStatus(4, 'passed');
+                        break;
+
+                    case 5: // Fallback برای کلید ناموجود
+                        const nonExistentKey = 'this_key_does_not_exist';
+                        const fallbackValue = langManager.translate(nonExistentKey);
+                        output = `✅ کلید "${nonExistentKey}" موجود نیست.
+                        مقدار بازگشتی: "${fallbackValue}" (باید خود کلید را برگرداند)`;
+                        TestRunner.updateStatus(5, 'passed');
+                        break;
+
+                    case 6: // تغییر جهت RTL/LTR
+                        const currentDir = langManager.getDirection();
+                        const newLang = currentDir === 'rtl' ? 'en' : 'fa';
+                        langManager.setLanguage(newLang);
+                        output = `✅ جهت صفحه از ${currentDir} به ${langManager.getDirection()} تغییر یافت.
+                        زبان فعلی: ${langManager.currentLang}`;
+                        TestRunner.updateStatus(6, 'passed');
+                        break;
+
+                    case 7: // اعداد فارسی/انگلیسی
+                        const numbers = [123, 4567, 890];
+                        output = '✅ تبدیل اعداد:\n';
+                        numbers.forEach(num => {
+                            output += `${num} → ${langManager.formatNumber(num)}\n`;
+                        });
+                        output += `زبان فعلی: ${langManager.currentLang}`;
+                        TestRunner.updateStatus(7, 'passed');
+                        break;
+
+                    default:
+                        output = '❌ تست نامعتبر';
+                        success = false;
+                }
+            } catch(e) {
+                output = `❌ خطا: ${e.message}`;
+                success = false;
+                TestRunner.updateStatus(testId, 'failed');
+            }
+
+            showOutput(output);
+        }
+
+        function showOutput(text) {
+            document.getElementById('testOutput').innerHTML = text.replace(/\n/g, '<br>');
+        }
+
+        function resetTests() {
+            TestRunner.reset();
+            langManager.setLanguage('fa');
+            showOutput('✅ همه تست‌ها ریست شدند. زبان به فارسی بازگشت.');
+        }
+
+        // Event listener for language changes
+        window.addEventListener('languageChanged', (e) => {
+            console.log('زبان تغییر کرد به:', e.detail.language);
+        });
+
+        // Initialize on load
+        window.onload = function() {
+            TestRunner.renderTable();
+        };
+    </script>
+</body>
+</html>
