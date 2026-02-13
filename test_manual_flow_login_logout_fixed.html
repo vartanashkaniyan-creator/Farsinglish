@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>تست دستی جریان ورود/خروج - Farsinglish</title>
+    <style>
+        * { box-sizing: border-box; font-family: Vazir, Tahoma, sans-serif; }
+        body { background: #f0f2f5; margin: 0; padding: 15px; }
+        .container { max-width: 600px; margin: 0 auto; }
+        .header { background: #2c3e50; color: white; padding: 20px; border-radius: 15px; text-align: center; margin-bottom: 20px; }
+        .card { background: white; border-radius: 15px; padding: 20px; margin-bottom: 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+        .form-group { margin-bottom: 15px; }
+        label { display: block; margin-bottom: 5px; font-weight: bold; }
+        input, select { width: 100%; padding: 12px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 1rem; }
+        .btn-group { display: flex; gap: 10px; flex-wrap: wrap; margin: 15px 0; }
+        button { flex: 1; min-width: 120px; padding: 12px; border: none; border-radius: 8px; font-size: 1rem; cursor: pointer; font-weight: bold; }
+        .btn-primary { background: #3498db; color: white; }
+        .btn-success { background: #27ae60; color: white; }
+        .btn-danger { background: #e74c3c; color: white; }
+        .btn-warning { background: #f39c12; color: white; }
+        .btn-secondary { background: #95a5a6; color: white; }
+        .log-panel { background: #1e272e; color: #00ff00; padding: 15px; border-radius: 10px; font-family: monospace; height: 200px; overflow-y: auto; font-size: 0.9rem; direction: ltr; text-align: left; margin-top: 15px; }
+        .status-badge { display: inline-block; padding: 5px 10px; border-radius: 20px; font-size: 0.9rem; margin: 5px 0; }
+        .status-online { background: #27ae60; color: white; }
+        .status-offline { background: #7f8c8d; color: white; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h2>🧪 تست دستی جریان ورود/خروج</h2>
+        </div>
+
+        <!-- کارت وضعیت -->
+        <div class="card">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <h3>📊 وضعیت فعلی</h3>
+                <span class="status-badge status-offline" id="authStatusDisplay">وضعیت: آفلاین</span>
+            </div>
+            <div id="userInfo" style="background: #f8f9fa; padding: 15px; border-radius: 8px; margin-top: 10px;">
+                <p>👤 کاربر: <span id="displayUsername">وارد نشده</span></p>
+                <p>🔑 توکن: <span id="displayToken">-</span></p>
+            </div>
+        </div>
+
+        <!-- کارت ثبت‌نام -->
+        <div class="card" id="registerCard">
+            <h3>📝 ثبت‌نام</h3>
+            <div class="form-group">
+                <label>نام کاربری:</label>
+                <input type="text" id="regUsername" value="testuser">
+            </div>
+            <div class="form-group">
+                <label>ایمیل:</label>
+                <input type="email" id="regEmail" value="test@example.com">
+            </div>
+            <div class="form-group">
+                <label>رمز عبور:</label>
+                <input type="password" id="regPassword" value="123456">
+            </div>
+            <button class="btn-primary" onclick="window.handleRegister()">📝 ثبت‌نام</button>
+        </div>
+
+        <!-- کارت ورود -->
+        <div class="card" id="loginCard">
+            <h3>🔐 ورود</h3>
+            <div class="form-group">
+                <label>نام کاربری یا ایمیل:</label>
+                <input type="text" id="loginUsername" value="testuser">
+            </div>
+            <div class="form-group">
+                <label>رمز عبور:</label>
+                <input type="password" id="loginPassword" value="123456">
+            </div>
+            <button class="btn-success" onclick="window.handleLogin()">🔓 ورود</button>
+            <button class="btn-secondary" onclick="window.clearSession()" style="margin-top:10px;">🧹 پاک کردن نشست</button>
+        </div>
+
+        <!-- کارت داشبورد -->
+        <div class="card" id="dashboardCard" style="display: none;">
+            <h3>📋 داشبورد</h3>
+            <button class="btn-danger" onclick="window.handleLogout()">🚪 خروج</button>
+            <button class="btn-warning" onclick="window.checkSession()">🔄 بررسی نشست</button>
+            <button class="btn-secondary" onclick="window.refreshToken()">🔄 تمدید توکن</button>
+            <button class="btn-warning" onclick="window.simulateExpiredToken()" style="margin-top:10px;">⏰ انقضای توکن</button>
+        </div>
+
+        <!-- دکمه پاک کردن همه داده‌ها -->
+        <button class="btn-secondary" onclick="window.clearAllData()" style="width:100%; margin-bottom:15px;">🗑️ پاک کردن همه داده‌ها</button>
+
+        <!-- پنل لاگ -->
+        <div class="card">
+            <h3>📋 گزارش تست</h3>
+            <div class="log-panel" id="logPanel">⏱️ منتظر عملیات...</div>
+            <button class="btn-secondary" onclick="window.clearLogs()" style="margin-top:10px;">🗑️ پاک کردن لاگ</button>
+        </div>
+    </div>
+
+    <script>
+        // قرار دادن توابع در scope جهانی
+        window.handleRegister = handleRegister;
+        window.handleLogin = handleLogin;
+        window.handleLogout = handleLogout;
+        window.clearSession = clearSession;
+        window.checkSession = checkSession;
+        window.refreshToken = refreshToken;
+        window.simulateExpiredToken = simulateExpiredToken;
+        window.clearAllData = clearAllData;
+        window.clearLogs = clearLogs;
+
+        // ---------- کلاس Auth ----------
+        class AuthService {
+            constructor() {
+                this.STORAGE_KEY = 'farsinglish_auth';
+                this.USERS_KEY = 'farsinglish_users';
+                this.currentUser = null;
+                this.token = null;
+                this.tokenExpiry = null;
+                this.loadSession();
+            }
+
+            async hashPassword(password) {
+                const msgBuffer = new TextEncoder().encode(password);
+                const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
+                const hashArray = Array.from(new Uint8Array(hashBuffer));
+                return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+            }
+
+            async register(username, email, password) {
+                if (!username || username.length < 3) throw new Error('نام کاربری حداقل ۳ کاراکتر');
+                if (!email || !email.includes('@')) throw new Error('ایمیل نامعتبر');
+                if (!password || password.length < 6) throw new Error('رمز حداقل ۶ کاراکتر');
+
+                const users = this.getUsers();
+                if (users[username]) throw new Error('کاربر وجود دارد');
+
+                const hashedPassword = await this.hashPassword(password);
+                users[username] = { username, email, password: hashedPassword, createdAt: new Date().toISOString() };
+                localStorage.setItem(this.USERS_KEY, JSON.stringify(users));
+                return true;
+            }
+
+            async login(identifier, password) {
+                const users = this.getUsers();
+                let foundUser = null;
+
+                for (let username in users) {
+                    if (username === identifier || users[username].email === identifier) {
+                        foundUser = users[username];
+                        break;
+                    }
+                }
+
+                if (!foundUser) throw new Error('کاربر یافت نشد');
+
+                const hashedPassword = await this.hashPassword(password);
+                if (hashedPassword !== foundUser.password) throw new Error('رمز اشتباه');
+
+                this.currentUser = foundUser;
+                this.tokenExpiry = Date.now() + (60 * 60 * 1000);
+                this.token = this.generateToken(foundUser.username);
+                this.saveSession();
+                return true;
+            }
+
+            generateToken(username) {
+                return btoa(JSON.stringify({ username, exp: this.tokenExpiry }));
+            }
+
+            logout() {
+                this.currentUser = null;
+                this.token = null;
+                this.tokenExpiry = null;
+                localStorage.removeItem(this.STORAGE_KEY);
+            }
+
+            checkSession() {
+                if (!this.token || !this.tokenExpiry) return false;
+                if (Date.now() > this.tokenExpiry) {
+                    this.logout();
+                    return false;
+                }
+                return true;
+            }
+
+            refreshToken() {
+                if (!this.checkSession()) throw new Error('نشست نامعتبر');
+                this.tokenExpiry = Date.now() + (60 * 60 * 1000);
+                this.token = this.generateToken(this.currentUser.username);
+                this.saveSession();
+                return this.token;
+            }
+
+            saveSession() {
+                if (!this.currentUser || !this.token) return;
+                localStorage.setItem(this.STORAGE_KEY, JSON.stringify({
+                    user: this.currentUser,
+                    token: this.token,
+                    expiry: this.tokenExpiry
+                }));
+            }
+
+            loadSession() {
+                const saved = localStorage.getItem(this.STORAGE_KEY);
+                if (saved) {
+                    try {
+                        const session = JSON.parse(saved);
+                        this.currentUser = session.user;
+                        this.token = session.token;
+                        this.tokenExpiry = session.expiry;
+                        if (Date.now() > this.tokenExpiry) this.logout();
+                    } catch (e) { this.logout(); }
+                }
+            }
+
+            getUsers() {
+                const users = localStorage.getItem(this.USERS_KEY);
+                return users ? JSON.parse(users) : {};
+            }
+
+            clearAll() {
+                this.logout();
+                localStorage.removeItem(this.USERS_KEY);
+                localStorage.removeItem(this.STORAGE_KEY);
+            }
+        }
+
+        // نمونه اصلی
+        const auth = new AuthService();
+
+        // توابع لاگ
+        function addLog(message, type = 'info') {
+            const logPanel = document.getElementById('logPanel');
+            const time = new Date().toLocaleTimeString('fa-IR');
+            const emoji = type === 'success' ? '✅' : type === 'error' ? '❌' : 'ℹ️';
+            logPanel.innerHTML += `<div>[${time}] ${emoji} ${message}</div>`;
+            logPanel.scrollTop = logPanel.scrollHeight;
+        }
+
+        function clearLogs() {
+            document.getElementById('logPanel').innerHTML = '⏱️ لاگ پاک شد...';
+        }
+
+        // به‌روزرسانی UI
+        function updateUI() {
+            const isLoggedIn = auth.checkSession();
+            const statusEl = document.getElementById('authStatusDisplay');
+            
+            if (isLoggedIn && auth.currentUser) {
+                statusEl.className = 'status-badge status-online';
+                statusEl.textContent = 'وضعیت: آنلاین';
+                document.getElementById('displayUsername').textContent = auth.currentUser.username;
+                document.getElementById('displayToken').textContent = auth.token ? auth.token.substring(0, 15) + '...' : '-';
+                
+                document.getElementById('registerCard').style.display = 'none';
+                document.getElementById('loginCard').style.display = 'none';
+                document.getElementById('dashboardCard').style.display = 'block';
+            } else {
+                statusEl.className = 'status-badge status-offline';
+                statusEl.textContent = 'وضعیت: آفلاین';
+                document.getElementById('displayUsername').textContent = 'وارد نشده';
+                document.getElementById('displayToken').textContent = '-';
+                
+                document.getElementById('registerCard').style.display = 'block';
+                document.getElementById('loginCard').style.display = 'block';
+                document.getElementById('dashboardCard').style.display = 'none';
+            }
+        }
+
+        // توابع هندلر
+        async function handleRegister() {
+            const username = document.getElementById('regUsername').value.trim();
+            const email = document.getElementById('regEmail').value.trim();
+            const password = document.getElementById('regPassword').value;
+
+            try {
+                addLog(`تلاش ثبت‌نام: ${username}`);
+                await auth.register(username, email, password);
+                addLog('✅ ثبت‌نام موفق', 'success');
+                alert('✅ ثبت‌نام موفق');
+            } catch (error) {
+                addLog(`❌ ${error.message}`, 'error');
+                alert(`❌ ${error.message}`);
+            }
+        }
+
+        async function handleLogin() {
+            const identifier = document.getElementById('loginUsername').value.trim();
+            const password = document.getElementById('loginPassword').value;
+
+            try {
+                addLog(`تلاش ورود: ${identifier}`);
+                await auth.login(identifier, password);
+                addLog('✅ ورود موفق', 'success');
+                updateUI();
+            } catch (error) {
+                addLog(`❌ ${error.message}`, 'error');
+                alert(`❌ ${error.message}`);
+            }
+        }
+
+        function handleLogout() {
+            auth.logout();
+            addLog('🚪 خروج انجام شد');
+            updateUI();
+        }
+
+        function clearSession() {
+            auth.logout();
+            addLog('🧹 نشست پاک شد');
+            updateUI();
+        }
+
+        function checkSession() {
+            const isValid = auth.checkSession();
+            addLog(isValid ? '✅ نشست معتبر' : '❌ نشست نامعتبر', isValid ? 'success' : 'error');
+            alert(isValid ? '✅ نشست معتبر' : '❌ نشست نامعتبر');
+            updateUI();
+        }
+
+        function refreshToken() {
+            try {
+                auth.refreshToken();
+                addLog('🔄 توکن تمدید شد', 'success');
+                updateUI();
+            } catch (error) {
+                addLog(`❌ ${error.message}`, 'error');
+                alert(`❌ ${error.message}`);
+            }
+        }
+
+        function simulateExpiredToken() {
+            if (auth.tokenExpiry) {
+                auth.tokenExpiry = Date.now() - 1000;
+                auth.saveSession();
+                addLog('⏰ انقضا شبیه‌سازی شد');
+                checkSession();
+            } else {
+                addLog('⚠️ کاربر وارد نشده');
+            }
+        }
+
+        function clearAllData() {
+            auth.clearAll();
+            addLog('🗑️ همه داده‌ها پاک شد');
+            updateUI();
+        }
+
+        // شروع
+        window.onload = function() {
+            updateUI();
+            addLog('🚀 تست آماده است');
+        };
+    </script>
+</body>
+</html>
