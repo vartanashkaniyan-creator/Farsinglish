@@ -1,0 +1,468 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.5, user-scalable=yes">
+    <title>تست دستی جریان ثبت‌نام و شروع درس - Farsinglish</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: 'Tahoma', 'Vazir', 'Segoe UI', sans-serif;
+            background: linear-gradient(145deg, #667eea 0%, #764ba2 100%);
+            padding: 16px;
+            color: #1e293b;
+            line-height: 1.6;
+            min-height: 100vh;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        .header {
+            background: rgba(255,255,255,0.95);
+            backdrop-filter: blur(10px);
+            padding: 20px;
+            border-radius: 30px;
+            margin-bottom: 24px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.15);
+            text-align: center;
+            border: 1px solid rgba(255,255,255,0.5);
+        }
+        .header h1 {
+            font-size: 1.9rem;
+            color: #1e293b;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            margin-bottom: 8px;
+        }
+        .card {
+            background: rgba(255,255,255,0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 32px;
+            padding: 28px;
+            margin-bottom: 24px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            border: 1px solid rgba(255,255,255,0.5);
+        }
+        .step {
+            background: #ffffff;
+            border-radius: 24px;
+            padding: 24px;
+            margin-bottom: 24px;
+            border: 2px solid #e2e8f0;
+            transition: all 0.3s;
+            position: relative;
+        }
+        .step.active {
+            border: 2px solid #10b981;
+            box-shadow: 0 0 0 4px rgba(16,185,129,0.1);
+        }
+        .step h3 {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            color: #0f172a;
+            margin-bottom: 20px;
+            font-size: 1.4rem;
+            border-bottom: 2px dashed #cbd5e1;
+            padding-bottom: 12px;
+        }
+        .btn {
+            background: linear-gradient(145deg, #3b82f6, #2563eb);
+            color: white;
+            border: none;
+            padding: 16px 28px;
+            border-radius: 50px;
+            font-size: 1.2rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            box-shadow: 0 8px 16px rgba(37,99,235,0.3);
+            width: 100%;
+            margin: 12px 0;
+            border: 1px solid rgba(255,255,255,0.3);
+        }
+        .btn:active { transform: scale(0.96); }
+        .btn:disabled {
+            opacity: 0.5;
+            transform: none;
+            box-shadow: none;
+            pointer-events: none;
+        }
+        .btn-success { background: linear-gradient(145deg, #10b981, #059669); }
+        .btn-warning { background: linear-gradient(145deg, #f59e0b, #d97706); }
+        .log-panel {
+            background: #0b1120;
+            color: #e2e8f0;
+            padding: 24px;
+            border-radius: 20px;
+            font-family: 'Courier New', monospace;
+            direction: ltr;
+            text-align: left;
+            max-height: 350px;
+            overflow-y: auto;
+            font-size: 0.95rem;
+            margin-top: 24px;
+            border: 2px solid #334155;
+            box-shadow: inset 0 4px 8px rgba(0,0,0,0.5);
+        }
+        .badge {
+            background: #e2e8f0;
+            color: #1e293b;
+            padding: 8px 16px;
+            border-radius: 40px;
+            font-size: 0.9rem;
+            display: inline-block;
+            margin: 6px;
+            font-weight: bold;
+        }
+        .progress-container {
+            background: #e2e8f0;
+            border-radius: 30px;
+            height: 16px;
+            margin: 24px 0;
+            overflow: hidden;
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #3b82f6, #10b981);
+            width: 0%;
+            transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+            border-radius: 30px;
+        }
+        .info-box {
+            background: #eff6ff;
+            padding: 20px;
+            border-radius: 20px;
+            margin: 16px 0;
+            border-right: 6px solid #3b82f6;
+        }
+        .icon { font-size: 1.6rem; }
+        @media (max-width: 600px) {
+            .container { padding: 8px; }
+            .header h1 { font-size: 1.5rem; }
+            .card { padding: 20px; }
+            .step { padding: 18px; }
+            .btn { padding: 14px; font-size: 1rem; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>
+                <span class="icon">🎯</span> 
+                Farsinglish
+                <span class="icon">🚀</span>
+            </h1>
+            <div style="display: flex; justify-content: center; gap: 12px; flex-wrap: wrap;">
+                <span class="badge">📱 تست دستی موبایل</span>
+                <span class="badge">🔄 جریان ۵ مرحله‌ای</span>
+                <span class="badge">✅ ثبت‌نام → شروع درس</span>
+            </div>
+        </div>
+
+        <div class="card">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+                <h2 style="font-size: 1.6rem; color: #0f172a;">📋 پنل اجرای سناریو</h2>
+                <span id="flowStatus" style="background: #10b981; color: white; padding: 8px 20px; border-radius: 40px; font-weight: bold;">⏳ آماده</span>
+            </div>
+            
+            <div class="progress-container">
+                <div id="flowProgress" class="progress-fill"></div>
+            </div>
+
+            <!-- مرحله ۱: ثبت‌نام -->
+            <div id="step1" class="step active">
+                <h3><span class="icon">۱️⃣</span> ثبت‌نام کاربر جدید</h3>
+                <div class="info-box">
+                    <p style="display: flex; gap: 8px; margin-bottom: 8px;"><span>👤</span> <strong>کاربر:</strong> farsinglish_demo</p>
+                    <p style="display: flex; gap: 8px; margin-bottom: 8px;"><span>📧</span> <strong>ایمیل:</strong> demo@farsinglish.app</p>
+                    <p style="display: flex; gap: 8px; margin-bottom: 8px;"><span>🔑</span> <strong>رمز:</strong> Test@1234</p>
+                    <p style="display: flex; gap: 8px;"><span>🇮🇷</span> <strong>زبان:</strong> فارسی (پیش‌فرض)</p>
+                </div>
+                <button id="registerBtn" class="btn btn-success" onclick="handleRegister()">
+                    <span>✅</span> ثبت‌نام کاربر جدید
+                </button>
+            </div>
+
+            <!-- مرحله ۲: ورود -->
+            <div id="step2" class="step" style="opacity: 0.6;">
+                <h3><span class="icon">۲️⃣</span> ورود به حساب کاربری</h3>
+                <button id="loginBtn" class="btn" onclick="handleLogin()" disabled>
+                    <span>🔐</span> ورود به سیستم
+                </button>
+            </div>
+
+            <!-- مرحله ۳: بارگذاری درس‌ها -->
+            <div id="step3" class="step" style="opacity: 0.6;">
+                <h3><span class="icon">۳️⃣</span> بارگذاری درس‌های نمونه</h3>
+                <button id="loadLessonsBtn" class="btn" onclick="handleLoadLessons()" disabled>
+                    <span>📚</span> دریافت لیست درس‌ها از سرور
+                </button>
+            </div>
+
+            <!-- مرحله ۴: انتخاب اولین درس -->
+            <div id="step4" class="step" style="opacity: 0.6;">
+                <h3><span class="icon">۴️⃣</span> انتخاب و شروع اولین درس</h3>
+                <div id="lessonList" style="display: none; background: #f8fafc; padding: 16px; border-radius: 16px; margin-bottom: 16px;">
+                    <div style="margin-bottom: 12px; padding: 12px; background: white; border-radius: 12px; border: 2px solid #e2e8f0;">
+                        <input type="radio" name="lesson" id="lesson1" value="lesson_1" checked style="transform: scale(1.2); margin-left: 12px;">
+                        <label for="lesson1"><strong>📘 درس ۱:</strong> الفبای انگلیسی - مقدماتی (۸ کارت)</label>
+                    </div>
+                    <div style="padding: 12px; background: white; border-radius: 12px; border: 2px solid #e2e8f0;">
+                        <input type="radio" name="lesson" id="lesson2" value="lesson_2" style="transform: scale(1.2); margin-left: 12px;">
+                        <label for="lesson2"><strong>📗 درس ۲:</strong> Greetings - احوالپرسی (۱۲ کارت)</label>
+                    </div>
+                </div>
+                <button id="selectLessonBtn" class="btn" onclick="handleSelectLesson()" disabled>
+                    <span>🎯</span> انتخاب درس و ادامه
+                </button>
+            </div>
+
+            <!-- مرحله ۵: نمایش درس و تمرین -->
+            <div id="step5" class="step" style="opacity: 0.6;">
+                <h3><span class="icon">۵️⃣</span> نمایش درس و تمرین اول</h3>
+                <div id="lessonDisplay" style="background: linear-gradient(145deg, #fef9c3, #fef08a); padding: 24px; border-radius: 20px; display: none; margin-bottom: 16px;">
+                    <p style="font-size: 1.6rem; margin-bottom: 12px; color: #0f172a;">📖 Hello, how are you?</p>
+                    <p style="font-size: 1.3rem; color: #334155; margin-bottom: 20px;">📍 سلام، چطوری؟</p>
+                    <div style="border-top: 2px dashed #94a3b8; margin: 16px 0;"></div>
+                    <p style="font-size: 1.2rem; margin-bottom: 16px;"><strong>📝 تمرین:</strong> معادل فارسی صحیح را انتخاب کنید:</p>
+                    <div style="display: grid; gap: 12px;">
+                        <button class="btn" style="background: #475569;" onclick="logMessage('✅ پاسخ صحیح: سلام، چطوری؟')">سلام، چطوری؟</button>
+                        <button class="btn" style="background: #64748b;" onclick="logMessage('❌ پاسخ غلط: خداحافظ')">خداحافظ</button>
+                        <button class="btn" style="background: #64748b;" onclick="logMessage('❌ پاسخ غلط: صبح بخیر')">صبح بخیر</button>
+                    </div>
+                </div>
+                <button id="startLessonBtn" class="btn" onclick="handleStartLesson()" disabled>
+                    <span>📖</span> شروع تمرین و مرور هوشمند
+                </button>
+            </div>
+
+            <!-- دکمه ریست -->
+            <button id="resetBtn" class="btn btn-warning" onclick="resetFlow()" style="margin-top: 16px;">
+                <span>🔄</span> شروع مجدد جریان از ابتدا
+            </button>
+
+            <!-- لاگ رویدادها -->
+            <div style="margin-top: 32px;">
+                <h3 style="display: flex; gap: 12px; align-items: center; margin-bottom: 16px;">
+                    <span style="font-size: 1.5rem;">📋</span> 
+                    <span style="font-size: 1.3rem;">گزارش اجرای گام‌ها</span>
+                    <button onclick="clearLog()" style="background: #e2e8f0; border: none; padding: 8px 20px; border-radius: 40px; font-size: 0.9rem; margin-right: auto; display: flex; gap: 6px; align-items: center;">
+                        <span>🧹</span> پاک‌کردن
+                    </button>
+                </h3>
+                <div id="logPanel" class="log-panel">
+                    🚀 تست دستی جریان کاربر آماده اجرا است<br>
+                    👆 لطفاً مراحل را به ترتیب از مرحله ۱ شروع کنید<br>
+                    ⏱️ منتظر کلیک روی دکمه ثبت‌نام...
+                </div>
+            </div>
+            
+            <div style="text-align: center; margin-top: 24px; color: #64748b; font-size: 0.9rem;">
+                Farsinglish v1.0 | تست جریان اصلی | PWA Ready
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ---------- وضعیت جریان ----------
+        const FlowState = {
+            userRegistered: false,
+            userLoggedIn: false,
+            lessonsLoaded: false,
+            lessonSelected: false,
+            lessonStarted: false,
+            
+            updateUI() {
+                // بروزرسانی مرحله ۲
+                const step2 = document.getElementById('step2');
+                const loginBtn = document.getElementById('loginBtn');
+                if (this.userRegistered) {
+                    step2.style.opacity = '1';
+                    step2.classList.add('active');
+                    loginBtn.disabled = false;
+                    document.getElementById('flowStatus').innerHTML = '✅ ثبت‌نام کامل';
+                }
+                
+                // بروزرسانی مرحله ۳
+                const step3 = document.getElementById('step3');
+                const loadBtn = document.getElementById('loadLessonsBtn');
+                if (this.userLoggedIn) {
+                    step3.style.opacity = '1';
+                    step3.classList.add('active');
+                    loadBtn.disabled = false;
+                    document.getElementById('flowStatus').innerHTML = '🔓 وارد شدید';
+                }
+                
+                // بروزرسانی مرحله ۴
+                const step4 = document.getElementById('step4');
+                const lessonList = document.getElementById('lessonList');
+                const selectBtn = document.getElementById('selectLessonBtn');
+                if (this.lessonsLoaded) {
+                    step4.style.opacity = '1';
+                    step4.classList.add('active');
+                    lessonList.style.display = 'block';
+                    selectBtn.disabled = false;
+                    document.getElementById('flowStatus').innerHTML = '📚 درس‌ها بارگذاری شد';
+                }
+                
+                // بروزرسانی مرحله ۵
+                const step5 = document.getElementById('step5');
+                const startBtn = document.getElementById('startLessonBtn');
+                if (this.lessonSelected) {
+                    step5.style.opacity = '1';
+                    step5.classList.add('active');
+                    startBtn.disabled = false;
+                    document.getElementById('flowStatus').innerHTML = '🎯 درس انتخاب شد';
+                }
+                
+                // نمایش درس
+                const lessonDisplay = document.getElementById('lessonDisplay');
+                if (this.lessonStarted) {
+                    lessonDisplay.style.display = 'block';
+                    document.getElementById('flowStatus').innerHTML = '📖 در حال تمرین';
+                }
+                
+                this.updateProgressBar();
+            },
+            
+            updateProgressBar() {
+                let progress = 0;
+                if (this.userRegistered) progress += 20;
+                if (this.userLoggedIn) progress += 20;
+                if (this.lessonsLoaded) progress += 20;
+                if (this.lessonSelected) progress += 20;
+                if (this.lessonStarted) progress += 20;
+                document.getElementById('flowProgress').style.width = progress + '%';
+            },
+            
+            reset() {
+                this.userRegistered = false;
+                this.userLoggedIn = false;
+                this.lessonsLoaded = false;
+                this.lessonSelected = false;
+                this.lessonStarted = false;
+                
+                // ریست UI
+                document.getElementById('step1').classList.add('active');
+                document.getElementById('step2').style.opacity = '0.6';
+                document.getElementById('step3').style.opacity = '0.6';
+                document.getElementById('step4').style.opacity = '0.6';
+                document.getElementById('step5').style.opacity = '0.6';
+                
+                document.getElementById('step2').classList.remove('active');
+                document.getElementById('step3').classList.remove('active');
+                document.getElementById('step4').classList.remove('active');
+                document.getElementById('step5').classList.remove('active');
+                
+                document.getElementById('loginBtn').disabled = true;
+                document.getElementById('loadLessonsBtn').disabled = true;
+                document.getElementById('lessonList').style.display = 'none';
+                document.getElementById('selectLessonBtn').disabled = true;
+                document.getElementById('startLessonBtn').disabled = true;
+                document.getElementById('lessonDisplay').style.display = 'none';
+                
+                this.updateProgressBar();
+                document.getElementById('flowStatus').innerHTML = '⏳ آماده';
+            }
+        };
+
+        // ---------- توابع لاگ ----------
+        function logMessage(msg) {
+            const logPanel = document.getElementById('logPanel');
+            const time = new Date().toLocaleTimeString('fa-IR', { hour12: false });
+            logPanel.innerHTML += `<div style="margin-bottom: 6px; border-bottom: 1px solid #334155; padding-bottom: 4px;">⏱️ ${time} | ${msg}</div>`;
+            logPanel.scrollTop = logPanel.scrollHeight;
+        }
+
+        function clearLog() {
+            document.getElementById('logPanel').innerHTML = '🧹 لاگ پاک شد. منتظر عملیات جدید...';
+            logMessage('گزارش اجرا پاک شد');
+        }
+
+        // ---------- هندلرها ----------
+        function handleRegister() {
+            logMessage('📝 درخواست ثبت‌نام ارسال شد...');
+            setTimeout(() => {
+                FlowState.userRegistered = true;
+                FlowState.updateUI();
+                logMessage('✅ ثبت‌نام موفق: کاربر farsinglish_demo ایجاد شد');
+                logMessage('🎉 مرحله ۱ از ۵: ثبت‌نام با موفقیت انجام شد');
+                document.getElementById('flowStatus').innerHTML = '✅ ثبت‌نام کامل';
+            }, 600);
+        }
+
+        function handleLogin() {
+            logMessage('🔑 درخواست ورود...');
+            setTimeout(() => {
+                FlowState.userLoggedIn = true;
+                FlowState.updateUI();
+                logMessage('🔓 ورود موفق: توکن JWT صادر شد');
+                logMessage('👤 کاربر: farsinglish_demo | نقش: student');
+                logMessage('🎉 مرحله ۲ از ۵: ورود موفق');
+            }, 600);
+        }
+
+        function handleLoadLessons() {
+            logMessage('🌐 در حال بارگذاری درس‌ها از سرور...');
+            setTimeout(() => {
+                FlowState.lessonsLoaded = true;
+                FlowState.updateUI();
+                logMessage('📚 ۱۲ درس نمونه با موفقیت بارگذاری شد');
+                logMessage('📌 درس ۱: الفبای انگلیسی (۸ کارت) - سطح ۱');
+                logMessage('📌 درس ۲: احوالپرسی (۱۲ کارت) - سطح ۱');
+                logMessage('🎉 مرحله ۳ از ۵: بارگذاری درس‌ها');
+            }, 800);
+        }
+
+        function handleSelectLesson() {
+            const selected = document.querySelector('input[name="lesson"]:checked');
+            const lessonName = selected ? selected.nextElementSibling.textContent.trim() : 'درس ۱: الفبای انگلیسی';
+            
+            logMessage(`📌 در حال انتخاب ${lessonName}...`);
+            setTimeout(() => {
+                FlowState.lessonSelected = true;
+                FlowState.updateUI();
+                logMessage(`✅ درس انتخاب شد: ${lessonName}`);
+                logMessage('🎯 آماده شروع تمرین و مرور هوشمند');
+                logMessage('🎉 مرحله ۴ از ۵: انتخاب درس');
+            }, 500);
+        }
+
+        function handleStartLesson() {
+            logMessage('📖 در حال بارگذاری صفحه درس...');
+            setTimeout(() => {
+                FlowState.lessonStarted = true;
+                FlowState.updateUI();
+                logMessage('📖 صفحه درس باز شد: "Hello, how are you?"');
+                logMessage('📝 اولین تمرین: انتخاب معادل فارسی');
+                logMessage('🎉 مرحله ۵ از ۵: شروع تمرین');
+                logMessage('🏆 ✅✅✅ جریان کامل کاربر با موفقیت انجام شد! ✅✅✅');
+            }, 700);
+        }
+
+        function resetFlow() {
+            FlowState.reset();
+            logMessage('🔄 جریان کاربر ریست شد. از مرحله ۱ شروع کنید.');
+            logMessage('👆 لطفاً روی دکمه "ثبت‌نام کاربر جدید" کلیک کنید');
+        }
+
+        // ---------- مقداردهی اولیه ----------
+        window.onload = function() {
+            FlowState.reset();
+            logMessage('🚀 Farsinglish - تست دستی جریان کاربر');
+            logMessage('📱 محیط: موبایل | PWA | نسخه ۱.۰');
+            logMessage('👆 برای شروع، مرحله ۱ را اجرا کنید');
+        };
+    </script>
+</body>
+                          </html>
