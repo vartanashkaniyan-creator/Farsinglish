@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>تست دستی Timeout و Retry - Farsinglish</title>
+    <style>
+        body { font-family: Tahoma, Arial, sans-serif; max-width: 900px; margin: 0 auto; padding: 15px; background: #f5f5f5; }
+        .header { background: #2c3e50; color: white; padding: 15px; border-radius: 10px; margin-bottom: 20px; text-align: center; }
+        .test-card { background: white; border-radius: 10px; padding: 20px; margin-bottom: 20px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        button { background: #3498db; color: white; border: none; padding: 12px 25px; border-radius: 6px; font-size: 16px; cursor: pointer; margin: 5px; width: calc(50% - 10px); }
+        button.small { width: auto; padding: 8px 15px; }
+        .btn-success { background: #27ae60; }
+        .btn-danger { background: #e74c3c; }
+        .btn-warning { background: #f39c12; }
+        .log { background: #34495e; color: #ecf0f1; padding: 15px; border-radius: 8px; font-family: monospace; height: 300px; overflow-y: auto; font-size: 14px; margin-top: 20px; }
+        .log-entry { border-bottom: 1px solid #445566; padding: 5px 0; }
+        .badge { background: #3498db; color: white; padding: 3px 8px; border-radius: 4px; font-size: 12px; margin-right: 5px; }
+        .config-item { margin: 10px 0; padding: 10px; background: #ecf0f1; border-radius: 6px; }
+        input { padding: 8px; border: 1px solid #bdc3c7; border-radius: 4px; width: 100px; margin: 0 5px; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>⏱️ Farsinglish - تست دستی Timeout و Retry</h1>
+        <h2>شبیه‌سازی تأخیر شبکه و تلاش مجدد</h2>
+    </div>
+
+    <div class="test-card">
+        <h3>⚙️ تنظیمات تست</h3>
+        <div class="config-item">
+            <label>⏱️ زمان تأخیر شبیه‌سازی‌شده (ms):</label>
+            <input type="number" id="delayInput" value="3000" min="0" max="10000" step="100">
+            <span class="badge">پیش‌فرض: ۳۰۰۰ (۳ ثانیه)</span>
+        </div>
+        <div class="config-item">
+            <label>🔄 حداکثر تعداد تلاش مجدد:</label>
+            <input type="number" id="maxRetriesInput" value="3" min="1" max="5">
+            <span class="badge">پیش‌فرض: ۳ بار</span>
+        </div>
+        <div class="config-item">
+            <label>📈 فاکتور افزایش تأخیر (Backoff):</label>
+            <input type="number" id="backoffInput" value="2" min="1" max="4" step="0.5">
+            <span class="badge">هر بار ×۲</span>
+        </div>
+    </div>
+
+    <div class="test-card">
+        <h3>🧪 سناریوهای تست</h3>
+        <button class="btn-success" onclick="testSuccessfulRequest()">✅ درخواست موفق</button>
+        <button class="btn-warning" onclick="testTimeoutRequest()">⏱️ شبیه‌سازی Timeout</button>
+        <button class="btn-danger" onclick="testServerError()">❌ خطای سرور (۵۰۰)</button>
+        <button style="background: #9b59b6;" onclick="testNetworkError()">📶 قطع شبکه</button>
+        <button onclick="testExponentialBackoff()">📈 Backoff نمایی</button>
+        <button onclick="testMaxRetriesExceeded()">⚠️ اتمام تلاش‌ها</button>
+        <button onclick="clearLog()">🗑️ پاک کردن لاگ</button>
+    </div>
+
+    <div class="test-card">
+        <h3>📋 لاگ رویدادها</h3>
+        <div id="logContainer" class="log">
+            <div class="log-entry">⏱️ برای شروع یک سناریو کلیک کنید...</div>
+        </div>
+    </div>
+
+    <script>
+        // -------------------- شبیه‌سازی درخواست شبکه --------------------
+        class NetworkSimulator {
+            constructor() {
+                this.retryCount = 0;
+                this.abortController = null;
+            }
+
+            async simulateRequest(options = {}) {
+                const {
+                    delay = 3000,
+                    shouldTimeout = false,
+                    shouldError = false,
+                    errorStatus = 500,
+                    simulateNetworkError = false
+                } = options;
+
+                return new Promise((resolve, reject) => {
+                    // شبیه‌سازی قطع شبکه
+                    if (simulateNetworkError) {
+                        setTimeout(() => reject(new Error('🌐 اتصال اینترنت قطع شد')), 500);
+                        return;
+                    }
+
+                    // شبیه‌سازی timeout
+                    if (shouldTimeout) {
+                        setTimeout(() => reject(new Error('⏱️ Timeout: سرور پاسخ نداد')), delay);
+                        return;
+                    }
+
+                    // شبیه‌سازی خطای سرور
+                    if (shouldError) {
+                        setTimeout(() => {
+                            reject({
+                                status: errorStatus,
+                                message: errorStatus === 500 ? 'خطای داخلی سرور' : 'خطای سرور',
+                                isServerError: true
+                            });
+                        }, delay / 2);
+                        return;
+                    }
+
+                    // شبیه‌سازی پاسخ موفق
+                    setTimeout(() => {
+                        resolve({
+                            status: 200,
+                            data: { message: 'پاسخ موفق از سرور', timestamp: Date.now() }
+                        });
+                    }, delay);
+                });
+            }
+
+            async requestWithRetry(options = {}) {
+                const {
+                    maxRetries = 3,
+                    baseDelay = 3000,
+                    backoffFactor = 2,
+                    scenario = 'success'
+                } = options;
+
+                this.retryCount = 0;
+                let lastError = null;
+
+                for (let attempt = 1; attempt <= maxRetries; attempt++) {
+                    try {
+                        logMessage(`🔄 تلاش ${attempt}/${maxRetries}...`, 'info');
+                        
+                        // تنظیم سناریو
+                        const simOptions = { delay: baseDelay };
+                        
+                        if (scenario === 'timeout' && attempt <= 2) {
+                            simOptions.shouldTimeout = true;
+                        } else if (scenario === 'serverError' && attempt <= 2) {
+                            simOptions.shouldError = true;
+                            simOptions.errorStatus = 500;
+                        } else if (scenario === 'networkError' && attempt === 1) {
+                            simOptions.simulateNetworkError = true;
+                        } else if (scenario === 'backoff') {
+                            // شبیه‌سازی backoff نمایی
+                            const backoffDelay = baseDelay * Math.pow(backoffFactor, attempt - 1);
+                            logMessage(`⏱️ تأخیر ${backoffDelay}ms (Backoff نمایی)`, 'info');
+                            await this.delay(backoffDelay);
+                            
+                            if (attempt < maxRetries) {
+                                throw new Error(`⏱️ Timeout شبیه‌سازی‌شده (تلاش ${attempt})`);
+                            }
+                        }
+
+                        const response = await this.simulateRequest(simOptions);
+                        logMessage(`✅ تلاش ${attempt} موفق: ${JSON.stringify(response.data)}`, 'success');
+                        return response;
+
+                    } catch (error) {
+                        lastError = error;
+                        logMessage(`❌ تلاش ${attempt} ناموفق: ${error.message || JSON.stringify(error)}`, 'error');
+                        
+                        if (attempt === maxRetries) {
+                            logMessage(`⚠️ تمام ${maxRetries} تلاش ناموفق بود`, 'warning');
+                            throw error;
+                        }
+
+                        // محاسبه تأخیر قبل از تلاش بعدی
+                        const retryDelay = baseDelay * Math.pow(backoffFactor, attempt - 1);
+                        logMessage(`⏳ ${retryDelay}ms تا تلاش بعدی...`, 'info');
+                        await this.delay(retryDelay);
+                    }
+                }
+            }
+
+            delay(ms) {
+                return new Promise(resolve => setTimeout(resolve, ms));
+            }
+        }
+
+        const simulator = new NetworkSimulator();
+
+        // -------------------- توابع تست --------------------
+        async function testSuccessfulRequest() {
+            logMessage('🧪 شروع تست درخواست موفق', 'test');
+            try {
+                const response = await simulator.requestWithRetry({
+                    maxRetries: 1,
+                    baseDelay: getDelay(),
+                    scenario: 'success'
+                });
+                logMessage('🎉 درخواست موفق با پاسخ: ' + JSON.stringify(response.data), 'success');
+            } catch (error) {
+                logMessage('❌ خطا: ' + error.message, 'error');
+            }
+        }
+
+        async function testTimeoutRequest() {
+            logMessage('🧪 شروع تست Timeout (۲ بار اول timeout، بار سوم موفق)', 'test');
+            try {
+                const response = await simulator.requestWithRetry({
+                    maxRetries: getMaxRetries(),
+                    baseDelay: getDelay(),
+                    scenario: 'timeout'
+                });
+                logMessage('🎉 درخواست پس از timeout موفق شد', 'success');
+            } catch (error) {
+                logMessage('❌ تمام تلاش‌ها با timeout ناموفق بود', 'error');
+            }
+        }
+
+        async function testServerError() {
+            logMessage('🧪 شروع تست خطای سرور (۵۰۰)', 'test');
+            try {
+                const response = await simulator.requestWithRetry({
+                    maxRetries: getMaxRetries(),
+                    baseDelay: getDelay(),
+                    scenario: 'serverError'
+                });
+                logMessage('🎉 درخواست پس از خطای سرور موفق شد', 'success');
+            } catch (error) {
+                logMessage('❌ تمام تلاش‌ها با خطای سرور ناموفق بود', 'error');
+            }
+        }
+
+        async function testNetworkError() {
+            logMessage('🧪 شروع تست قطع شبکه', 'test');
+            try {
+                const response = await simulator.requestWithRetry({
+                    maxRetries: getMaxRetries(),
+                    baseDelay: getDelay(),
+                    scenario: 'networkError'
+                });
+                logMessage('🎉 درخواست پس از قطع شبکه موفق شد', 'success');
+            } catch (error) {
+                logMessage('❌ تمام تلاش‌ها با قطع شبکه ناموفق بود', 'error');
+            }
+        }
+
+        async function testExponentialBackoff() {
+            logMessage('🧪 شروع تست Backoff نمایی (افزایش تأخیر)', 'test');
+            const start = Date.now();
+            try {
+                await simulator.requestWithRetry({
+                    maxRetries: 3,
+                    baseDelay: 1000,
+                    backoffFactor: getBackoffFactor(),
+                    scenario: 'backoff'
+                });
+            } catch (error) {
+                const duration = ((Date.now() - start) / 1000).toFixed(1);
+                logMessage(`📊 مجموع زمان: ${duration} ثانیه (تأخیرها: ۱, ${getBackoffFactor()}, ${getBackoffFactor()*2} ثانیه)`, 'info');
+            }
+        }
+
+        async function testMaxRetriesExceeded() {
+            logMessage('🧪 شروع تست اتمام تلاش‌ها (همه timeout)', 'test');
+            try {
+                const response = await simulator.requestWithRetry({
+                    maxRetries: 3,
+                    baseDelay: 1000,
+                    scenario: 'timeout'
+                });
+            } catch (error) {
+                logMessage('⚠️ تست مورد انتظار: تمام ۳ تلاش timeout شد', 'warning');
+            }
+        }
+
+        // -------------------- توابع کمکی --------------------
+        function getDelay() {
+            return parseInt(document.getElementById('delayInput').value) || 3000;
+        }
+
+        function getMaxRetries() {
+            return parseInt(document.getElementById('maxRetriesInput').value) || 3;
+        }
+
+        function getBackoffFactor() {
+            return parseFloat(document.getElementById('backoffInput').value) || 2;
+        }
+
+        function logMessage(message, type = 'info') {
+            const container = document.getElementById('logContainer');
+            const entry = document.createElement('div');
+            entry.className = 'log-entry';
+            
+            let icon = '📌';
+            let color = '#3498db';
+            
+            if (type === 'success') { icon = '✅'; color = '#27ae60'; }
+            else if (type === 'error') { icon = '❌'; color = '#e74c3c'; }
+            else if (type === 'warning') { icon = '⚠️'; color = '#f39c12'; }
+            else if (type === 'test') { icon = '🧪'; color = '#9b59b6'; }
+            
+            const time = new Date().toLocaleTimeString('fa-IR');
+            entry.innerHTML = `<span style="color: ${color}">${icon}</span> [${time}] ${message}`;
+            container.appendChild(entry);
+            container.scrollTop = container.scrollHeight;
+        }
+
+        function clearLog() {
+            const container = document.getElementById('logContainer');
+            container.innerHTML = '<div class="log-entry">⏱️ لاگ پاک شد...</div>';
+        }
+    </script>
+</body>
+</html>
