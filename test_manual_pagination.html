@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>تست صفحه‌بندی - Farsinglish</title>
+    <style>
+        body { font-family: Tahoma, Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 15px; background: #f5f5f5; }
+        .header { background: #2c3e50; color: white; padding: 15px; border-radius: 10px; margin-bottom: 20px; text-align: center; }
+        .card { background: white; border-radius: 10px; padding: 20px; margin-bottom: 20px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        .item { background: #f8f9fa; padding: 12px; margin: 8px 0; border-radius: 6px; border-right: 3px solid #3498db; }
+        .pagination-controls { display: flex; gap: 10px; justify-content: center; margin: 20px 0; flex-wrap: wrap; }
+        button { background: #3498db; color: white; border: none; padding: 12px 25px; border-radius: 6px; font-size: 16px; cursor: pointer; min-width: 100px; }
+        button:disabled { background: #bdc3c7; cursor: not-allowed; }
+        .info { background: #e8f4fd; padding: 10px; border-radius: 6px; margin: 10px 0; text-align: center; }
+        .loading { background: #fff3cd; color: #856404; padding: 10px; border-radius: 6px; text-align: center; display: none; }
+        .error { background: #f8d7da; color: #721c24; padding: 10px; border-radius: 6px; text-align: center; display: none; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>📖 Farsinglish - تست صفحه‌بندی (Pagination)</h1>
+        <h2>۵۰ آیتم • صفحات ۱۰ تایی</h2>
+    </div>
+
+    <div class="card">
+        <div class="info" id="pageInfo"></div>
+        <div class="loading" id="loading">⏳ در حال بارگذاری...</div>
+        <div class="error" id="error">❌ خطا در بارگذاری</div>
+        <div id="itemsContainer"></div>
+        
+        <div class="pagination-controls">
+            <button onclick="goToFirst()" id="firstBtn" disabled>⏮️ اولین</button>
+            <button onclick="prevPage()" id="prevBtn" disabled>◀ قبلی</button>
+            <span style="padding: 12px; background: #ecf0f1; border-radius: 6px;" id="pageDisplay"></span>
+            <button onclick="nextPage()" id="nextBtn">بعدی ▶</button>
+            <button onclick="goToLast()" id="lastBtn">آخرین ⏭️</button>
+        </div>
+
+        <div style="display: flex; gap: 10px; margin-top: 20px;">
+            <button onclick="simulateLoading()" style="background: #f39c12;">⏳ شبیه‌سازی لودینگ</button>
+            <button onclick="simulateError()" style="background: #e74c3c;">❌ شبیه‌سازی خطا</button>
+            <button onclick="resetData()" style="background: #27ae60;">⟲ بازنشانی</button>
+        </div>
+    </div>
+
+    <script>
+        // -------------------- داده‌های نمونه --------------------
+        const ITEMS_PER_PAGE = 10;
+        const TOTAL_ITEMS = 50;
+        
+        // تولید ۵۰ آیتم درس
+        const allItems = Array.from({ length: TOTAL_ITEMS }, (_, i) => ({
+            id: i + 1,
+            title: `درس ${i + 1}`,
+            words: Math.floor(Math.random() * 20) + 10,
+            level: Math.floor(i / 10) + 1
+        }));
+
+        // -------------------- وضعیت صفحه‌بندی --------------------
+        let currentPage = 1;
+        let totalPages = Math.ceil(TOTAL_ITEMS / ITEMS_PER_PAGE);
+        let isLoading = false;
+        let hasError = false;
+
+        // -------------------- توابع کمکی --------------------
+        function getCurrentPageItems() {
+            const start = (currentPage - 1) * ITEMS_PER_PAGE;
+            const end = start + ITEMS_PER_PAGE;
+            return allItems.slice(start, end);
+        }
+
+        function updateUI() {
+            // به‌روزرسانی دکمه‌ها
+            document.getElementById('firstBtn').disabled = currentPage === 1 || isLoading || hasError;
+            document.getElementById('prevBtn').disabled = currentPage === 1 || isLoading || hasError;
+            document.getElementById('nextBtn').disabled = currentPage === totalPages || isLoading || hasError;
+            document.getElementById('lastBtn').disabled = currentPage === totalPages || isLoading || hasError;
+
+            // نمایش شماره صفحه
+            document.getElementById('pageDisplay').textContent = `صفحه ${currentPage} از ${totalPages}`;
+            document.getElementById('pageInfo').textContent = `نمایش ${(currentPage-1)*ITEMS_PER_PAGE+1} تا ${Math.min(currentPage*ITEMS_PER_PAGE, TOTAL_ITEMS)} از ${TOTAL_ITEMS} آیتم`;
+
+            // نمایش آیتم‌ها
+            if (!isLoading && !hasError) {
+                const items = getCurrentPageItems();
+                const container = document.getElementById('itemsContainer');
+                container.innerHTML = items.map(item => `
+                    <div class="item">
+                        <strong>${item.title}</strong> - 
+                        <span>📚 ${item.words} کلمه</span> - 
+                        <span>⭐ سطح ${item.level}</span>
+                    </div>
+                `).join('');
+            }
+        }
+
+        // -------------------- توابع اصلی --------------------
+        function goToPage(page) {
+            if (isLoading || hasError) return;
+            currentPage = Math.max(1, Math.min(page, totalPages));
+            updateUI();
+        }
+
+        function nextPage() {
+            goToPage(currentPage + 1);
+        }
+
+        function prevPage() {
+            goToPage(currentPage - 1);
+        }
+
+        function goToFirst() {
+            goToPage(1);
+        }
+
+        function goToLast() {
+            goToPage(totalPages);
+        }
+
+        // -------------------- شبیه‌سازی حالت‌ها --------------------
+        function simulateLoading() {
+            isLoading = true;
+            hasError = false;
+            document.getElementById('loading').style.display = 'block';
+            document.getElementById('error').style.display = 'none';
+            document.getElementById('itemsContainer').innerHTML = '';
+            updateUI();
+
+            setTimeout(() => {
+                isLoading = false;
+                document.getElementById('loading').style.display = 'none';
+                updateUI();
+            }, 2000);
+        }
+
+        function simulateError() {
+            isLoading = false;
+            hasError = true;
+            document.getElementById('loading').style.display = 'none';
+            document.getElementById('error').style.display = 'block';
+            document.getElementById('itemsContainer').innerHTML = '';
+            updateUI();
+        }
+
+        function resetData() {
+            isLoading = false;
+            hasError = false;
+            currentPage = 1;
+            document.getElementById('loading').style.display = 'none';
+            document.getElementById('error').style.display = 'none';
+            updateUI();
+        }
+
+        // -------------------- تست دستی --------------------
+        window.onload = function() {
+            resetData();
+            console.log('✅ تست صفحه‌بندی آماده است');
+            console.log('📋 سناریوهای تست:');
+            console.log('  1. کلیک روی دکمه‌های بعدی/قبلی');
+            console.log('  2. رفتن به اولین/آخرین صفحه');
+            console.log('  3. شبیه‌سازی حالت لودینگ');
+            console.log('  4. شبیه‌سازی خطا و بازگشت');
+            console.log('  5. بررسی صحت تعداد آیتم‌ها');
+        };
+    </script>
+</body>
+</html>
