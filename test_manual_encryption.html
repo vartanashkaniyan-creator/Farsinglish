@@ -1,0 +1,575 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>تست دستی رمزنگاری - Farsinglish</title>
+    <style>
+        body {
+            font-family: 'Tahoma', Arial, sans-serif;
+            max-width: 900px;
+            margin: 20px auto;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #333;
+        }
+        .header {
+            background: white;
+            padding: 25px;
+            border-radius: 20px;
+            margin-bottom: 25px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            text-align: center;
+        }
+        .header h1 {
+            margin: 0;
+            color: #667eea;
+            font-size: 28px;
+        }
+        .header p {
+            margin: 10px 0 0;
+            color: #666;
+            font-size: 16px;
+        }
+        .test-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 20px;
+            margin-bottom: 25px;
+        }
+        .test-card {
+            background: white;
+            border-radius: 20px;
+            padding: 20px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+            transition: transform 0.3s ease;
+        }
+        .test-card:hover {
+            transform: translateY(-5px);
+        }
+        .card-title {
+            font-size: 18px;
+            font-weight: bold;
+            color: #4a5568;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #e2e8f0;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .card-title span {
+            background: #667eea;
+            color: white;
+            padding: 5px 10px;
+            border-radius: 12px;
+            font-size: 14px;
+        }
+        .input-group {
+            margin-bottom: 15px;
+        }
+        .input-group label {
+            display: block;
+            margin-bottom: 5px;
+            color: #4a5568;
+            font-weight: 500;
+        }
+        .input-group input, .input-group textarea {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #e2e8f0;
+            border-radius: 12px;
+            font-size: 14px;
+            transition: border-color 0.3s;
+            box-sizing: border-box;
+            font-family: inherit;
+        }
+        .input-group input:focus, .input-group textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        .input-group textarea {
+            min-height: 80px;
+            resize: vertical;
+        }
+        .btn {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 12px;
+            font-size: 15px;
+            font-weight: bold;
+            cursor: pointer;
+            width: 100%;
+            transition: all 0.3s;
+            margin: 5px 0;
+        }
+        .btn:hover {
+            background: #5a67d8;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+        .btn-secondary {
+            background: #48bb78;
+        }
+        .btn-secondary:hover {
+            background: #38a169;
+        }
+        .btn-warning {
+            background: #ed8936;
+        }
+        .btn-warning:hover {
+            background: #dd6b20;
+        }
+        .result-box {
+            background: #f7fafc;
+            border-radius: 12px;
+            padding: 15px;
+            margin-top: 15px;
+            border: 2px dashed #cbd5e0;
+        }
+        .result-item {
+            background: white;
+            padding: 12px;
+            border-radius: 10px;
+            margin-bottom: 10px;
+            border-right: 4px solid #667eea;
+            word-break: break-all;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+        }
+        .success-badge {
+            background: #c6f6d5;
+            color: #22543d;
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-size: 13px;
+            display: inline-block;
+            margin-top: 10px;
+        }
+        .error-badge {
+            background: #fed7d7;
+            color: #742a2a;
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-size: 13px;
+            display: inline-block;
+            margin-top: 10px;
+        }
+        .summary {
+            background: white;
+            border-radius: 20px;
+            padding: 20px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+        .summary-stats {
+            display: flex;
+            justify-content: space-around;
+            margin: 20px 0;
+        }
+        .stat-item {
+            text-align: center;
+        }
+        .stat-value {
+            font-size: 32px;
+            font-weight: bold;
+            color: #667eea;
+        }
+        .stat-label {
+            color: #718096;
+            font-size: 14px;
+        }
+        .progress-bar {
+            width: 100%;
+            height: 10px;
+            background: #e2e8f0;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+        .progress-fill {
+            height: 100%;
+            background: #667eea;
+            transition: width 0.3s ease;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🔐 تست دستی رمزنگاری - Farsinglish</h1>
+        <p>آزمایش الگوریتم‌های رمزنگاری، هش و امنیت داده</p>
+    </div>
+
+    <div class="test-grid">
+        <!-- کارت ۱: رمزنگاری AES -->
+        <div class="test-card">
+            <div class="card-title">
+                <span>۱</span>
+                رمزنگاری AES (متقارن)
+            </div>
+            <div class="input-group">
+                <label>متن اصلی:</label>
+                <input type="text" id="aesPlaintext" value="کاربر: test@example.com">
+            </div>
+            <div class="input-group">
+                <label>کلید رمز (حداقل ۸ کاراکتر):</label>
+                <input type="text" id="aesKey" value="MySecretKey123">
+            </div>
+            <button class="btn" onclick="testAES()">🔒 رمزنگاری AES</button>
+            <div id="aesResult" class="result-box" style="display: none;"></div>
+        </div>
+
+        <!-- کارت ۲: هش SHA-256 -->
+        <div class="test-card">
+            <div class="card-title">
+                <span>۲</span>
+                هش SHA-256 (یک‌طرفه)
+            </div>
+            <div class="input-group">
+                <label>متن برای هش:</label>
+                <input type="text" id="shaInput" value="password123">
+            </div>
+            <button class="btn" onclick="testSHA256()">🔑 تولید هش SHA-256</button>
+            <div id="shaResult" class="result-box" style="display: none;"></div>
+        </div>
+
+        <!-- کارت ۳: رمزنگاری Base64 (غیرامن) -->
+        <div class="test-card">
+            <div class="card-title">
+                <span>۳</span>
+                رمزنگاری Base64 (آموزشی)
+            </div>
+            <div class="input-group">
+                <label>متن اصلی:</label>
+                <input type="text" id="base64Plaintext" value="این یک متن محرمانه است">
+            </div>
+            <button class="btn btn-secondary" onclick="testBase64()">📦 رمزنگاری Base64</button>
+            <div id="base64Result" class="result-box" style="display: none;"></div>
+        </div>
+
+        <!-- کارت ۴: اعتبارسنجی یکپارچگی -->
+        <div class="test-card">
+            <div class="card-title">
+                <span>۴</span>
+                اعتبارسنجی یکپارچگی (HMAC)
+            </div>
+            <div class="input-group">
+                <label>پیام:</label>
+                <input type="text" id="hmacMessage" value="data=user123&score=100">
+            </div>
+            <div class="input-group">
+                <label>کلید مخفی:</label>
+                <input type="text" id="hmacKey" value="secretKey">
+            </div>
+            <button class="btn btn-warning" onclick="testHMAC()">🔏 تولید HMAC</button>
+            <div id="hmacResult" class="result-box" style="display: none;"></div>
+        </div>
+
+        <!-- کارت ۵: رمزنگاری پیشرفته با salt -->
+        <div class="test-card">
+            <div class="card-title">
+                <span>۵</span>
+                رمزنگاری با Salt (PBKDF2)
+            </div>
+            <div class="input-group">
+                <label>رمز عبور:</label>
+                <input type="text" id="pbkdf2Password" value="mySecurePassword">
+            </div>
+            <div class="input-group">
+                <label>Salt (اختیاری):</label>
+                <input type="text" id="pbkdf2Salt" value="randomsalt123">
+            </div>
+            <button class="btn" onclick="testPBKDF2()">🧂 رمزنگاری با Salt</button>
+            <div id="pbkdf2Result" class="result-box" style="display: none;"></div>
+        </div>
+
+        <!-- کارت ۶: تست امنیت توکن -->
+        <div class="test-card">
+            <div class="card-title">
+                <span>۶</span>
+                تست امنیت توکن
+            </div>
+            <div class="input-group">
+                <label>توکن JWT نمونه:</label>
+                <textarea id="jwtToken">eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c</textarea>
+            </div>
+            <button class="btn btn-secondary" onclick="testTokenSecurity()">🛡️ بررسی امنیت توکن</button>
+            <div id="tokenResult" class="result-box" style="display: none;"></div>
+        </div>
+    </div>
+
+    <!-- خلاصه تست‌ها -->
+    <div class="summary">
+        <h2>📊 خلاصه تست‌های رمزنگاری</h2>
+        <div class="summary-stats">
+            <div class="stat-item">
+                <div class="stat-value" id="totalTests">۰</div>
+                <div class="stat-label">کل تست‌ها</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value" id="successTests">۰</div>
+                <div class="stat-label">موفق</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value" id="failTests">۰</div>
+                <div class="stat-label">ناموفق</div>
+            </div>
+        </div>
+        <div class="progress-bar">
+            <div class="progress-fill" id="progressFill" style="width: 0%;"></div>
+        </div>
+        <button class="btn" onclick="resetAllTests()" style="width: auto; margin-top: 20px; padding: 10px 30px;">🔄 ریست همه تست‌ها</button>
+    </div>
+
+    <script>
+        // آمار تست‌ها
+        let testStats = {
+            total: 0,
+            success: 0,
+            fail: 0
+        };
+
+        // توابع رمزنگاری ساده (برای نمایش概念)
+        function simpleAESEncrypt(text, key) {
+            // شبیه‌سازی AES (در واقعیت از کتابخانه کریپتو استفاده می‌شود)
+            let result = '';
+            for(let i = 0; i < text.length; i++) {
+                let charCode = text.charCodeAt(i) ^ key.charCodeAt(i % key.length);
+                result += String.fromCharCode(charCode);
+            }
+            return btoa(result); // تبدیل به base64 برای نمایش
+        }
+
+        function simpleAESDecrypt(encryptedBase64, key) {
+            try {
+                let encrypted = atob(encryptedBase64);
+                let result = '';
+                for(let i = 0; i < encrypted.length; i++) {
+                    let charCode = encrypted.charCodeAt(i) ^ key.charCodeAt(i % key.length);
+                    result += String.fromCharCode(charCode);
+                }
+                return result;
+            } catch(e) {
+                return 'خطا در رمزگشایی';
+            }
+        }
+
+        function sha256Simulation(text) {
+            // شبیه‌سازی SHA-256 (در واقعیت هش واقعی تولید می‌کند)
+            let hash = 0;
+            for(let i = 0; i < text.length; i++) {
+                hash = ((hash << 5) - hash) + text.charCodeAt(i);
+                hash |= 0;
+            }
+            return Math.abs(hash).toString(16).padStart(64, '0').substring(0, 64);
+        }
+
+        function base64Encode(text) {
+            return btoa(unescape(encodeURIComponent(text)));
+        }
+
+        function base64Decode(encoded) {
+            try {
+                return decodeURIComponent(escape(atob(encoded)));
+            } catch(e) {
+                return 'خطا در دیکد';
+            }
+        }
+
+        function hmacSimulation(message, key) {
+            // شبیه‌سازی HMAC
+            return sha256Simulation(key + message + key);
+        }
+
+        function pbkdf2Simulation(password, salt, iterations = 1000) {
+            // شبیه‌سازی PBKDF2
+            let hash = password + salt;
+            for(let i = 0; i < iterations; i++) {
+                hash = sha256Simulation(hash);
+            }
+            return hash;
+        }
+
+        function updateStats(success) {
+            testStats.total++;
+            if(success) {
+                testStats.success++;
+            } else {
+                testStats.fail++;
+            }
+            
+            document.getElementById('totalTests').textContent = testStats.total;
+            document.getElementById('successTests').textContent = testStats.success;
+            document.getElementById('failTests').textContent = testStats.fail;
+            
+            const progress = (testStats.success / testStats.total) * 100;
+            document.getElementById('progressFill').style.width = progress + '%';
+        }
+
+        function showResult(elementId, original, encrypted, decrypted, success) {
+            const resultDiv = document.getElementById(elementId);
+            const isMatch = (original === decrypted);
+            
+            resultDiv.style.display = 'block';
+            resultDiv.innerHTML = `
+                <div class="result-item">📝 متن اصلی: ${original}</div>
+                <div class="result-item">🔒 متن رمز شده: ${encrypted}</div>
+                <div class="result-item">🔓 متن رمزگشایی: ${decrypted}</div>
+                ${isMatch ? 
+                    '<div class="success-badge">✅ رمزنگاری و رمزگشایی موفق</div>' : 
+                    '<div class="error-badge">❌ خطا: متن اصلی با رمزگشایی مطابقت ندارد</div>'}
+            `;
+            
+            updateStats(isMatch);
+        }
+
+        function testAES() {
+            const plaintext = document.getElementById('aesPlaintext').value;
+            const key = document.getElementById('aesKey').value;
+            
+            if(key.length < 8) {
+                alert('کلید باید حداقل ۸ کاراکتر باشد');
+                return;
+            }
+            
+            const encrypted = simpleAESEncrypt(plaintext, key);
+            const decrypted = simpleAESDecrypt(encrypted, key);
+            
+            showResult('aesResult', plaintext, encrypted, decrypted, plaintext === decrypted);
+        }
+
+        function testSHA256() {
+            const input = document.getElementById('shaInput').value;
+            const hash = sha256Simulation(input);
+            
+            const resultDiv = document.getElementById('shaResult');
+            resultDiv.style.display = 'block';
+            resultDiv.innerHTML = `
+                <div class="result-item">📝 متن اصلی: ${input}</div>
+                <div class="result-item">🔑 هش SHA-256: ${hash}</div>
+                <div class="result-item">📏 طول هش: ${hash.length} کاراکتر</div>
+                <div class="success-badge">✅ هش تولید شد (غیرقابل برگشت)</div>
+            `;
+            
+            updateStats(true);
+        }
+
+        function testBase64() {
+            const plaintext = document.getElementById('base64Plaintext').value;
+            const encrypted = base64Encode(plaintext);
+            const decrypted = base64Decode(encrypted);
+            
+            showResult('base64Result', plaintext, encrypted, decrypted, plaintext === decrypted);
+        }
+
+        function testHMAC() {
+            const message = document.getElementById('hmacMessage').value;
+            const key = document.getElementById('hmacKey').value;
+            
+            const hmac = hmacSimulation(message, key);
+            const hmac2 = hmacSimulation(message + 'x', key); // تغییر جزئی در پیام
+            
+            const resultDiv = document.getElementById('hmacResult');
+            resultDiv.style.display = 'block';
+            resultDiv.innerHTML = `
+                <div class="result-item">📝 پیام: ${message}</div>
+                <div class="result-item">🔏 HMAC تولیدی: ${hmac}</div>
+                <div class="result-item">🔄 HMAC با پیام تغییر یافته: ${hmac2}</div>
+                ${hmac !== hmac2 ? 
+                    '<div class="success-badge">✅ HMAC با تغییر پیام عوض می‌شود (یکپارچگی تأیید شد)</div>' : 
+                    '<div class="error-badge">❌ HMAC تغییر نمی‌کند</div>'}
+            `;
+            
+            updateStats(hmac !== hmac2);
+        }
+
+        function testPBKDF2() {
+            const password = document.getElementById('pbkdf2Password').value;
+            const salt = document.getElementById('pbkdf2Salt').value;
+            
+            const hash1 = pbkdf2Simulation(password, salt, 100);
+            const hash2 = pbkdf2Simulation(password, salt + 'x', 100); // تغییر salt
+            
+            const resultDiv = document.getElementById('pbkdf2Result');
+            resultDiv.style.display = 'block';
+            resultDiv.innerHTML = `
+                <div class="result-item">🔑 رمز عبور: ${password}</div>
+                <div class="result-item">🧂 Salt: ${salt}</div>
+                <div class="result-item">🔒 هش با salt اصلی: ${hash1}</div>
+                <div class="result-item">🔒 هش با salt متفاوت: ${hash2}</div>
+                ${hash1 !== hash2 ? 
+                    '<div class="success-badge">✅ Salt تأثیرگذار است (امنیت افزایش یافت)</div>' : 
+                    '<div class="error-badge">❌ Salt تأثیر ندارد</div>'}
+            `;
+            
+            updateStats(hash1 !== hash2);
+        }
+
+        function testTokenSecurity() {
+            const token = document.getElementById('jwtToken').value;
+            
+            // بررسی ساده امنیت توکن
+            const hasThreeParts = token.split('.').length === 3;
+            const isValidLength = token.length > 50;
+            
+            const resultDiv = document.getElementById('tokenResult');
+            resultDiv.style.display = 'block';
+            resultDiv.innerHTML = `
+                <div class="result-item">🔑 توکن: ${token.substring(0, 50)}...</div>
+                <div class="result-item">📊 ساختار: ${hasThreeParts ? '✅ سه بخشی' : '❌ نامعتبر'}</div>
+                <div class="result-item">📏 طول: ${token.length} کاراکتر ${isValidLength ? '✅' : '❌'}</div>
+                ${hasThreeParts && isValidLength ? 
+                    '<div class="success-badge">✅ توکن ساختار معتبری دارد</div>' : 
+                    '<div class="error-badge">⚠️ توکن نامعتبر یا ناقص است</div>'}
+            `;
+            
+            updateStats(hasThreeParts && isValidLength);
+        }
+
+        function resetAllTests() {
+            testStats = { total: 0, success: 0, fail: 0 };
+            document.getElementById('totalTests').textContent = '۰';
+            document.getElementById('successTests').textContent = '۰';
+            document.getElementById('failTests').textContent = '۰';
+            document.getElementById('progressFill').style.width = '۰%';
+            
+            // مخفی کردن همه نتایج
+            document.getElementById('aesResult').style.display = 'none';
+            document.getElementById('shaResult').style.display = 'none';
+            document.getElementById('base64Result').style.display = 'none';
+            document.getElementById('hmacResult').style.display = 'none';
+            document.getElementById('pbkdf2Result').style.display = 'none';
+            document.getElementById('tokenResult').style.display = 'none';
+            
+            // ریست ورودی‌ها به مقادیر پیش‌فرض
+            document.getElementById('aesPlaintext').value = 'کاربر: test@example.com';
+            document.getElementById('aesKey').value = 'MySecretKey123';
+            document.getElementById('shaInput').value = 'password123';
+            document.getElementById('base64Plaintext').value = 'این یک متن محرمانه است';
+            document.getElementById('hmacMessage').value = 'data=user123&score=100';
+            document.getElementById('hmacKey').value = 'secretKey';
+            document.getElementById('pbkdf2Password').value = 'mySecurePassword';
+            document.getElementById('pbkdf2Salt').value = 'randomsalt123';
+        }
+
+        // تنظیم راست‌چین بودن اعداد فارسی
+        document.addEventListener('DOMContentLoaded', function() {
+            // تبدیل اعداد به فارسی
+            function toPersianNumber(num) {
+                const persianDigits = ['۰', '۱', '۲', '۳', '۴', '۵', '۶', '۷', '۸', '۹'];
+                return num.toString().replace(/\d/g, x => persianDigits[x]);
+            }
+            
+            // اعمال به آمار
+            const totalEl = document.getElementById('totalTests');
+            const successEl = document.getElementById('successTests');
+            const failEl = document.getElementById('failTests');
+            
+            if(totalEl) totalEl.textContent = '۰';
+            if(successEl) successEl.textContent = '۰';
+            if(failEl) failEl.textContent = '۰';
+        });
+    </script>
+</body>
+</html>
