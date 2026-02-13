@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.5, user-scalable=yes">
+    <title>تست دستی State Loading - Farsinglish</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: 'Tahoma', 'Arial', sans-serif;
+            background: #f8fafc;
+            padding: 16px;
+            padding-bottom: 40px;
+            color: #0f172a;
+        }
+        .container { max-width: 700px; margin: 0 auto; }
+        h1 {
+            font-size: 24px;
+            background: #1e293b;
+            color: white;
+            padding: 20px;
+            border-radius: 20px;
+            margin-bottom: 24px;
+            text-align: center;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+        }
+        .card {
+            background: white;
+            border-radius: 20px;
+            padding: 20px;
+            margin-bottom: 24px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+            border: 1px solid #e2e8f0;
+        }
+        .badge {
+            display: inline-block;
+            padding: 6px 14px;
+            border-radius: 30px;
+            font-size: 13px;
+            font-weight: bold;
+            margin-bottom: 16px;
+        }
+        .badge.blue { background: #dbeafe; color: #1e40af; border-right: 4px solid #2563eb; }
+        .state-box {
+            background: #f1f5f9;
+            border-radius: 16px;
+            padding: 20px;
+            margin: 16px 0;
+            border: 1px dashed #94a3b8;
+            min-height: 100px;
+        }
+        .loading { display: flex; align-items: center; gap: 12px; background: #fef9c3; padding: 12px; border-radius: 12px; color: #854d0e; }
+        .success { background: #dcfce7; padding: 12px; border-radius: 12px; color: #166534; }
+        .error { background: #fee2e2; padding: 12px; border-radius: 12px; color: #991b1b; }
+        .btn {
+            background: #2563eb;
+            color: white;
+            border: none;
+            padding: 14px 20px;
+            border-radius: 14px;
+            font-size: 16px;
+            font-weight: bold;
+            margin: 8px 4px;
+            cursor: pointer;
+            transition: 0.2s;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            min-width: 120px;
+        }
+        .btn.secondary { background: #475569; }
+        .btn.warning { background: #b45309; }
+        .btn.outline { background: white; color: #2563eb; border: 2px solid #2563eb; }
+        .btn-group { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 12px; }
+        .log {
+            background: #0f172a;
+            color: #e2e8f0;
+            padding: 16px;
+            border-radius: 14px;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            margin-top: 16px;
+            max-height: 200px;
+            overflow-y: auto;
+            direction: ltr;
+            text-align: left;
+        }
+        .summary { background: #0f172a; color: white; padding: 20px; border-radius: 20px; margin-top: 30px; }
+        .result-badge { display: inline-block; width: 12px; height: 12px; border-radius: 50%; margin-left: 8px; }
+        hr { margin: 24px 0; border: 1px solid #e2e8f0; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧪 تست دستی · State Loading/Success/Error</h1>
+        <p style="margin-bottom: 20px; background: #f1f5f9; padding: 14px; border-radius: 14px;">
+            ⚡ سناریوهای واقعی: لودینگ، موفقیت، خطا، تایم‌اوت، ریترای، کنسل، بازیابی
+        </p>
+
+        <!-- تست ۱: حالت لودینگ ساده -->
+        <div class="card">
+            <span class="badge blue">🧠 تست ۱ · حالت لودینگ</span>
+            <div id="state1Display" class="state-box">
+                <div style="color: #64748b;">⏳ وضعیت فعلی: —</div>
+            </div>
+            <div class="btn-group">
+                <button id="btnLoading1" class="btn">⏳ شروع لودینگ</button>
+                <button id="btnSuccess1" class="btn success" style="background:#22c55e; color:white;">✅ موفق</button>
+                <button id="btnError1" class="btn error" style="background:#ef4444; color:white;">❌ خطا</button>
+                <button id="btnReset1" class="btn outline">↺ ریست</button>
+            </div>
+            <div id="log1" class="log">[لاگ] منتظر عملیات...</div>
+        </div>
+
+        <!-- تست ۲: تایم‌اوت و ریترای -->
+        <div class="card">
+            <span class="badge blue">⏱️ تست ۲ · تایم‌اوت + ریترای</span>
+            <div id="state2Display" class="state-box">
+                <div>⏳ تلاش: <span id="retryCount">۰</span> از ۳</div>
+                <div id="timeoutStatus">⏸️ آماده</div>
+            </div>
+            <div class="btn-group">
+                <button id="btnStartTimeout" class="btn warning">⏱️ شروع تایم‌اوت (۳ثانیه)</button>
+                <button id="btnRetry" class="btn secondary">🔄 ریترای</button>
+                <button id="btnCancel" class="btn outline">✖️ کنسل</button>
+            </div>
+            <div id="log2" class="log">[لاگ] ...</div>
+        </div>
+
+        <!-- تست ۳: بازیابی از خطا (Recovery) -->
+        <div class="card">
+            <span class="badge blue">🔄 تست ۳ · بازیابی از خطا</span>
+            <div id="state3Display" class="state-box">
+                <div>📌 وضعیت: <span id="recoveryState">عادی</span></div>
+            </div>
+            <div class="btn-group">
+                <button id="btnTriggerError" class="btn error" style="background:#b45309;">⚠️ ایجاد خطای موقت</button>
+                <button id="btnRecover" class="btn success" style="background:#16a34a;">✅ بازیابی</button>
+                <button id="btnSimulateNetwork" class="btn secondary">📶 شبیه‌ساز شبکه</button>
+            </div>
+            <div id="log3" class="log">[لاگ] ...</div>
+        </div>
+
+        <!-- تست ۴: آبشار درخواست (Parallel/Sequential) -->
+        <div class="card">
+            <span class="badge blue">🌊 تست ۴ · درخواست‌های هم‌زمان</span>
+            <div id="state4Display" class="state-box">
+                <div>🔄 درخواست ۱: <span id="req1">—</span></div>
+                <div>🔄 درخواست ۲: <span id="req2">—</span></div>
+                <div>🔄 درخواست ۳: <span id="req3">—</span></div>
+            </div>
+            <div class="btn-group">
+                <button id="btnParallel" class="btn">⚡ اجرای هم‌زمان</button>
+                <button id="btnSequential" class="btn secondary">⏸️ اجرای ترتیبی</button>
+                <button id="btnReset4" class="btn outline">↺ ریست</button>
+            </div>
+            <div id="log4" class="log">[لاگ] ...</div>
+        </div>
+
+        <!-- دکمه پاک کردن همه لاگ‌ها -->
+        <button id="clearAllLogs" style="background:#334155; color:white; padding:14px; border-radius:50px; width:100%; margin-top:10px;">🧹 پاک کردن همه لاگ‌ها</button>
+
+        <!-- خلاصه نهایی -->
+        <div id="finalSummary" class="summary">
+            <h3 style="margin-bottom:12px;">📊 خلاصه تست‌های دستی</h3>
+            <div id="summaryContent">✅ ۴ سناریو اصلی · ۸ حالت مختلف · لودینگ/موفقیت/خطا/تایم‌اوت/ریترای/کنسل/بازیابی/همزمانی</div>
+            <p style="margin-top:16px; color:#94a3b8;">⏱️ آخرین به‌روزرسانی: <span id="timestamp">—</span></p>
+        </div>
+    </div>
+
+    <script>
+        (function(){
+            "use strict";
+
+            // --- Helper Logger ---
+            const LogManager = {
+                logs: { log1: [], log2: [], log3: [], log4: [] },
+                
+                add(containerId, message) {
+                    const logDiv = document.getElementById(containerId);
+                    if (!logDiv) return;
+                    const timestamp = new Date().toLocaleTimeString('fa-IR', { hour12: false });
+                    const entry = `[${timestamp}] ${message}`;
+                    this.logs[containerId]?.push(entry);
+                    if (this.logs[containerId].length > 8) this.logs[containerId].shift();
+                    logDiv.innerHTML = this.logs[containerId].map(e => `🔹 ${e}`).join('<br>') || '[لاگ] خالی';
+                },
+                
+                clear(containerId) {
+                    if (containerId) {
+                        this.logs[containerId] = [];
+                        const logDiv = document.getElementById(containerId);
+                        if (logDiv) logDiv.innerHTML = '[لاگ] پاک شد';
+                    }
+                },
+                
+                clearAll() {
+                    this.clear('log1'); this.clear('log2'); this.clear('log3'); this.clear('log4');
+                }
+            };
+
+            // --- حالت‌دهنده UI برای تست ۱ ---
+            const state1Display = document.getElementById('state1Display');
+            const log1 = 'log1';
+            
+            document.getElementById('btnLoading1').addEventListener('click', function() {
+                state1Display.innerHTML = `<div class="loading">⏳ لودینگ ... <span style="margin-right:auto;">🔄</span></div>`;
+                LogManager.add(log1, 'نمایش حالت لودینگ');
+            });
+            
+            document.getElementById('btnSuccess1').addEventListener('click', function() {
+                state1Display.innerHTML = `<div class="success">✅ عملیات با موفقیت انجام شد! <br> <small>📦 داده: ۱۲ درس بارگذاری شد</small></div>`;
+                LogManager.add(log1, 'نمایش حالت موفقیت');
+            });
+            
+            document.getElementById('btnError1').addEventListener('click', function() {
+                state1Display.innerHTML = `<div class="error">❌ خطا: اتصال به سرور برقرار نشد (کد ۴۰۴) <br> <small>⏱️ ۳ ثانیه دیگر تلاش مجدد...</small></div>`;
+                LogManager.add(log1, 'نمایش حالت خطا - 404');
+            });
+            
+            document.getElementById('btnReset1').addEventListener('click', function() {
+                state1Display.innerHTML = `<div style="color: #64748b;">⏳ وضعیت فعلی: —</div>`;
+                LogManager.add(log1, 'ریست state');
+            });
+
+            // --- تست ۲: تایم‌اوت و ریترای ---
+            let timeoutId = null;
+            let retryAttempt = 0;
+            const retrySpan = document.getElementById('retryCount');
+            const timeoutStatus = document.getElementById('timeoutStatus');
+            const state2Display = document.getElementById('state2Display');
+            const log2 = 'log2';
+
+            function resetTimeoutUI() {
+                if (timeoutId) clearTimeout(timeoutId);
+                timeoutId = null;
+                retryAttempt = 0;
+                retrySpan.innerText = retryAttempt;
+                timeoutStatus.innerText = '⏸️ متوقف';
+                timeoutStatus.style.color = '#64748b';
+                state2Display.innerHTML = `<div>⏳ تلاش: <span id="retryCount">۰</span> از ۳</div><div id="timeoutStatus">⏸️ آماده</div>`;
+                // ری‌اتصال span
+                document.getElementById('retryCount').innerText = '۰';
+            }
+
+            document.getElementById('btnStartTimeout').addEventListener('click', function() {
+                resetTimeoutUI();
+                retryAttempt = 1;
+                retrySpan.innerText = retryAttempt;
+                timeoutStatus.innerText = '⏳ در حال انتظار (۳ ثانیه) ...';
+                timeoutStatus.style.color = '#b45309';
+                state2Display.innerHTML = `<div class="loading">⏳ تایم‌اوت ۳ ثانیه ...</div>`;
+                LogManager.add(log2, 'شروع تایم‌اوت');
+
+                timeoutId = setTimeout(() => {
+                    state2Display.innerHTML = `<div class="error">⏰ خطای تایم‌اوت! پاسخ از سرور دریافت نشد.</div>`;
+                    timeoutStatus.innerText = '❌ تایم‌اوت';
+                    LogManager.add(log2, 'تایم‌اوت - عدم پاسخ');
+                    timeoutId = null;
+                }, 3000);
+            });
+
+            document.getElementById('btnRetry').addEventListener('click', function() {
+                if (timeoutId) clearTimeout(timeoutId);
+                retryAttempt++;
+                if (retryAttempt > 3) retryAttempt = 3;
+                retrySpan.innerText = retryAttempt;
+                timeoutStatus.innerText = `🔄 ریترای شماره ${retryAttempt}`;
+                state2Display.innerHTML = `<div class="loading">🔄 تلاش مجدد (${retryAttempt}/۳) ...</div>`;
+                LogManager.add(log2, `ریترای: تلاش ${retryAttempt}`);
+                
+                if (retryAttempt < 3) {
+                    timeoutId = setTimeout(() => {
+                        state2Display.innerHTML = `<div class="error">⏰ تایم‌اوت مجدد! (تلاش ${retryAttempt})</div>`;
+                        LogManager.add(log2, `تایم‌اوت در ریترای ${retryAttempt}`);
+                        timeoutId = null;
+                    }, 3000);
+                } else {
+                    // تلاش سوم - موفقیت فرضی
+                    setTimeout(() => {
+                        state2Display.innerHTML = `<div class="success">✅ موفق! داده پس از ۳ ریترای دریافت شد.</div>`;
+                        timeoutStatus.innerText = '✅ موفق';
+                        LogManager.add(log2, 'ریترای سوم موفقیت‌آمیز');
+                    }, 1500);
+                }
+            });
+
+            document.getElementById('btnCancel').addEventListener('click', function() {
+                if (timeoutId) {
+                    clearTimeout(timeoutId);
+                    timeoutId = null;
+                }
+                retryAttempt = 0;
+                retrySpan.innerText = retryAttempt;
+                timeoutStatus.innerText = '✖️ کنسل شد';
+                state2Display.innerHTML = `<div style="background:#e2e8f0; padding:10px;">✖️ درخواست توسط کاربر لغو شد.</div>`;
+                LogManager.add(log2, 'عملیات کنسل شد');
+            });
+
+            // --- تست ۳: بازیابی از خطا ---
+            const recoveryState = document.getElementById('recoveryState');
+            const state3Display = document.getElementById('state3Display');
+            const log3 = 'log3';
+            
+            document.getElementById('btnTriggerError').addEventListener('click', function() {
+                state3Display.innerHTML = `<div class="error">⚠️ خطای موقت شبکه! اتصال قطع است.<br><small>تلاش خودکار برای بازیابی...</small></div>`;
+                recoveryState.innerText = '⚠️ خطا';
+                LogManager.add(log3, 'خطای موقت شبکه ایجاد شد');
+            });
+            
+            document.getElementById('btnRecover').addEventListener('click', function() {
+                state3Display.innerHTML = `<div class="success">✅ اتصال بازیابی شد! همگام‌سازی انجام گردید.<br><small>📦 ۵ درس آفلاین ذخیره شد.</small></div>`;
+                recoveryState.innerText = '✅ عادی - بازیابی شده';
+                LogManager.add(log3, 'بازیابی دستی با موفقیت');
+            });
+            
+            document.getElementById('btnSimulateNetwork').addEventListener('click', function() {
+                state3Display.innerHTML = `<div class="loading">📶 شبیه‌ساز شبکه: قطع و وصل ...<br><small>در حال تلاش مجدد (۲/۵)</small></div>`;
+                recoveryState.innerText = '🔄 در حال بازیابی';
+                LogManager.add(log3, 'شبیه‌ساز شبکه فعال شد');
+                setTimeout(() => {
+                    if (state3Display.innerHTML.includes('شبیه‌ساز')) {
+                        state3Display.innerHTML = `<div class="success">✅ شبکه پایدار شد. همگام‌سازی کامل.</div>`;
+                        recoveryState.innerText = '✅ بازیابی خودکار';
+                        LogManager.add(log3, 'بازیابی خودکار پس از شبیه‌سازی');
+                    }
+                }, 2500);
+            });
+
+            // --- تست ۴: همزمانی ---
+            const req1 = document.getElementById('req1');
+            const req2 = document.getElementById('req2');
+            const req3 = document.getElementById('req3');
+            const state4Display = document.getElementById('state4Display');
+            const log4 = 'log4';
+
+            document.getElementById('btnParallel').addEventListener('click', function() {
+                req1.innerText = '⏳ لودینگ'; req2.innerText = '⏳ لودینگ'; req3.innerText = '⏳ لودینگ';
+                state4Display.innerHTML = `<div class="loading">⚡ اجرای همزمان ۳ درخواست ...</div>`;
+                LogManager.add(log4, 'شروع ۳ درخواست همزمان');
+                
+                setTimeout(() => { req1.innerText = '✅ موفق (درس ۱)'; }, 800);
+                setTimeout(() => { req2.innerText = '✅ موفق (درس ۷)'; }, 1200);
+                setTimeout(() => { 
+                    req3.innerText = '✅ موفق (درس ۱۲)'; 
+                    state4Display.innerHTML = `<div class="success">🌊 همه درخواست‌های همزمان کامل شدند.</div>`;
+                    LogManager.add(log4, '۳ درخواست همزمان با موفقیت انجام شد');
+                }, 1600);
+            });
+
+            document.getElementById('btnSequential').addEventListener('click', function() {
+                req1.innerText = '⏳ لودینگ'; req2.innerText = '⏳ در انتظار'; req3.innerText = '⏳ در انتظار';
+                state4Display.innerHTML = `<div class="loading">⏸️ اجرای ترتیبی ...</div>`;
+                LogManager.add(log4, 'شروع ترتیبی درخواست‌ها');
+                
+                setTimeout(() => {
+                    req1.innerText = '✅ موفق (درس ۱)';
+                    req2.innerText = '⏳ لودینگ';
+                    setTimeout(() => {
+                        req2.innerText = '✅ موفق (درس ۷)';
+                        req3.innerText = '⏳ لودینگ';
+                        setTimeout(() => {
+                            req3.innerText = '✅ موفق (درس ۱۲)';
+                            state4Display.innerHTML = `<div class="success">🔁 همه درخواست‌های ترتیبی کامل شدند.</div>`;
+                            LogManager.add(log4, '۳ درخواست ترتیبی موفق');
+                        }, 900);
+                    }, 900);
+                }, 900);
+            });
+
+            document.getElementById('btnReset4').addEventListener('click', function() {
+                req1.innerText = '—'; req2.innerText = '—'; req3.innerText = '—';
+                state4Display.innerHTML = `<div>🔄 درخواست ۱: <span id="req1">—</span></div><div>🔄 درخواست ۲: <span id="req2">—</span></div><div>🔄 درخواست ۳: <span id="req3">—</span></div>`;
+                LogManager.add(log4, 'ریست تست همزمانی');
+            });
+
+            // --- Clear all logs ---
+            document.getElementById('clearAllLogs').addEventListener('click', function() {
+                LogManager.clearAll();
+            });
+
+            // --- timestamp ---
+            function updateTimestamp() {
+                document.getElementById('timestamp').innerText = new Date().toLocaleString('fa-IR');
+            }
+            updateTimestamp();
+            setInterval(updateTimestamp, 1000);
+
+            // --- لاگ اولیه ---
+            LogManager.add('log1', 'آماده');
+            LogManager.add('log2', 'آماده');
+            LogManager.add('log3', 'آماده');
+            LogManager.add('log4', 'آماده');
+
+            // reset timeout ui on load
+            resetTimeoutUI();
+        })();
+    </script>
+</body>
+  </html>
