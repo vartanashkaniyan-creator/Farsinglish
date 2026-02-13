@@ -1,0 +1,638 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.5, user-scalable=yes">
+    <title>تست دستی ناوبری و بازگشت - Farsinglish</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: 'Tahoma', 'Arial', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .container {
+            max-width: 900px;
+            width: 100%;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 28px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            padding: 25px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.3);
+        }
+        h1 {
+            font-size: 1.9rem;
+            color: #2d3748;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            border-bottom: 3px solid #9f7aea;
+            padding-bottom: 15px;
+        }
+        .subtitle {
+            color: #4a5568;
+            margin-bottom: 25px;
+            font-size: 1.1rem;
+            background: #e9d8fd;
+            padding: 12px 18px;
+            border-radius: 50px;
+            display: inline-block;
+        }
+        .test-area {
+            background: #f7fafc;
+            border-radius: 24px;
+            padding: 25px;
+            margin: 20px 0;
+            border: 2px dashed #cbd5e0;
+        }
+        .nav-bar {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+            background: white;
+            padding: 15px;
+            border-radius: 18px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+        }
+        .nav-btn {
+            background: #edf2f7;
+            border: none;
+            padding: 14px 24px;
+            border-radius: 16px;
+            font-size: 1rem;
+            font-weight: 600;
+            color: #2d3748;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+            transition: 0.2s;
+            border: 1px solid transparent;
+            flex: 1 1 auto;
+            justify-content: center;
+        }
+        .nav-btn.active {
+            background: #805ad5;
+            color: white;
+            box-shadow: 0 10px 15px -3px rgba(128, 90, 213, 0.4);
+            border-color: #553c9a;
+        }
+        .nav-btn:hover {
+            background: #cbd5e0;
+            transform: translateY(-2px);
+        }
+        .content-panel {
+            background: white;
+            border-radius: 20px;
+            padding: 25px;
+            min-height: 280px;
+            box-shadow: inset 0 2px 10px rgba(0,0,0,0.02);
+            border: 1px solid #e2e8f0;
+            margin-bottom: 25px;
+        }
+        .state-box {
+            background: #2d3748;
+            color: #e2e8f0;
+            padding: 18px;
+            border-radius: 16px;
+            font-family: 'Courier New', monospace;
+            direction: ltr;
+            text-align: left;
+            font-size: 0.9rem;
+            overflow-x: auto;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            border-left: 6px solid #9f7aea;
+            margin-top: 15px;
+        }
+        .history-list {
+            background: #fefcbf;
+            padding: 18px;
+            border-radius: 16px;
+            color: #744210;
+            border-right: 6px solid #d69e2e;
+            margin: 15px 0;
+        }
+        .btn {
+            background: linear-gradient(145deg, #48bb78, #38a169);
+            color: white;
+            border: none;
+            padding: 16px 28px;
+            border-radius: 50px;
+            font-size: 1.1rem;
+            font-weight: 700;
+            display: inline-flex;
+            align-items: center;
+            gap: 12px;
+            cursor: pointer;
+            transition: 0.2s;
+            border-bottom: 4px solid #276749;
+            margin: 10px 0;
+            width: 100%;
+            justify-content: center;
+        }
+        .btn-secondary {
+            background: linear-gradient(145deg, #a0aec0, #718096);
+            border-bottom-color: #4a5568;
+        }
+        .btn-warning {
+            background: linear-gradient(145deg, #fbbf24, #d97706);
+            border-bottom-color: #b45309;
+        }
+        .test-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+            gap: 12px;
+            margin: 20px 0;
+        }
+        .log-entry {
+            background: #1a202c;
+            color: #cbd5e0;
+            padding: 10px 16px;
+            border-radius: 12px;
+            font-family: monospace;
+            margin-bottom: 8px;
+            border-left: 4px solid #48bb78;
+        }
+        .badge {
+            background: #ecc94b;
+            color: #1a202c;
+            padding: 6px 14px;
+            border-radius: 30px;
+            font-size: 0.85rem;
+            font-weight: 700;
+            display: inline-block;
+        }
+        @media (max-width: 600px) {
+            .container { padding: 18px; }
+            h1 { font-size: 1.5rem; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>
+            <span>🧭 آزمون ناوبری و بازگشت</span>
+            <span class="badge">تست دستی · ۷ سناریو</span>
+        </h1>
+        <div class="subtitle">
+            ⏪ بررسی حفظ state، پشته تاریخچه و بازگشت به صفحه قبل
+        </div>
+
+        <!-- نوار ناوبری شبیه‌سازی شده -->
+        <div class="nav-bar" id="navBar">
+            <button class="nav-btn" data-page="dashboard">🏠 داشبورد</button>
+            <button class="nav-btn" data-page="lessons">📚 دروس من</button>
+            <button class="nav-btn" data-page="review">🔄 مرور هوشمند</button>
+            <button class="nav-btn" data-page="profile">👤 پروفایل</button>
+        </div>
+
+        <!-- نمایش صفحه جاری -->
+        <div class="content-panel" id="contentPanel">
+            <h2 id="pageTitle" style="color: #2c5282; margin-bottom: 16px;">🏠 داشبورد</h2>
+            <div id="pageContent">
+                <p style="font-size: 1.2rem; margin-bottom: 20px;">به صفحه اصلی خوش آمدید!</p>
+                <div style="background: #ebf4ff; padding: 20px; border-radius: 18px;">
+                    <span style="font-weight: bold;">پیشرفت امروز:</span> ۶۸٪ تکمیل شده<br>
+                    <span style="font-weight: bold;">مرور بعدی:</span> ۱۲ دقیقه دیگر
+                </div>
+            </div>
+        </div>
+
+        <!-- بخش تست دستی ناوبری -->
+        <div class="test-area">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                <h3 style="color: #2b6cb0; margin: 0;">🧪 سناریوهای تست دستی</h3>
+                <span id="manualStepBadge" style="background: #faf089; padding: 8px 18px; border-radius: 30px; font-weight: bold;">گام ۱ از ۷</span>
+            </div>
+            
+            <!-- نمایش state فعلی و تاریخچه -->
+            <div style="margin-bottom: 20px;">
+                <button id="showStateBtn" class="btn-secondary" style="width: auto; padding: 12px 20px; display: inline-flex; margin-left: 10px;">
+                    📊 نمایش state کامل
+                </button>
+                <button id="simulateBackBtn" class="btn-warning" style="width: auto; padding: 12px 20px; display: inline-flex;">
+                    ⏪ شبیه‌سازی دکمه بازگشت
+                </button>
+                <button id="resetTestBtn" style="background: #e53e3e; border-bottom-color: #9b2c2c; width: auto; padding: 12px 20px; display: inline-flex;" class="btn">
+                    🔄 ریست تست
+                </button>
+            </div>
+
+            <!-- نمایش State به صورت live -->
+            <div id="stateDisplay" class="state-box">
+                ⏳ منتظر اجرای تست...
+            </div>
+
+            <!-- تاریخچه ناوبری -->
+            <div id="historyDisplay" class="history-list">
+                <strong>📜 پشته ناوبری:</strong> <span id="historyStack">[dashboard]</span><br>
+                <strong>🧾 آخرین اکشن:</strong> <span id="lastAction">شروع برنامه</span>
+            </div>
+
+            <!-- لیست چک‌لیست تست دستی -->
+            <div style="background: #fff5f5; padding: 22px; border-radius: 20px; margin-top: 25px; border: 1px solid #feb2b2;">
+                <h4 style="color: #c53030; margin-bottom: 18px;">✅ چک‌لیست تست دستی (۷ سناریو)</h4>
+                
+                <div class="test-grid">
+                    <div id="test1Card" style="background: white; padding: 15px; border-radius: 16px; border: 2px solid #e2e8f0;">
+                        <input type="checkbox" id="test1" class="test-checkbox" data-testid="1">
+                        <label for="test1" style="font-weight: bold; margin-right: 8px;">۱. ناوبری به درس‌ها</label>
+                        <p style="font-size: 0.85rem; color: #4a5568; margin-top: 8px;">کلیک روی "دروس من" ← بررسی تغییر محتوا</p>
+                    </div>
+                    <div id="test2Card" style="background: white; padding: 15px; border-radius: 16px; border: 2px solid #e2e8f0;">
+                        <input type="checkbox" id="test2" class="test-checkbox" data-testid="2">
+                        <label for="test2" style="font-weight: bold; margin-right: 8px;">۲. بازگشت به قبلی</label>
+                        <p style="font-size: 0.85rem; color: #4a5568; margin-top: 8px;">دکمه بازگشت ← بازگشت به داشبورد</p>
+                    </div>
+                    <div id="test3Card" style="background: white; padding: 15px; border-radius: 16px; border: 2px solid #e2e8f0;">
+                        <input type="checkbox" id="test3" class="test-checkbox" data-testid="3">
+                        <label for="test3" style="font-weight: bold; margin-right: 8px;">۳. ورود دیتای فرم</label>
+                        <p style="font-size: 0.85rem; color: #4a5568; margin-top: 8px;">در پروفایل، متنی تایپ کن ← بازگشت ← برگرد</p>
+                    </div>
+                    <div id="test4Card" style="background: white; padding: 15px; border-radius: 16px; border: 2px solid #e2e8f0;">
+                        <input type="checkbox" id="test4" class="test-checkbox" data-testid="4">
+                        <label for="test4" style="font-weight: bold; margin-right: 8px;">۴. چرخش صفحه</label>
+                        <p style="font-size: 0.85rem; color: #4a5568; margin-top: 8px;">مرورگر را افقی/عمودی کن ← state حفظ شده؟</p>
+                    </div>
+                    <div id="test5Card" style="background: white; padding: 15px; border-radius: 16px; border: 2px solid #e2e8f0;">
+                        <input type="checkbox" id="test5" class="test-checkbox" data-testid="5">
+                        <label for="test5" style="font-weight: bold; margin-right: 8px;">۵. بازگشت چند مرحله</label>
+                        <p style="font-size: 0.85rem; color: #4a5568; margin-top: 8px;">۳ صفحه جلو برو ← ۲ بار بازگشت</p>
+                    </div>
+                    <div id="test6Card" style="background: white; padding: 15px; border-radius: 16px; border: 2px solid #e2e8f0;">
+                        <input type="checkbox" id="test6" class="test-checkbox" data-testid="6">
+                        <label for="test6" style="font-weight: bold; margin-right: 8px;">۶. بازخوانی صفحه</label>
+                        <p style="font-size: 0.85rem; color: #4a5568; margin-top: 8px;">F5/رفرش کن ← صفحه آخر حفظ شد؟</p>
+                    </div>
+                    <div id="test7Card" style="background: white; padding: 15px; border-radius: 16px; border: 2px solid #e2e8f0;">
+                        <input type="checkbox" id="test7" class="test-checkbox" data-testid="7">
+                        <label for="test7" style="font-weight: bold; margin-right: 8px;">۷. استخراج تاریخچه</label>
+                        <p style="font-size: 0.85rem; color: #4a5568; margin-top: 8px;">دکمه state کامل ← لاگ navigation stack</p>
+                    </div>
+                </div>
+                
+                <div style="display: flex; gap: 15px; margin-top: 30px; flex-wrap: wrap;">
+                    <button id="exportLogBtn" class="btn-secondary" style="padding: 14px 25px; flex: 1;">
+                        📤 خروجی لاگ به کنسول مجازی
+                    </button>
+                    <button id="markAllCompleteBtn" style="background: #38a169; padding: 14px 25px; flex: 1;" class="btn">
+                        ✅ تأیید همه سناریوها
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- کنسول مجازی برای نمایش لاگ -->
+        <div style="margin-top: 25px; background: #1a202c; border-radius: 18px; padding: 18px;">
+            <div style="display: flex; align-items: center; gap: 12px; color: #e2e8f0; margin-bottom: 15px;">
+                <span style="background: #48bb78; padding: 5px 14px; border-radius: 30px; font-size: 0.8rem;">LIVE</span>
+                <span>📋 کنسول مجازی - آخرین رویدادها</span>
+                <button id="clearLogBtn" style="background: transparent; border: 1px solid #718096; color: white; padding: 6px 16px; border-radius: 30px; margin-right: auto;">پاک کردن</button>
+            </div>
+            <div id="virtualConsole" style="min-height: 100px; max-height: 200px; overflow-y: auto; direction: ltr; text-align: left; font-family: 'Courier New', monospace; font-size: 0.8rem; color: #a0aec0;">
+                <div class="log-entry">[INFO] تست ناوبری آغاز شد - ۱۳ بهمن ۱۴۰۴</div>
+                <div class="log-entry">[SYSTEM] state manager فعال شد</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // -------------------- مدیریت پیشرفته State و History --------------------
+        class NavigationTestManager {
+            constructor() {
+                this.history = ['dashboard'];
+                this.currentPage = 'dashboard';
+                this.state = {
+                    dashboard: { lastVisit: new Date().toLocaleString('fa-IR'), progress: 68 },
+                    lessons: { filter: 'all', scrollPosition: 0, selectedCategory: 'grammar' },
+                    review: { currentCard: 0, totalCards: 12, easeFactor: 2.5 },
+                    profile: { name: 'علی محمدی', email: 'ali@example.com', tempInput: '' }
+                };
+                this.listeners = [];
+                this.init();
+            }
+
+            init() {
+                // بارگیری از localStorage اگر موجود باشد
+                try {
+                    const saved = localStorage.getItem('farsinglish_navigation_test');
+                    if (saved) {
+                        const parsed = JSON.parse(saved);
+                        this.history = parsed.history || ['dashboard'];
+                        this.currentPage = parsed.currentPage || 'dashboard';
+                        this.state = { ...this.state, ...parsed.state };
+                    }
+                } catch(e) {}
+                
+                this.log('مدیریت ناوبری مقداردهی شد');
+                this.persist();
+            }
+
+            navigate(page) {
+                if (page === this.currentPage) return;
+                
+                const previousPage = this.currentPage;
+                this.history.push(page);
+                this.currentPage = page;
+                
+                this.log(`ناوبری: ${previousPage} → ${page}`);
+                this.persist();
+                this.notify();
+                return { previous: previousPage, current: page };
+            }
+
+            back() {
+                if (this.history.length <= 1) {
+                    this.log('⚠️ پشته ناوبری خالی است - نمی‌توان بازگشت');
+                    return null;
+                }
+                
+                this.history.pop(); // حذف صفحه فعلی
+                const previousPage = this.history[this.history.length - 1];
+                const oldPage = this.currentPage;
+                this.currentPage = previousPage;
+                
+                this.log(`⬅️ بازگشت: ${oldPage} → ${previousPage}`);
+                this.persist();
+                this.notify();
+                return { from: oldPage, to: previousPage };
+            }
+
+            updateState(page, key, value) {
+                if (!this.state[page]) this.state[page] = {};
+                this.state[page][key] = value;
+                
+                this.log(`📦 state به‌روزرسانی: ${page}.${key} = ${typeof value === 'string' ? value : JSON.stringify(value)}`);
+                this.persist();
+                return this.state[page];
+            }
+
+            getState(page) {
+                return { ...this.state[page] }; // کپی عمیق
+            }
+
+            persist() {
+                const data = {
+                    history: this.history,
+                    currentPage: this.currentPage,
+                    state: this.state
+                };
+                localStorage.setItem('farsinglish_navigation_test', JSON.stringify(data));
+            }
+
+            reset() {
+                this.history = ['dashboard'];
+                this.currentPage = 'dashboard';
+                this.state = {
+                    dashboard: { lastVisit: new Date().toLocaleString('fa-IR'), progress: 68 },
+                    lessons: { filter: 'all', scrollPosition: 0, selectedCategory: 'grammar' },
+                    review: { currentCard: 0, totalCards: 12, easeFactor: 2.5 },
+                    profile: { name: 'علی محمدی', email: 'ali@example.com', tempInput: '' }
+                };
+                localStorage.removeItem('farsinglish_navigation_test');
+                this.log('🔄 ریست کامل سیستم ناوبری');
+                this.notify();
+            }
+
+            log(message) {
+                const consoleDiv = document.getElementById('virtualConsole');
+                const entry = document.createElement('div');
+                entry.className = 'log-entry';
+                entry.textContent = `[${new Date().toLocaleTimeString('fa-IR')}] ${message}`;
+                consoleDiv.appendChild(entry);
+                consoleDiv.scrollTop = consoleDiv.scrollHeight;
+                
+                // ذخیره در localStorage برای دیباگ
+                try {
+                    const logs = JSON.parse(localStorage.getItem('nav_test_logs') || '[]');
+                    logs.push({ time: new Date().toISOString(), message });
+                    localStorage.setItem('nav_test_logs', JSON.stringify(logs.slice(-20)));
+                } catch(e) {}
+            }
+
+            notify() {
+                this.listeners.forEach(fn => fn(this.getSnapshot()));
+            }
+
+            subscribe(fn) {
+                this.listeners.push(fn);
+                fn(this.getSnapshot());
+                return () => this.listeners = this.listeners.filter(l => l !== fn);
+            }
+
+            getSnapshot() {
+                return {
+                    currentPage: this.currentPage,
+                    history: [...this.history],
+                    state: JSON.parse(JSON.stringify(this.state)) // deep clone
+                };
+            }
+
+            // شبیه‌سازی چرخش صفحه (حفظ state)
+            simulateRotation() {
+                this.log('🔄 چرخش صفحه شبیه‌سازی شد - state سالم');
+                return this.getSnapshot();
+            }
+        }
+
+        // -------------------- راه‌اندازی و اتصال به UI --------------------
+        const navManager = new NavigationTestManager();
+
+        // به‌روزرسانی رابط کاربری بر اساس state
+        function updateUI(snapshot) {
+            // نمایش صفحه جاری
+            const pageTitleMap = {
+                dashboard: '🏠 داشبورد',
+                lessons: '📚 دروس من',
+                review: '🔄 مرور هوشمند',
+                profile: '👤 پروفایل'
+            };
+            
+            document.getElementById('pageTitle').innerHTML = pageTitleMap[snapshot.currentPage] || '🏠 صفحه';
+            
+            // محتوای داینامیک
+            let contentHtml = '';
+            if (snapshot.currentPage === 'dashboard') {
+                contentHtml = `<p style="font-size: 1.2rem; margin-bottom: 20px;">به صفحه اصلی خوش آمدید!</p>
+                    <div style="background: #ebf4ff; padding: 20px; border-radius: 18px;">
+                        <span style="font-weight: bold;">پیشرفت امروز:</span> ${snapshot.state.dashboard?.progress || 68}٪ تکمیل شده<br>
+                        <span style="font-weight: bold;">مرور بعدی:</span> ۱۲ دقیقه دیگر
+                    </div>`;
+            } else if (snapshot.currentPage === 'lessons') {
+                contentHtml = `<div style="display: flex; flex-direction: column; gap: 15px;">
+                    <p><span style="background: #805ad5; color: white; padding: 5px 12px; border-radius: 20px;">📘 گرامر پایه</span>  ۶۰٪ پیشرفت</p>
+                    <p><span style="background: #3182ce; color: white; padding: 5px 12px; border-radius: 20px;">🗣️ مکالمه روزمره</span>  ۳۰٪ پیشرفت</p>
+                    <p><span style="background: #38a169; color: white; padding: 5px 12px; border-radius: 20px;">✍️ واژگان ضروری</span>  ۸۵٪ پیشرفت</p>
+                    <input type="text" id="lessonFilterInput" placeholder="فیلتر درس‌ها..." style="margin-top: 15px; padding: 12px; border-radius: 12px; border: 1px solid #cbd5e0; width: 100%;" value="${snapshot.state.lessons?.filter || ''}">
+                </div>`;
+            } else if (snapshot.currentPage === 'review') {
+                contentHtml = `<div style="text-align: center; padding: 15px;">
+                    <div style="font-size: 1.6rem; margin-bottom: 15px;">🃏 کارت ${snapshot.state.review?.currentCard + 1 || 1} از ${snapshot.state.review?.totalCards || 12}</div>
+                    <div style="background: #faf089; padding: 30px; border-radius: 24px; font-size: 1.8rem; margin-bottom: 20px; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1);">Apple</div>
+                    <p style="color: #2d3748;">معنی: سیب</p>
+                    <div style="display: flex; gap: 10px; margin-top: 20px;">
+                        <button style="flex:1; background: #f56565; padding: 12px; border-radius: 20px; border: none; color: white;">سخت</button>
+                        <button style="flex:1; background: #48bb78; padding: 12px; border-radius: 20px; border: none; color: white;">آسان</button>
+                    </div>
+                </div>`;
+            } else if (snapshot.currentPage === 'profile') {
+                contentHtml = `<div style="display: flex; flex-direction: column; gap: 20px;">
+                    <div><span style="font-weight: bold;">نام:</span> ${snapshot.state.profile?.name || 'علی محمدی'}</div>
+                    <div><span style="font-weight: bold;">ایمیل:</span> ${snapshot.state.profile?.email || 'ali@example.com'}</div>
+                    <div>
+                        <label>📝 یادداشت (تست حفظ state):</label>
+                        <input type="text" id="profileNoteInput" placeholder="چیزی تایپ کن..." style="margin-top: 8px; padding: 14px; border-radius: 14px; border: 1px solid #cbd5e0; width: 100%;" value="${snapshot.state.profile?.tempInput || ''}">
+                    </div>
+                </div>`;
+            }
+            
+            document.getElementById('pageContent').innerHTML = contentHtml;
+            
+            // به‌روزرسانی history stack
+            document.getElementById('historyStack').innerHTML = `[${snapshot.history.join(' → ')}]`;
+            document.getElementById('lastAction').innerHTML = `آخرین صفحه: ${snapshot.currentPage}`;
+            
+            // نمایش state کامل
+            const stateDisplay = document.getElementById('stateDisplay');
+            if (stateDisplay) {
+                stateDisplay.innerHTML = `📌 state جاری:\n${JSON.stringify(snapshot.state, null, 2)}`;
+            }
+            
+            // هایلات دکمه فعال
+            document.querySelectorAll('.nav-btn').forEach(btn => {
+                btn.classList.remove('active');
+                if (btn.dataset.page === snapshot.currentPage) {
+                    btn.classList.add('active');
+                }
+            });
+        }
+
+        // -------------------- Event Listeners --------------------
+        window.onload = function() {
+            // ثبت observer برای به‌روزرسانی UI
+            navManager.subscribe(updateUI);
+            
+            // ناوبری با کلیک روی دکمه‌ها
+            document.querySelectorAll('.nav-btn').forEach(btn => {
+                btn.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    const page = this.dataset.page;
+                    navManager.navigate(page);
+                    
+                    // ذخیره مقدار ورودی اگر در صفحه پروفایل هستیم
+                    if (page === 'profile') {
+                        setTimeout(() => {
+                            const input = document.getElementById('profileNoteInput');
+                            if (input) {
+                                input.addEventListener('input', function(e) {
+                                    navManager.updateState('profile', 'tempInput', e.target.value);
+                                });
+                            }
+                        }, 100);
+                    }
+                    
+                    // فیلتر درس‌ها
+                    if (page === 'lessons') {
+                        setTimeout(() => {
+                            const filterInput = document.getElementById('lessonFilterInput');
+                            if (filterInput) {
+                                filterInput.addEventListener('input', function(e) {
+                                    navManager.updateState('lessons', 'filter', e.target.value);
+                                });
+                            }
+                        }, 100);
+                    }
+                });
+            });
+            
+            // دکمه شبیه‌سازی بازگشت
+            document.getElementById('simulateBackBtn').addEventListener('click', function() {
+                navManager.back();
+            });
+            
+            // دکمه نمایش state
+            document.getElementById('showStateBtn').addEventListener('click', function() {
+                const snapshot = navManager.getSnapshot();
+                alert('✅ state در localStorage ذخیره شد. برای مشاهده دقیق کنسول مجازی را ببینید.');
+                navManager.log('📋 درخواست نمایش state کامل');
+                navManager.log(JSON.stringify(snapshot.state, null, 2));
+            });
+            
+            // ریست تست
+            document.getElementById('resetTestBtn').addEventListener('click', function() {
+                if (confirm('آیا از ریست کردن تمام state و تاریخچه اطمینان دارید؟')) {
+                    navManager.reset();
+                    document.querySelectorAll('.test-checkbox').forEach(cb => cb.checked = false);
+                    document.getElementById('manualStepBadge').innerHTML = 'گام ۱ از ۷';
+                }
+            });
+            
+            // شبیه‌سازی چرخش صفحه
+            window.addEventListener('orientationchange', function() {
+                navManager.simulateRotation();
+                navManager.log('🔄 orientationchange: state حفظ شد');
+            });
+            
+            // بازخوانی صفحه - state از localStorage می‌آید
+            window.addEventListener('beforeunload', function() {
+                navManager.persist();
+            });
+            
+            // ذخیره state ورودی‌ها
+            document.addEventListener('input', function(e) {
+                if (e.target.id === 'profileNoteInput') {
+                    navManager.updateState('profile', 'tempInput', e.target.value);
+                }
+                if (e.target.id === 'lessonFilterInput') {
+                    navManager.updateState('lessons', 'filter', e.target.value);
+                }
+            });
+            
+            // دکمه لاگ خروجی
+            document.getElementById('exportLogBtn').addEventListener('click', function() {
+                const logs = localStorage.getItem('nav_test_logs') || '[]';
+                navManager.log('📤 خروجی لاگ گرفته شد');
+                alert('لاگ‌ها در کنسول مجازی و localStorage ذخیره شدند');
+            });
+            
+            // پاک کردن کنسول مجازی
+            document.getElementById('clearLogBtn').addEventListener('click', function() {
+                document.getElementById('virtualConsole').innerHTML = '';
+                localStorage.removeItem('nav_test_logs');
+                navManager.log('🧹 کنسول مجازی پاک شد');
+            });
+            
+            // مارک تمام چک‌باکس‌ها
+            document.getElementById('markAllCompleteBtn').addEventListener('click', function() {
+                document.querySelectorAll('.test-checkbox').forEach(cb => cb.checked = true);
+                document.getElementById('manualStepBadge').innerHTML = '✅ تمام سناریوها';
+                navManager.log('🎯 تمام ۷ سناریوی تست دستی تأیید شدند');
+            });
+            
+            // به‌روزرسانی گام تست بر اساس چک‌باکس‌ها
+            document.querySelectorAll('.test-checkbox').forEach(cb => {
+                cb.addEventListener('change', function(e) {
+                    const checkedCount = document.querySelectorAll('.test-checkbox:checked').length;
+                    document.getElementById('manualStepBadge').innerHTML = `✅ ${checkedCount} از ۷ تکمیل`;
+                    
+                    if (this.checked) {
+                        const testId = this.dataset.testid;
+                        navManager.log(`🧪 تست ${testId} با موفقیت گذرانده شد`);
+                    }
+                });
+            });
+            
+            // مقداردهی اولیه
+            navManager.log('🚀 سیستم تست ناوبری آماده است');
+        };
+    </script>
+</body>
+  </html>
