@@ -130,16 +130,16 @@
     <div class="card">
         <div style="display: flex; justify-content: space-between; align-items: center;">
             <h2 style="color: #ffb980; font-size: 1.6rem;">📦 ۱. ذخیره‌سازی نشست (Session)</h2>
-            <span id="sessionBadge1" style="background: #3a3f4a; padding: 8px 16px; border-radius: 30px;">وضعیت: --</span>
+            <span id="session_badge_1" style="background: #3a3f4a; padding: 8px 16px; border-radius: 30px;">وضعیت: --</span>
         </div>
         <div class="scenario">
             <p style="font-size: 1.1rem; margin-bottom: 10px;">🔹 کاربر در حال انجام درس ۷: «حروف اضافه» است.</p>
             <p>✅ پاسخ‌های داده شده: ۸ از ۱۲</p>
             <p>⏳ زمان باقی‌مانده: ۴:۲۲</p>
         </div>
-        <button id="simulateCrash1" class="danger-btn">💥 شبیه‌سازی کرش ناگهانی (Session)</button>
-        <button id="recoverSession" class="success-btn">🔄 بازیابی از کرش (بارگذاری خودکار)</button>
-        <div id="sessionOutput" class="state-view" style="margin-top: 20px;">
+        <button id="simulate_crash_1" class="danger-btn">💥 شبیه‌سازی کرش ناگهانی (Session)</button>
+        <button id="recover_session" class="success-btn">🔄 بازیابی از کرش (بارگذاری خودکار)</button>
+        <div id="session_output" class="state-view" style="margin-top: 20px;">
             ⏸️ منتظر شبیه‌سازی...
         </div>
     </div>
@@ -148,31 +148,31 @@
     <div class="card">
         <div style="display: flex; justify-content: space-between;">
             <h2 style="color: #a6e3a1; font-size: 1.6rem;">🗂️ ۲. ذخیره پایدار (IndexedDB)</h2>
-            <span id="dbBadge" style="background: #2e5c4b; padding: 8px 16px; border-radius: 30px;">آفلاین</span>
+            <span id="db_badge" style="background: #2e5c4b; padding: 8px 16px; border-radius: 30px;">آفلاین</span>
         </div>
         <p style="margin: 15px 0;">📚 درس «افعال بی‌قاعده» - سطح ۲</p>
         <p>💯 نمره نهایی: ۸۵٪ · مرور بعدی: ۳ روز دیگر</p>
-        <button id="simulateCrash2" class="danger-btn">⚠️ قطع ناگهانی + خاموشی</button>
-        <button id="recoverFromDB" class="success-btn">📀 بازیابی از دیتابیس محلی</button>
-        <div id="dbOutput" class="state-view">⏳ دیتابیس آماده نیست</div>
+        <button id="simulate_crash_2" class="danger-btn">⚠️ قطع ناگهانی + خاموشی</button>
+        <button id="recover_from_db" class="success-btn">📀 بازیابی از دیتابیس محلی</button>
+        <div id="db_output" class="state-view">⏳ دیتابیس آماده نیست</div>
     </div>
 
     <!-- سناریو ۳: بازگشت پس از Low Memory / Background Kill -->
     <div class="card">
         <h2 style="color: #f6c2b3; font-size: 1.6rem;">📱 ۳. کشته شدن توسط سیستم (Low Memory)</h2>
         <p style="background: #2c1a1f; padding: 14px; border-radius: 16px;">⚡ حافظه پایین · اپ در پس‌زمینه بسته شد</p>
-        <button id="simulateLowMemory" class="danger-btn">🧠 شبیه‌سازی Low Memory Kill</button>
-        <button id="restoreAfterKill" class="success-btn">📂 بازگشت به صفحه قبل از کرش</button>
-        <div id="memoryOutput" style="margin-top: 18px; background: #1e272b; padding: 14px; border-radius: 18px;">
-            آخرین صفحه: <span id="lastScreenSpan">—</span>
+        <button id="simulate_low_memory" class="danger-btn">🧠 شبیه‌سازی Low Memory Kill</button>
+        <button id="restore_after_kill" class="success-btn">📂 بازگشت به صفحه قبل از کرش</button>
+        <div id="memory_output" style="margin-top: 18px; background: #1e272b; padding: 14px; border-radius: 18px;">
+            آخرین صفحه: <span id="last_screen_span">—</span>
         </div>
     </div>
 
     <!-- گزارش جامع -->
     <div style="margin-top: 30px; background: #202c33; border-radius: 28px; padding: 22px;">
         <h3 style="color: #ffcf8a;">📋 گزارش بازیابی</h3>
-        <pre id="recoveryLog" style="height: 150px; overflow-y: auto;">[سیستم] تست بازیابی آماده است.</pre>
-        <button id="clearLog" style="background: #4a5c66; box-shadow: 0 9px 0 #2f3b42;">🧹 پاک کردن لاگ</button>
+        <pre id="recovery_log" style="height: 150px; overflow-y: auto;">[سیستم] تست بازیابی آماده است.</pre>
+        <button id="clear_log" style="background: #4a5c66; box-shadow: 0 9px 0 #2f3b42;">🧹 پاک کردن لاگ</button>
     </div>
 </div>
 
@@ -182,10 +182,10 @@
 
         // ---------- شبیه‌ساز ذخیره‌سازی ----------
         const STORAGE_KEYS = {
-            SESSION_LESSON: 'crashTest_sessionLesson',
-            SESSION_PROGRESS: 'crashTest_progress',
-            DB_LESSON: 'crashTest_dbLesson',
-            LAST_SCREEN: 'crashTest_lastScreen'
+            SESSION_LESSON: 'crash_test_session_lesson',
+            SESSION_PROGRESS: 'crash_test_progress',
+            DB_LESSON: 'crash_test_db_lesson',
+            LAST_SCREEN: 'crash_test_last_screen'
         };
 
         // ---- سناریو ۱ : Session Storage ----
@@ -199,9 +199,9 @@
                 timestamp: Date.now()
             };
             sessionStorage.setItem(STORAGE_KEYS.SESSION_LESSON, JSON.stringify(state));
-            document.getElementById('sessionOutput').innerText = '💾 ذخیره شد:\n' + JSON.stringify(state, null, 2);
-            document.getElementById('sessionBadge1').innerHTML = '✅ ذخیره شده';
-            document.getElementById('sessionBadge1').style.background = '#1d6f42';
+            document.getElementById('session_output').innerText = '💾 ذخیره شد:\n' + JSON.stringify(state, null, 2);
+            document.getElementById('session_badge_1').innerHTML = '✅ ذخیره شده';
+            document.getElementById('session_badge_1').style.background = '#1d6f42';
             logEvent('Session state ذخیره شد (درس ۷)');
         }
 
@@ -210,16 +210,16 @@
             if (data) {
                 try {
                     const parsed = JSON.parse(data);
-                    document.getElementById('sessionOutput').innerHTML = '✅ بازیابی موفق از SessionStorage:<br>' + 
+                    document.getElementById('session_output').innerHTML = '✅ بازیابی موفق از SessionStorage:<br>' + 
                         `📖 درس: ${parsed.title} | پاسخ: ${parsed.answered}/${parsed.total} | زمان: ${parsed.timeLeft}`;
-                    document.getElementById('sessionBadge1').innerHTML = '🔄 بازیابی شد';
-                    document.getElementById('sessionBadge1').style.background = '#285f8a';
+                    document.getElementById('session_badge_1').innerHTML = '🔄 بازیابی شد';
+                    document.getElementById('session_badge_1').style.background = '#285f8a';
                     logEvent('Session بازیابی شد - ادامه درس');
                 } catch(e) {
-                    document.getElementById('sessionOutput').innerText = '❌ خطا در بازیابی';
+                    document.getElementById('session_output').innerText = '❌ خطا در بازیابی';
                 }
             } else {
-                document.getElementById('sessionOutput').innerText = '⚠️ داده‌ای برای بازیابی یافت نشد. ابتدا کرش را شبیه‌سازی کنید.';
+                document.getElementById('session_output').innerText = '⚠️ داده‌ای برای بازیابی یافت نشد. ابتدا کرش را شبیه‌سازی کنید.';
                 logEvent('بازیابی: هیچ داده session یافت نشد');
             }
         }
@@ -234,9 +234,9 @@
                 lastPracticed: new Date().toISOString()
             };
             localStorage.setItem(STORAGE_KEYS.DB_LESSON, JSON.stringify(progress));
-            document.getElementById('dbOutput').innerText = '📀 ذخیره در IndexedDB (شبیه‌ساز):\n' + JSON.stringify(progress, null, 2);
-            document.getElementById('dbBadge').innerHTML = '✅ داده پایدار';
-            document.getElementById('dbBadge').style.background = '#1f6e4a';
+            document.getElementById('db_output').innerText = '📀 ذخیره در IndexedDB (شبیه‌ساز):\n' + JSON.stringify(progress, null, 2);
+            document.getElementById('db_badge').innerHTML = '✅ داده پایدار';
+            document.getElementById('db_badge').style.background = '#1f6e4a';
             logEvent('پیشرفت درس در IndexedDB ذخیره شد');
         }
 
@@ -244,13 +244,13 @@
             const data = localStorage.getItem(STORAGE_KEYS.DB_LESSON);
             if (data) {
                 const p = JSON.parse(data);
-                document.getElementById('dbOutput').innerHTML = '♻️ بازیابی از دیتابیس محلی:<br>' +
+                document.getElementById('db_output').innerHTML = '♻️ بازیابی از دیتابیس محلی:<br>' +
                     `📕 ${p.lessonName} | سطح ${p.level} | نمره ${p.score}% | مرور: ${p.nextReviewDays} روز`;
-                document.getElementById('dbBadge').innerHTML = '📀 بازیابی شد';
-                document.getElementById('dbBadge').style.background = '#3a6ea5';
+                document.getElementById('db_badge').innerHTML = '📀 بازیابی شد';
+                document.getElementById('db_badge').style.background = '#3a6ea5';
                 logEvent('IndexedDB بازیابی شد - ' + p.lessonName);
             } else {
-                document.getElementById('dbOutput').innerText = '⛔ داده‌ای یافت نشد!';
+                document.getElementById('db_output').innerText = '⛔ داده‌ای یافت نشد!';
                 logEvent('شکست بازیابی: دیتابیس خالی');
             }
         }
@@ -259,73 +259,73 @@
         function simulateLowMemoryKill() {
             const screenInfo = 'صفحه تمرین: فلش‌کارت‌ها - کارت ۱۴ از ۲۰';
             localStorage.setItem(STORAGE_KEYS.LAST_SCREEN, screenInfo);
-            document.getElementById('lastScreenSpan').innerText = screenInfo;
-            document.getElementById('memoryOutput').style.background = '#3a2a2a';
+            document.getElementById('last_screen_span').innerText = screenInfo;
+            document.getElementById('memory_output').style.background = '#3a2a2a';
             logEvent('⚠️ low memory kill شبیه‌سازی شد. آخرین صفحه ذخیره شد.');
         }
 
         function restoreLastScreen() {
             const last = localStorage.getItem(STORAGE_KEYS.LAST_SCREEN);
             if (last) {
-                document.getElementById('lastScreenSpan').innerText = last + ' (بازیابی)';
-                document.getElementById('memoryOutput').style.background = '#1e4a3b';
+                document.getElementById('last_screen_span').innerText = last + ' (بازیابی)';
+                document.getElementById('memory_output').style.background = '#1e4a3b';
                 logEvent('بازگشت به صفحه: ' + last);
             } else {
-                document.getElementById('lastScreenSpan').innerText = 'صفحه اصلی (پیش‌فرض)';
+                document.getElementById('last_screen_span').innerText = 'صفحه اصلی (پیش‌فرض)';
                 logEvent('صفحه پیش‌فرض پس از کرش');
             }
         }
 
         // ---- لاگ مرکزی ----
         function logEvent(msg) {
-            const logEl = document.getElementById('recoveryLog');
+            const logEl = document.getElementById('recovery_log');
             const time = new Date().toLocaleTimeString('fa-IR', { hour12: false });
             logEl.innerHTML += `\n[${time}] ${msg}`;
             logEl.scrollTop = logEl.scrollHeight;
         }
 
         function clearLog() {
-            document.getElementById('recoveryLog').innerHTML = '[سیستم] لاگ پاک شد.';
+            document.getElementById('recovery_log').innerHTML = '[سیستم] لاگ پاک شد.';
             logEvent('تست بازیابی مجدد آغاز شد');
         }
 
         // ---- مقداردهی اولیه ----
         function init() {
             // سناریو ۱
-            document.getElementById('simulateCrash1').addEventListener('click', function() {
+            document.getElementById('simulate_crash_1').addEventListener('click', function() {
                 saveSessionState();
                 logEvent('💥 کرش session شبیه‌سازی شد (داده ذخیره شد)');
             });
-            document.getElementById('recoverSession').addEventListener('click', function() {
+            document.getElementById('recover_session').addEventListener('click', function() {
                 loadSessionState();
             });
 
             // سناریو ۲
-            document.getElementById('simulateCrash2').addEventListener('click', function() {
+            document.getElementById('simulate_crash_2').addEventListener('click', function() {
                 saveToDBMock();
                 logEvent('⚡ قطع ناگهانی برق -> داده در IndexedDB');
             });
-            document.getElementById('recoverFromDB').addEventListener('click', function() {
+            document.getElementById('recover_from_db').addEventListener('click', function() {
                 recoverFromDB();
             });
 
             // سناریو ۳
-            document.getElementById('simulateLowMemory').addEventListener('click', function() {
+            document.getElementById('simulate_low_memory').addEventListener('click', function() {
                 simulateLowMemoryKill();
             });
-            document.getElementById('restoreAfterKill').addEventListener('click', function() {
+            document.getElementById('restore_after_kill').addEventListener('click', function() {
                 restoreLastScreen();
             });
 
             // پاک کردن لاگ
-            document.getElementById('clearLog').addEventListener('click', function() {
+            document.getElementById('clear_log').addEventListener('click', function() {
                 clearLog();
             });
 
             // بررسی وجود داده در start
             if (localStorage.getItem(STORAGE_KEYS.DB_LESSON)) {
-                document.getElementById('dbBadge').innerHTML = '📦 داده موجود';
-                document.getElementById('dbBadge').style.background = '#3a5f6e';
+                document.getElementById('db_badge').innerHTML = '📦 داده موجود';
+                document.getElementById('db_badge').style.background = '#3a5f6e';
             }
             logEvent('🚀 صفحه تست بازیابی کرش آماده است.');
         }
