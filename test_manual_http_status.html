@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>تست دستی HTTP Status - Farsinglish</title>
+    <style>
+        body { font-family: Tahoma, Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 15px; background: #f5f5f5; }
+        .header { background: #2c3e50; color: white; padding: 15px; border-radius: 10px; margin-bottom: 20px; text-align: center; }
+        .test-card { background: white; border-radius: 10px; padding: 15px; margin-bottom: 15px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        .button-group { display: flex; gap: 10px; flex-wrap: wrap; margin: 15px 0; }
+        button { background: #3498db; color: white; border: none; padding: 12px 20px; border-radius: 6px; font-size: 16px; cursor: pointer; flex: 1; min-width: 120px; }
+        button.success { background: #27ae60; }
+        button.warning { background: #f39c12; }
+        button.danger { background: #e74c3c; }
+        button.secondary { background: #95a5a6; }
+        .log { background: #34495e; color: #ecf0f1; padding: 15px; border-radius: 8px; font-family: monospace; height: 200px; overflow-y: auto; margin-top: 20px; }
+        .log-entry { padding: 5px; border-bottom: 1px solid #7f8c8d; }
+        .summary { background: #34495e; color: white; padding: 15px; border-radius: 8px; margin-top: 20px; }
+        input, select { padding: 10px; border: 1px solid #bdc3c7; border-radius: 6px; font-size: 16px; width: 100%; margin: 5px 0; }
+        .info-box { background: #e8f4fd; border-right: 4px solid #3498db; padding: 10px; margin: 10px 0; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🌐 Farsinglish - تست دستی HTTP Status</h1>
+        <h2>بررسی وضعیت‌های 200، 400، 404، 500 و خطاهای شبکه</h2>
+    </div>
+
+    <div class="test-card">
+        <h3>🛠️ تنظیمات شبیه‌ساز سرور</h3>
+        <div class="info-box">
+            <strong>⚡ وضعیت فعلی:</strong> شبیه‌سازی پاسخ‌های سرور با تأخیر تصادفی
+        </div>
+        
+        <div class="button-group">
+            <button class="success" onclick="mockServer(200, {message: 'موفق', data: {user: 'test', id: 1}})">✅ 200 OK</button>
+            <button class="warning" onclick="mockServer(400, {error: 'Bad Request', details: 'ورودی نامعتبر'})">⚠️ 400 Bad Request</button>
+            <button class="warning" onclick="mockServer(404, {error: 'Not Found', details: 'منبع یافت نشد'})">🔍 404 Not Found</button>
+            <button class="danger" onclick="mockServer(500, {error: 'Internal Server Error', details: 'خطای داخلی سرور'})">🔥 500 Server Error</button>
+        </div>
+        
+        <div class="button-group">
+            <button class="secondary" onclick="mockNetworkError()">📡 قطع شبکه</button>
+            <button class="secondary" onclick="mockTimeout()">⏱️ Timeout (۳ ثانیه)</button>
+            <button class="secondary" onclick="mockMalformedJSON()">📦 JSON خراب</button>
+        </div>
+    </div>
+
+    <div class="test-card">
+        <h3>🧪 تست ترکیبی</h3>
+        <p>انتخاب وضعیت و مشاهده پاسخ:</p>
+        <select id="statusSelect">
+            <option value="200">200 OK</option>
+            <option value="400">400 Bad Request</option>
+            <option value="404">404 Not Found</option>
+            <option value="500">500 Internal Error</option>
+        </select>
+        <div class="button-group">
+            <button onclick="mockCustomStatus()">🎯 ارسال درخواست</button>
+            <button onclick="clearLog()">🗑️ پاک کردن لاگ</button>
+        </div>
+    </div>
+
+    <div class="test-card">
+        <h3>📊 آمار تست‌ها</h3>
+        <div class="button-group">
+            <button onclick="recordSuccess()">✅ ثبت موفق</button>
+            <button onclick="recordFailure()">❌ ثبت ناموفق</button>
+            <button onclick="resetStats()">🔄 ریست آمار</button>
+        </div>
+        <div id="stats" style="margin-top: 15px; padding: 10px; background: #ecf0f1; border-radius: 6px;">
+            <p>✅ موفق: <span id="successCount">0</span> | ❌ ناموفق: <span id="failureCount">0</span> | 📋 کل: <span id="totalCount">0</span></p>
+        </div>
+    </div>
+
+    <div class="log" id="logContainer">
+        <div class="log-entry">⏱️ منتظر اقدام شما...</div>
+    </div>
+
+    <div class="summary" id="summary">
+        <h3>📝 راهنمای تست</h3>
+        <p>1. روی دکمه‌های وضعیت کلیک کنید</p>
+        <p>2. پاسخ شبیه‌سازی شده را در لاگ مشاهده کنید</p>
+        <p>3. وضعیت موفق/ناموفق را ثبت کنید</p>
+        <p>4. خطاهای شبکه را تست کنید</p>
+    </div>
+
+    <script>
+        // آمار تست
+        let stats = {
+            success: 0,
+            failure: 0
+        };
+
+        // شبیه‌سازی سرور
+        function mockServer(status, response) {
+            addToLog(`📤 ارسال درخواست به سرور...`, 'info');
+            
+            return new Promise((resolve, reject) => {
+                setTimeout(() => {
+                    if (status >= 200 && status < 300) {
+                        addToLog(`✅ [${status}] پاسخ موفق: ${JSON.stringify(response)}`, 'success');
+                        resolve(response);
+                    } else {
+                        addToLog(`⚠️ [${status}] خطا: ${JSON.stringify(response)}`, 'error');
+                        reject(new Error(`HTTP ${status}: ${response.error}`));
+                    }
+                }, Math.random() * 1000 + 500); // تأخیر 500-1500ms
+            }).catch(error => {
+                console.error(error);
+            });
+        }
+
+        // خطای شبکه
+        function mockNetworkError() {
+            addToLog(`📡 خطای شبکه: اتصال اینترنت قطع است`, 'error');
+            addToLog(`💡 راهکار: بررسی اتصال اینترنت و تلاش مجدد`, 'info');
+        }
+
+        // Timeout
+        function mockTimeout() {
+            addToLog(`⏱️ ارسال درخواست... (مدت زمان ۳ ثانیه)', 'info');
+            
+            setTimeout(() => {
+                addToLog(`⏱️ خطای Timeout: سرور پاسخ نداد`, 'error');
+                addToLog(`💡 راهکار: بررسی سرور و افزایش زمان انتظار`, 'info');
+            }, 3000);
+        }
+
+        // JSON خراب
+        function mockMalformedJSON() {
+            addToLog(`📦 دریافت پاسخ از سرور...`, 'info');
+            
+            try {
+                const badJSON = '{message: "test", data: }'; // JSON نامعتبر
+                JSON.parse(badJSON);
+            } catch (error) {
+                addToLog(`📦 خطای JSON خراب: ${error.message}`, 'error');
+                addToLog(`💡 راهکار: بررسی فرمت پاسخ سرور`, 'info');
+            }
+        }
+
+        // وضعیت سفارشی
+        function mockCustomStatus() {
+            const status = document.getElementById('statusSelect').value;
+            let response;
+            
+            switch(status) {
+                case '200':
+                    response = {message: 'موفق', data: {user: 'test', id: 1}};
+                    break;
+                case '400':
+                    response = {error: 'Bad Request', details: 'ورودی نامعتبر'};
+                    break;
+                case '404':
+                    response = {error: 'Not Found', details: 'منبع یافت نشد'};
+                    break;
+                case '500':
+                    response = {error: 'Internal Server Error', details: 'خطای داخلی سرور'};
+                    break;
+            }
+            
+            mockServer(parseInt(status), response);
+        }
+
+        // اضافه کردن به لاگ
+        function addToLog(message, type = 'info') {
+            const log = document.getElementById('logContainer');
+            const entry = document.createElement('div');
+            entry.className = 'log-entry';
+            
+            let icon = '📌';
+            if (type === 'success') icon = '✅';
+            if (type === 'error') icon = '❌';
+            if (type === 'info') icon = 'ℹ️';
+            
+            entry.innerHTML = `${icon} ${new Date().toLocaleTimeString('fa-IR')} - ${message}`;
+            log.appendChild(entry);
+            log.scrollTop = log.scrollHeight;
+        }
+
+        // ثبت موفق
+        function recordSuccess() {
+            stats.success++;
+            updateStats();
+            addToLog(`✅ تست موفق ثبت شد`, 'success');
+        }
+
+        // ثبت ناموفق
+        function recordFailure() {
+            stats.failure++;
+            updateStats();
+            addToLog(`❌ تست ناموفق ثبت شد`, 'error');
+        }
+
+        // ریست آمار
+        function resetStats() {
+            stats.success = 0;
+            stats.failure = 0;
+            updateStats();
+            addToLog(`🔄 آمار تست ریست شد`, 'info');
+        }
+
+        // پاک کردن لاگ
+        function clearLog() {
+            document.getElementById('logContainer').innerHTML = '<div class="log-entry">⏱️ لاگ پاک شد...</div>';
+            addToLog(`🗑️ لاگ پاک شد`, 'info');
+        }
+
+        // بروزرسانی آمار
+        function updateStats() {
+            document.getElementById('successCount').textContent = stats.success;
+            document.getElementById('failureCount').textContent = stats.failure;
+            document.getElementById('totalCount').textContent = stats.success + stats.failure;
+        }
+
+        // تست‌های خودکار هنگام بارگذاری
+        window.onload = function() {
+            addToLog(`🌐 تست HTTP Status آماده است`, 'info');
+            addToLog(`🎯 روی دکمه‌ها کلیک کنید`, 'info');
+        };
+    </script>
+</body>
+</html>
