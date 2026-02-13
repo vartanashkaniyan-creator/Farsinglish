@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>تست دستی نشت توکن - Farsinglish</title>
+    <style>
+        body { font-family: Tahoma, Arial, sans-serif; max-width: 900px; margin: 0 auto; padding: 15px; background: #f5f5f5; }
+        .header { background: #2c3e50; color: white; padding: 15px; border-radius: 10px; margin-bottom: 20px; text-align: center; }
+        .token-card { background: white; border-radius: 10px; padding: 20px; margin-bottom: 20px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        button { background: #3498db; color: white; border: none; padding: 12px 20px; border-radius: 6px; font-size: 15px; cursor: pointer; margin: 5px; transition: 0.3s; }
+        button:hover { opacity: 0.9; }
+        .danger-btn { background: #e74c3c; }
+        .success-btn { background: #27ae60; }
+        .warning-btn { background: #f39c12; }
+        .log-box { background: #2d2d2d; color: #00ff00; padding: 15px; border-radius: 8px; font-family: monospace; height: 200px; overflow-y: auto; margin: 15px 0; }
+        .result-pass { background: #27ae60; color: white; padding: 10px; border-radius: 6px; margin: 10px 0; }
+        .result-fail { background: #e74c3c; color: white; padding: 10px; border-radius: 6px; margin: 10px 0; }
+        .token-display { background: #f8f9fa; padding: 15px; border-radius: 6px; border: 1px solid #ddd; word-break: break-all; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🔐 Farsinglish - تست نشت توکن (Token Leak)</h1>
+        <h2>بررسی عدم نمایش توکن در لاگ‌ها، حافظه و localStorage</h2>
+    </div>
+
+    <div class="token-card">
+        <h3>🔑 توکن فعلی</h3>
+        <div id="tokenDisplay" class="token-display">توکنی ساخته نشده</div>
+    </div>
+
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 10px; margin-bottom: 20px;">
+        <button onclick="generateToken()" class="success-btn">🔑 تولید توکن جدید</button>
+        <button onclick="saveToLocalStorage()">💾 ذخیره در localStorage</button>
+        <button onclick="saveToSessionStorage()">📝 ذخیره در sessionStorage</button>
+        <button onclick="logToConsole()" class="warning-btn">📋 نمایش در console.log</button>
+        <button onclick="logErrorWithToken()" class="danger-btn">⚠️ ثبت خطا با توکن</button>
+        <button onclick="sendNetworkRequest()">🌐 شبیه‌سازی درخواست</button>
+        <button onclick="checkLeaks()" class="success-btn">🔍 بررسی نشت</button>
+        <button onclick="clearAll()" class="danger-btn">🗑️ پاک کردن همه</button>
+    </div>
+
+    <div class="token-card">
+        <h3>📋 لاگ شبیه‌سازی شده</h3>
+        <div id="logBox" class="log-box">
+            [سیستم] آماده‌باش...
+        </div>
+    </div>
+
+    <div id="resultArea"></div>
+
+    <script>
+        let currentToken = null;
+        const logBox = document.getElementById('logBox');
+        const tokenDisplay = document.getElementById('tokenDisplay');
+        const resultArea = document.getElementById('resultArea');
+
+        function addLog(message, isError = false) {
+            const logEntry = document.createElement('div');
+            logEntry.textContent = `[${new Date().toLocaleTimeString('fa-IR')}] ${message}`;
+            logEntry.style.color = isError ? '#ff6b6b' : '#00ff00';
+            logBox.appendChild(logEntry);
+            logBox.scrollTop = logBox.scrollHeight;
+        }
+
+        function maskToken(token) {
+            if (!token) return 'بدون توکن';
+            if (token.length <= 10) return '***';
+            return token.substring(0, 4) + '...' + token.substring(token.length - 4);
+        }
+
+        function generateToken() {
+            const header = btoa(JSON.stringify({ alg: 'HS256', typ: 'JWT' }));
+            const payload = btoa(JSON.stringify({ 
+                userId: 12345, 
+                username: 'test_user',
+                role: 'user',
+                exp: Date.now() + 3600000
+            }));
+            const signature = Math.random().toString(36).substring(2) + Math.random().toString(36).substring(2);
+            currentToken = `${header}.${payload}.${signature}`;
+            
+            tokenDisplay.textContent = maskToken(currentToken);
+            tokenDisplay.style.backgroundColor = '#fff3cd';
+            addLog('✅ توکن جدید ساخته شد: ' + maskToken(currentToken));
+        }
+
+        function saveToLocalStorage() {
+            if (!currentToken) {
+                addLog('❌ ابتدا توکن تولید کنید', true);
+                return;
+            }
+            try {
+                localStorage.setItem('auth_token', currentToken);
+                addLog('⚠️ توکن در localStorage ذخیره شد (بررسی نشت خودکار انجام شود)');
+            } catch(e) {
+                addLog('❌ خطا در ذخیره: ' + e.message, true);
+            }
+        }
+
+        function saveToSessionStorage() {
+            if (!currentToken) {
+                addLog('❌ ابتدا توکن تولید کنید', true);
+                return;
+            }
+            try {
+                sessionStorage.setItem('session_token', currentToken);
+                addLog('⚠️ توکن در sessionStorage ذخیره شد');
+            } catch(e) {
+                addLog('❌ خطا: ' + e.message, true);
+            }
+        }
+
+        function logToConsole() {
+            if (!currentToken) {
+                addLog('❌ ابتدا توکن تولید کنید', true);
+                return;
+            }
+            // شبیه‌سازی console.log خطرناک
+            console.log('توکن کاربر:', currentToken);
+            addLog('❌ خطر: توکن در console.log نمایش داده شد (نشت قطعی)', true);
+            checkForTokenInLog(currentToken);
+        }
+
+        function logErrorWithToken() {
+            if (!currentToken) {
+                addLog('❌ ابتدا توکن تولید کنید', true);
+                return;
+            }
+            try {
+                throw new Error('خطای احراز هویت');
+            } catch(e) {
+                // شبیه‌سازی خطای حاوی توکن
+                const errorWithToken = e.message + ' - توکن: ' + currentToken;
+                console.error(errorWithToken);
+                addLog('❌ خطر: توکن در خطا لو رفت: ' + maskToken(currentToken), true);
+            }
+        }
+
+        function sendNetworkRequest() {
+            if (!currentToken) {
+                addLog('❌ ابتدا توکن تولید کنید', true);
+                return;
+            }
+            addLog('📡 شبیه‌سازی درخواست به سرور...');
+            // شبیه‌سازی هدر Authorization
+            const headers = {
+                'Authorization': 'Bearer ' + currentToken,
+                'Content-Type': 'application/json'
+            };
+            addLog('✅ هدر Authorization تنظیم شد (مخفی: Bearer ' + maskToken(currentToken) + ')');
+            
+            // بررسی نشت در URL
+            const urlWithToken = `https://api.example.com/user?token=${currentToken}`;
+            addLog('❌ خطر: توکن در URL: ' + maskToken(currentToken), true);
+        }
+
+        function checkLeaks() {
+            let leaks = [];
+            
+            // بررسی localStorage
+            for(let i = 0; i < localStorage.length; i++) {
+                const key = localStorage.key(i);
+                const value = localStorage.getItem(key);
+                if(value && value.includes('.') && value.split('.').length === 3) {
+                    if(value.length > 50) { // احتمالاً JWT
+                        leaks.push(`localStorage.${key}`);
+                    }
+                }
+            }
+
+            // بررسی sessionStorage
+            for(let i = 0; i < sessionStorage.length; i++) {
+                const key = sessionStorage.key(i);
+                const value = sessionStorage.getItem(key);
+                if(value && value.includes('.') && value.split('.').length === 3) {
+                    if(value.length > 50) {
+                        leaks.push(`sessionStorage.${key}`);
+                    }
+                }
+            }
+
+            // بررسی حافظه (شبیه‌سازی)
+            if(currentToken) {
+                if(document.cookie.includes(currentToken.substring(0, 10))) {
+                    leaks.push('cookie');
+                }
+            }
+
+            // نمایش نتیجه
+            let resultHtml = '';
+            if(leaks.length === 0) {
+                resultHtml = '<div class="result-pass">✅ هیچ نشت توکنی یافت نشد</div>';
+            } else {
+                resultHtml = `<div class="result-fail">❌ نشت توکن در: ${leaks.join(', ')}</div>`;
+            }
+            resultArea.innerHTML = resultHtml;
+            
+            addLog('🔍 بررسی نشت کامل شد: ' + (leaks.length ? leaks.length + ' نشت' : 'بدون نشت'));
+        }
+
+        function checkForTokenInLog(token) {
+            // شبیه‌سازی بررسی لاگ‌ها
+            setTimeout(() => {
+                addLog('🔍 بررسی خودکار لاگ‌ها...');
+                // 50% شانس تشخیص نشت
+                if(Math.random() > 0.5) {
+                    addLog('✅ سیستم تشخیص نشت: توکن در لاگ‌ها یافت شد', true);
+                }
+            }, 1000);
+        }
+
+        function clearAll() {
+            currentToken = null;
+            tokenDisplay.textContent = 'توکنی ساخته نشده';
+            tokenDisplay.style.backgroundColor = '#f8f9fa';
+            localStorage.clear();
+            sessionStorage.clear();
+            document.cookie.split(";").forEach(function(c) { 
+                document.cookie = c.replace(/^ +/, "").replace(/=.*/, "=;expires=" + new Date().toUTCString() + ";path=/"); 
+            });
+            logBox.innerHTML = '[سیستم] همه چیز پاک شد';
+            resultArea.innerHTML = '';
+            addLog('🧹 همه داده‌ها پاک شدند');
+        }
+
+        // تست خودکار هنگام بارگذاری
+        window.onload = function() {
+            addLog('🛡️ سیستم تست نشت توکن فعال شد');
+            addLog('⚠️ توکن‌ها هرگز نباید در لاگ، console، URL یا خطاها نمایش داده شوند');
+        };
+    </script>
+</body>
+</html>
