@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.5, user-scalable=yes">
+    <title>تست دستی State Event - Farsinglish</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: 'Tahoma', 'Vazir', sans-serif;
+            background: #f8fafc;
+            color: #1e293b;
+            padding: 16px;
+            line-height: 1.6;
+        }
+        .container { max-width: 700px; margin: 0 auto; }
+        h1, h2, h3 { margin-bottom: 12px; }
+        .header {
+            background: linear-gradient(135deg, #1e3c72, #2a5298);
+            color: white;
+            padding: 20px;
+            border-radius: 24px;
+            margin-bottom: 24px;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+            text-align: center;
+        }
+        .card {
+            background: white;
+            border-radius: 20px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+            border: 1px solid #e2e8f0;
+        }
+        .flex { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; }
+        button {
+            background: #2563eb;
+            border: none;
+            color: white;
+            padding: 14px 22px;
+            border-radius: 40px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: 0.2s;
+            box-shadow: 0 4px 6px rgba(37,99,235,0.2);
+            border: 1px solid rgba(255,255,255,0.2);
+            flex: 1 1 auto;
+        }
+        button:hover { background: #1d4ed8; transform: translateY(-2px); }
+        button.secondary { background: #64748b; box-shadow: 0 4px 6px rgba(100,116,139,0.2); }
+        button.success { background: #0e9f6e; }
+        button.warning { background: #e07c3c; }
+        .event-log {
+            background: #0f172a;
+            color: #e2e8f0;
+            font-family: 'Courier New', monospace;
+            padding: 16px;
+            border-radius: 16px;
+            height: 200px;
+            overflow-y: auto;
+            font-size: 14px;
+            direction: ltr;
+            text-align: left;
+            margin-top: 16px;
+        }
+        .badge {
+            background: #e2e8f0;
+            padding: 6px 14px;
+            border-radius: 30px;
+            font-size: 14px;
+            font-weight: 600;
+            color: #1e293b;
+        }
+        .state-view {
+            background: #dbeafe;
+            border-radius: 16px;
+            padding: 16px;
+            border: 2px solid #bfdbfe;
+            font-family: monospace;
+            direction: ltr;
+            text-align: left;
+            word-break: break-word;
+        }
+        .test-step { border-bottom: 2px dashed #cbd5e1; padding-bottom: 20px; margin-bottom: 20px; }
+        .counter { font-size: 48px; font-weight: bold; color: #1e3c72; text-align: center; }
+        hr { margin: 20px 0; border: 1px solid #e2e8f0; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="header">
+        <h1>🧪 تست دستی State & Event</h1>
+        <p>تغییر state با رویدادها • Idempotency • Event Bus</p>
+    </div>
+
+    <!-- نمایش State جاری -->
+    <div class="card">
+        <div class="flex" style="justify-content: space-between;">
+            <h2>📌 State جاری</h2>
+            <span class="badge" id="eventCountBadge">رویدادها: ۰</span>
+        </div>
+        <div id="currentStateDisplay" class="state-view">
+            { "user": null, "lessons": [], "loading": false, "error": null }
+        </div>
+    </div>
+
+    <!-- بخش ۱: رویدادهای کاربر -->
+    <div class="card test-step">
+        <h2>🔹 ۱. رویدادهای کاربر (User Events)</h2>
+        <p>کلیک کردن = dispatch رویداد → تغییر state</p>
+        <div class="flex" style="margin: 16px 0;">
+            <button id="btnLogin" class="success">🔐 رویداد: ورود کاربر</button>
+            <button id="btnLogout" class="secondary">🚪 رویداد: خروج</button>
+        </div>
+        <div class="flex">
+            <button id="btnStartLesson">📘 رویداد: شروع درس ۱</button>
+            <button id="btnFinishLesson">✅ رویداد: پایان درس</button>
+        </div>
+        <div class="flex" style="margin-top: 12px;">
+            <button id="btnError" class="warning">⚠️ رویداد: خطا (شبکه)</button>
+            <button id="btnClearError">🧹 پاک کردن خطا</button>
+        </div>
+    </div>
+
+    <!-- بخش ۲: تست Idempotency (هم‌توانی) -->
+    <div class="card test-step">
+        <h2>🔹 ۲. تست Idempotency (هم‌توانی)</h2>
+        <p>ارسال چندبارۀ یک رویداد یکسان → state فقط یکبار تغییر کند</p>
+        <div class="flex">
+            <button id="btnIncrement">🔢 افزایش شمارنده (۵ بار تست کنید)</button>
+            <button id="btnIncrementOnce">🎯 افزایش یکبار (ایمپوتنت)</button>
+        </div>
+        <div style="margin-top: 16px;">
+            <span class="badge" style="background: #1e3c72; color: white;">مقدار شمارنده:</span>
+            <span id="counterValue" style="font-size: 32px; font-weight: bold; margin-right: 8px;">۰</span>
+        </div>
+        <p style="color: #475569; font-size: 14px; margin-top: 8px;">
+            * دکمه سمت چپ هر بار افزایش می‌دهد (غیر یکسان)، دکمه سمت راست فقط یکبار افزایش می‌دهد حتی اگر چندبار کلیک کنید.
+        </p>
+    </div>
+
+    <!-- بخش ۳: Event Bus / Multi-listener -->
+    <div class="card test-step">
+        <h2>🔹 ۳. Event Bus (شنوندگان چندگانه)</h2>
+        <p>با هر رویداد، چندین تابع (listener) فراخوانی شوند.</p>
+        <div class="flex">
+            <button id="btnNotifyAll">📢 ارسال رویداد "NOTIFY_ALL"</button>
+            <button id="btnResetLog">🗑️ پاک کردن لاگ</button>
+        </div>
+        <p style="margin-top: 8px;">📋 لاگ رویدادها:</p>
+        <div id="eventLog" class="event-log">
+            -- منتظر رویداد --
+        </div>
+    </div>
+
+    <!-- بخش ۴: رویدادهای زمان‌دار (Async) -->
+    <div class="card">
+        <h2>🔹 ۴. رویدادهای ناهمزمان</h2>
+        <p>شبیه‌سازی بارگذاری (loading) با تأخیر</p>
+        <div class="flex">
+            <button id="btnAsyncLoad">⏳ بارگذاری درس (۳ ثانیه)</button>
+            <button id="btnCancelLoad">✖️ لغو بارگذاری</button>
+        </div>
+        <div id="loadingIndicator" style="margin-top: 12px; display: none;">
+            <span style="color: #2563eb;">⏱️ در حال بارگذاری...</span>
+        </div>
+    </div>
+
+    <!-- دکمه reset کلی -->
+    <div style="margin: 30px 0; text-align: center;">
+        <button id="btnResetState" style="background: #ef4444; width: auto; padding: 12px 40px;">🔄 بازنشانی State</button>
+    </div>
+</div>
+
+<script>
+    // -------------------- ۱. State مدیریت رویداد محور (Event-driven State) --------------------
+    const initialState = {
+        user: null,
+        currentLesson: null,
+        completedLessons: [],
+        loading: false,
+        error: null,
+        counter: 0,
+        lastEvent: null,
+        eventHistory: []
+    };
+
+    // State جاری
+    let currentState = { ...initialState, eventHistory: [] };
+
+    // لیست شنوندگان (Listeners)
+    const listeners = [];
+
+    // ---------- تابع تغییر state (dispatch) ----------
+    function dispatchEvent(eventType, payload = {}) {
+        // ۱. ثبت رویداد در تاریخچه
+        const event = {
+            type: eventType,
+            payload,
+            timestamp: new Date().toISOString(),
+            id: crypto.randomUUID ? crypto.randomUUID() : Date.now() + Math.random()
+        };
+
+        // ۲. اعمال تغییرات بر اساس رویداد (Reducer)
+        let newState = { ...currentState, lastEvent: event };
+        newState.eventHistory = [event, ...currentState.eventHistory].slice(0, 20); // نگهداری ۲۰ رویداد آخر
+
+        switch (eventType) {
+            case 'USER_LOGIN':
+                newState.user = payload.user || { name: 'علی', id: 1, level: 5 };
+                newState.error = null;
+                break;
+            case 'USER_LOGOUT':
+                newState.user = null;
+                newState.currentLesson = null;
+                break;
+            case 'LESSON_START':
+                newState.currentLesson = payload.lessonId || 1;
+                newState.loading = false;
+                newState.error = null;
+                break;
+            case 'LESSON_FINISH':
+                if (newState.currentLesson && !newState.completedLessons.includes(newState.currentLesson)) {
+                    newState.completedLessons = [...newState.completedLessons, newState.currentLesson];
+                }
+                newState.currentLesson = null;
+                break;
+            case 'ERROR_OCCURRED':
+                newState.error = payload.error || 'خطای ناشناخته';
+                newState.loading = false;
+                break;
+            case 'CLEAR_ERROR':
+                newState.error = null;
+                break;
+            case 'INCREMENT_COUNTER':
+                newState.counter += 1;
+                break;
+            case 'INCREMENT_ONCE':
+                // idempotent: فقط اگر مقدار 0 بود افزایش بده
+                if (newState.counter === 0) newState.counter += 1;
+                break;
+            case 'ASYNC_LOAD_START':
+                newState.loading = true;
+                newState.error = null;
+                break;
+            case 'ASYNC_LOAD_SUCCESS':
+                newState.loading = false;
+                newState.currentLesson = payload.lessonId || 2;
+                break;
+            case 'ASYNC_LOAD_CANCEL':
+            case 'ASYNC_LOAD_FAIL':
+                newState.loading = false;
+                if (eventType === 'ASYNC_LOAD_FAIL') newState.error = payload.error || 'بارگذاری ناموفق';
+                break;
+            case 'NOTIFY_ALL':
+                // رویداد خاص برای Event Bus - بدون تغییر state
+                break;
+            case 'RESET_STATE':
+                newState = { ...initialState, eventHistory: [] };
+                break;
+            default: break;
+        }
+
+        // ۳. اعمال state جدید
+        currentState = newState;
+
+        // ۴. به‌روزرسانی UI
+        updateUI();
+
+        // ۵. اطلاع‌رسانی به همه شنوندگان
+        listeners.forEach(listener => {
+            try { listener(eventType, currentState, event); } catch(e) { console.error(e); }
+        });
+
+        // ۶. افزودن به لاگ (برای Event Bus)
+        if (eventType === 'NOTIFY_ALL' || payload.log !== false) {
+            addToLog(event);
+        }
+
+        return event;
+    }
+
+    // ---------- افزودن شنونده ----------
+    function addListener(callback) {
+        listeners.push(callback);
+        return () => listeners.filter(l => l !== callback); // تابع پاک‌سازی
+    }
+
+    // ---------- به‌روزرسانی UI ----------
+    function updateUI() {
+        // نمایش state
+        const displayState = {
+            user: currentState.user,
+            currentLesson: currentState.currentLesson,
+            completed: currentState.completedLessons.length,
+            loading: currentState.loading,
+            error: currentState.error,
+            counter: currentState.counter
+        };
+        document.getElementById('currentStateDisplay').innerHTML = 
+            JSON.stringify(displayState, null, 2).replace(/\n/g, '<br>').replace(/ /g, '&nbsp;');
+
+        // شمارنده
+        document.getElementById('counterValue').innerText = currentState.counter;
+        document.getElementById('eventCountBadge').innerHTML = `رویدادها: ${currentState.eventHistory.length}`;
+
+        // نشانگر بارگذاری
+        const loadingEl = document.getElementById('loadingIndicator');
+        if (currentState.loading) {
+            loadingEl.style.display = 'block';
+        } else {
+            loadingEl.style.display = 'none';
+        }
+    }
+
+    // ---------- افزودن به لاگ رویدادها ----------
+    function addToLog(event) {
+        const logEl = document.getElementById('eventLog');
+        const time = new Date(event.timestamp).toLocaleTimeString('fa-IR');
+        const line = document.createElement('div');
+        line.style.marginBottom = '6px';
+        line.style.borderBottom = '1px solid #334155';
+        line.style.paddingBottom = '4px';
+        line.innerHTML = `<span style="color:#94a3b8;">[${time}]</span> <span style="color:#facc15;">${event.type}</span> <span style="color:#7dd3fc;">${JSON.stringify(event.payload)}</span>`;
+        logEl.appendChild(line);
+        logEl.scrollTop = logEl.scrollHeight;
+    }
+
+    // ---------- پاک کردن لاگ ----------
+    function clearLog() {
+        document.getElementById('eventLog').innerHTML = '-- لاگ پاک شد --';
+    }
+
+    // ---------- شنونده نمونه (ثبت در کنسول مجازی) ----------
+    addListener((type, state, event) => {
+        // این شنونده صرفاً برای تست (در اینجا کاری نمی‌کنیم)
+        // می‌توانید در کنسول مرورگر ببینید
+        console.log(`[Event] ${type}`, event.payload);
+    });
+
+    // -------------------- ۲. اتصال دکمه‌ها به رویدادها --------------------
+    window.onload = function() {
+        // ورود / خروج
+        document.getElementById('btnLogin').addEventListener('click', () => dispatchEvent('USER_LOGIN', { user: { name: 'علی', id: 1, level: 7 } }));
+        document.getElementById('btnLogout').addEventListener('click', () => dispatchEvent('USER_LOGOUT'));
+
+        // شروع/پایان درس
+        document.getElementById('btnStartLesson').addEventListener('click', () => dispatchEvent('LESSON_START', { lessonId: 1 }));
+        document.getElementById('btnFinishLesson').addEventListener('click', () => dispatchEvent('LESSON_FINISH'));
+
+        // خطا
+        document.getElementById('btnError').addEventListener('click', () => dispatchEvent('ERROR_OCCURRED', { error: 'اتصال اینترنت قطع است' }));
+        document.getElementById('btnClearError').addEventListener('click', () => dispatchEvent('CLEAR_ERROR'));
+
+        // شمارنده (idempotency)
+        document.getElementById('btnIncrement').addEventListener('click', () => dispatchEvent('INCREMENT_COUNTER'));
+        document.getElementById('btnIncrementOnce').addEventListener('click', () => dispatchEvent('INCREMENT_ONCE'));
+
+        // Event Bus
+        document.getElementById('btnNotifyAll').addEventListener('click', () => {
+            dispatchEvent('NOTIFY_ALL', { message: 'اعلان همگانی', log: true });
+            // اضافه کردن پیام به لاگ به صورت دستی
+            addToLog({ type: 'NOTIFY_ALL', payload: { message: 'اعلان همگانی' }, timestamp: new Date().toISOString() });
+        });
+        document.getElementById('btnResetLog').addEventListener('click', clearLog);
+
+        // Async
+        let timeoutId = null;
+        document.getElementById('btnAsyncLoad').addEventListener('click', () => {
+            if (timeoutId) clearTimeout(timeoutId);
+            dispatchEvent('ASYNC_LOAD_START');
+            timeoutId = setTimeout(() => {
+                dispatchEvent('ASYNC_LOAD_SUCCESS', { lessonId: 5, log: true });
+                timeoutId = null;
+            }, 3000);
+        });
+        document.getElementById('btnCancelLoad').addEventListener('click', () => {
+            if (timeoutId) {
+                clearTimeout(timeoutId);
+                timeoutId = null;
+                dispatchEvent('ASYNC_LOAD_CANCEL');
+            }
+        });
+
+        // Reset
+        document.getElementById('btnResetState').addEventListener('click', () => {
+            dispatchEvent('RESET_STATE');
+            clearLog();
+        });
+
+        // State اولیه
+        updateUI();
+    };
+
+    // -------------------- ۳. تست idempotency به صورت دستی --------------------
+    // (کاربر با چندبار کلیک کردن بررسی می‌کند)
+</script>
+
+<!-- راهنمای تست دستی -->
+<div class="card" style="background: #f1f5f9; margin-top: 20px;">
+    <h3>📋 سناریوهای تست دستی</h3>
+    <ul style="margin-right: 20px;">
+        <li>✅ <strong>رویدادهای کاربر</strong> - روی دکمه ورود کلیک کنید → state تغییر کند، نام کاربر نمایش یابد.</li>
+        <li>✅ <strong>Idempotency</strong> - دکمه "افزایش یکبار" را چند بار پشت سر هم بزنید → شمارنده فقط ۱ شود.</li>
+        <li>✅ <strong>Event Bus</strong> - دکمه "ارسال NOTIFY_ALL" را بزنید → در لاگ رویداد ثبت شود.</li>
+        <li>✅ <strong>بارگذاری Async</strong> - دکمه "بارگذاری درس" → state.loading = true ، بعد ۳ ثانیه درس ست شود.</li>
+        <li>✅ <strong>لغو بارگذاری</strong> - در حین بارگذاری، دکمه لغو را بزنید → loading false بماند.</li>
+        <li>✅ <strong>عدم تغییر state اصلی</strong> - با هر کلیک state قبلی تغییر نکند (immutability).</li>
+    </ul>
+    <p style="color: #2563eb; margin-top: 12px;">✅ این فایل کاملاً دستی و دکمه‌ای است. تمام سناریوهای State/Event را پوشش می‌دهد.</p>
+</div>
+
+</body>
+</html>
