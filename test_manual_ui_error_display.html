@@ -1,0 +1,585 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>تست دستی نمایش خطاهای UI - Farsinglish</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Tahoma', 'Vazir', sans-serif;
+        }
+        body {
+            background: #f0f2f5;
+            padding: 20px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        .header {
+            background: linear-gradient(135deg, #2c3e50, #3498db);
+            color: white;
+            padding: 25px;
+            border-radius: 15px;
+            margin-bottom: 30px;
+            text-align: center;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        }
+        .header h1 {
+            font-size: 24px;
+            margin-bottom: 10px;
+        }
+        .header h2 {
+            font-size: 18px;
+            opacity: 0.9;
+        }
+        .test-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 25px;
+            margin-bottom: 30px;
+        }
+        .test-card {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+            border: 2px solid transparent;
+            transition: all 0.3s ease;
+        }
+        .test-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+        }
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #ecf0f1;
+        }
+        .card-header h3 {
+            color: #2c3e50;
+            font-size: 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .badge {
+            background: #3498db;
+            color: white;
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+        }
+        .btn {
+            background: #3498db;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            width: 100%;
+            margin: 5px 0;
+            border: 2px solid transparent;
+        }
+        .btn:hover {
+            background: #2980b9;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 10px rgba(52,152,219,0.3);
+        }
+        .btn-success {
+            background: #27ae60;
+        }
+        .btn-success:hover {
+            background: #229954;
+        }
+        .btn-danger {
+            background: #e74c3c;
+        }
+        .btn-danger:hover {
+            background: #c0392b;
+        }
+        .btn-warning {
+            background: #f39c12;
+        }
+        .btn-warning:hover {
+            background: #e67e22;
+        }
+        .error-container {
+            margin: 15px 0;
+            padding: 15px;
+            border-radius: 10px;
+            background: #f8f9fa;
+            min-height: 60px;
+            border: 2px dashed #bdc3c7;
+        }
+        .error-message {
+            padding: 12px 15px;
+            border-radius: 8px;
+            margin: 8px 0;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            animation: slideIn 0.3s ease;
+        }
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        .error-message.error {
+            background: #fdeaea;
+            border-right: 4px solid #e74c3c;
+            color: #c0392b;
+        }
+        .error-message.warning {
+            background: #fff3e0;
+            border-right: 4px solid #f39c12;
+            color: #e67e22;
+        }
+        .error-message.success {
+            background: #e8f8f5;
+            border-right: 4px solid #27ae60;
+            color: #16a085;
+        }
+        .error-message.info {
+            background: #e8f0fe;
+            border-right: 4px solid #3498db;
+            color: #2980b9;
+        }
+        .error-icon {
+            font-size: 20px;
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+        }
+        .error-icon.error {
+            background: #e74c3c;
+            color: white;
+        }
+        .error-icon.warning {
+            background: #f39c12;
+            color: white;
+        }
+        .error-icon.success {
+            background: #27ae60;
+            color: white;
+        }
+        .error-icon.info {
+            background: #3498db;
+            color: white;
+        }
+        .close-btn {
+            margin-right: auto;
+            cursor: pointer;
+            opacity: 0.6;
+            transition: opacity 0.3s ease;
+        }
+        .close-btn:hover {
+            opacity: 1;
+        }
+        .test-log {
+            background: #2c3e50;
+            color: #ecf0f1;
+            padding: 15px;
+            border-radius: 10px;
+            font-family: monospace;
+            font-size: 13px;
+            margin-top: 20px;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+        .test-log p {
+            margin: 5px 0;
+            border-bottom: 1px solid #34495e;
+            padding: 5px;
+        }
+        .log-success {
+            color: #2ecc71;
+        }
+        .log-error {
+            color: #e74c3c;
+        }
+        .test-summary {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            margin-top: 20px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+            border: 2px solid #3498db;
+        }
+        .summary-stats {
+            display: flex;
+            justify-content: space-around;
+            margin: 15px 0;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        .stat-item {
+            text-align: center;
+            padding: 10px 20px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            min-width: 100px;
+        }
+        .stat-number {
+            font-size: 24px;
+            font-weight: bold;
+            color: #2c3e50;
+        }
+        .stat-label {
+            font-size: 12px;
+            color: #7f8c8d;
+            margin-top: 5px;
+        }
+        .reset-btn {
+            background: #95a5a6;
+            margin-top: 10px;
+        }
+        .reset-btn:hover {
+            background: #7f8c8d;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🧪 Farsinglish - تست دستی نمایش خطاهای UI</h1>
+        <h2>اعتبارسنجی انواع خطاها، رنگ‌بندی و تجربه کاربری</h2>
+    </div>
+
+    <div class="test-grid">
+        <!-- کارت 1: خطاهای اعتبارسنجی فرم -->
+        <div class="test-card">
+            <div class="card-header">
+                <h3>📝 خطاهای اعتبارسنجی فرم</h3>
+                <span class="badge">۵ سناریو</span>
+            </div>
+            <button class="btn btn-danger" onclick="showError('validation', 'empty-field')">🔴 فیلد خالی</button>
+            <button class="btn btn-danger" onclick="showError('validation', 'invalid-email')">📧 ایمیل نامعتبر</button>
+            <button class="btn btn-danger" onclick="showError('validation', 'short-password')">🔑 رمز کوتاه</button>
+            <button class="btn btn-danger" onclick="showError('validation', 'password-mismatch')">🔄 عدم تطابق رمز</button>
+            <button class="btn btn-danger" onclick="showError('validation', 'invalid-username')">👤 نام کاربری نامعتبر</button>
+            <div id="validation-error" class="error-container">
+                <!-- خطاهای اعتبارسنجی اینجا نمایش داده می‌شوند -->
+            </div>
+        </div>
+
+        <!-- کارت 2: خطاهای شبکه و سرور -->
+        <div class="test-card">
+            <div class="card-header">
+                <h3>🌐 خطاهای شبکه و سرور</h3>
+                <span class="badge">۶ سناریو</span>
+            </div>
+            <button class="btn btn-warning" onclick="showError('network', 'timeout')">⏱️ تایم‌اوت</button>
+            <button class="btn btn-warning" onclick="showError('network', '404')">🔍 خطای ۴۰۴</button>
+            <button class="btn btn-warning" onclick="showError('network', '500')">💥 خطای ۵۰۰</button>
+            <button class="btn btn-warning" onclick="showError('network', 'offline')">📡 آفلاین</button>
+            <button class="btn btn-warning" onclick="showError('network', 'cors')">🌍 خطای CORS</button>
+            <button class="btn btn-warning" onclick="showError('network', 'rate-limit')">⏳ محدودیت درخواست</button>
+            <div id="network-error" class="error-container">
+                <!-- خطاهای شبکه اینجا نمایش داده می‌شوند -->
+            </div>
+        </div>
+
+        <!-- کارت 3: خطاهای SRS و درس -->
+        <div class="test-card">
+            <div class="card-header">
+                <h3>📚 خطاهای SRS و درس</h3>
+                <span class="badge">۵ سناریو</span>
+            </div>
+            <button class="btn btn-danger" onclick="showError('lesson', 'no-lessons')">📭 درسی موجود نیست</button>
+            <button class="btn btn-danger" onclick="showError('lesson', 'lesson-locked')">🔒 درس قفل است</button>
+            <button class="btn btn-danger" onclick="showError('lesson', 'max-reviews')">⚠️ حد نصاب مرور</button>
+            <button class="btn btn-danger" onclick="showError('lesson', 'invalid-quality')">⭐ کیفیت نامعتبر</button>
+            <button class="btn btn-danger" onclick="showError('lesson', 'expired-session')">⌛ جلسه منقضی</button>
+            <div id="lesson-error" class="error-container">
+                <!-- خطاهای درس اینجا نمایش داده می‌شوند -->
+            </div>
+        </div>
+
+        <!-- کارت 4: خطاهای مجوز و دسترسی -->
+        <div class="test-card">
+            <div class="card-header">
+                <h3>🔒 خطاهای مجوز و دسترسی</h3>
+                <span class="badge">۴ سناریو</span>
+            </div>
+            <button class="btn btn-danger" onclick="showError('auth', 'unauthorized')">🚫 عدم احراز هویت</button>
+            <button class="btn btn-danger" onclick="showError('auth', 'forbidden')">⛔ دسترسی ممنوع</button>
+            <button class="btn btn-danger" onclick="showError('auth', 'expired-token')">🔐 توکن منقضی</button>
+            <button class="btn btn-danger" onclick="showError('auth', 'invalid-token')">❌ توکن نامعتبر</button>
+            <div id="auth-error" class="error-container">
+                <!-- خطاهای مجوز اینجا نمایش داده می‌شوند -->
+            </div>
+        </div>
+
+        <!-- کارت 5: خطاهای دیتابیس -->
+        <div class="test-card">
+            <div class="card-header">
+                <h3>💾 خطاهای دیتابیس</h3>
+                <span class="badge">۴ سناریو</span>
+            </div>
+            <button class="btn btn-warning" onclick="showError('db', 'quota-exceeded')">📦 فضای کافی نیست</button>
+            <button class="btn btn-warning" onclick="showError('db', 'transaction-failed')">🔄 تراکنش ناموفق</button>
+            <button class="btn btn-warning" onclick="showError('db', 'constraint-violation')">⚠️ نقض محدودیت</button>
+            <button class="btn btn-warning" onclick="showError('db', 'version-mismatch')">📋 نسخه نامعتبر</button>
+            <div id="db-error" class="error-container">
+                <!-- خطاهای دیتابیس اینجا نمایش داده می‌شوند -->
+            </div>
+        </div>
+
+        <!-- کارت 6: پیام‌های موفقیت و اطلاعات -->
+        <div class="test-card">
+            <div class="card-header">
+                <h3>✅ پیام‌های موفقیت و اطلاع‌رسانی</h3>
+                <span class="badge">۴ سناریو</span>
+            </div>
+            <button class="btn btn-success" onclick="showError('info', 'success-save')">💾 ذخیره موفق</button>
+            <button class="btn btn-success" onclick="showError('info', 'success-sync')">🔄 همگام‌سازی موفق</button>
+            <button class="btn btn-info" onclick="showError('info', 'info-update')">📢 بروزرسانی موجود</button>
+            <button class="btn btn-info" onclick="showError('info', 'info-reminder')">⏰ یادآوری مرور</button>
+            <div id="info-message" class="error-container">
+                <!-- پیام‌های اطلاعاتی اینجا نمایش داده می‌شوند -->
+            </div>
+        </div>
+    </div>
+
+    <!-- دکمه‌های عمومی -->
+    <div style="display: flex; gap: 10px; margin: 20px 0;">
+        <button class="btn btn-success" style="width: auto;" onclick="clearAllErrors()">🗑️ پاک کردن همه خطاها</button>
+        <button class="btn btn-warning" style="width: auto;" onclick="showRandomError()">🎲 نمایش خطای تصادفی</button>
+        <button class="btn btn-info" style="width: auto;" onclick="exportTestLog()">📥 خروجی لاگ</button>
+    </div>
+
+    <!-- لاگ تست -->
+    <div class="test-log" id="test-log">
+        <p>📋 لاگ عملیات‌ها...</p>
+    </div>
+
+    <!-- خلاصه تست -->
+    <div class="test-summary" id="test-summary">
+        <h3>📊 خلاصه تست‌های دستی</h3>
+        <div class="summary-stats">
+            <div class="stat-item">
+                <div class="stat-number" id="total-tests">۰</div>
+                <div class="stat-label">کل سناریوها</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-number" id="tested-count">۰</div>
+                <div class="stat-label">تست شده</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-number" id="remaining-count">۲۸</div>
+                <div class="stat-label">باقی‌مانده</div>
+            </div>
+        </div>
+        <button class="btn reset-btn" onclick="resetTestStats()">🔄 ریست آمار تست</button>
+    </div>
+
+    <script>
+        // داده‌های خطاها
+        const errorMessages = {
+            validation: {
+                'empty-field': { type: 'error', title: 'فیلد خالی', message: 'لطفاً این فیلد را پر کنید' },
+                'invalid-email': { type: 'error', title: 'ایمیل نامعتبر', message: 'فرمت ایمیل صحیح نیست (example@domain.com)' },
+                'short-password': { type: 'error', title: 'رمز عبور کوتاه', message: 'رمز عبور باید حداقل ۸ کاراکتر باشد' },
+                'password-mismatch': { type: 'error', title: 'عدم تطابق', message: 'رمز عبور و تکرار آن یکسان نیستند' },
+                'invalid-username': { type: 'error', title: 'نام کاربری نامعتبر', message: 'فقط حروف، اعداد و زیرخط مجاز است' }
+            },
+            network: {
+                'timeout': { type: 'warning', title: 'تایم‌اوت', message: 'مدت زمان پاسخگویی سرور به پایان رسید' },
+                '404': { type: 'warning', title: 'خطای ۴۰۴', message: 'منبع مورد نظر یافت نشد' },
+                '500': { type: 'error', title: 'خطای سرور', message: 'خطای داخلی سرور - بعداً تلاش کنید' },
+                'offline': { type: 'warning', title: 'آفلاین', message: 'اتصال اینترنت برقرار نیست' },
+                'cors': { type: 'error', title: 'خطای CORS', message: 'دسترسی به منبع مسدود شد' },
+                'rate-limit': { type: 'warning', title: 'محدودیت درخواست', message: 'تعداد درخواست‌ها زیاد است. ۶۰ ثانیه صبر کنید' }
+            },
+            lesson: {
+                'no-lessons': { type: 'error', title: 'بدون درس', message: 'درسی برای نمایش وجود ندارد' },
+                'lesson-locked': { type: 'warning', title: 'درس قفل است', message: 'برای دسترسی به این درس، درس قبلی را کامل کنید' },
+                'max-reviews': { type: 'info', title: 'حد نصاب مرور', message: 'امروز به حد نصاب مرور رسیده‌اید' },
+                'invalid-quality': { type: 'error', title: 'کیفیت نامعتبر', message: 'کیفیت پاسخ باید بین ۰ تا ۵ باشد' },
+                'expired-session': { type: 'warning', title: 'جلسه منقضی', message: 'جلسه تمرین منقضی شده است. دوباره شروع کنید' }
+            },
+            auth: {
+                'unauthorized': { type: 'error', title: 'احراز هویت نشده', message: 'لطفاً ابتدا وارد شوید' },
+                'forbidden': { type: 'error', title: 'دسترسی ممنوع', message: 'شما مجوز دسترسی به این بخش را ندارید' },
+                'expired-token': { type: 'warning', title: 'توکن منقضی', message: 'نشست شما منقضی شده است. دوباره وارد شوید' },
+                'invalid-token': { type: 'error', title: 'توکن نامعتبر', message: 'توکن احراز هویت معتبر نیست' }
+            },
+            db: {
+                'quota-exceeded': { type: 'warning', title: 'فضای کافی نیست', message: 'فضای ذخیره‌سازی دستگاه پر است' },
+                'transaction-failed': { type: 'error', title: 'تراکنش ناموفق', message: 'عملیات دیتابیس با شکست مواجه شد' },
+                'constraint-violation': { type: 'error', title: 'نقض محدودیت', message: 'داده تکراری یا نامعتبر است' },
+                'version-mismatch': { type: 'warning', title: 'نسخه نامعتبر', message: 'نسخه دیتابیس با برنامه همخوانی ندارد' }
+            },
+            info: {
+                'success-save': { type: 'success', title: 'با موفقیت ذخیره شد', message: 'تغییرات شما اعمال شد' },
+                'success-sync': { type: 'success', title: 'همگام‌سازی موفق', message: 'داده‌ها با سرور همگام شدند' },
+                'info-update': { type: 'info', title: 'بروزرسانی موجود', message: 'نسخه جدید برنامه آماده نصب است' },
+                'info-reminder': { type: 'info', title: 'یادآوری مرور', message: '۵ لغت برای مرور امروز دارید' }
+            }
+        };
+
+        let testLog = [];
+        let testedScenarios = new Set();
+
+        function showError(category, errorKey) {
+            const error = errorMessages[category][errorKey];
+            if (!error) return;
+
+            const containerId = getContainerId(category);
+            const container = document.getElementById(containerId);
+            
+            const errorElement = createErrorElement(error, category, errorKey);
+            container.appendChild(errorElement);
+
+            // اضافه کردن به لاگ
+            addToLog(category, errorKey, error);
+            
+            // ثبت سناریوی تست شده
+            testedScenarios.add(`${category}-${errorKey}`);
+            updateStats();
+
+            // اسکرول به خطا
+            errorElement.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+
+        function getContainerId(category) {
+            const map = {
+                'validation': 'validation-error',
+                'network': 'network-error',
+                'lesson': 'lesson-error',
+                'auth': 'auth-error',
+                'db': 'db-error',
+                'info': 'info-message'
+            };
+            return map[category] || 'validation-error';
+        }
+
+        function createErrorElement(error, category, errorKey) {
+            const div = document.createElement('div');
+            div.className = `error-message ${error.type}`;
+            div.setAttribute('data-category', category);
+            div.setAttribute('data-key', errorKey);
+            
+            let icon = '';
+            switch(error.type) {
+                case 'error': icon = '❌'; break;
+                case 'warning': icon = '⚠️'; break;
+                case 'success': icon = '✅'; break;
+                case 'info': icon = 'ℹ️'; break;
+            }
+
+            div.innerHTML = `
+                <span class="error-icon ${error.type}">${icon}</span>
+                <div style="flex: 1;">
+                    <strong>${error.title}</strong><br>
+                    <small>${error.message}</small>
+                </div>
+                <span class="close-btn" onclick="this.parentElement.remove()">✕</span>
+            `;
+
+            return div;
+        }
+
+        function addToLog(category, errorKey, error) {
+            const time = new Date().toLocaleTimeString('fa-IR');
+            const logEntry = {
+                time,
+                category,
+                type: error.type,
+                title: error.title,
+                message: error.message
+            };
+            
+            testLog.unshift(logEntry);
+            updateLogDisplay();
+        }
+
+        function updateLogDisplay() {
+            const logElement = document.getElementById('test-log');
+            if (testLog.length === 0) {
+                logElement.innerHTML = '<p>📋 لاگ عملیات‌ها...</p>';
+                return;
+            }
+
+            let html = '';
+            testLog.slice(0, 10).forEach(entry => {
+                const colorClass = entry.type === 'error' ? 'log-error' : 
+                                  entry.type === 'success' ? 'log-success' : '';
+                html += `<p class="${colorClass}">⏱️ ${entry.time} - ${entry.title}: ${entry.message}</p>`;
+            });
+            logElement.innerHTML = html;
+        }
+
+        function clearAllErrors() {
+            const containers = ['validation-error', 'network-error', 'lesson-error', 'auth-error', 'db-error', 'info-message'];
+            containers.forEach(id => {
+                document.getElementById(id).innerHTML = '';
+            });
+            addToLog('system', 'clear', { type: 'info', title: 'پاک کردن', message: 'تمام خطاها پاک شدند' });
+        }
+
+        function showRandomError() {
+            const categories = Object.keys(errorMessages);
+            const randomCategory = categories[Math.floor(Math.random() * categories.length)];
+            const errors = Object.keys(errorMessages[randomCategory]);
+            const randomError = errors[Math.floor(Math.random() * errors.length)];
+            showError(randomCategory, randomError);
+        }
+
+        function exportTestLog() {
+            const logText = testLog.map(entry => 
+                `[${entry.time}] ${entry.type.toUpperCase()}: ${entry.title} - ${entry.message}`
+            ).join('\n');
+            
+            const blob = new Blob([logText], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `test-log-${new Date().toISOString().slice(0,10)}.txt`;
+            a.click();
+            URL.revokeObjectURL(url);
+            
+            addToLog('system', 'export', { type: 'info', title: 'خروجی لاگ', message: 'فایل لاگ با موفقیت دانلود شد' });
+        }
+
+        function updateStats() {
+            const totalScenarios = Object.keys(errorMessages).reduce((acc, cat) => 
+                acc + Object.keys(errorMessages[cat]).length, 0
+            );
+            
+            document.getElementById('total-tests').textContent = totalScenarios;
+            document.getElementById('tested-count').textContent = testedScenarios.size;
+            document.getElementById('remaining-count').textContent = totalScenarios - testedScenarios.size;
+        }
+
+        function resetTestStats() {
+            testedScenarios.clear();
+            updateStats();
+            clearAllErrors();
+            testLog = [];
+            updateLogDisplay();
+            addToLog('system', 'reset', { type: 'info', title: 'ریست آمار', message: 'آمار تست‌ها بازنشانی شد' });
+        }
+
+        // مقداردهی اولیه
+        updateStats();
+    </script>
+</body>
+</html>
