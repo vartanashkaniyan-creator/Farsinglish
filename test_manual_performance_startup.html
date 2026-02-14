@@ -1,0 +1,501 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>تست دستی Performance Startup - Farsinglish</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: 'Tahoma', 'Arial', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            color: #333;
+        }
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+        h1 {
+            text-align: center;
+            color: white;
+            margin-bottom: 10px;
+            font-size: 1.8rem;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+        }
+        .subtitle {
+            text-align: center;
+            color: rgba(255,255,255,0.9);
+            margin-bottom: 30px;
+            font-size: 1.1rem;
+        }
+        .card {
+            background: white;
+            border-radius: 20px;
+            padding: 25px;
+            margin-bottom: 25px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+        }
+        .card h2 {
+            color: #4a5568;
+            margin-bottom: 20px;
+            font-size: 1.4rem;
+            border-right: 4px solid #667eea;
+            padding-right: 15px;
+        }
+        .button-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin: 20px 0;
+        }
+        button {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 14px 25px;
+            border-radius: 12px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            flex: 1 1 auto;
+            min-width: 200px;
+            font-weight: 500;
+            border: 2px solid transparent;
+            box-shadow: 0 4px 10px rgba(102, 126, 234, 0.3);
+        }
+        button:hover {
+            background: #5a67d8;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 15px rgba(102, 126, 234, 0.4);
+        }
+        button.secondary {
+            background: #48bb78;
+            box-shadow: 0 4px 10px rgba(72, 187, 120, 0.3);
+        }
+        button.secondary:hover {
+            background: #38a169;
+        }
+        button.warning {
+            background: #ed8936;
+            box-shadow: 0 4px 10px rgba(237, 137, 54, 0.3);
+        }
+        .result-box {
+            background: #f7fafc;
+            border-radius: 15px;
+            padding: 20px;
+            margin: 20px 0;
+            border: 2px dashed #cbd5e0;
+            font-family: 'Courier New', monospace;
+            direction: ltr;
+            text-align: left;
+        }
+        .metric {
+            background: #ebf4ff;
+            border-radius: 12px;
+            padding: 15px;
+            margin: 15px 0;
+            border-right: 4px solid #4299e1;
+        }
+        .metric p {
+            margin: 8px 0;
+            font-size: 1.1rem;
+        }
+        .metric .value {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #2b6cb0;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 15px 0;
+        }
+        th, td {
+            border: 1px solid #e2e8f0;
+            padding: 12px;
+            text-align: center;
+        }
+        th {
+            background: #4a5568;
+            color: white;
+        }
+        tr:nth-child(even) {
+            background: #f7fafc;
+        }
+        .progress-bar {
+            width: 100%;
+            height: 25px;
+            background: #e2e8f0;
+            border-radius: 15px;
+            overflow: hidden;
+            margin: 15px 0;
+        }
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #48bb78, #38a169);
+            width: 0%;
+            transition: width 0.5s;
+            color: white;
+            text-align: center;
+            line-height: 25px;
+            font-size: 0.9rem;
+        }
+        .warning-box {
+            background: #feebc8;
+            border-right: 4px solid #ed8936;
+            padding: 15px;
+            border-radius: 10px;
+            margin: 15px 0;
+        }
+        .success-box {
+            background: #c6f6d5;
+            border-right: 4px solid #48bb78;
+            padding: 15px;
+            border-radius: 10px;
+        }
+        footer {
+            text-align: center;
+            color: rgba(255,255,255,0.8);
+            margin-top: 30px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>⚡ تست دستی Performance Startup</h1>
+        <div class="subtitle">اندازه‌گیری زمان بارگذاری، رندر و پاسخگویی اولیه</div>
+
+        <div class="card">
+            <h2>📊 معیارهای عملکرد</h2>
+            <div class="metric">
+                <p>🕒 زمان بارگذاری کامل (Load): <span id="loadTime" class="value">-</span> ms</p>
+                <p>📄 DOM Content Loaded: <span id="domTime" class="value">-</span> ms</p>
+                <p>🎨 First Paint: <span id="paintTime" class="value">-</span> ms</p>
+                <p>⚡ زمان پاسخگویی اولیه: <span id="responseTime" class="value">-</span> ms</p>
+            </div>
+            <div class="progress-bar">
+                <div id="performanceProgress" class="progress-fill" style="width: 0%;">۰%</div>
+            </div>
+        </div>
+
+        <div class="card">
+            <h2>🧪 تست‌های دستی</h2>
+            <div class="button-group">
+                <button onclick="testStartupTime()">🚀 اندازه‌گیری زمان Startup</button>
+                <button class="secondary" onclick="testLoadLessons()">📚 بارگذاری ۵۰ درس</button>
+                <button class="warning" onclick="testLoadExercises()">📝 بارگذاری ۱۰۰۰ تمرین</button>
+                <button onclick="testConcurrentLoad()">⚡ بارگذاری همزمان</button>
+                <button class="secondary" onclick="testMemoryUsage()">🧠 اندازه‌گیری حافظه</button>
+                <button onclick="resetTests()">🔄 ریست کردن</button>
+            </div>
+        </div>
+
+        <div class="card">
+            <h2>📋 نتایج تست‌ها</h2>
+            <div id="results" class="result-box">
+                <p style="color: #718096;">برای شروع یکی از تست‌ها را کلیک کنید...</p>
+            </div>
+        </div>
+
+        <div class="card">
+            <h2>📈 شبیه‌سازی داده‌های حجیم</h2>
+            <div class="button-group">
+                <button onclick="generateLargeDataset(100)">🔢 ۱۰۰ آیتم</button>
+                <button onclick="generateLargeDataset(500)">🔢 ۵۰۰ آیتم</button>
+                <button onclick="generateLargeDataset(1000)">🔢 ۱۰۰۰ آیتم</button>
+                <button onclick="generateLargeDataset(5000)">🔢 ۵۰۰۰ آیتم</button>
+            </div>
+            <div id="datasetStats" style="margin-top: 20px; padding: 15px; background: #f0f4f8; border-radius: 10px;">
+                <p>📊 تعداد آیتم‌ها: <span id="itemCount">۰</span></p>
+                <p>⏱️ زمان تولید: <span id="generateTime">-</span> ms</p>
+            </div>
+        </div>
+
+        <div class="card">
+            <h2>🔄 تست‌های استرس</h2>
+            <div class="button-group">
+                <button onclick="stressTestRender()">🎨 رندر ۱۰۰۰ کامپوننت</button>
+                <button onclick="stressTestCalculation()">🧮 محاسبات سنگین (فیبوناچی ۴۰)</button>
+                <button onclick="stressTestMethod()">⚡ ۱۰۰۰ فراخوانی متد</button>
+            </div>
+        </div>
+
+        <div class="warning-box">
+            <strong>⚠️ نکته:</strong> اعداد بر حسب میلی‌ثانیه هستند. مقادیر زیر ۱۰۰۰ ms عالی، ۱۰۰۰-۲۰۰۰ خوب، ۲۰۰۰-۳۰۰۰ متوسط، بالای ۳۰۰۰ نیاز به بهینه‌سازی دارد.
+        </div>
+
+        <footer>
+            <span>Farsinglish - تست دستی Performance | 🚀 نسخه ۱.۰</span>
+        </footer>
+    </div>
+
+    <script>
+        // متغیرهای ذخیره نتایج
+        let testResults = {
+            startupTime: null,
+            lessonLoadTime: null,
+            exerciseLoadTime: null,
+            concurrentLoadTime: null,
+            memoryUsage: null
+        };
+
+        // اندازه‌گیری زمان Startup واقعی
+        window.addEventListener('load', function() {
+            if (window.performance) {
+                const perfData = window.performance.timing;
+                const loadTime = perfData.loadEventEnd - perfData.navigationStart;
+                const domTime = perfData.domContentLoadedEventEnd - perfData.navigationStart;
+                
+                document.getElementById('loadTime').textContent = loadTime;
+                document.getElementById('domTime').textContent = domTime;
+                
+                // اندازه‌گیری First Paint
+                if (window.performance.getEntriesByType) {
+                    const paint = performance.getEntriesByType('paint');
+                    paint.forEach(entry => {
+                        if (entry.name === 'first-paint') {
+                            document.getElementById('paintTime').textContent = Math.round(entry.startTime);
+                        }
+                    });
+                }
+                
+                testResults.startupTime = loadTime;
+                updateProgress();
+            }
+        });
+
+        // تست زمان Startup (دستی)
+        function testStartupTime() {
+            const start = performance.now();
+            
+            // شبیه‌سازی عملیات Startup
+            setTimeout(() => {
+                const end = performance.now();
+                const responseTime = end - start;
+                document.getElementById('responseTime').textContent = Math.round(responseTime);
+                
+                addResult('✅ تست Startup:', `زمان پاسخگویی: ${Math.round(responseTime)} ms`);
+                testResults.startupTime = responseTime;
+                updateProgress();
+            }, 100);
+        }
+
+        // بارگذاری ۵۰ درس
+        function testLoadLessons() {
+            const start = performance.now();
+            
+            // تولید ۵۰ درس نمونه
+            const lessons = [];
+            for (let i = 1; i <= 50; i++) {
+                lessons.push({
+                    id: i,
+                    title: `درس ${i}`,
+                    level: Math.floor(i / 10) + 1,
+                    words: generateWords(20),
+                    completed: false
+                });
+            }
+            
+            const end = performance.now();
+            const loadTime = end - start;
+            
+            testResults.lessonLoadTime = loadTime;
+            addResult('📚 بارگذاری ۵۰ درس:', `${Math.round(loadTime)} ms - ${lessons.length} درس`);
+            updateProgress();
+        }
+
+        // بارگذاری ۱۰۰۰ تمرین
+        function testLoadExercises() {
+            const start = performance.now();
+            
+            // تولید ۱۰۰۰ تمرین نمونه
+            const exercises = [];
+            for (let i = 1; i <= 1000; i++) {
+                exercises.push({
+                    id: i,
+                    type: ['multiple-choice', 'fill-blank', 'translation'][i % 3],
+                    question: `سوال ${i}`,
+                    options: ['گزینه ۱', 'گزینه ۲', 'گزینه ۳', 'گزینه ۴'],
+                    answer: i % 4
+                });
+            }
+            
+            const end = performance.now();
+            const loadTime = end - start;
+            
+            testResults.exerciseLoadTime = loadTime;
+            addResult('📝 بارگذاری ۱۰۰۰ تمرین:', `${Math.round(loadTime)} ms - ${exercises.length} تمرین`);
+            updateProgress();
+        }
+
+        // بارگذاری همزمان
+        function testConcurrentLoad() {
+            const start = performance.now();
+            
+            // بارگذاری همزمان درس‌ها و تمرین‌ها
+            const lessons = [];
+            const exercises = [];
+            
+            for (let i = 1; i <= 30; i++) {
+                lessons.push({ id: i, title: `درس ${i}` });
+            }
+            
+            for (let i = 1; i <= 200; i++) {
+                exercises.push({ id: i, question: `سوال ${i}` });
+            }
+            
+            const end = performance.now();
+            const loadTime = end - start;
+            
+            testResults.concurrentLoadTime = loadTime;
+            addResult('⚡ بارگذاری همزمان:', `${Math.round(loadTime)} ms - ${lessons.length} درس + ${exercises.length} تمرین`);
+            updateProgress();
+        }
+
+        // اندازه‌گیری حافظه (در صورت پشتیبانی)
+        function testMemoryUsage() {
+            if (performance.memory) {
+                const memory = performance.memory;
+                const usedJSHeapSize = Math.round(memory.usedJSHeapSize / (1024 * 1024));
+                const totalJSHeapSize = Math.round(memory.totalJSHeapSize / (1024 * 1024));
+                
+                testResults.memoryUsage = usedJSHeapSize;
+                addResult('🧠 حافظه مصرفی:', `${usedJSHeapSize} MB / ${totalJSHeapSize} MB`);
+            } else {
+                addResult('🧠 حافظه مصرفی:', 'API پشتیبانی نمی‌شود', 'warning');
+            }
+            updateProgress();
+        }
+
+        // تولید دیتاست بزرگ
+        function generateLargeDataset(count) {
+            const start = performance.now();
+            const data = [];
+            
+            for (let i = 0; i < count; i++) {
+                data.push({
+                    id: i,
+                    value: Math.random() * 1000,
+                    text: `item ${i}`,
+                    nested: {
+                        a: i,
+                        b: i * 2,
+                        c: i * 3
+                    }
+                });
+            }
+            
+            const end = performance.now();
+            document.getElementById('itemCount').textContent = count;
+            document.getElementById('generateTime').textContent = Math.round(end - start);
+            
+            addResult('🔢 تولید دیتاست:', `${count} آیتم در ${Math.round(end - start)} ms`);
+        }
+
+        // تست استرس رندر
+        function stressTestRender() {
+            const start = performance.now();
+            let divs = '';
+            
+            for (let i = 0; i < 1000; i++) {
+                divs += `<div style="display: none;">${i}</div>`;
+            }
+            
+            const tempDiv = document.createElement('div');
+            tempDiv.innerHTML = divs;
+            
+            const end = performance.now();
+            addResult('🎨 رندر ۱۰۰۰ کامپوننت:', `${Math.round(end - start)} ms`);
+        }
+
+        // تست استرس محاسباتی
+        function stressTestCalculation() {
+            const start = performance.now();
+            
+            function fib(n) {
+                if (n <= 1) return n;
+                return fib(n - 1) + fib(n - 2);
+            }
+            
+            const result = fib(40);
+            const end = performance.now();
+            
+            addResult('🧮 محاسبه فیبوناچی ۴۰:', `${Math.round(end - start)} ms (نتیجه: ${result})`);
+        }
+
+        // تست استرس متد
+        function stressTestMethod() {
+            const start = performance.now();
+            
+            for (let i = 0; i < 1000; i++) {
+                JSON.parse(JSON.stringify({ a: i, b: i * 2, c: { d: i } }));
+            }
+            
+            const end = performance.now();
+            addResult('⚡ ۱۰۰۰ فراخوانی متد:', `${Math.round(end - start)} ms`);
+        }
+
+        // تولید کلمات نمونه
+        function generateWords(count) {
+            const words = [];
+            for (let i = 0; i < count; i++) {
+                words.push(`word${i}`);
+            }
+            return words;
+        }
+
+        // افزودن نتیجه
+        function addResult(title, message, type = 'success') {
+            const resultsDiv = document.getElementById('results');
+            const resultHTML = `
+                <div style="margin: 10px 0; padding: 10px; background: ${type === 'success' ? '#f0fff4' : '#fff3e0'}; border-radius: 8px;">
+                    <strong style="color: #2d3748;">${title}</strong>
+                    <p style="color: #4a5568; margin-top: 5px;">${message}</p>
+                </div>
+            `;
+            resultsDiv.innerHTML = resultHTML + resultsDiv.innerHTML;
+        }
+
+        // به‌روزرسانی progress bar
+        function updateProgress() {
+            const values = [
+                testResults.startupTime ? Math.min(100, 1000 / testResults.startupTime * 100) : 0,
+                testResults.lessonLoadTime ? Math.min(100, 500 / testResults.lessonLoadTime * 100) : 0,
+                testResults.exerciseLoadTime ? Math.min(100, 1000 / testResults.exerciseLoadTime * 100) : 0,
+                testResults.concurrentLoadTime ? Math.min(100, 800 / testResults.concurrentLoadTime * 100) : 0
+            ];
+            
+            const avg = values.reduce((a, b) => a + b, 0) / values.filter(v => v > 0).length;
+            const progress = Math.min(100, Math.round(avg || 0));
+            
+            document.getElementById('performanceProgress').style.width = progress + '%';
+            document.getElementById('performanceProgress').textContent = progress + '%';
+        }
+
+        // ریست کردن
+        function resetTests() {
+            testResults = {
+                startupTime: null,
+                lessonLoadTime: null,
+                exerciseLoadTime: null,
+                concurrentLoadTime: null,
+                memoryUsage: null
+            };
+            
+            document.getElementById('loadTime').textContent = '-';
+            document.getElementById('domTime').textContent = '-';
+            document.getElementById('paintTime').textContent = '-';
+            document.getElementById('responseTime').textContent = '-';
+            document.getElementById('performanceProgress').style.width = '0%';
+            document.getElementById('performanceProgress').textContent = '۰%';
+            document.getElementById('results').innerHTML = '<p style="color: #718096;">برای شروع یکی از تست‌ها را کلیک کنید...</p>';
+            document.getElementById('itemCount').textContent = '۰';
+            document.getElementById('generateTime').textContent = '-';
+            
+            addResult('🔄', 'همه تست‌ها ریست شدند', 'warning');
+        }
+    </script>
+</body>
+</html>
