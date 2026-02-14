@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>تست دستی UI ریسپانسیو - Farsinglish</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: 'Tahoma', 'Arial', sans-serif;
+            background: #f0f2f5;
+            padding: 15px;
+            transition: all 0.3s;
+        }
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 15px;
+            margin-bottom: 20px;
+            text-align: center;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        .control-panel {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .btn-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin: 15px 0;
+        }
+        button {
+            padding: 12px 20px;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+            flex: 1 1 auto;
+            min-width: 100px;
+        }
+        .btn-primary { background: #667eea; color: white; }
+        .btn-primary:hover { background: #5a67d8; transform: translateY(-2px); }
+        .btn-success { background: #48bb78; color: white; }
+        .btn-info { background: #4299e1; color: white; }
+        .btn-warning { background: #ed8936; color: white; }
+        
+        .test-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin: 20px 0;
+        }
+        .card {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            transition: all 0.3s;
+        }
+        .card:hover { transform: translateY(-5px); box-shadow: 0 4px 8px rgba(0,0,0,0.15); }
+        
+        .lesson-card {
+            border-right: 4px solid #667eea;
+        }
+        .progress-bar {
+            width: 100%;
+            height: 10px;
+            background: #e2e8f0;
+            border-radius: 5px;
+            margin: 10px 0;
+            overflow: hidden;
+        }
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #667eea, #764ba2);
+            width: 0%;
+            transition: width 0.5s;
+        }
+        .button-demo {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin: 15px 0;
+        }
+        .btn-sm { padding: 8px 12px; font-size: 12px; }
+        .btn-md { padding: 12px 20px; font-size: 14px; }
+        .btn-lg { padding: 16px 28px; font-size: 16px; }
+        
+        .size-indicator {
+            background: #2d3748;
+            color: white;
+            padding: 10px;
+            border-radius: 8px;
+            text-align: center;
+            margin: 10px 0;
+            font-family: monospace;
+            font-size: 16px;
+        }
+        .result-box {
+            background: #f7fafc;
+            border: 2px solid #cbd5e0;
+            border-radius: 10px;
+            padding: 15px;
+            margin: 15px 0;
+            min-height: 100px;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>📱 تست دستی UI ریسپانسیو</h1>
+        <p>بررسی نمایش در اندازه‌های مختلف صفحه</p>
+    </div>
+
+    <div class="control-panel">
+        <h2>🎯 کنترل اندازه صفحه</h2>
+        <div class="btn-group">
+            <button class="btn-primary" onclick="setViewport(320)">📱 موبایل کوچک (320px)</button>
+            <button class="btn-primary" onclick="setViewport(480)">📱 موبایل (480px)</button>
+            <button class="btn-primary" onclick="setViewport(768)">📱 تبلت (768px)</button>
+            <button class="btn-primary" onclick="setViewport(1024)">💻 دسکتاپ (1024px)</button>
+            <button class="btn-primary" onclick="setViewport(1280)">🖥️ دسکتاپ بزرگ (1280px)</button>
+        </div>
+        
+        <div class="size-indicator" id="sizeDisplay">
+            عرض فعلی: <span id="currentWidth">0</span>px
+        </div>
+        
+        <div class="btn-group">
+            <button class="btn-success" onclick="checkResponsive()">🔍 بررسی ریسپانسیو</button>
+            <button class="btn-info" onclick="resetViewport()">🔄 بازنشانی</button>
+            <button class="btn-warning" onclick="logResults()">📝 نمایش نتایج</button>
+        </div>
+    </div>
+
+    <div class="control-panel">
+        <h2>🧪 کامپوننت‌های تست</h2>
+        
+        <!-- گرید کارت‌ها -->
+        <h3>📚 گرید درس‌ها</h3>
+        <div class="test-grid" id="lessonGrid">
+            <div class="card lesson-card">
+                <h4>درس ۱: مقدماتی</h4>
+                <p>۱۲ لغت جدید • سطح ۱</p>
+                <div class="progress-bar"><div class="progress-fill" style="width: 75%"></div></div>
+                <button class="btn-primary btn-sm">شروع درس</button>
+            </div>
+            <div class="card lesson-card">
+                <h4>درس ۲: خانواده</h4>
+                <p>۲۰ لغت جدید • سطح ۱</p>
+                <div class="progress-bar"><div class="progress-fill" style="width: 30%"></div></div>
+                <button class="btn-primary btn-sm">شروع درس</button>
+            </div>
+            <div class="card lesson-card">
+                <h4>درس ۳: غذاها</h4>
+                <p>۱۵ لغت جدید • سطح ۲</p>
+                <div class="progress-bar"><div class="progress-fill" style="width: 0%"></div></div>
+                <button class="btn-primary btn-sm">شروع درس</button>
+            </div>
+            <div class="card lesson-card">
+                <h4>درس ۴: سفر</h4>
+                <p>۲۵ لغت جدید • سطح ۲</p>
+                <div class="progress-bar"><div class="progress-fill" style="width: 10%"></div></div>
+                <button class="btn-primary btn-sm">شروع درس</button>
+            </div>
+        </div>
+
+        <!-- دکمه‌ها در اندازه‌های مختلف -->
+        <h3>🔘 دکمه‌ها</h3>
+        <div class="button-demo">
+            <button class="btn-primary btn-sm">دکمه کوچک</button>
+            <button class="btn-primary btn-md">دکمه متوسط</button>
+            <button class="btn-primary btn-lg">دکمه بزرگ</button>
+            <button class="btn-success btn-md">موفق</button>
+            <button class="btn-warning btn-md">اخطار</button>
+            <button class="btn-info btn-md">اطلاعات</button>
+        </div>
+
+        <!-- فرم ساده -->
+        <h3>📝 فرم ورود</h3>
+        <div style="background: #f7fafc; padding: 15px; border-radius: 10px;">
+            <input type="text" placeholder="نام کاربری" style="width: 100%; padding: 10px; margin-bottom: 10px; border: 1px solid #cbd5e0; border-radius: 5px;">
+            <input type="password" placeholder="رمز عبور" style="width: 100%; padding: 10px; margin-bottom: 10px; border: 1px solid #cbd5e0; border-radius: 5px;">
+            <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                <button class="btn-primary" style="flex: 1;">ورود</button>
+                <button class="btn-info" style="flex: 1;">ثبت‌نام</button>
+            </div>
+        </div>
+
+        <!-- لیست افقی -->
+        <h3>📋 منوی افقی</h3>
+        <div style="display: flex; flex-wrap: wrap; gap: 10px; background: #2d3748; padding: 10px; border-radius: 8px;">
+            <span style="color: white; padding: 5px 10px;">خانه</span>
+            <span style="color: white; padding: 5px 10px;">درس‌ها</span>
+            <span style="color: white; padding: 5px 10px;">مرور</span>
+            <span style="color: white; padding: 5px 10px;">پروفایل</span>
+            <span style="color: white; padding: 5px 10px;">تنظیمات</span>
+        </div>
+    </div>
+
+    <div class="control-panel">
+        <h2>📊 نتایج بررسی</h2>
+        <div class="result-box" id="resultBox">
+            <p>برای بررسی ریسپانسیو، دکمه "بررسی ریسپانسیو" را بزنید.</p>
+        </div>
+        
+        <div class="btn-group">
+            <button class="btn-success" onclick="exportResults()">📥 خروجی نتایج</button>
+            <button class="btn-warning" onclick="clearResults()">🗑️ پاک کردن</button>
+        </div>
+    </div>
+
+    <script>
+        // نمایش عرض فعلی
+        function updateSizeDisplay() {
+            const width = window.innerWidth;
+            document.getElementById('currentWidth').textContent = width;
+        }
+
+        // تنظیم ویوپورت
+        function setViewport(width) {
+            // راه‌حل ساده: تغییر عرض بدنه با استایل
+            document.body.style.maxWidth = width + 'px';
+            document.body.style.margin = '0 auto';
+            updateSizeDisplay();
+            
+            addResult(`📏 تغییر اندازه به ${width}px`);
+        }
+
+        // بازنشانی ویوپورت
+        function resetViewport() {
+            document.body.style.maxWidth = '';
+            document.body.style.margin = '';
+            updateSizeDisplay();
+            addResult('🔄 بازنشانی به اندازه اصلی');
+        }
+
+        // بررسی ریسپانسیو
+        function checkResponsive() {
+            const width = window.innerWidth;
+            const results = [];
+            
+            // بررسی گرید
+            const grid = document.getElementById('lessonGrid');
+            const gridStyle = window.getComputedStyle(grid);
+            const gridColumns = gridStyle.gridTemplateColumns.split(' ').length;
+            
+            // بررسی دکمه‌ها
+            const buttons = document.querySelectorAll('.button-demo button');
+            let buttonsWrap = false;
+            buttons.forEach(btn => {
+                if (btn.offsetTop > buttons[0].offsetTop + 10) buttonsWrap = true;
+            });
+
+            // بررسی منو
+            const menu = document.querySelector('[style*="display: flex"]:last-child');
+            const menuItems = menu.children;
+            let menuWrap = false;
+            if (menuItems.length > 0) {
+                for(let i = 1; i < menuItems.length; i++) {
+                    if (menuItems[i].offsetTop > menuItems[0].offsetTop) {
+                        menuWrap = true;
+                        break;
+                    }
+                }
+            }
+
+            // تولید نتایج
+            results.push(`📱 عرض صفحه: ${width}px`);
+            results.push(`📚 تعداد ستون‌های گرید: ${gridColumns}`);
+            results.push(`🔘 دکمه‌ها در حالت: ${buttonsWrap ? 'ستونی' : 'ردیفی'}`);
+            results.push(`📋 منو در حالت: ${menuWrap ? 'ستونی' : 'ردیفی'}`);
+            
+            if (width < 480) {
+                results.push('✅ حالت موبایل: همه چیز ستونی');
+            } else if (width < 768) {
+                results.push('✅ حالت تبلت: ترکیبی');
+            } else {
+                results.push('✅ حالت دسکتاپ: همه چیز ردیفی');
+            }
+
+            addResult(results.join('<br>'));
+        }
+
+        // افزودن نتیجه
+        function addResult(text) {
+            const box = document.getElementById('resultBox');
+            const p = document.createElement('p');
+            p.innerHTML = text;
+            p.style.margin = '10px 0';
+            p.style.padding = '5px';
+            p.style.borderBottom = '1px solid #e2e8f0';
+            box.appendChild(p);
+        }
+
+        // نمایش نتایج در کنسول
+        function logResults() {
+            const results = document.getElementById('resultBox').innerHTML;
+            console.log('نتایج تست ریسپانسیو:', results);
+            addResult('📋 نتایج در کنسول نمایش داده شد');
+        }
+
+        // پاک کردن نتایج
+        function clearResults() {
+            document.getElementById('resultBox').innerHTML = '<p>نتایج پاک شد.</p>';
+        }
+
+        // خروجی نتایج
+        function exportResults() {
+            const results = document.getElementById('resultBox').innerText;
+            const blob = new Blob([results], { type: 'text/plain' });
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = 'responsive-test-results.txt';
+            a.click();
+            addResult('📥 فایل نتایج دانلود شد');
+        }
+
+        // بروزرسانی هنگام تغییر اندازه
+        window.addEventListener('resize', function() {
+            updateSizeDisplay();
+        });
+
+        // اجرا در شروع
+        window.onload = function() {
+            updateSizeDisplay();
+            addResult('✅ تست ریسپانسیو آغاز شد. اندازه‌های مختلف را امتحان کنید.');
+        };
+    </script>
+</body>
+</html>
