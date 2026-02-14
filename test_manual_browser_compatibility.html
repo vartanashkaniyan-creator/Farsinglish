@@ -1,0 +1,709 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>تست سازگاری مرورگرها - Farsinglish</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Tahoma', 'Vazir', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            color: #333;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 25px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            backdrop-filter: blur(10px);
+        }
+
+        h1 {
+            color: #2c3e50;
+            text-align: center;
+            margin-bottom: 10px;
+            font-size: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        h2 {
+            color: #34495e;
+            margin: 20px 0 15px;
+            font-size: 20px;
+            border-right: 4px solid #667eea;
+            padding-right: 15px;
+        }
+
+        .browser-info {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 15px;
+            margin-bottom: 25px;
+            text-align: center;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+        }
+
+        .browser-name {
+            font-size: 28px;
+            font-weight: bold;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        .browser-details {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            flex-wrap: wrap;
+            font-size: 14px;
+            opacity: 0.9;
+        }
+
+        .test-section {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            border: 1px solid #e0e0e0;
+        }
+
+        .test-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+
+        .test-card {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 15px;
+            border: 2px solid #dee2e6;
+            transition: all 0.3s ease;
+        }
+
+        .test-card.pass {
+            border-color: #27ae60;
+            background: #f0fff4;
+        }
+
+        .test-card.fail {
+            border-color: #e74c3c;
+            background: #fff5f5;
+        }
+
+        .test-title {
+            font-weight: bold;
+            margin-bottom: 10px;
+            color: #2c3e50;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .test-status {
+            font-size: 14px;
+            padding: 5px 10px;
+            border-radius: 5px;
+            margin: 10px 0;
+            text-align: center;
+        }
+
+        .test-status.pass {
+            background: #27ae60;
+            color: white;
+        }
+
+        .test-status.fail {
+            background: #e74c3c;
+            color: white;
+        }
+
+        .test-status.warning {
+            background: #f39c12;
+            color: white;
+        }
+
+        button {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 8px;
+            font-size: 15px;
+            font-weight: bold;
+            cursor: pointer;
+            width: 100%;
+            transition: all 0.3s ease;
+            margin: 5px 0;
+            border: 1px solid #5a67d8;
+        }
+
+        button:hover {
+            background: #5a67d8;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        button.secondary {
+            background: #95a5a6;
+            border-color: #7f8c8d;
+        }
+
+        button.secondary:hover {
+            background: #7f8c8d;
+        }
+
+        .result-box {
+            background: #1a2634;
+            color: #0f0;
+            padding: 15px;
+            border-radius: 8px;
+            font-family: monospace;
+            margin: 15px 0;
+            max-height: 200px;
+            overflow-y: auto;
+            direction: ltr;
+            text-align: left;
+            font-size: 13px;
+            line-height: 1.5;
+            border: 2px solid #2c3e50;
+        }
+
+        .summary {
+            background: #2c3e50;
+            color: white;
+            padding: 20px;
+            border-radius: 15px;
+            margin-top: 25px;
+            text-align: center;
+        }
+
+        .summary-stats {
+            display: flex;
+            justify-content: space-around;
+            margin: 15px 0;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .stat-item {
+            text-align: center;
+            background: rgba(255, 255, 255, 0.1);
+            padding: 15px;
+            border-radius: 10px;
+            min-width: 100px;
+        }
+
+        .stat-number {
+            font-size: 28px;
+            font-weight: bold;
+            color: #f1c40f;
+        }
+
+        .feature-badge {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: bold;
+            margin-left: 5px;
+        }
+
+        .feature-badge.yes {
+            background: #27ae60;
+            color: white;
+        }
+
+        .feature-badge.no {
+            background: #e74c3c;
+            color: white;
+        }
+
+        .feature-badge.limited {
+            background: #f39c12;
+            color: white;
+        }
+
+        @media (max-width: 600px) {
+            .container { padding: 15px; }
+            .browser-name { font-size: 22px; }
+            .test-grid { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🌐 Farsinglish - تست سازگاری مرورگرها</h1>
+        <p style="text-align: center; color: #666; margin-bottom: 20px;">Browser Compatibility Test</p>
+
+        <!-- اطلاعات مرورگر -->
+        <div class="browser-info" id="browserInfo">
+            <div class="browser-name" id="browserName">در حال تشخیص...</div>
+            <div class="browser-details" id="browserDetails"></div>
+        </div>
+
+        <!-- دکمه‌های اصلی -->
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; margin-bottom: 20px;">
+            <button onclick="detectBrowser()">🔄 تشخیص مجدد مرورگر</button>
+            <button onclick="testAllFeatures()">🧪 تست همه ویژگی‌ها</button>
+            <button onclick="exportResults()">📥 خروجی JSON</button>
+        </div>
+
+        <!-- ویژگی‌های پایه -->
+        <div class="test-section">
+            <h2>📌 ویژگی‌های پایه مرورگر</h2>
+            <div class="test-grid" id="basicFeatures"></div>
+        </div>
+
+        <!-- ذخیره‌سازی -->
+        <div class="test-section">
+            <h2>💾 ذخیره‌سازی</h2>
+            <div class="test-grid" id="storageFeatures"></div>
+        </div>
+
+        <!-- ویژگی‌های پیشرفته -->
+        <div class="test-section">
+            <h2>⚡ ویژگی‌های پیشرفته</h2>
+            <div class="test-grid" id="advancedFeatures"></div>
+        </div>
+
+        <!-- PWA و سرویس ورکر -->
+        <div class="test-section">
+            <h2>📱 PWA & Service Worker</h2>
+            <div class="test-grid" id="pwaFeatures"></div>
+        </div>
+
+        <!-- خروجی لاگ -->
+        <div class="result-box" id="logOutput">
+            ⏳ برای شروع تست، دکمه‌ها را کلیک کنید...
+        </div>
+
+        <!-- خلاصه نهایی -->
+        <div class="summary" id="summary">
+            <h3>📊 خلاصه تست‌ها</h3>
+            <div class="summary-stats" id="summaryStats">
+                <div class="stat-item">
+                    <div>✅ پشتیبانی</div>
+                    <div class="stat-number" id="supportedCount">0</div>
+                </div>
+                <div class="stat-item">
+                    <div>❌ عدم پشتیبانی</div>
+                    <div class="stat-number" id="unsupportedCount">0</div>
+                </div>
+                <div class="stat-item">
+                    <div>⚠️ محدود</div>
+                    <div class="stat-number" id="limitedCount">0</div>
+                </div>
+            </div>
+            <p id="compatibilityMessage" style="margin-top: 15px; font-size: 16px;"></p>
+        </div>
+    </div>
+
+    <script>
+        // ---------- تشخیص مرورگر ----------
+        function detectBrowser() {
+            const ua = navigator.userAgent;
+            const browserInfo = {
+                name: 'Unknown',
+                version: 'Unknown',
+                engine: 'Unknown',
+                os: 'Unknown',
+                mobile: /Mobile|Android|iPhone|iPad|iPod/i.test(ua)
+            };
+
+            // تشخیص مرورگر
+            if (ua.indexOf('Chrome') > -1 && ua.indexOf('Edg') === -1) {
+                browserInfo.name = 'Google Chrome';
+                browserInfo.version = ua.match(/Chrome\/(\d+\.\d+)/)?.[1] || 'Unknown';
+            } else if (ua.indexOf('Firefox') > -1) {
+                browserInfo.name = 'Mozilla Firefox';
+                browserInfo.version = ua.match(/Firefox\/(\d+\.\d+)/)?.[1] || 'Unknown';
+            } else if (ua.indexOf('Safari') > -1 && ua.indexOf('Chrome') === -1) {
+                browserInfo.name = 'Apple Safari';
+                browserInfo.version = ua.match(/Version\/(\d+\.\d+)/)?.[1] || 'Unknown';
+            } else if (ua.indexOf('Edg') > -1) {
+                browserInfo.name = 'Microsoft Edge';
+                browserInfo.version = ua.match(/Edg\/(\d+\.\d+)/)?.[1] || 'Unknown';
+            }
+
+            // تشخیص موتور
+            if (ua.indexOf('AppleWebKit') > -1) browserInfo.engine = 'WebKit';
+            else if (ua.indexOf('Gecko') > -1) browserInfo.engine = 'Gecko';
+            else if (ua.indexOf('Trident') > -1) browserInfo.engine = 'Trident';
+
+            // تشخیص OS
+            if (ua.indexOf('Windows') > -1) browserInfo.os = 'Windows';
+            else if (ua.indexOf('Mac') > -1) browserInfo.os = 'macOS';
+            else if (ua.indexOf('Linux') > -1) browserInfo.os = 'Linux';
+            else if (ua.indexOf('Android') > -1) browserInfo.os = 'Android';
+            else if (ua.indexOf('iOS') > -1 || ua.indexOf('iPhone') > -1) browserInfo.os = 'iOS';
+
+            document.getElementById('browserName').textContent = browserInfo.name;
+            document.getElementById('browserDetails').innerHTML = `
+                <span>نسخه: ${browserInfo.version}</span>
+                <span>موتور: ${browserInfo.engine}</span>
+                <span>سیستم‌عامل: ${browserInfo.os}</span>
+                <span>موبایل: ${browserInfo.mobile ? '✅' : '❌'}</span>
+            `;
+
+            log(`✅ مرورگر شناسایی شد: ${browserInfo.name} ${browserInfo.version}`);
+            return browserInfo;
+        }
+
+        // ---------- تست ویژگی‌ها ----------
+        const testResults = {};
+
+        async function testFeature(feature, testFn) {
+            try {
+                const result = await testFn();
+                testResults[feature] = result ? 'yes' : 'no';
+                return result;
+            } catch (e) {
+                testResults[feature] = 'no';
+                return false;
+            }
+        }
+
+        // تست localStorage
+        function testLocalStorage() {
+            try {
+                const test = '__test__';
+                localStorage.setItem(test, test);
+                localStorage.removeItem(test);
+                return true;
+            } catch(e) {
+                return false;
+            }
+        }
+
+        // تست sessionStorage
+        function testSessionStorage() {
+            try {
+                const test = '__test__';
+                sessionStorage.setItem(test, test);
+                sessionStorage.removeItem(test);
+                return true;
+            } catch(e) {
+                return false;
+            }
+        }
+
+        // تست IndexedDB
+        function testIndexedDB() {
+            return 'indexedDB' in window;
+        }
+
+        // تست WebSQL (فقط Safari)
+        function testWebSQL() {
+            return 'openDatabase' in window;
+        }
+
+        // تست Cache API
+        function testCacheAPI() {
+            return 'caches' in window;
+        }
+
+        // تست Service Worker
+        function testServiceWorker() {
+            return 'serviceWorker' in navigator;
+        }
+
+        // تست Push API
+        function testPushAPI() {
+            return 'PushManager' in window;
+        }
+
+        // تست Notification
+        function testNotification() {
+            return 'Notification' in window;
+        }
+
+        // تست Geolocation
+        function testGeolocation() {
+            return 'geolocation' in navigator;
+        }
+
+        // تست Web Workers
+        function testWebWorkers() {
+            return 'Worker' in window;
+        }
+
+        // تست WebGL
+        function testWebGL() {
+            try {
+                const canvas = document.createElement('canvas');
+                return !!(canvas.getContext('webgl') || canvas.getContext('experimental-webgl'));
+            } catch(e) {
+                return false;
+            }
+        }
+
+        // تست WebRTC
+        function testWebRTC() {
+            return 'RTCPeerConnection' in window;
+        }
+
+        // تست WebSocket
+        function testWebSocket() {
+            return 'WebSocket' in window;
+        }
+
+        // تست Canvas
+        function testCanvas() {
+            const canvas = document.createElement('canvas');
+            return !!(canvas.getContext && canvas.getContext('2d'));
+        }
+
+        // تست SVG
+        function testSVG() {
+            return 'SVGElement' in window;
+        }
+
+        // تست Web Components
+        function testWebComponents() {
+            return 'customElements' in window;
+        }
+
+        // تست Intersection Observer
+        function testIntersectionObserver() {
+            return 'IntersectionObserver' in window;
+        }
+
+        // تست Resize Observer
+        function testResizeObserver() {
+            return 'ResizeObserver' in window;
+        }
+
+        // تست Mutation Observer
+        function testMutationObserver() {
+            return 'MutationObserver' in window;
+        }
+
+        // تست Fetch API
+        function testFetch() {
+            return 'fetch' in window;
+        }
+
+        // تست Promise
+        function testPromise() {
+            return 'Promise' in window;
+        }
+
+        // تست Async/Await
+        function testAsyncAwait() {
+            try {
+                eval('(async function(){})');
+                return true;
+            } catch(e) {
+                return false;
+            }
+        }
+
+        // نمایش نتایج
+        async function renderResults() {
+            const features = {
+                basic: [
+                    { id: 'canvas', name: 'Canvas', test: testCanvas },
+                    { id: 'svg', name: 'SVG', test: testSVG },
+                    { id: 'webgl', name: 'WebGL', test: testWebGL },
+                    { id: 'websocket', name: 'WebSocket', test: testWebSocket }
+                ],
+                storage: [
+                    { id: 'localstorage', name: 'localStorage', test: testLocalStorage },
+                    { id: 'sessionstorage', name: 'sessionStorage', test: testSessionStorage },
+                    { id: 'indexeddb', name: 'IndexedDB', test: testIndexedDB },
+                    { id: 'websql', name: 'WebSQL', test: testWebSQL },
+                    { id: 'cacheapi', name: 'Cache API', test: testCacheAPI }
+                ],
+                advanced: [
+                    { id: 'fetch', name: 'Fetch API', test: testFetch },
+                    { id: 'promise', name: 'Promise', test: testPromise },
+                    { id: 'async', name: 'Async/Await', test: testAsyncAwait },
+                    { id: 'geolocation', name: 'Geolocation', test: testGeolocation },
+                    { id: 'webworkers', name: 'Web Workers', test: testWebWorkers },
+                    { id: 'webrtc', name: 'WebRTC', test: testWebRTC },
+                    { id: 'webcomponents', name: 'Web Components', test: testWebComponents }
+                ],
+                pwa: [
+                    { id: 'serviceworker', name: 'Service Worker', test: testServiceWorker },
+                    { id: 'pushapi', name: 'Push API', test: testPushAPI },
+                    { id: 'notification', name: 'Notification', test: testNotification },
+                    { id: 'intersection', name: 'Intersection Observer', test: testIntersectionObserver },
+                    { id: 'resize', name: 'Resize Observer', test: testResizeObserver },
+                    { id: 'mutation', name: 'Mutation Observer', test: testMutationObserver }
+                ]
+            };
+
+            // اجرای تست‌ها
+            for (const category in features) {
+                for (const feature of features[category]) {
+                    await testFeature(feature.id, feature.test);
+                }
+            }
+
+            // نمایش ویژگی‌های پایه
+            renderCategory('basicFeatures', features.basic);
+            
+            // نمایش ذخیره‌سازی
+            renderCategory('storageFeatures', features.storage);
+            
+            // نمایش ویژگی‌های پیشرفته
+            renderCategory('advancedFeatures', features.advanced);
+            
+            // نمایش PWA
+            renderCategory('pwaFeatures', features.pwa);
+
+            // به‌روزرسانی آمار
+            updateStats();
+        }
+
+        function renderCategory(elementId, features) {
+            const container = document.getElementById(elementId);
+            container.innerHTML = '';
+
+            features.forEach(feature => {
+                const status = testResults[feature.id] || 'no';
+                const card = document.createElement('div');
+                card.className = `test-card ${status === 'yes' ? 'pass' : status === 'no' ? 'fail' : 'warning'}`;
+                
+                let statusText = '';
+                let statusClass = '';
+                if (status === 'yes') {
+                    statusText = '✅ پشتیبانی کامل';
+                    statusClass = 'pass';
+                } else if (status === 'no') {
+                    statusText = '❌ عدم پشتیبانی';
+                    statusClass = 'fail';
+                } else {
+                    statusText = '⚠️ پشتیبانی محدود';
+                    statusClass = 'warning';
+                }
+
+                card.innerHTML = `
+                    <div class="test-title">
+                        <span>${feature.name}</span>
+                        <span class="feature-badge ${statusClass}">${status === 'yes' ? '✅' : status === 'no' ? '❌' : '⚠️'}</span>
+                    </div>
+                    <div class="test-status ${statusClass}">${statusText}</div>
+                    <button class="secondary" onclick="testSpecificFeature('${feature.id}')">
+                        🔄 تست مجدد
+                    </button>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        async function testSpecificFeature(featureId) {
+            const featureMap = {
+                canvas: testCanvas,
+                svg: testSVG,
+                webgl: testWebGL,
+                websocket: testWebSocket,
+                localstorage: testLocalStorage,
+                sessionstorage: testSessionStorage,
+                indexeddb: testIndexedDB,
+                websql: testWebSQL,
+                cacheapi: testCacheAPI,
+                fetch: testFetch,
+                promise: testPromise,
+                async: testAsyncAwait,
+                geolocation: testGeolocation,
+                webworkers: testWebWorkers,
+                webrtc: testWebRTC,
+                webcomponents: testWebComponents,
+                serviceworker: testServiceWorker,
+                pushapi: testPushAPI,
+                notification: testNotification,
+                intersection: testIntersectionObserver,
+                resize: testResizeObserver,
+                mutation: testMutationObserver
+            };
+
+            const result = await testFeature(featureId, featureMap[featureId]);
+            log(`✅ تست ${featureId}: ${result ? 'موفق' : 'ناموفق'}`);
+            await renderResults();
+        }
+
+        function updateStats() {
+            let supported = 0, unsupported = 0, limited = 0;
+            
+            Object.values(testResults).forEach(status => {
+                if (status === 'yes') supported++;
+                else if (status === 'no') unsupported++;
+                else limited++;
+            });
+
+            document.getElementById('supportedCount').textContent = supported;
+            document.getElementById('unsupportedCount').textContent = unsupported;
+            document.getElementById('limitedCount').textContent = limited;
+
+            const total = supported + unsupported + limited;
+            const percent = total > 0 ? Math.round((supported / total) * 100) : 0;
+            
+            let message = '';
+            if (percent >= 90) {
+                message = '✅ مرورگر شما کاملاً با Farsinglish سازگار است';
+            } else if (percent >= 70) {
+                message = '⚠️ مرورگر شما تا حد زیادی سازگار است، اما برخی ویژگی‌ها محدود هستند';
+            } else {
+                message = '❌ مرورگر شما برای اجرای کامل Farsinglish مناسب نیست';
+            }
+            
+            document.getElementById('compatibilityMessage').textContent = message;
+        }
+
+        async function testAllFeatures() {
+            log('🧪 شروع تست همه ویژگی‌ها...');
+            await renderResults();
+            log('✅ تست همه ویژگی‌ها کامل شد');
+        }
+
+        function log(message) {
+            const logBox = document.getElementById('logOutput');
+            const time = new Date().toLocaleTimeString('fa-IR');
+            logBox.innerHTML += `<div>⏱️ ${time} | ${message}</div>`;
+            logBox.scrollTop = logBox.scrollHeight;
+        }
+
+        function exportResults() {
+            const data = {
+                browser: detectBrowser(),
+                timestamp: new Date().toISOString(),
+                results: testResults
+            };
+            
+            const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `browser-test-${Date.now()}.json`;
+            a.click();
+            
+            log('📥 نتایج با موفقیت خروجی گرفته شد');
+        }
+
+        // مقداردهی اولیه
+        window.onload = function() {
+            detectBrowser();
+            testAllFeatures();
+        };
+    </script>
+</body>
+</html>
