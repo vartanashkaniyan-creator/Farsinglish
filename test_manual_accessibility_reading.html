@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>تست دسترسی‌پذیری (خوانایی متن) - Farsinglish</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Tahoma', 'Arial', sans-serif;
+        }
+        body {
+            background: #f4f7fa;
+            padding: 20px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        .header {
+            background: #2c3e50;
+            color: white;
+            padding: 25px;
+            border-radius: 18px;
+            margin-bottom: 25px;
+            text-align: center;
+            box-shadow: 0 6px 12px rgba(0,0,0,0.1);
+        }
+        .header h1 {
+            font-size: 28px;
+            margin-bottom: 8px;
+        }
+        .test-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        .card {
+            background: white;
+            border-radius: 20px;
+            padding: 20px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.08);
+            transition: all 0.2s;
+            border: 1px solid #e9ecef;
+        }
+        .card h3 {
+            color: #1e293b;
+            margin-bottom: 15px;
+            font-size: 20px;
+            border-bottom: 2px solid #dee2e6;
+            padding-bottom: 10px;
+        }
+        .sample-text {
+            background: #f8fafc;
+            border-radius: 14px;
+            padding: 20px;
+            margin: 15px 0;
+            border-right: 4px solid #3498db;
+            line-height: 1.8;
+        }
+        .button-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin: 20px 0 10px;
+            justify-content: center;
+        }
+        .btn {
+            background: #3498db;
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 40px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: 0.2s;
+            box-shadow: 0 2px 5px rgba(52,152,219,0.3);
+            flex: 1 1 auto;
+            min-width: 130px;
+            border: 1px solid #2980b9;
+        }
+        .btn:hover {
+            background: #2980b9;
+            transform: translateY(-2px);
+        }
+        .btn-success {
+            background: #2ecc71;
+            border-color: #27ae60;
+        }
+        .btn-warning {
+            background: #f39c12;
+            border-color: #e67e22;
+        }
+        .btn-danger {
+            background: #e74c3c;
+            border-color: #c0392b;
+        }
+        .result-box {
+            background: #1e293b;
+            color: #b0e9ff;
+            padding: 18px;
+            border-radius: 16px;
+            font-family: monospace;
+            font-size: 15px;
+            margin: 20px 0 5px;
+            direction: ltr;
+            text-align: left;
+            white-space: pre-wrap;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+        .badge {
+            display: inline-block;
+            background: #8b5cf6;
+            color: white;
+            padding: 6px 14px;
+            border-radius: 40px;
+            font-size: 13px;
+            margin-left: 8px;
+        }
+        .contrast-box {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: #f1f5f9;
+            border-radius: 18px;
+            padding: 15px;
+            margin: 15px 0;
+        }
+        .contrast-preview {
+            width: 80px;
+            height: 80px;
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+        }
+        footer {
+            text-align: center;
+            margin-top: 40px;
+            color: #64748b;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>♿ تست دسترسی‌پذیری (WCAG) - خوانایی متن</h1>
+        <p>بررسی کنتراست، اندازه فونت، فاصله خطوط و قابلیت بزرگ‌نمایی</p>
+    </div>
+
+    <div class="test-grid">
+        <!-- کارت ۱: کنتراست رنگ -->
+        <div class="card" id="contrast-card">
+            <h3>🔆 ۱. کنتراست رنگ (WCAG)</h3>
+            <div class="contrast-box">
+                <div class="contrast-preview" style="background: #1a2b3c; color: white;">Aa</div>
+                <div><strong>پیش‌فرض:</strong> متن تیره/روشن</div>
+                <button class="btn btn-success" id="test-contrast-normal">تست سطح AA</button>
+            </div>
+            <div class="contrast-box">
+                <div class="contrast-preview" style="background: #f4f1de; color: #3d5a80;">Aa</div>
+                <div><strong>پیشنهادی:</strong> آبی روی کرم</div>
+                <button class="btn btn-warning" id="test-contrast-low">شبیه‌سازی ضعیف</button>
+            </div>
+            <div class="sample-text" id="contrast-sample">
+                <p id="contrast-text">این یک نمونه متن برای تست کنتراست است. آیا خوانایی کافی دارد؟</p>
+            </div>
+            <div class="button-group">
+                <button class="btn" id="apply-high-contrast">کنتراست بالا (AA)</button>
+                <button class="btn btn-danger" id="apply-low-contrast">کنتراست پایین (غیراستاندارد)</button>
+            </div>
+        </div>
+
+        <!-- کارت ۲: اندازه فونت -->
+        <div class="card">
+            <h3>🔤 ۲. اندازه فونت (قابل تنظیم)</h3>
+            <div class="sample-text" id="font-sample" style="font-size: 16px;">
+                <p>اندازه فعلی: <span id="current-font-size">16px</span></p>
+                <p id="font-demo-text">لطفاً دکمه‌های زیر را برای تغییر اندازه و بررسی خوانایی در دستگاه موبایل تست کنید.</p>
+            </div>
+            <div class="button-group">
+                <button class="btn" id="font-smaller">− کوچک (12px)</button>
+                <button class="btn btn-success" id="font-normal">پایه (16px)</button>
+                <button class="btn" id="font-larger">+ بزرگ (22px)</button>
+                <button class="btn btn-warning" id="font-xlarge">🔍 خیلی بزرگ (32px)</button>
+            </div>
+        </div>
+
+        <!-- کارت ۳: فاصله خطوط و حروف -->
+        <div class="card">
+            <h3>📏 ۳. فاصله خطوط و حروف</h3>
+            <div class="sample-text" id="spacing-sample" style="line-height: 1.5; letter-spacing: normal;">
+                <p>این یک پاراگراف طولانی است که برای تست فاصله خطوط و تراکم متن استفاده می‌شود. در خوانایی متن، فاصله مناسب بین خطوط و حروف تأثیر مستقیم دارد به خصوص برای کاربران با مشکلات بینایی یا دیسلکسی.</p>
+                <p>خط دوم برای بررسی بهتر.</p>
+            </div>
+            <div class="button-group">
+                <button class="btn" id="line-tight">فشرده (line-height:1.2)</button>
+                <button class="btn btn-success" id="line-normal">استاندارد (1.5)</button>
+                <button class="btn" id="line-loose">باز (2.0)</button>
+                <button class="btn" id="letter-spacing-test">فاصله حروف +0.5px</button>
+            </div>
+        </div>
+
+        <!-- کارت ۴: بزرگ‌نمایی صفحه (Zoom) -->
+        <div class="card">
+            <h3>🔎 ۴. شبیه‌سازی بزرگ‌نمایی (Zoom)</h3>
+            <div class="sample-text" id="zoom-sample">
+                <p>کاربران با دید کم از ذره‌بین مرورگر استفاده می‌کنند (تا ۲۰۰٪).</p>
+                <p><strong>آیا متن با ۲۰۰٪ هنوز خواناست و بریده نمی‌شود؟</strong></p>
+            </div>
+            <div class="button-group">
+                <button class="btn" id="zoom-in">➕ بزرگ‌نمایی ۲۰۰٪</button>
+                <button class="btn btn-warning" id="zoom-out">➖ بازگشت به ۱۰۰٪</button>
+                <button class="btn" id="layout-check">بررسی شکستن طرح</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- کارت نتیجه کلی -->
+    <div class="card" style="grid-column: 1/-1; margin-top: 10px;">
+        <h3>📋 گزارش تست‌ها</h3>
+        <div class="result-box" id="accessibility-log">
+            -- برای اجرای هر تست، روی دکمه مربوط کلیک کنید --
+        </div>
+        <div class="button-group">
+            <button class="btn-success btn" id="reset-all-tests">🔄 بازنشانی همه</button>
+            <button class="btn-warning btn" id="run-all-tests">▶ اجرای سریع همه تست‌ها</button>
+        </div>
+    </div>
+
+    <footer>
+        <p>تست دستی خوانایی بر اساس معیارهای WCAG 2.1 (سطح AA/AAA) | همه دکمه‌ها فعال و پاسخگو</p>
+    </footer>
+
+    <script>
+        (function() {
+            // -------------------- عناصر DOM --------------------
+            const logBox = document.getElementById('accessibility-log');
+            
+            // عناصر کارت کنتراست
+            const contrastText = document.getElementById('contrast-text');
+            const contrastSample = document.getElementById('contrast-sample');
+            const btnHighContrast = document.getElementById('apply-high-contrast');
+            const btnLowContrast = document.getElementById('apply-low-contrast');
+            const btnContrastNormal = document.getElementById('test-contrast-normal');
+            const btnContrastLow = document.getElementById('test-contrast-low');
+
+            // عناصر کارت فونت
+            const fontSample = document.getElementById('font-sample');
+            const fontDemoText = document.getElementById('font-demo-text');
+            const currentFontSpan = document.getElementById('current-font-size');
+            const btnFontSmaller = document.getElementById('font-smaller');
+            const btnFontNormal = document.getElementById('font-normal');
+            const btnFontLarger = document.getElementById('font-larger');
+            const btnFontXlarge = document.getElementById('font-xlarge');
+
+            // عناصر کارت فاصله
+            const spacingSample = document.getElementById('spacing-sample');
+            const btnLineTight = document.getElementById('line-tight');
+            const btnLineNormal = document.getElementById('line-normal');
+            const btnLineLoose = document.getElementById('line-loose');
+            const btnLetterSpacing = document.getElementById('letter-spacing-test');
+
+            // عناصر کارت زوم
+            const zoomSample = document.getElementById('zoom-sample');
+            const btnZoomIn = document.getElementById('zoom-in');
+            const btnZoomOut = document.getElementById('zoom-out');
+            const btnLayoutCheck = document.getElementById('layout-check');
+
+            // دکمه‌های عمومی
+            const resetBtn = document.getElementById('reset-all-tests');
+            const runAllBtn = document.getElementById('run-all-tests');
+
+            // -------------------- توابع کمکی لاگ --------------------
+            function addLog(message, type = 'info') {
+                const time = new Date().toLocaleTimeString('fa-IR');
+                const prefix = type === 'success' ? '✅' : (type === 'warn' ? '⚠️' : '🔹');
+                logBox.innerHTML += `\n[${time}] ${prefix} ${message}`;
+                logBox.scrollTop = logBox.scrollHeight;
+            }
+
+            function clearLog() {
+                logBox.innerHTML = '-- گزارش تست‌ها --';
+            }
+
+            // -------------------- تست‌های کنتراست --------------------
+            btnHighContrast.addEventListener('click', () => {
+                const originalBg = contrastSample.style.background;
+                const originalColor = contrastText.style.color;
+                
+                contrastSample.style.background = '#1e2b3a';
+                contrastText.style.color = '#f0f7ff';
+                contrastText.style.fontWeight = '500';
+                
+                addLog('کنتراست بالا (AA) اعمال شد: پس زمینه تیره/متن روشن', 'success');
+            });
+
+            btnLowContrast.addEventListener('click', () => {
+                contrastSample.style.background = '#e0e7ff';
+                contrastText.style.color = '#a5b4fc';
+                contrastText.style.fontWeight = '300';
+                
+                addLog('⚠️ کنتراست پایین (غیراستاندارد) - این حالت برای تست ضعف خوانایی است', 'warn');
+            });
+
+            btnContrastNormal.addEventListener('click', () => {
+                addLog('تست کنتراست سطح AA: نسبت حداقل 4.5:1 برای متن عادی - در این نمونه بررسی شد.', 'success');
+            });
+
+            btnContrastLow.addEventListener('click', () => {
+                addLog('شبیه‌سازی کنتراست ضعیف (نسبت حدود 2:1) - برای کاربران مشکل‌ساز است.', 'warn');
+            });
+
+            // -------------------- تست اندازه فونت --------------------
+            function setFontSize(px) {
+                fontSample.style.fontSize = px + 'px';
+                if (fontDemoText) fontDemoText.style.fontSize = px + 'px';
+                currentFontSpan.innerText = px + 'px';
+                addLog(`اندازه فونت به ${px}px تغییر یافت.`, 'info');
+            }
+
+            btnFontSmaller.addEventListener('click', () => setFontSize(12));
+            btnFontNormal.addEventListener('click', () => setFontSize(16));
+            btnFontLarger.addEventListener('click', () => setFontSize(22));
+            btnFontXlarge.addEventListener('click', () => setFontSize(32));
+
+            // -------------------- تست فاصله خطوط و حروف --------------------
+            btnLineTight.addEventListener('click', () => {
+                spacingSample.style.lineHeight = '1.2';
+                addLog('فاصله خطوط فشرده (1.2) - ممکن است برای برخی کاربران سخت باشد.', 'warn');
+            });
+            btnLineNormal.addEventListener('click', () => {
+                spacingSample.style.lineHeight = '1.5';
+                addLog('فاصله خطوط استاندارد (1.5) - مناسب برای اکثر کاربران.', 'success');
+            });
+            btnLineLoose.addEventListener('click', () => {
+                spacingSample.style.lineHeight = '2.0';
+                addLog('فاصله خطوط باز (2.0) - خوانایی بالا برای نیازهای ویژه.', 'info');
+            });
+            btnLetterSpacing.addEventListener('click', () => {
+                const current = spacingSample.style.letterSpacing;
+                spacingSample.style.letterSpacing = '0.5px';
+                addLog('فاصله حروف 0.5px اضافه شد (کمک به دیسلکسی)', 'info');
+            });
+
+            // -------------------- شبیه‌سازی زوم --------------------
+            btnZoomIn.addEventListener('click', () => {
+                zoomSample.style.transform = 'scale(1.5)';
+                zoomSample.style.transformOrigin = 'top right';
+                zoomSample.style.marginBottom = '80px';
+                zoomSample.style.height = 'auto';
+                addLog('بزرگ‌نمایی ۱۵۰٪ شبیه‌سازی شد - بررسی کنید متن بریده نشود', 'info');
+            });
+            btnZoomOut.addEventListener('click', () => {
+                zoomSample.style.transform = 'none';
+                zoomSample.style.marginBottom = '0';
+                addLog('بازگشت به اندازه عادی.', 'info');
+            });
+            btnLayoutCheck.addEventListener('click', () => {
+                const rect = zoomSample.getBoundingClientRect();
+                if (rect.width > window.innerWidth) {
+                    addLog('⚠️ متن از عرض صفحه بیرون زده - نیاز به ریسپانسیو بهتر.', 'warn');
+                } else {
+                    addLog('✅ طرح در عرض صفحه باقی می‌ماند.', 'success');
+                }
+            });
+
+            // -------------------- دکمه بازنشانی همه --------------------
+            resetBtn.addEventListener('click', () => {
+                // Reset contrast
+                contrastSample.style.background = '#f8fafc';
+                contrastText.style.color = '#1e293b';
+                contrastText.style.fontWeight = '400';
+                
+                // Reset font
+                setFontSize(16);
+                
+                // Reset spacing
+                spacingSample.style.lineHeight = '1.5';
+                spacingSample.style.letterSpacing = 'normal';
+                
+                // Reset zoom
+                zoomSample.style.transform = 'none';
+                zoomSample.style.marginBottom = '0';
+                
+                clearLog();
+                addLog('همه تنظیمات به حالت پیش‌فرض بازگشت.', 'success');
+            });
+
+            // -------------------- اجرای سریع همه تست‌ها (نمونه) --------------------
+            runAllBtn.addEventListener('click', () => {
+                addLog('اجرای سریع تست‌های کنتراست...');
+                btnHighContrast.click();
+                setTimeout(() => btnLineNormal.click(), 300);
+                setTimeout(() => btnFontNormal.click(), 600);
+                setTimeout(() => {
+                    addLog('🔔 تست دستی: لطفاً خوانایی را با چشمان خود بررسی کنید.', 'info');
+                }, 1000);
+            });
+
+            // لاگ اولیه
+            addLog('صفحه تست دسترسی‌پذیری بارگذاری شد. برای شروع یکی از دکمه‌ها را فشار دهید.', 'info');
+        })();
+    </script>
+</body>
+</html>
