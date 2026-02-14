@@ -1,0 +1,710 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
+    <title>تست RTL و Locale - Farsinglish</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Tahoma', 'Vazir', 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, #43cea2 0%, #185a9d 100%);
+            min-height: 100vh;
+            padding: 15px;
+            color: #333;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.98);
+            border-radius: 25px;
+            padding: 20px;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.3);
+        }
+
+        h1 {
+            color: #2c3e50;
+            text-align: center;
+            margin-bottom: 10px;
+            font-size: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        h2 {
+            color: #34495e;
+            margin: 20px 0 15px;
+            font-size: 20px;
+            border-right: 4px solid #43cea2;
+            padding-right: 15px;
+        }
+
+        .info-bar {
+            background: #f8f9fa;
+            border-radius: 50px;
+            padding: 15px 20px;
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 15px;
+            border: 2px solid #e0e0e0;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+        }
+
+        .locale-badge {
+            background: #2c3e50;
+            color: white;
+            padding: 8px 20px;
+            border-radius: 50px;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .test-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 20px;
+            margin: 20px 0;
+        }
+
+        .test-card {
+            background: white;
+            border-radius: 20px;
+            padding: 20px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.08);
+            border: 2px solid #e9ecef;
+            transition: all 0.2s ease;
+        }
+
+        .test-card.rtl-pass {
+            border-color: #27ae60;
+            background: linear-gradient(145deg, #f0fff4, white);
+        }
+
+        .test-card.rtl-fail {
+            border-color: #e74c3c;
+            background: linear-gradient(145deg, #fff5f5, white);
+        }
+
+        .test-title {
+            font-size: 18px;
+            font-weight: bold;
+            color: #2c3e50;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            border-bottom: 2px solid #f0f0f0;
+            padding-bottom: 10px;
+        }
+
+        .test-status {
+            background: #f8f9fa;
+            padding: 10px;
+            border-radius: 10px;
+            margin: 15px 0;
+            text-align: center;
+            font-weight: bold;
+            font-size: 14px;
+        }
+
+        .test-status.pass {
+            background: #27ae60;
+            color: white;
+        }
+
+        .test-status.fail {
+            background: #e74c3c;
+            color: white;
+        }
+
+        button {
+            background: #43cea2;
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 12px;
+            font-size: 15px;
+            font-weight: bold;
+            cursor: pointer;
+            width: 100%;
+            transition: all 0.2s ease;
+            margin: 5px 0;
+            border: 1px solid #2c9b7a;
+        }
+
+        button:hover {
+            background: #3ab390;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(67, 206, 162, 0.3);
+        }
+
+        button.small {
+            padding: 8px 12px;
+            font-size: 13px;
+            width: auto;
+            margin: 5px;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            justify-content: center;
+            margin: 15px 0;
+        }
+
+        .rtl-sample {
+            background: #f0f0f0;
+            padding: 15px;
+            border-radius: 10px;
+            margin: 15px 0;
+            font-size: 16px;
+            line-height: 1.8;
+            text-align: right;
+            border: 2px dashed #999;
+        }
+
+        .sample-text {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 10px 0;
+            border-right: 4px solid #43cea2;
+        }
+
+        .sample-text.ltr {
+            direction: ltr;
+            text-align: left;
+            border-right: none;
+            border-left: 4px solid #e74c3c;
+        }
+
+        .result-box {
+            background: #1a2634;
+            color: #0f0;
+            padding: 15px;
+            border-radius: 15px;
+            font-family: 'Courier New', monospace;
+            margin: 20px 0;
+            max-height: 200px;
+            overflow-y: auto;
+            direction: ltr;
+            text-align: left;
+            font-size: 13px;
+            line-height: 1.6;
+        }
+
+        .summary {
+            background: linear-gradient(135deg, #2c3e50, #34495e);
+            color: white;
+            padding: 25px;
+            border-radius: 20px;
+            margin-top: 25px;
+            text-align: center;
+        }
+
+        .summary-stats {
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+            margin: 20px 0;
+            flex-wrap: wrap;
+        }
+
+        .stat-item {
+            text-align: center;
+            min-width: 100px;
+        }
+
+        .stat-number {
+            font-size: 32px;
+            font-weight: bold;
+            color: #f1c40f;
+        }
+
+        @media (max-width: 600px) {
+            .container { padding: 15px; }
+            .info-bar { flex-direction: column; }
+            .button-group { flex-direction: column; }
+        }
+
+        /* تست RTL پیشرفته */
+        .test-string {
+            font-size: 20px;
+            padding: 10px;
+            background: #fff3e0;
+            border-radius: 8px;
+            margin: 10px 0;
+            text-align: center;
+        }
+
+        .persian-text {
+            color: #27ae60;
+            font-weight: bold;
+        }
+
+        .mixed-text {
+            color: #e67e22;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🇮🇷 Farsinglish - تست RTL و Locale</h1>
+        <p style="text-align: center; color: #666; margin-bottom: 20px;">Right-to-Left & Localization Test</p>
+
+        <!-- اطلاعات فعلی -->
+        <div class="info-bar">
+            <div class="locale-badge">
+                <span>🌐 زبان مرورگر:</span>
+                <span id="browserLang">---</span>
+            </div>
+            <div class="locale-badge">
+                <span>📅 تاریخ:</span>
+                <span id="currentDate">---</span>
+            </div>
+            <div class="locale-badge">
+                <span>💰 قیمت:</span>
+                <span id="currentCurrency">---</span>
+            </div>
+        </div>
+
+        <!-- دکمه‌های اصلی -->
+        <div class="button-group">
+            <button onclick="detectLocale()" class="small">🔄 تشخیص مجدد Locale</button>
+            <button onclick="testAllRTL()" class="small">🧪 تست همه موارد RTL</button>
+            <button onclick="exportRTLResults()" class="small">📥 خروجی نتایج</button>
+        </div>
+
+        <!-- تست‌های RTL -->
+        <div class="test-grid">
+            <!-- کارت ۱: جهت متن -->
+            <div class="test-card" id="cardDirection">
+                <div class="test-title">➡️ جهت متن (Text Direction)</div>
+                <div class="rtl-sample">
+                    <p>📌 متن فارسی: <span class="persian-text">سلام دنیا!</span></p>
+                    <p>📌 متن انگلیسی: <span class="mixed-text">Hello World!</span></p>
+                    <p>📌 ترکیبی: <span class="mixed-text">سلام World ۱۲۳</span></p>
+                </div>
+                <div class="test-status" id="directionStatus">در انتظار تست...</div>
+                <button onclick="testTextDirection()">🔍 تست جهت متن</button>
+            </div>
+
+            <!-- کارت ۲: اعداد فارسی -->
+            <div class="test-card" id="cardNumbers">
+                <div class="test-title">🔢 اعداد فارسی (Persian Numbers)</div>
+                <div class="test-string" id="numberDisplay">۱۲۳۴۵۶۷۸۹۰</div>
+                <div class="test-string" id="englishNumber">1234567890 (انگلیسی)</div>
+                <div class="test-status" id="numbersStatus">در انتظار تست...</div>
+                <button onclick="testPersianNumbers()">🔢 تست اعداد فارسی</button>
+            </div>
+
+            <!-- کارت ۳: تاریخ و زمان -->
+            <div class="test-card" id="cardDate">
+                <div class="test-title">📅 تاریخ و زمان (Date/Time)</div>
+                <div id="dateDisplay" style="font-size: 18px; margin: 15px 0; padding: 10px; background: #e8f4f8; border-radius: 8px;"></div>
+                <div class="test-status" id="dateStatus">در انتظار تست...</div>
+                <button onclick="testPersianDate()">📅 تست تاریخ شمسی</button>
+            </div>
+
+            <!-- کارت ۴: ارز و واحد پول -->
+            <div class="test-card" id="cardCurrency">
+                <div class="test-title">💰 ارز و واحد پول (Currency)</div>
+                <div id="currencyDisplay" style="font-size: 18px; margin: 15px 0; padding: 10px; background: #e8f4f8; border-radius: 8px;"></div>
+                <div class="test-status" id="currencyStatus">در انتظار تست...</div>
+                <button onclick="testCurrency()">💰 تست فرمت ریال</button>
+            </div>
+
+            <!-- کارت ۵: مرتب‌سازی -->
+            <div class="test-card" id="cardSort">
+                <div class="test-title">🔤 مرتب‌سازی فارسی (Persian Sort)</div>
+                <div id="sortDisplay" style="font-size: 16px; margin: 15px 0; padding: 10px; background: #e8f4f8; border-radius: 8px;"></div>
+                <div class="test-status" id="sortStatus">در انتظار تست...</div>
+                <button onclick="testPersianSort()">🔤 تست مرتب‌سازی</button>
+            </div>
+
+            <!-- کارت ۶: Regex فارسی -->
+            <div class="test-card" id="cardRegex">
+                <div class="test-title">🔍 تشخیص متن فارسی</div>
+                <div id="regexDisplay" style="font-size: 16px; margin: 15px 0; padding: 10px; background: #e8f4f8; border-radius: 8px;"></div>
+                <div class="test-status" id="regexStatus">در انتظار تست...</div>
+                <button onclick="testPersianRegex()">🔍 تست Regex</button>
+            </div>
+        </div>
+
+        <!-- نمونه‌های RTL/LTR -->
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin: 20px 0;">
+            <div class="sample-text">
+                <strong>📝 راست‌چین (RTL):</strong><br>
+                این یک متن فارسی است که باید از راست به چپ نمایش داده شود. اعداد ۱۲۳۴۵۶۷۸۹۰ و علائم نگارشی،
+            </div>
+            <div class="sample-text ltr">
+                <strong>📝 چپ‌چین (LTR):</strong><br>
+                This is English text that should be displayed left-to-right. Numbers 1234567890 and punctuation.
+            </div>
+        </div>
+
+        <!-- خروجی لاگ -->
+        <div class="result-box" id="logOutput">
+            ⏳ برای شروع تست، دکمه‌ها را کلیک کنید...
+        </div>
+
+        <!-- خلاصه نهایی -->
+        <div class="summary" id="summary">
+            <h3>📊 خلاصه تست‌های RTL</h3>
+            <div class="summary-stats">
+                <div class="stat-item">
+                    <div>✅ موفق</div>
+                    <div class="stat-number" id="successCount">0</div>
+                </div>
+                <div class="stat-item">
+                    <div>❌ ناموفق</div>
+                    <div class="stat-number" id="failCount">0</div>
+                </div>
+                <div class="stat-item">
+                    <div>📋 کل</div>
+                    <div class="stat-number" id="totalCount">6</div>
+                </div>
+            </div>
+            <p id="rtlMessage" style="margin-top: 15px; font-size: 16px;"></p>
+        </div>
+    </div>
+
+    <script>
+        // ---------- متغیرهای اصلی ----------
+        const testResults = {
+            direction: null,
+            numbers: null,
+            date: null,
+            currency: null,
+            sort: null,
+            regex: null
+        };
+
+        // ---------- توابع کمکی ----------
+        function log(message) {
+            const logBox = document.getElementById('logOutput');
+            const time = new Date().toLocaleTimeString('fa-IR');
+            logBox.innerHTML += `<div>⏱️ ${time} | ${message}</div>`;
+            logBox.scrollTop = logBox.scrollHeight;
+        }
+
+        function updateSummary() {
+            let success = 0, fail = 0;
+            for (let key in testResults) {
+                if (testResults[key] === true) success++;
+                else if (testResults[key] === false) fail++;
+            }
+            
+            document.getElementById('successCount').textContent = success;
+            document.getElementById('failCount').textContent = fail;
+            
+            const total = success + fail;
+            const message = total === 6 ? 
+                (fail === 0 ? '✅ تمام تست‌های RTL با موفقیت گذرانده شدند' : 
+                `⚠️ ${fail} تست RTL ناموفق بود`) : 
+                '⏳ همه تست‌ها را اجرا کنید';
+            
+            document.getElementById('rtlMessage').textContent = message;
+        }
+
+        // ---------- تشخیص Locale ----------
+        function detectLocale() {
+            const lang = navigator.language || navigator.userLanguage || 'fa-IR';
+            document.getElementById('browserLang').textContent = lang;
+            
+            try {
+                const date = new Date();
+                document.getElementById('currentDate').textContent = date.toLocaleDateString('fa-IR');
+                document.getElementById('currentCurrency').textContent = 
+                    (1250000).toLocaleString('fa-IR', { style: 'currency', currency: 'IRR' });
+            } catch(e) {
+                document.getElementById('currentDate').textContent = 'خطا در نمایش';
+                document.getElementById('currentCurrency').textContent = 'خطا';
+            }
+            
+            log(`🌐 زبان مرورگر: ${lang}`);
+            return lang;
+        }
+
+        // ---------- تست ۱: جهت متن ----------
+        function testTextDirection() {
+            const card = document.getElementById('cardDirection');
+            const status = document.getElementById('directionStatus');
+            
+            try {
+                const dir = document.documentElement.dir;
+                const computedStyle = window.getComputedStyle(document.body);
+                const textAlign = computedStyle.textAlign;
+                
+                const rtlElements = document.querySelectorAll('.persian-text, .mixed-text');
+                let allRTL = true;
+                
+                rtlElements.forEach(el => {
+                    const style = window.getComputedStyle(el);
+                    if (style.direction !== 'rtl') allRTL = false;
+                });
+                
+                const passed = (dir === 'rtl' && textAlign === 'right') || allRTL;
+                
+                testResults.direction = passed;
+                status.textContent = passed ? '✅ جهت متن صحیح است' : '❌ مشکل در جهت متن';
+                status.className = `test-status ${passed ? 'pass' : 'fail'}`;
+                card.className = `test-card ${passed ? 'rtl-pass' : 'rtl-fail'}`;
+                
+                log(`➡️ تست جهت متن: ${passed ? 'موفق' : 'ناموفق'}`);
+                updateSummary();
+            } catch(e) {
+                status.textContent = '❌ خطا در تست';
+                log(`❌ خطا: ${e.message}`);
+            }
+        }
+
+        // ---------- تست ۲: اعداد فارسی ----------
+        function testPersianNumbers() {
+            const card = document.getElementById('cardNumbers');
+            const status = document.getElementById('numbersStatus');
+            
+            try {
+                const persianNumbers = '۱۲۳۴۵۶۷۸۹۰';
+                const display = document.getElementById('numberDisplay').textContent;
+                
+                let passed = true;
+                for (let i = 0; i < persianNumbers.length; i++) {
+                    if (display[i] !== persianNumbers[i]) {
+                        passed = false;
+                        break;
+                    }
+                }
+                
+                testResults.numbers = passed;
+                status.textContent = passed ? '✅ اعداد فارسی به درستی نمایش داده می‌شوند' : '❌ مشکل در نمایش اعداد فارسی';
+                status.className = `test-status ${passed ? 'pass' : 'fail'}`;
+                card.className = `test-card ${passed ? 'rtl-pass' : 'rtl-fail'}`;
+                
+                log(`🔢 تست اعداد فارسی: ${passed ? 'موفق' : 'ناموفق'}`);
+                updateSummary();
+            } catch(e) {
+                status.textContent = '❌ خطا در تست';
+                log(`❌ خطا: ${e.message}`);
+            }
+        }
+
+        // ---------- تست ۳: تاریخ شمسی ----------
+        function testPersianDate() {
+            const card = document.getElementById('cardDate');
+            const status = document.getElementById('dateStatus');
+            const display = document.getElementById('dateDisplay');
+            
+            try {
+                const date = new Date();
+                const options = { 
+                    year: 'numeric', 
+                    month: 'long', 
+                    day: 'numeric',
+                    weekday: 'long',
+                    calendar: 'persian'
+                };
+                
+                let persianDate;
+                try {
+                    persianDate = date.toLocaleDateString('fa-IR', options);
+                } catch(e) {
+                    persianDate = date.toLocaleDateString('fa-IR');
+                }
+                
+                display.textContent = persianDate;
+                
+                const hasPersianChars = /[۰-۹]/.test(persianDate);
+                const passed = hasPersianChars && persianDate.length > 0;
+                
+                testResults.date = passed;
+                status.textContent = passed ? '✅ تاریخ شمسی به درستی نمایش داده می‌شود' : '❌ مشکل در نمایش تاریخ شمسی';
+                status.className = `test-status ${passed ? 'pass' : 'fail'}`;
+                card.className = `test-card ${passed ? 'rtl-pass' : 'rtl-fail'}`;
+                
+                log(`📅 تست تاریخ شمسی: ${passed ? 'موفق' : 'ناموفق'}`);
+                updateSummary();
+            } catch(e) {
+                status.textContent = '❌ خطا در تست';
+                log(`❌ خطا: ${e.message}`);
+            }
+        }
+
+        // ---------- تست ۴: ارز ----------
+        function testCurrency() {
+            const card = document.getElementById('cardCurrency');
+            const status = document.getElementById('currencyStatus');
+            const display = document.getElementById('currencyDisplay');
+            
+            try {
+                const amount = 1250000;
+                let currency;
+                
+                try {
+                    currency = amount.toLocaleString('fa-IR', { 
+                        style: 'currency', 
+                        currency: 'IRR',
+                        minimumFractionDigits: 0
+                    });
+                } catch(e) {
+                    currency = amount.toLocaleString('fa-IR') + ' ریال';
+                }
+                
+                display.textContent = currency;
+                
+                const hasRial = currency.includes('ریال') || /[۰-۹]/.test(currency);
+                const passed = hasRial && currency.length > 0;
+                
+                testResults.currency = passed;
+                status.textContent = passed ? '✅ فرمت ریال به درستی نمایش داده می‌شود' : '❌ مشکل در نمایش ریال';
+                status.className = `test-status ${passed ? 'pass' : 'fail'}`;
+                card.className = `test-card ${passed ? 'rtl-pass' : 'rtl-fail'}`;
+                
+                log(`💰 تست ارز: ${passed ? 'موفق' : 'ناموفق'}`);
+                updateSummary();
+            } catch(e) {
+                status.textContent = '❌ خطا در تست';
+                log(`❌ خطا: ${e.message}`);
+            }
+        }
+
+        // ---------- تست ۵: مرتب‌سازی فارسی ----------
+        function testPersianSort() {
+            const card = document.getElementById('cardSort');
+            const status = document.getElementById('sortStatus');
+            const display = document.getElementById('sortDisplay');
+            
+            try {
+                const words = ['ب', 'پ', 'ت', 'ث', 'ج', 'چ', 'ح', 'خ', 'د', 'ذ', 'ر', 'ز', 'ژ', 'س', 'ش', 'ص', 'ض', 'ط', 'ظ', 'ع', 'غ', 'ف', 'ق', 'ک', 'گ', 'ل', 'م', 'ن', 'و', 'ه', 'ی'];
+                const shuffled = [...words].sort(() => Math.random() - 0.5);
+                const sorted = [...shuffled].sort((a, b) => a.localeCompare(b, 'fa'));
+                
+                display.innerHTML = `
+                    <div>🔀 مرتب‌شده: ${shuffled.slice(0, 5).join('، ')} ...</div>
+                    <div>✅ مرتب‌سازی: ${sorted.slice(0, 5).join('، ')} ...</div>
+                `;
+                
+                let correct = true;
+                for (let i = 0; i < words.length; i++) {
+                    if (sorted[i] !== words[i]) {
+                        correct = false;
+                        break;
+                    }
+                }
+                
+                testResults.sort = correct;
+                status.textContent = correct ? '✅ مرتب‌سازی فارسی صحیح است' : '❌ مشکل در مرتب‌سازی فارسی';
+                status.className = `test-status ${correct ? 'pass' : 'fail'}`;
+                card.className = `test-card ${correct ? 'rtl-pass' : 'rtl-fail'}`;
+                
+                log(`🔤 تست مرتب‌سازی فارسی: ${correct ? 'موفق' : 'ناموفق'}`);
+                updateSummary();
+            } catch(e) {
+                status.textContent = '❌ خطا در تست';
+                log(`❌ خطا: ${e.message}`);
+            }
+        }
+
+        // ---------- تست ۶: Regex فارسی ----------
+        function testPersianRegex() {
+            const card = document.getElementById('cardRegex');
+            const status = document.getElementById('regexStatus');
+            const display = document.getElementById('regexDisplay');
+            
+            try {
+                const persianRegex = /^[\u0600-\u06FF\u0750-\u077F\u08A0-\u08FF\uFB50-\uFDFF\uFE70-\uFEFF\s۰-۹]+$/;
+                
+                const testCases = [
+                    { text: 'سلام دنیا', expected: true },
+                    { text: 'Hello', expected: false },
+                    { text: '۱۲۳۴۵', expected: true },
+                    { text: 'سلام 123', expected: false },
+                    { text: 'تست فارسی', expected: true }
+                ];
+                
+                let passed = true;
+                let results = [];
+                
+                testCases.forEach(tc => {
+                    const result = persianRegex.test(tc.text);
+                    if (result !== tc.expected) passed = false;
+                    results.push(`${tc.text}: ${result === tc.expected ? '✅' : '❌'}`);
+                });
+                
+                display.innerHTML = results.join('<br>');
+                
+                testResults.regex = passed;
+                status.textContent = passed ? '✅ تشخیص متن فارسی صحیح است' : '❌ مشکل در تشخیص متن فارسی';
+                status.className = `test-status ${passed ? 'pass' : 'fail'}`;
+                card.className = `test-card ${passed ? 'rtl-pass' : 'rtl-fail'}`;
+                
+                log(`🔍 تست Regex فارسی: ${passed ? 'موفق' : 'ناموفق'}`);
+                updateSummary();
+            } catch(e) {
+                status.textContent = '❌ خطا در تست';
+                log(`❌ خطا: ${e.message}`);
+            }
+        }
+
+        // ---------- تست همه موارد ----------
+        function testAllRTL() {
+            log('🧪 شروع تست همه موارد RTL...');
+            testTextDirection();
+            testPersianNumbers();
+            testPersianDate();
+            testCurrency();
+            testPersianSort();
+            testPersianRegex();
+            log('✅ تست همه موارد RTL کامل شد');
+        }
+
+        // ---------- خروجی نتایج ----------
+        function exportRTLResults() {
+            const results = {
+                timestamp: new Date().toISOString(),
+                browser: navigator.userAgent,
+                language: navigator.language,
+                tests: testResults,
+                summary: {
+                    success: document.getElementById('successCount').textContent,
+                    fail: document.getElementById('failCount').textContent
+                }
+            };
+            
+            const blob = new Blob([JSON.stringify(results, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `rtl-test-${Date.now()}.json`;
+            a.click();
+            
+            log('📥 نتایج RTL با موفقیت خروجی گرفته شد');
+        }
+
+        // ---------- مقداردهی اولیه ----------
+        window.onload = function() {
+            detectLocale();
+            // تست خودکار جهت متن هنگام بارگذاری
+            setTimeout(() => {
+                testTextDirection();
+            }, 500);
+        };
+    </script>
+</body>
+  </html>
