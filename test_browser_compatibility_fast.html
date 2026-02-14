@@ -1,0 +1,450 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
+    <title>تست سازگاری مرورگرها - Farsinglish (نسخه سریع)</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Tahoma', 'Vazir', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 15px;
+            color: #333;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.98);
+            border-radius: 25px;
+            padding: 20px;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.3);
+        }
+
+        h1 {
+            color: #2c3e50;
+            text-align: center;
+            margin-bottom: 10px;
+            font-size: 24px;
+        }
+
+        .browser-info {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 15px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .browser-name {
+            font-size: 24px;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            justify-content: center;
+            margin: 20px 0;
+        }
+
+        button {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 50px;
+            font-size: 15px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            border: 1px solid #5a67d8;
+            min-width: 120px;
+        }
+
+        button:hover {
+            background: #5a67d8;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        button.small {
+            padding: 8px 15px;
+            font-size: 13px;
+            min-width: 80px;
+        }
+
+        .test-section {
+            background: white;
+            border-radius: 15px;
+            padding: 15px;
+            margin-bottom: 15px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        }
+
+        .test-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 10px;
+            margin: 10px 0;
+        }
+
+        .test-card {
+            background: #f8f9fa;
+            border-radius: 12px;
+            padding: 12px;
+            border: 2px solid #dee2e6;
+        }
+
+        .test-card.pass { border-color: #27ae60; background: #f0fff4; }
+        .test-card.fail { border-color: #e74c3c; background: #fff5f5; }
+
+        .test-title {
+            font-weight: bold;
+            margin-bottom: 8px;
+            color: #2c3e50;
+            font-size: 15px;
+        }
+
+        .test-status {
+            font-size: 13px;
+            padding: 4px 8px;
+            border-radius: 20px;
+            margin: 8px 0;
+            text-align: center;
+            background: #e9ecef;
+        }
+
+        .test-status.pass { background: #27ae60; color: white; }
+        .test-status.fail { background: #e74c3c; color: white; }
+
+        .result-box {
+            background: #1a2634;
+            color: #0f0;
+            padding: 12px;
+            border-radius: 10px;
+            font-family: monospace;
+            margin: 15px 0;
+            max-height: 150px;
+            overflow-y: auto;
+            font-size: 12px;
+            direction: ltr;
+            text-align: left;
+        }
+
+        .summary {
+            background: #2c3e50;
+            color: white;
+            padding: 15px;
+            border-radius: 12px;
+            margin-top: 20px;
+            text-align: center;
+        }
+
+        .feature-badge {
+            display: inline-block;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 10px;
+            font-weight: bold;
+            margin-left: 5px;
+        }
+
+        .feature-badge.yes { background: #27ae60; color: white; }
+        .feature-badge.no { background: #e74c3c; color: white; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🌐 Farsinglish - تست سازگاری مرورگرها (نسخه سریع)</h1>
+
+        <!-- اطلاعات مرورگر -->
+        <div class="browser-info" id="browserInfo">
+            <div class="browser-name" id="browserName">در حال تشخیص...</div>
+        </div>
+
+        <!-- دکمه‌های اصلی -->
+        <div class="button-group">
+            <button onclick="runAllTests()">🧪 تست همه ویژگی‌ها</button>
+            <button onclick="exportResults()">📥 خروجی JSON</button>
+        </div>
+
+        <!-- ذخیره‌سازی -->
+        <div class="test-section">
+            <h3>💾 ذخیره‌سازی</h3>
+            <div class="test-grid" id="storageTests"></div>
+        </div>
+
+        <!-- ویژگی‌های پیشرفته -->
+        <div class="test-section">
+            <h3>⚡ ویژگی‌های پیشرفته</h3>
+            <div class="test-grid" id="advancedTests"></div>
+        </div>
+
+        <!-- خروجی -->
+        <div class="result-box" id="logOutput"></div>
+
+        <!-- خلاصه -->
+        <div class="summary" id="summary">
+            <span id="summaryText">⏳ منتظر اجرای تست...</span>
+        </div>
+    </div>
+
+    <script>
+        // ========== کش نتایج ==========
+        const resultsCache = {
+            storage: {},
+            advanced: {}
+        };
+
+        // ========== تشخیص مرورگر ==========
+        function detectBrowser() {
+            const ua = navigator.userAgent;
+            let name = 'Unknown';
+            
+            if (ua.indexOf('Chrome') > -1 && ua.indexOf('Edg') === -1) name = 'Google Chrome';
+            else if (ua.indexOf('Firefox') > -1) name = 'Mozilla Firefox';
+            else if (ua.indexOf('Safari') > -1 && ua.indexOf('Chrome') === -1) name = 'Apple Safari';
+            else if (ua.indexOf('Edg') > -1) name = 'Microsoft Edge';
+            
+            document.getElementById('browserName').textContent = name;
+            return name;
+        }
+
+        // ========== توابع تست ==========
+        function testLocalStorage() {
+            try { localStorage.setItem('test', 'test'); localStorage.removeItem('test'); return true; } 
+            catch(e) { return false; }
+        }
+
+        function testSessionStorage() {
+            try { sessionStorage.setItem('test', 'test'); sessionStorage.removeItem('test'); return true; } 
+            catch(e) { return false; }
+        }
+
+        function testIndexedDB() {
+            return 'indexedDB' in window;
+        }
+
+        function testWebSQL() {
+            return 'openDatabase' in window;
+        }
+
+        function testCacheAPI() {
+            return 'caches' in window;
+        }
+
+        function testPromise() {
+            return 'Promise' in window;
+        }
+
+        function testFetch() {
+            return 'fetch' in window;
+        }
+
+        function testWebSocket() {
+            return 'WebSocket' in window;
+        }
+
+        // ========== اجرای تست‌ها با کش ==========
+        function runStorageTests() {
+            const tests = [
+                { id: 'localStorage', name: 'localStorage', fn: testLocalStorage },
+                { id: 'sessionStorage', name: 'sessionStorage', fn: testSessionStorage },
+                { id: 'indexedDB', name: 'IndexedDB', fn: testIndexedDB },
+                { id: 'webSQL', name: 'WebSQL', fn: testWebSQL },
+                { id: 'cacheAPI', name: 'Cache API', fn: testCacheAPI }
+            ];
+
+            tests.forEach(test => {
+                if (resultsCache.storage[test.id] === undefined) {
+                    resultsCache.storage[test.id] = test.fn();
+                }
+            });
+
+            renderStorageTests();
+        }
+
+        function runAdvancedTests() {
+            const tests = [
+                { id: 'promise', name: 'Promise', fn: testPromise },
+                { id: 'fetch', name: 'Fetch API', fn: testFetch },
+                { id: 'websocket', name: 'WebSocket', fn: testWebSocket }
+            ];
+
+            tests.forEach(test => {
+                if (resultsCache.advanced[test.id] === undefined) {
+                    resultsCache.advanced[test.id] = test.fn();
+                }
+            });
+
+            renderAdvancedTests();
+        }
+
+        // ========== رندر کردن ==========
+        function renderStorageTests() {
+            const container = document.getElementById('storageTests');
+            container.innerHTML = '';
+
+            const items = [
+                { id: 'localStorage', name: 'localStorage', fa: 'ذخیره‌سازی محلی' },
+                { id: 'sessionStorage', name: 'sessionStorage', fa: 'ذخیره‌سازی جلسه' },
+                { id: 'indexedDB', name: 'IndexedDB', fa: 'پایگاه داده' },
+                { id: 'webSQL', name: 'WebSQL', fa: 'WebSQL' },
+                { id: 'cacheAPI', name: 'Cache API', fa: 'کش' }
+            ];
+
+            items.forEach(item => {
+                const result = resultsCache.storage[item.id];
+                if (result === undefined) return;
+
+                const card = document.createElement('div');
+                card.className = `test-card ${result ? 'pass' : 'fail'}`;
+                
+                card.innerHTML = `
+                    <div class="test-title">
+                        ${item.fa}
+                        <span class="feature-badge ${result ? 'yes' : 'no'}">${result ? '✅' : '❌'}</span>
+                    </div>
+                    <div class="test-status ${result ? 'pass' : 'fail'}">
+                        ${result ? 'پشتیبانی کامل' : 'عدم پشتیبانی'}
+                    </div>
+                    <button class="small" onclick="retestStorage('${item.id}')">🔄 تست مجدد</button>
+                `;
+                
+                container.appendChild(card);
+            });
+
+            log('✅ تست‌های ذخیره‌سازی به‌روزرسانی شد');
+            updateSummary();
+        }
+
+        function renderAdvancedTests() {
+            const container = document.getElementById('advancedTests');
+            container.innerHTML = '';
+
+            const items = [
+                { id: 'promise', name: 'Promise', fa: 'Promise' },
+                { id: 'fetch', name: 'Fetch API', fa: 'Fetch API' },
+                { id: 'websocket', name: 'WebSocket', fa: 'WebSocket' }
+            ];
+
+            items.forEach(item => {
+                const result = resultsCache.advanced[item.id];
+                if (result === undefined) return;
+
+                const card = document.createElement('div');
+                card.className = `test-card ${result ? 'pass' : 'fail'}`;
+                
+                card.innerHTML = `
+                    <div class="test-title">
+                        ${item.fa}
+                        <span class="feature-badge ${result ? 'yes' : 'no'}">${result ? '✅' : '❌'}</span>
+                    </div>
+                    <div class="test-status ${result ? 'pass' : 'fail'}">
+                        ${result ? 'پشتیبانی کامل' : 'عدم پشتیبانی'}
+                    </div>
+                    <button class="small" onclick="retestAdvanced('${item.id}')">🔄 تست مجدد</button>
+                `;
+                
+                container.appendChild(card);
+            });
+
+            log('✅ تست‌های پیشرفته به‌روزرسانی شد');
+            updateSummary();
+        }
+
+        // ========== تست مجدد تکی ==========
+        function retestStorage(id) {
+            const testMap = {
+                localStorage: testLocalStorage,
+                sessionStorage: testSessionStorage,
+                indexedDB: testIndexedDB,
+                webSQL: testWebSQL,
+                cacheAPI: testCacheAPI
+            };
+            
+            resultsCache.storage[id] = testMap[id]();
+            renderStorageTests();
+            log(`🔄 تست مجدد ${id}: ${resultsCache.storage[id] ? 'موفق' : 'ناموفق'}`);
+        }
+
+        function retestAdvanced(id) {
+            const testMap = {
+                promise: testPromise,
+                fetch: testFetch,
+                websocket: testWebSocket
+            };
+            
+            resultsCache.advanced[id] = testMap[id]();
+            renderAdvancedTests();
+            log(`🔄 تست مجدد ${id}: ${resultsCache.advanced[id] ? 'موفق' : 'ناموفق'}`);
+        }
+
+        // ========== اجرای همه تست‌ها ==========
+        function runAllTests() {
+            log('🧪 شروع تست همه ویژگی‌ها...');
+            runStorageTests();
+            runAdvancedTests();
+            log('✅ تست همه ویژگی‌ها کامل شد');
+        }
+
+        // ========== به‌روزرسانی خلاصه ==========
+        function updateSummary() {
+            const storageResults = Object.values(resultsCache.storage);
+            const advancedResults = Object.values(resultsCache.advanced);
+            const allResults = [...storageResults, ...advancedResults].filter(r => r !== undefined);
+            
+            const success = allResults.filter(r => r === true).length;
+            const total = allResults.length;
+            
+            document.getElementById('summaryText').innerHTML = 
+                `📊 تست‌ها: ✅ ${success} موفق | ❌ ${total - success} ناموفق | 📋 کل: ${total}`;
+        }
+
+        // ========== خروجی JSON ==========
+        function exportResults() {
+            const data = {
+                browser: detectBrowser(),
+                timestamp: new Date().toISOString(),
+                results: {
+                    storage: resultsCache.storage,
+                    advanced: resultsCache.advanced
+                }
+            };
+            
+            const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `browser-test-${Date.now()}.json`;
+            a.click();
+            log('📥 نتایج خروجی گرفته شد');
+        }
+
+        // ========== لاگ ==========
+        function log(message) {
+            const logBox = document.getElementById('logOutput');
+            const time = new Date().toLocaleTimeString('fa-IR');
+            logBox.innerHTML += `<div>⏱️ ${time} | ${message}</div>`;
+            logBox.scrollTop = logBox.scrollHeight;
+        }
+
+        // ========== مقداردهی اولیه ==========
+        window.onload = function() {
+            detectBrowser();
+            runAllTests();
+        };
+    </script>
+</body>
+</html>
