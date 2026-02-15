@@ -1,0 +1,361 @@
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>تست Exercise Service - قراردادها</title>
+    <style>
+        body {
+            font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+            max-width: 800px;
+            margin: 20px auto;
+            padding: 0 20px;
+            direction: ltr;
+            background: #f5f5f5;
+        }
+        h1 {
+            color: #2c3e50;
+            font-size: 1.8rem;
+            border-bottom: 2px solid #3498db;
+            padding-bottom: 8px;
+        }
+        .summary {
+            background: white;
+            padding: 15px;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            margin: 20px 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .summary-pass { color: #27ae60; font-weight: bold; }
+        .summary-fail { color: #e74c3c; font-weight: bold; }
+        .test-list {
+            background: white;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        .test-item {
+            padding: 15px 20px;
+            border-bottom: 1px solid #ecf0f1;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .test-item:last-child { border-bottom: none; }
+        .test-status {
+            width: 80px;
+            text-align: center;
+            padding: 4px 8px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 500;
+        }
+        .status-pass {
+            background: #e8f8f0;
+            color: #27ae60;
+        }
+        .status-fail {
+            background: #fdedec;
+            color: #e74c3c;
+        }
+        .test-name {
+            flex: 1;
+            font-weight: 500;
+            color: #34495e;
+        }
+        .test-message {
+            font-size: 0.85rem;
+            color: #7f8c8d;
+            margin-top: 4px;
+        }
+        .re-run {
+            background: #3498db;
+            color: white;
+            border: none;
+            padding: 10px 24px;
+            border-radius: 8px;
+            font-size: 1rem;
+            cursor: pointer;
+            margin: 20px 0;
+            font-weight: 500;
+        }
+        .re-run:hover { background: #2980b9; }
+        .note {
+            background: #fff3cd;
+            border-left: 4px solid #ffc107;
+            padding: 12px 16px;
+            border-radius: 8px;
+            margin: 20px 0;
+            font-size: 0.9rem;
+            color: #856404;
+        }
+        .contract-badge {
+            background: #3498db;
+            color: white;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            display: inline-block;
+            margin-left: 10px;
+        }
+    </style>
+</head>
+<body>
+    <h1>🧪 تست Exercise Service <span class="contract-badge">Contract Test</span></h1>
+    <p style="color: #555; margin-bottom: 20px;">بررسی قراردادهای سرویس تمرین · متدها · خطاها · جریان</p>
+
+    <div class="summary">
+        <span>📊 مجموع تست‌ها: <span id="total">0</span></span>
+        <span>✅ موفق: <span id="passed" class="summary-pass">0</span></span>
+        <span>❌ ناموفق: <span id="failed" class="summary-fail">0</span></span>
+    </div>
+
+    <div class="test-list" id="test-list"></div>
+
+    <button class="re-run" onclick="runAllTests()">▶ اجرای مجدد تست‌ها (دستی)</button>
+
+    <div class="note">
+        <strong>🔍 قرارداد (Contract):</strong> تست می‌کنیم که سرویس تمرین چه متدهایی دارد، چه ورودی می‌گیرد، چه خروجی می‌دهد و چگونه خطاها را مدیریت می‌کند.
+    </div>
+
+    <script>
+        (function() {
+            // --- Mock سرویس تمرین (شبیه‌سازی شده) ---
+            const ExerciseService = {
+                // داده‌های نمونه
+                _exercises: [
+                    { id: 1, type: 'multiple-choice', question: 'معنی "hello" چیست؟', options: ['سلام', 'خداحافظ', 'صبح بخیر'], correct: 0 },
+                    { id: 2, type: 'fill-blank', question: 'I ___ a student.', correct: 'am' },
+                    { id: 3, type: 'translation', question: 'خوب', correct: 'good' }
+                ],
+                _currentIndex: 0,
+                _history: [],
+
+                // متدها (قرارداد)
+                getExercise: function(index = null) {
+                    if (index !== null) {
+                        if (index < 0 || index >= this._exercises.length) {
+                            throw new Error('تمرین با این شناسه وجود ندارد');
+                        }
+                        return { ...this._exercises[index] };
+                    }
+                    return { ...this._exercises[this._currentIndex] };
+                },
+
+                getAllExercises: function() {
+                    return this._exercises.map(ex => ({ ...ex }));
+                },
+
+                submitAnswer: function(exerciseId, answer) {
+                    if (!exerciseId) throw new Error('شناسه تمرین الزامی است');
+                    
+                    const exercise = this._exercises.find(ex => ex.id === exerciseId);
+                    if (!exercise) throw new Error('تمرین یافت نشد');
+
+                    let isValid = false;
+                    if (exercise.type === 'multiple-choice') {
+                        isValid = answer === exercise.correct;
+                    } else if (exercise.type === 'fill-blank') {
+                        isValid = answer.trim().toLowerCase() === exercise.correct.toLowerCase();
+                    } else if (exercise.type === 'translation') {
+                        isValid = answer.trim().toLowerCase() === exercise.correct.toLowerCase();
+                    }
+
+                    const result = {
+                        exerciseId,
+                        answer,
+                        isValid,
+                        timestamp: new Date().toISOString()
+                    };
+
+                    this._history.push(result);
+                    return result;
+                },
+
+                nextExercise: function() {
+                    if (this._currentIndex + 1 < this._exercises.length) {
+                        this._currentIndex++;
+                        return { ...this._exercises[this._currentIndex] };
+                    }
+                    return null; // پایان تمرین‌ها
+                },
+
+                previousExercise: function() {
+                    if (this._currentIndex - 1 >= 0) {
+                        this._currentIndex--;
+                        return { ...this._exercises[this._currentIndex] };
+                    }
+                    return null;
+                },
+
+                getHistory: function() {
+                    return [...this._history];
+                },
+
+                reset: function() {
+                    this._currentIndex = 0;
+                    this._history = [];
+                    return true;
+                },
+
+                getProgress: function() {
+                    return {
+                        current: this._currentIndex + 1,
+                        total: this._exercises.length,
+                        completed: this._history.length,
+                        percentage: Math.round((this._currentIndex / this._exercises.length) * 100)
+                    };
+                }
+            };
+
+            // --- تست‌ها (10 تست) ---
+            const tests = [
+                {
+                    name: '✅ getExercise - دریافت تمرین فعلی',
+                    fn: () => {
+                        const ex = ExerciseService.getExercise();
+                        return ex && ex.id === 1 && ex.type === 'multiple-choice';
+                    }
+                },
+                {
+                    name: '✅ getExercise - دریافت با ایندکس مشخص',
+                    fn: () => {
+                        const ex = ExerciseService.getExercise(1);
+                        return ex && ex.id === 2 && ex.type === 'fill-blank';
+                    }
+                },
+                {
+                    name: '❌ getExercise - ایندکس نامعتبر',
+                    fn: () => {
+                        try {
+                            ExerciseService.getExercise(99);
+                            return false;
+                        } catch (e) {
+                            return e.message.includes('وجود ندارد');
+                        }
+                    }
+                },
+                {
+                    name: '✅ getAllExercises - دریافت همه تمرین‌ها',
+                    fn: () => {
+                        const all = ExerciseService.getAllExercises();
+                        return Array.isArray(all) && all.length === 3;
+                    }
+                },
+                {
+                    name: '✅ submitAnswer - پاسخ صحیح چندگزینه‌ای',
+                    fn: () => {
+                        const result = ExerciseService.submitAnswer(1, 0);
+                        return result.isValid === true;
+                    }
+                },
+                {
+                    name: '✅ submitAnswer - پاسخ غلط جای‌خالی',
+                    fn: () => {
+                        const result = ExerciseService.submitAnswer(2, 'is');
+                        return result.isValid === false;
+                    }
+                },
+                {
+                    name: '❌ submitAnswer - شناسه نامعتبر',
+                    fn: () => {
+                        try {
+                            ExerciseService.submitAnswer(null, 'test');
+                            return false;
+                        } catch (e) {
+                            return e.message.includes('الزامی');
+                        }
+                    }
+                },
+                {
+                    name: '✅ nextExercise - حرکت به بعدی',
+                    fn: () => {
+                        ExerciseService.reset();
+                        const first = ExerciseService.getExercise();
+                        const next = ExerciseService.nextExercise();
+                        return first.id === 1 && next.id === 2;
+                    }
+                },
+                {
+                    name: '✅ getProgress - دریافت پیشرفت',
+                    fn: () => {
+                        ExerciseService.reset();
+                        ExerciseService.nextExercise();
+                        const progress = ExerciseService.getProgress();
+                        return progress.current === 2 && progress.total === 3;
+                    }
+                },
+                {
+                    name: '✅ reset - بازنشانی سرویس',
+                    fn: () => {
+                        ExerciseService.nextExercise();
+                        ExerciseService.submitAnswer(2, 'am');
+                        ExerciseService.reset();
+                        const progress = ExerciseService.getProgress();
+                        return progress.current === 1 && ExerciseService.getHistory().length === 0;
+                    }
+                }
+            ];
+
+            // --- تابع اجرای تست و نمایش نتیجه ---
+            window.runAllTests = function() {
+                const testList = document.getElementById('test-list');
+                const totalSpan = document.getElementById('total');
+                const passedSpan = document.getElementById('passed');
+                const failedSpan = document.getElementById('failed');
+
+                let passed = 0;
+                let failed = 0;
+
+                testList.innerHTML = '';
+
+                tests.forEach((test, index) => {
+                    try {
+                        const result = test.fn();
+                        const status = result ? 'pass' : 'fail';
+                        const statusText = result ? '✅ PASS' : '❌ FAIL';
+                        const message = result ? 'شرط برقرار است' : 'نتیجه خلاف انتظار';
+
+                        if (result) passed++; else failed++;
+
+                        const item = document.createElement('div');
+                        item.className = 'test-item';
+                        item.innerHTML = `
+                            <div class="test-status ${status === 'pass' ? 'status-pass' : 'status-fail'}">${statusText}</div>
+                            <div class="test-name">
+                                ${test.name}
+                                <div class="test-message">${message}</div>
+                            </div>
+                        `;
+                        testList.appendChild(item);
+                    } catch (error) {
+                        failed++;
+                        const item = document.createElement('div');
+                        item.className = 'test-item';
+                        item.innerHTML = `
+                            <div class="test-status status-fail">⚠️ ERROR</div>
+                            <div class="test-name">
+                                ${test.name}
+                                <div class="test-message">خطا: ${error.message}</div>
+                            </div>
+                        `;
+                        testList.appendChild(item);
+                    }
+                });
+
+                totalSpan.innerText = tests.length;
+                passedSpan.innerText = passed;
+                failedSpan.innerText = failed;
+            };
+
+            // اجرای خودکار هنگام بارگذاری صفحه
+            window.onload = runAllTests;
+        })();
+    </script>
+</body>
+</html>
+```
