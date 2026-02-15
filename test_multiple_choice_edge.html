@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<html dir="rtl" lang="fa">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>تست لبه‌های Multiple Choice - Farsinglish</title>
+    <style>
+        body {
+            font-family: Vazir, Tahoma, Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            margin: 0;
+            padding: 20px;
+            min-height: 100vh;
+            color: #333;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+        .header {
+            background: #4A90E2;
+            color: white;
+            padding: 25px;
+            text-align: center;
+        }
+        .header h1 {
+            margin: 0;
+            font-size: 1.8em;
+        }
+        .header p {
+            margin: 10px 0 0;
+            opacity: 0.9;
+        }
+        .test-panel {
+            padding: 25px;
+        }
+        .info-box {
+            background: #E3F2FD;
+            border-right: 5px solid #2196F3;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 25px;
+            font-size: 0.95em;
+        }
+        .test-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        .test-card {
+            background: #F8F9FA;
+            border: 2px solid #E9ECEF;
+            border-radius: 12px;
+            padding: 20px;
+            transition: all 0.3s ease;
+        }
+        .test-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        }
+        .test-card h3 {
+            margin: 0 0 15px 0;
+            color: #2C3E50;
+            font-size: 1.2em;
+            border-bottom: 2px solid #4A90E2;
+            padding-bottom: 8px;
+        }
+        .test-btn {
+            background: #4A90E2;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-size: 0.95em;
+            cursor: pointer;
+            width: 100%;
+            transition: all 0.2s;
+            font-weight: 500;
+            margin-top: 10px;
+        }
+        .test-btn:hover {
+            background: #357ABD;
+            transform: scale(1.02);
+        }
+        .test-btn:active {
+            transform: scale(0.98);
+        }
+        .result-box {
+            background: #1E1E2F;
+            color: #F8F9FA;
+            padding: 15px;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9em;
+            margin: 15px 0;
+            white-space: pre-wrap;
+            direction: ltr;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+        .summary-box {
+            background: #2ECC71;
+            color: white;
+            padding: 20px;
+            border-radius: 12px;
+            text-align: center;
+            margin-top: 25px;
+        }
+        .summary-box h3 {
+            margin: 0 0 10px 0;
+            font-size: 1.5em;
+        }
+        .summary-stats {
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+            font-size: 1.2em;
+        }
+        .badge {
+            display: inline-block;
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-size: 0.8em;
+            font-weight: bold;
+        }
+        .badge.success { background: #27AE60; color: white; }
+        .badge.danger { background: #E74C3C; color: white; }
+        .badge.warning { background: #F39C12; color: white; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🧪 تست لبه‌های Multiple Choice</h1>
+            <p>بررسی حالت‌های مرزی و لبه‌های تمرین چندگزینه‌ای</p>
+        </div>
+        <div class="test-panel">
+            <div class="info-box">
+                <strong>🎯 اصول تست:</strong>
+                <ul style="margin: 10px 0 0 20px;">
+                    <li>ورودی‌های لبه (Edge Cases) - لیست خالی، گزینه تکراری، ایندکس نامعتبر</li>
+                    <li>خروجی قطعی و قابل پیش‌بینی</li>
+                    <li>هیچ وابستگی به خارج از ماژول ندارد</li>
+                </ul>
+            </div>
+
+            <div id="testGrid" class="test-grid">
+                <!-- تست‌ها با JavaScript ساخته می‌شوند -->
+            </div>
+
+            <div class="summary-box" id="summaryBox">
+                <h3>📊 نتایج تست‌ها</h3>
+                <div class="summary-stats" id="summaryStats">
+                    <span>✅ موفق: <span id="successCount">0</span></span>
+                    <span>❌ شکست: <span id="failCount">0</span></span>
+                    <span>⚠️ کل: <span id="totalCount">0</span></span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ==================== ماژول Multiple Choice ====================
+        const MultipleChoiceModule = {
+            // تابع اصلی بررسی پاسخ
+            checkAnswer(question, selectedIndex) {
+                // validation اولیه
+                if (!question || typeof question !== 'object') {
+                    return {
+                        isValid: false,
+                        correct: false,
+                        error: 'سوال نامعتبر است'
+                    };
+                }
+
+                if (!Array.isArray(question.options) || question.options.length === 0) {
+                    return {
+                        isValid: false,
+                        correct: false,
+                        error: 'گزینه‌ها نامعتبر یا خالی هستند'
+                    };
+                }
+
+                if (typeof question.correctIndex !== 'number' || 
+                    question.correctIndex < 0 || 
+                    question.correctIndex >= question.options.length) {
+                    return {
+                        isValid: false,
+                        correct: false,
+                        error: 'شاخص پاسخ صحیح نامعتبر است'
+                    };
+                }
+
+                if (typeof selectedIndex !== 'number' || selectedIndex < 0) {
+                    return {
+                        isValid: false,
+                        correct: false,
+                        error: 'شاخص انتخاب شده نامعتبر است'
+                    };
+                }
+
+                // بررسی تکراری بودن گزینه‌ها (هشدار)
+                const uniqueOptions = new Set(question.options);
+                if (uniqueOptions.size !== question.options.length) {
+                    console.warn('⚠️ گزینه‌های تکراری شناسایی شدند');
+                }
+
+                // بررسی صحت پاسخ
+                const isCorrect = (selectedIndex === question.correctIndex);
+                
+                return {
+                    isValid: true,
+                    correct: isCorrect,
+                    selectedIndex,
+                    correctIndex: question.correctIndex,
+                    message: isCorrect ? 'پاسخ صحیح است ✅' : 'پاسخ نادرست است ❌',
+                    hasDuplicate: uniqueOptions.size !== question.options.length
+                };
+            },
+
+            // تابع دریافت گزینه تصادفی (برای تست‌های لبه)
+            getRandomOption(question) {
+                if (!question || !Array.isArray(question.options) || question.options.length === 0) {
+                    return null;
+                }
+                const randomIndex = Math.floor(Math.random() * question.options.length);
+                return {
+                    index: randomIndex,
+                    text: question.options[randomIndex]
+                };
+            }
+        };
+
+        // ==================== تعریف تست‌ها ====================
+        const tests = [
+            {
+                id: 1,
+                title: 'تست لیست خالی گزینه‌ها',
+                description: 'وقتی آرایه گزینه‌ها خالی است',
+                question: {
+                    text: 'رنگ آسمان چیست؟',
+                    options: [],
+                    correctIndex: 0
+                },
+                selectedIndex: 0,
+                expectedError: true,
+                expectedMessage: 'گزینه‌ها نامعتبر یا خالی هستند'
+            },
+            {
+                id: 2,
+                title: 'تست گزینه‌های تکراری',
+                description: 'وقتی گزینه‌های تکراری وجود دارد (هشدار)',
+                question: {
+                    text: 'بزرگترین سیاره منظومه شمسی؟',
+                    options: ['مشتری', 'زحل', 'مشتری', 'مریخ'],
+                    correctIndex: 0
+                },
+                selectedIndex: 0,
+                expectedCorrect: true,
+                expectDuplicateWarning: true
+            },
+            {
+                id: 3,
+                title: 'تست ایندکس صحیح خارج از بازه',
+                description: 'وقتی correctIndex بزرگتر از تعداد گزینه‌هاست',
+                question: {
+                    text: 'پایتخت ایران؟',
+                    options: ['تهران', 'مشهد', 'اصفهان'],
+                    correctIndex: 5
+                },
+                selectedIndex: 0,
+                expectedError: true,
+                expectedMessage: 'شاخص پاسخ صحیح نامعتبر است'
+            },
+            {
+                id: 4,
+                title: 'تست ایندکس انتخاب شده منفی',
+                description: 'وقتی selectedIndex عدد منفی است',
+                question: {
+                    text: '2+2 چند می‌شود؟',
+                    options: ['3', '4', '5'],
+                    correctIndex: 1
+                },
+                selectedIndex: -1,
+                expectedError: true,
+                expectedMessage: 'شاخص انتخاب شده نامعتبر است'
+            },
+            {
+                id: 5,
+                title: 'تست سوال نال',
+                description: 'وقتی خود سوال null است',
+                question: null,
+                selectedIndex: 0,
+                expectedError: true,
+                expectedMessage: 'سوال نامعتبر است'
+            },
+            {
+                id: 6,
+                title: 'تست گزینه‌ها با ایندکس تکراری',
+                description: 'انتخاب یک گزینه تکراری (اولین occurrence)',
+                question: {
+                    text: 'کدام حیوان صدا میو دارد؟',
+                    options: ['گربه', 'سگ', 'گربه', 'موش'],
+                    correctIndex: 0
+                },
+                selectedIndex: 2, // انتخاب دومین "گربه"
+                expectedCorrect: true,
+                expectDuplicateWarning: true,
+                note: 'در منطق ما، هر دو گربه درست در نظر گرفته می‌شوند چون index یکسان ندارند'
+            },
+            {
+                id: 7,
+                title: 'تست گزینه‌ها با رشته‌های شبیه',
+                description: 'گزینه‌های بسیار شبیه به هم',
+                question: {
+                    text: 'کدامیک صحیح است؟',
+                    options: ['affect', 'effect', 'affect', 'effekt'],
+                    correctIndex: 1
+                },
+                selectedIndex: 0,
+                expectedCorrect: false,
+                expectDuplicateWarning: true
+            },
+            {
+                id: 8,
+                title: 'تست تعداد گزینه‌های کم',
+                description: 'فقط 1 گزینه (حالت مرزی)',
+                question: {
+                    text: 'زمین گرد است؟',
+                    options: ['بله'],
+                    correctIndex: 0
+                },
+                selectedIndex: 0,
+                expectedCorrect: true
+            },
+            {
+                id: 9,
+                title: 'تست selectedIndex خارج از بازه',
+                description: 'انتخاب گزینه با ایندکس بزرگتر از طول آرایه',
+                question: {
+                    text: 'چند فصل داریم؟',
+                    options: ['۲', '۳', '۴'],
+                    correctIndex: 2
+                },
+                selectedIndex: 10,
+                expectedError: true,
+                expectedMessage: 'شاخص انتخاب شده نامعتبر است'
+            },
+            {
+                id: 10,
+                title: 'تست question بدون فیلد options',
+                description: 'آبجکت سوال ناقص',
+                question: {
+                    text: 'تست'
+                },
+                selectedIndex: 0,
+                expectedError: true,
+                expectedMessage: 'گزینه‌ها نامعتبر یا خالی هستند'
+            }
+        ];
+
+        // ==================== اجرای تست ====================
+        function runTest(testCase) {
+            try {
+                const result = MultipleChoiceModule.checkAnswer(
+                    testCase.question, 
+                    testCase.selectedIndex
+                );
+
+                let passed = true;
+                let messages = [];
+
+                // بررسی خطای مورد انتظار
+                if (testCase.expectedError) {
+                    passed = !result.isValid && result.error === testCase.expectedMessage;
+                    if (!passed) {
+                        messages.push(`❌ خطای مورد انتظار: "${testCase.expectedMessage}" دریافت شد: "${result.error}"`);
+                    }
+                } else {
+                    passed = result.isValid;
+                    if (testCase.expectedCorrect !== undefined) {
+                        passed = passed && (result.correct === testCase.expectedCorrect);
+                        if (!passed) {
+                            messages.push(`❌ نتیجه مورد انتظار: ${testCase.expectedCorrect} دریافت شد: ${result.correct}`);
+                        }
+                    }
+                }
+
+                // بررسی هشدار تکراری بودن
+                if (testCase.expectDuplicateWarning) {
+                    // ما در خروجی result.hasDuplicate را داریم
+                    if (!result.hasDuplicate) {
+                        messages.push('⚠️ هشدار تکراری بودن انتظار می‌رفت');
+                    }
+                }
+
+                return {
+                    passed: passed && messages.length === 0,
+                    result: result,
+                    messages: messages
+                };
+            } catch (error) {
+                return {
+                    passed: false,
+                    result: null,
+                    messages: [`❌ خطای غیرمنتظره: ${error.message}`]
+                };
+            }
+        }
+
+        // ==================== رندر تست‌ها ====================
+        function renderTests() {
+            const grid = document.getElementById('testGrid');
+            let successCount = 0;
+            let failCount = 0;
+
+            tests.forEach(test => {
+                const result = runTest(test);
+                if (result.passed) successCount++; else failCount++;
+
+                const card = document.createElement('div');
+                card.className = 'test-card';
+                card.innerHTML = `
+                    <h3>${test.id}. ${test.title}</h3>
+                    <p style="color: #666; margin: 5px 0;">📌 ${test.description}</p>
+                    <div class="result-box" id="result-${test.id}">${JSON.stringify(result.result, null, 2)}</div>
+                    <button class="test-btn" onclick="runSingleTest(${test.id})">🔄 اجرای مجدد تست</button>
+                    <div style="margin-top: 10px;">
+                        <span class="badge ${result.passed ? 'success' : 'danger'}">
+                            ${result.passed ? '✅ پاس' : '❌ شکست'}
+                        </span>
+                        ${result.messages.length ? `<span class="badge warning">${result.messages.length} اخطار</span>` : ''}
+                    </div>
+                `;
+                grid.appendChild(card);
+            });
+
+            document.getElementById('successCount').textContent = successCount;
+            document.getElementById('failCount').textContent = failCount;
+            document.getElementById('totalCount').textContent = tests.length;
+        }
+
+        // ==================== اجرای تکی ====================
+        window.runSingleTest = function(testId) {
+            const test = tests.find(t => t.id === testId);
+            const result = runTest(test);
+            const resultBox = document.getElementById(`result-${testId}`);
+            if (resultBox) {
+                resultBox.textContent = JSON.stringify(result.result, null, 2);
+            }
+            alert(`تست ${testId}: ${result.passed ? '✅ پاس' : '❌ شکست'}\n${result.messages.join('\n')}`);
+        };
+
+        // ==================== اجرای اولیه ====================
+        window.onload = renderTests;
+    </script>
+</body>
+</html>
