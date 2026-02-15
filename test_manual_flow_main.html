@@ -1,0 +1,444 @@
+<!DOCTYPE html>
+<html dir="rtl" lang="fa">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>تست دستی جریان اصلی کاربر - Farsinglish</title>
+    <style>
+        body {
+            font-family: Vazir, Tahoma, Arial, sans-serif;
+            background: #f5f7fa;
+            margin: 0;
+            padding: 20px;
+            color: #2c3e50;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.1);
+            padding: 24px;
+        }
+        h1 {
+            font-size: 1.6rem;
+            color: #1e3c5c;
+            border-bottom: 2px solid #e1e8ed;
+            padding-bottom: 12px;
+            margin-top: 0;
+        }
+        .step-panel {
+            background: #f8fafd;
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 24px;
+            border: 1px solid #dde4ec;
+        }
+        .step-title {
+            font-weight: bold;
+            font-size: 1.2rem;
+            color: #0b4f6c;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .step-number {
+            background: #0b4f6c;
+            color: white;
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.9rem;
+        }
+        button {
+            background: #2274a5;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 30px;
+            font-size: 1rem;
+            font-weight: 500;
+            cursor: pointer;
+            margin: 5px 8px 5px 0;
+            transition: 0.2s;
+            border: 1px solid #1b5a7e;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        button:hover {
+            background: #1b5a7e;
+            transform: translateY(-1px);
+        }
+        button.secondary {
+            background: #e7eef4;
+            color: #1e3c5c;
+            border-color: #b8ccd8;
+        }
+        .log-area {
+            background: #1e2b36;
+            color: #d4e6f1;
+            border-radius: 10px;
+            padding: 16px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9rem;
+            max-height: 250px;
+            overflow-y: auto;
+            margin-top: 16px;
+            white-space: pre-wrap;
+            direction: ltr;
+            text-align: left;
+            border: 2px solid #0e1a24;
+        }
+        .log-entry {
+            border-bottom: 1px solid #3a4c5e;
+            padding: 4px 0;
+        }
+        .flex-row {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 10px;
+            margin: 12px 0;
+        }
+        .output-panel {
+            background: #e9f2f9;
+            padding: 12px;
+            border-radius: 8px;
+            margin: 10px 0;
+            border-right: 4px solid #2274a5;
+        }
+        .badge {
+            background: #d4e6f1;
+            color: #0b4f6c;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+        }
+        hr {
+            border: none;
+            border-top: 1px dashed #b8ccd8;
+            margin: 16px 0;
+        }
+    </style>
+</head>
+<body>
+<div class="container" id="app">
+    <h1>🧪 تست دستی جریان اصلی کاربر (Manual Flow)</h1>
+    <p style="color: #4a6572;">سناریوی کامل: ثبت‌نام/ورود → بارگذاری درس → تمرین → ذخیره پیشرفت ← SRS</p>
+
+    <!-- گام ۱: احراز هویت -->
+    <div class="step-panel">
+        <div class="step-title"><span class="step-number">۱</span> احراز هویت (ورود/ثبت‌نام)</div>
+        <div class="flex-row">
+            <button id="btnLogin">🔐 ورود با کاربر تست</button>
+            <button id="btnLogout" class="secondary">🚪 خروج</button>
+            <button id="btnShowUser" class="secondary">👤 نمایش کاربر فعلی</button>
+        </div>
+        <div id="authOutput" class="output-panel">وارد نشده‌اید</div>
+    </div>
+
+    <!-- گام ۲: بارگذاری درس‌ها -->
+    <div class="step-panel">
+        <div class="step-title"><span class="step-number">۲</span> بارگذاری محتوای آموزشی</div>
+        <div class="flex-row">
+            <button id="btnLoadLessons">📚 بارگذاری لیست درس‌ها</button>
+            <button id="btnSelectLesson">📖 انتخاب درس اول</button>
+        </div>
+        <div id="lessonsOutput" class="output-panel">درس‌ها بارگذاری نشده</div>
+    </div>
+
+    <!-- گام ۳: تمرین و پاسخ -->
+    <div class="step-panel">
+        <div class="step-title"><span class="step-number">۳</span> شبیه‌سازی تمرین</div>
+        <div class="flex-row">
+            <button id="btnGenerateExercise">🎲 تولید تمرین تصادفی</button>
+            <button id="btnAnswerCorrect">✅ پاسخ صحیح</button>
+            <button id="btnAnswerWrong">❌ پاسخ غلط</button>
+        </div>
+        <div id="exerciseOutput" class="output-panel">تمرینی فعال نیست</div>
+    </div>
+
+    <!-- گام ۴: ذخیره پیشرفت و SRS -->
+    <div class="step-panel">
+        <div class="step-title"><span class="step-number">۴</span> پیشرفت و مرور هوشمند (SRS)</div>
+        <div class="flex-row">
+            <button id="btnSaveProgress">💾 ذخیره پیشرفت فعلی</button>
+            <button id="btnShowProgress">📊 نمایش پیشرفت</button>
+            <button id="btnNextReview">⏳ محاسبه مرور بعدی</button>
+        </div>
+        <div id="progressOutput" class="output-panel">پیشرفتی ثبت نشده</div>
+    </div>
+
+    <!-- گام ۵: جریان کامل یکپارچه -->
+    <hr>
+    <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+        <button id="btnFullFlow" style="background: #2e7d32;">▶ اجرای گام‌به‌گام خودکار (۵ مرحله)</button>
+        <button id="btnClearLog" class="secondary">🧹 پاک کردن لاگ</button>
+    </div>
+
+    <!-- لاگ خروجی -->
+    <div style="margin-top: 24px;">
+        <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+            <span class="badge">📋 کنسول مجازی</span>
+            <span class="badge" id="logCounter">۰ رویداد</span>
+        </div>
+        <div id="logArea" class="log-area">[سیستم] آماده به کار. دکمه‌ها را امتحان کنید.</div>
+    </div>
+</div>
+
+<script>
+    (function() {
+        // ********** مدل‌های ساده (شبیه‌سازی) **********
+        let currentUser = null;
+        let lessons = [];
+        let selectedLesson = null;
+        let currentExercise = null;
+        let currentProgress = {
+            userId: null,
+            lessonId: null,
+            stage: 0,
+            easeFactor: 2.5,
+            interval: 0,
+            nextReview: null,
+            lastScore: null
+        };
+
+        // ماژول شبیه‌سازی SRS (همان srs-engine)
+        const SRS = {
+            calculateNextReview: function(score, stage, easeFactor, interval) {
+                if (score < 3) { // پاسخ ضعیف
+                    return { stage: 0, easeFactor: Math.max(1.3, easeFactor - 0.2), interval: 1, nextReview: new Date(Date.now() + 86400000) };
+                }
+                // پاسخ خوب
+                let newEaseFactor = easeFactor + (0.1 - (5 - score) * 0.08);
+                newEaseFactor = Math.max(1.3, Math.min(2.5, newEaseFactor));
+                let newInterval = 0;
+                if (stage === 0) newInterval = 1;
+                else if (stage === 1) newInterval = 6;
+                else newInterval = Math.round(interval * newEaseFactor);
+                return {
+                    stage: stage + 1,
+                    easeFactor: newEaseFactor,
+                    interval: newInterval,
+                    nextReview: new Date(Date.now() + newInterval * 86400000)
+                };
+            }
+        };
+
+        // ********** ابزار لاگ **********
+        const logArea = document.getElementById('logArea');
+        const logCounter = document.getElementById('logCounter');
+        let logEntries = [];
+
+        function addLog(message, type = 'info') {
+            const timestamp = new Date().toLocaleTimeString('fa-IR', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+            const entry = `[${timestamp}] ${message}`;
+            logEntries.push(entry);
+            logArea.innerHTML = logEntries.map(e => `<div class="log-entry">${e}</div>`).join('');
+            logArea.scrollTop = logArea.scrollHeight;
+            logCounter.textContent = logEntries.length + ' رویداد';
+            console.log(message);
+        }
+
+        // ********** به‌روزرسانی خروجی‌های UI **********
+        function updateAuthOutput() {
+            const out = document.getElementById('authOutput');
+            if (currentUser) {
+                out.innerText = `✅ کاربر: ${currentUser.name} (ایمیل: ${currentUser.email}) | توکن: ${currentUser.token.substring(0,12)}...`;
+            } else {
+                out.innerText = '🔴 خارج شده / وارد نشده';
+            }
+        }
+
+        function updateLessonsOutput() {
+            const out = document.getElementById('lessonsOutput');
+            if (lessons.length > 0) {
+                let text = `📚 ${lessons.length} درس بارگذاری شد: `;
+                text += lessons.map(l => l.title).join('، ');
+                if (selectedLesson) text += ` | درس انتخاب‌شده: ${selectedLesson.title}`;
+                out.innerText = text;
+            } else {
+                out.innerText = 'درس‌ها بارگذاری نشده';
+            }
+        }
+
+        function updateExerciseOutput() {
+            const out = document.getElementById('exerciseOutput');
+            if (currentExercise) {
+                out.innerText = `🎯 تمرین: ${currentExercise.question} | پاسخ صحیح: ${currentExercise.correctAnswer}`;
+            } else {
+                out.innerText = 'تمرینی فعال نیست';
+            }
+        }
+
+        function updateProgressOutput() {
+            const out = document.getElementById('progressOutput');
+            if (currentProgress.lessonId) {
+                out.innerText = `📈 درس: ${currentProgress.lessonId} | stage: ${currentProgress.stage} | EF: ${currentProgress.easeFactor.toFixed(2)} | فاصله: ${currentProgress.interval} روز | مرور بعدی: ${currentProgress.nextReview ? new Date(currentProgress.nextReview).toLocaleDateString('fa-IR') : 'همین الان'}`;
+            } else {
+                out.innerText = 'پیشرفتی ثبت نشده';
+            }
+        }
+
+        // ********** اکشن‌های دکمه‌ها **********
+        document.getElementById('btnLogin').addEventListener('click', function() {
+            currentUser = {
+                id: 'user_1',
+                name: 'علی رضایی',
+                email: 'ali@example.com',
+                token: 'jwt_test_token_' + Math.random().toString(36).substring(2)
+            };
+            addLog(`ورود موفق: ${currentUser.name}`);
+            updateAuthOutput();
+        });
+
+        document.getElementById('btnLogout').addEventListener('click', function() {
+            currentUser = null;
+            selectedLesson = null;
+            currentExercise = null;
+            currentProgress = { userId: null, lessonId: null, stage: 0, easeFactor: 2.5, interval: 0, nextReview: null };
+            addLog('خروج از حساب');
+            updateAuthOutput();
+            updateLessonsOutput();
+            updateExerciseOutput();
+            updateProgressOutput();
+        });
+
+        document.getElementById('btnShowUser').addEventListener('click', function() {
+            if (currentUser) {
+                addLog(`کاربر فعلی: ${currentUser.name} (${currentUser.email})`);
+            } else {
+                addLog('کاربری وارد نشده');
+            }
+        });
+
+        // بارگذاری درس‌های نمونه
+        document.getElementById('btnLoadLessons').addEventListener('click', function() {
+            lessons = [
+                { id: 'L1', title: 'مبتدی ۱ - greetings', words: ['hello', 'goodbye'] },
+                { id: 'L2', title: 'مبتدی ۲ - family', words: ['mother', 'father'] },
+                { id: 'L3', title: 'متوسط - food', words: ['apple', 'bread'] }
+            ];
+            addLog(`بارگذاری ${lessons.length} درس نمونه`);
+            updateLessonsOutput();
+        });
+
+        document.getElementById('btnSelectLesson').addEventListener('click', function() {
+            if (lessons.length === 0) {
+                addLog('ابتدا درس‌ها را بارگذاری کنید', 'warn');
+                return;
+            }
+            selectedLesson = lessons[0];
+            currentProgress.lessonId = selectedLesson.id;
+            currentProgress.userId = currentUser?.id || 'anonymous';
+            addLog(`درس انتخاب شد: ${selectedLesson.title}`);
+            updateLessonsOutput();
+        });
+
+        // تولید تمرین ساده
+        document.getElementById('btnGenerateExercise').addEventListener('click', function() {
+            if (!selectedLesson) {
+                addLog('لطفاً ابتدا یک درس انتخاب کنید', 'warn');
+                return;
+            }
+            const words = selectedLesson.words || ['hello', 'world'];
+            const randomWord = words[Math.floor(Math.random() * words.length)];
+            currentExercise = {
+                type: 'translate',
+                question: `معنی "${randomWord}" چیست؟`,
+                correctAnswer: randomWord === 'hello' ? 'سلام' : (randomWord === 'goodbye' ? 'خداحافظ' : 'پاسخ نمونه')
+            };
+            addLog(`تمرین جدید: ${currentExercise.question}`);
+            updateExerciseOutput();
+        });
+
+        document.getElementById('btnAnswerCorrect').addEventListener('click', function() {
+            if (!currentExercise) {
+                addLog('تمرینی برای پاسخ وجود ندارد', 'warn');
+                return;
+            }
+            addLog('✅ پاسخ صحیح داده شد');
+            // اعمال در SRS (نمره ۴)
+            const newState = SRS.calculateNextReview(4, currentProgress.stage, currentProgress.easeFactor, currentProgress.interval);
+            currentProgress.stage = newState.stage;
+            currentProgress.easeFactor = newState.easeFactor;
+            currentProgress.interval = newState.interval;
+            currentProgress.nextReview = newState.nextReview;
+            currentProgress.lastScore = 4;
+            addLog(`SRS: stage=${newState.stage}, EF=${newState.easeFactor.toFixed(2)}, فاصله=${newState.interval} روز`);
+            updateProgressOutput();
+        });
+
+        document.getElementById('btnAnswerWrong').addEventListener('click', function() {
+            if (!currentExercise) {
+                addLog('تمرینی برای پاسخ وجود ندارد', 'warn');
+                return;
+            }
+            addLog('❌ پاسخ غلط داده شد');
+            const newState = SRS.calculateNextReview(2, currentProgress.stage, currentProgress.easeFactor, currentProgress.interval);
+            currentProgress.stage = newState.stage;
+            currentProgress.easeFactor = newState.easeFactor;
+            currentProgress.interval = newState.interval;
+            currentProgress.nextReview = newState.nextReview;
+            currentProgress.lastScore = 2;
+            addLog(`SRS: stage=${newState.stage}, EF=${newState.easeFactor.toFixed(2)}, فاصله=${newState.interval} روز`);
+            updateProgressOutput();
+        });
+
+        document.getElementById('btnSaveProgress').addEventListener('click', function() {
+            if (!currentUser) { addLog('برای ذخیره پیشرفت ابتدا وارد شوید', 'warn'); return; }
+            if (!currentProgress.lessonId) { addLog('درسی انتخاب نشده', 'warn'); return; }
+            // ذخیره در شبیه‌ساز (localStorage)
+            const key = `progress_${currentUser.id}_${currentProgress.lessonId}`;
+            localStorage.setItem(key, JSON.stringify(currentProgress));
+            addLog(`پیشرفت درس ${currentProgress.lessonId} در localStorage ذخیره شد`);
+        });
+
+        document.getElementById('btnShowProgress').addEventListener('click', function() {
+            addLog(`پیشرفت فعلی: stage=${currentProgress.stage}, EF=${currentProgress.easeFactor}, مرور بعدی: ${currentProgress.nextReview}`);
+            updateProgressOutput();
+        });
+
+        document.getElementById('btnNextReview').addEventListener('click', function() {
+            if (!currentProgress.nextReview) {
+                addLog('مرور بعدی مشخص نیست');
+            } else {
+                const days = Math.round((new Date(currentProgress.nextReview) - new Date()) / 86400000);
+                addLog(`مرور بعدی در ${days} روز (${new Date(currentProgress.nextReview).toLocaleDateString('fa-IR')})`);
+            }
+        });
+
+        // گام کامل خودکار
+        document.getElementById('btnFullFlow').addEventListener('click', async function() {
+            addLog('🔥 شروع اجرای گام‌به‌گام خودکار');
+            if (!currentUser) document.getElementById('btnLogin').click();
+            await new Promise(r => setTimeout(r, 200));
+            document.getElementById('btnLoadLessons').click();
+            await new Promise(r => setTimeout(r, 200));
+            document.getElementById('btnSelectLesson').click();
+            await new Promise(r => setTimeout(r, 200));
+            document.getElementById('btnGenerateExercise').click();
+            await new Promise(r => setTimeout(r, 200));
+            document.getElementById('btnAnswerCorrect').click();
+            await new Promise(r => setTimeout(r, 200));
+            document.getElementById('btnSaveProgress').click();
+            await new Promise(r => setTimeout(r, 200));
+            document.getElementById('btnShowProgress').click();
+            addLog('✅ جریان کامل با موفقیت اجرا شد');
+        });
+
+        document.getElementById('btnClearLog').addEventListener('click', function() {
+            logEntries = [];
+            logArea.innerHTML = '<div class="log-entry">[سیستم] لاگ پاک شد.</div>';
+            logCounter.textContent = '۰ رویداد';
+        });
+
+        // مقداردهی اولیه
+        addLog('سیستم آماده است. دکمه‌های بالا را به ترتیب امتحان کنید.');
+    })();
+</script>
+</body>
+</html>
