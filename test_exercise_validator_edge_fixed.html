@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>تست لبه‌های اعتبارسنجی تمرین (اصلاح شده) - Farsinglish</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; direction: ltr; max-width: 900px; margin: 0 auto; padding: 20px; background: #f5f5f5; }
+        h1 { color: #2c3e50; text-align: center; border-bottom: 3px solid #3498db; padding-bottom: 10px; }
+        h2 { color: #34495e; margin-top: 30px; }
+        .test-card { background: white; border-radius: 12px; padding: 20px; margin: 20px 0; box-shadow: 0 4px 12px rgba(0,0,0,0.1); border-right: 6px solid #3498db; }
+        .test-case { background: #f8f9fa; border-left: 4px solid #27ae60; padding: 15px; margin: 15px 0; font-family: 'Courier New', monospace; border-radius: 0 8px 8px 0; }
+        .passed { background: #d4edda; border-left-color: #28a745; }
+        .failed { background: #f8d7da; border-left-color: #dc3545; }
+        .btn-run { background: #3498db; color: white; border: none; padding: 12px 30px; font-size: 18px; border-radius: 50px; cursor: pointer; transition: 0.3s; display: block; margin: 20px auto; font-weight: bold; box-shadow: 0 2px 8px rgba(52,152,219,0.4); }
+        .btn-run:hover { background: #2980b9; transform: translateY(-2px); }
+        .btn-test { background: #27ae60; color: white; border: none; padding: 8px 20px; font-size: 14px; border-radius: 25px; cursor: pointer; margin: 5px; }
+        .btn-test:hover { background: #2ecc71; }
+        pre { background: #2d2d2d; color: #f8f8f2; padding: 15px; border-radius: 8px; overflow-x: auto; font-size: 14px; }
+        .counter { background: #e74c3c; color: white; padding: 5px 15px; border-radius: 50px; display: inline-block; margin: 10px 0; }
+        .manual-section { background: #fff3cd; border: 2px solid #ffc107; padding: 20px; border-radius: 12px; margin: 30px 0; }
+    </style>
+</head>
+<body>
+    <h1>🧪 تست لبه‌های اعتبارسنجی تمرین (اصلاح شده)</h1>
+    <p style="text-align: center; color: #7f8c8d;">اجرای دستی هر تست با دکمه - رفع خطاهای null/undefined</p>
+
+    <button class="btn-run" id="runAllBtn">▶ اجرای تمام تست‌ها</button>
+
+    <div id="results">
+        <!-- نتایج تست‌ها اینجا نمایش داده می‌شوند -->
+    </div>
+
+    <script>
+        (function() {
+            // ==================== ماژول اعتبارسنجی تمرین (نسخه اصلاح شده) ====================
+            const ExerciseValidator = {
+                // اعتبارسنجی پاسخ با بررسی کامل ورودی‌ها
+                validate: function(answer, exercise, type) {
+                    // مرحله 1: بررسی وجود exercise
+                    if (exercise === null || exercise === undefined) {
+                        return { valid: false, error: 'exercise_required' };
+                    }
+                    
+                    // مرحله 2: بررسی شیء بودن exercise
+                    if (typeof exercise !== 'object') {
+                        return { valid: false, error: 'invalid_exercise' };
+                    }
+                    
+                    // مرحله 3: تشخیص نوع تمرین
+                    const exerciseType = type || exercise.type;
+                    
+                    // مرحله 4: اگر نوع مشخص نیست
+                    if (!exerciseType) {
+                        return { valid: false, error: 'unknown_exercise_type' };
+                    }
+                    
+                    // مرحله 5: بررسی وجود answer برای انواع خاص
+                    if (answer === null || answer === undefined) {
+                        // برخی تمرینات مثل pronunciation ممکن است answer نداشته باشند
+                        if (exerciseType === 'pronunciation') {
+                            return { valid: true, simulated: true };
+                        }
+                        return { valid: false, error: 'answer_required' };
+                    }
+                    
+                    // اعتبارسنجی بر اساس نوع
+                    switch(exerciseType) {
+                        case 'multiple-choice':
+                            return this.validateMultipleChoice(answer, exercise);
+                        case 'fill-blank':
+                            return this.validateFillBlank(answer, exercise);
+                        case 'translation':
+                            return this.validateTranslation(answer, exercise);
+                        case 'pronunciation':
+                            return this.validatePronunciation(answer, exercise);
+                        default:
+                            return { valid: false, error: 'unknown_exercise_type' };
+                    }
+                },
+
+                validateMultipleChoice: function(answer, exercise) {
+                    // بررسی وجود options
+                    if (!exercise.options || !Array.isArray(exercise.options)) {
+                        return { valid: false, error: 'invalid_options' };
+                    }
+                    
+                    // تبدیل answer به عدد
+                    const selectedIndex = Number(answer);
+                    
+                    // بررسی معتبر بودن ایندکس
+                    if (isNaN(selectedIndex)) {
+                        return { valid: false, error: 'answer_not_a_number' };
+                    }
+                    
+                    if (selectedIndex < 0 || selectedIndex >= exercise.options.length) {
+                        return { valid: false, error: 'index_out_of_range' };
+                    }
+                    
+                    // بررسی correctIndex (ممکن است آرایه‌ای از پاسخ‌های صحیح باشد)
+                    const correctIndices = exercise.correctIndices || 
+                                          (exercise.correctIndex !== undefined ? [exercise.correctIndex] : []);
+                    
+                    const isCorrect = correctIndices.includes(selectedIndex);
+                    
+                    return { 
+                        valid: true, 
+                        correct: isCorrect,
+                        selectedIndex: selectedIndex,
+                        correctIndices: correctIndices
+                    };
+                },
+
+                validateFillBlank: function(answer, exercise) {
+                    // بررسی رشته بودن answer
+                    if (typeof answer !== 'string') {
+                        return { valid: false, error: 'answer_must_be_string' };
+                    }
+                    
+                    const trimmedAnswer = answer.trim();
+                    
+                    if (trimmedAnswer === '') {
+                        return { valid: false, error: 'empty_answer' };
+                    }
+                    
+                    // بررسی وجود correctAnswer
+                    if (!exercise.correctAnswer) {
+                        return { valid: false, error: 'no_correct_answer' };
+                    }
+                    
+                    const normalizedAnswer = trimmedAnswer.toLowerCase();
+                    const normalizedCorrect = exercise.correctAnswer.trim().toLowerCase();
+                    
+                    const isExactMatch = (normalizedAnswer === normalizedCorrect);
+                    
+                    // محاسبه شباهت (برای تایپوهای مجاز)
+                    const similarity = this.levenshteinSimilarity(normalizedAnswer, normalizedCorrect);
+                    const isSimilar = similarity > 0.8;
+                    
+                    return { 
+                        valid: true, 
+                        correct: isExactMatch,
+                        similar: isSimilar,
+                        similarity: similarity,
+                        normalizedAnswer: normalizedAnswer
+                    };
+                },
+
+                validateTranslation: function(answer, exercise) {
+                    if (typeof answer !== 'string') {
+                        return { valid: false, error: 'answer_must_be_string' };
+                    }
+                    
+                    const trimmedAnswer = answer.trim().toLowerCase();
+                    
+                    // بررسی acceptedAnswers
+                    let acceptedAnswers = exercise.acceptedAnswers;
+                    
+                    if (!acceptedAnswers) {
+                        // اگر acceptedAnswers نبود، از correctAnswer استفاده کن
+                        if (exercise.correctAnswer) {
+                            acceptedAnswers = [exercise.correctAnswer];
+                        } else {
+                            return { valid: false, error: 'no_accepted_answers' };
+                        }
+                    }
+                    
+                    // مطمئن شو آرایه است
+                    if (!Array.isArray(acceptedAnswers)) {
+                        // اگر رشته بود، تبدیل به آرایه کن
+                        if (typeof acceptedAnswers === 'string') {
+                            acceptedAnswers = [acceptedAnswers];
+                        } else {
+                            return { valid: false, error: 'invalid_accepted_answers' };
+                        }
+                    }
+                    
+                    const isCorrect = acceptedAnswers.some(a => 
+                        String(a).trim().toLowerCase() === trimmedAnswer
+                    );
+                    
+                    return { 
+                        valid: true, 
+                        correct: isCorrect,
+                        matchedAnswer: trimmedAnswer
+                    };
+                },
+
+                validatePronunciation: function(answer, exercise) {
+                    // تمرین تلفظ - همیشه valid برمی‌گرداند (در واقعیت سخت‌افزار نیاز است)
+                    return { valid: true, correct: true, simulated: true };
+                },
+
+                // محاسبه شباهت لوونشتاین (ساده شده)
+                levenshteinSimilarity: function(s1, s2) {
+                    if (s1 === s2) return 1.0;
+                    if (!s1 || !s2) return 0.0;
+                    
+                    const len = Math.max(s1.length, s2.length);
+                    if (len === 0) return 1.0;
+                    
+                    // محاسبه فاصله ساده
+                    let distance = 0;
+                    const minLen = Math.min(s1.length, s2.length);
+                    
+                    for (let i = 0; i < minLen; i++) {
+                        if (s1[i] !== s2[i]) distance++;
+                    }
+                    
+                    distance += Math.abs(s1.length - s2.length);
+                    
+                    return Math.max(0, 1.0 - (distance / len));
+                }
+            };
+
+            // ==================== تست‌های لبه (اصلاح شده) ====================
+            const edgeTests = [
+                {
+                    name: 'تست 7: تمرین با داده ناقص (بدون type)',
+                    input: { answer: 'test', exercise: { wrongField: 'value' } },
+                    expected: { valid: false, error: 'unknown_exercise_type' }
+                },
+                {
+                    name: 'تست 8: تمرین با exercise = null',
+                    input: { answer: 'test', exercise: null },
+                    expected: { valid: false, error: 'exercise_required' }
+                },
+                {
+                    name: 'تست 9: تمرین با exercise = undefined',
+                    input: { answer: 'test', exercise: undefined },
+                    expected: { valid: false, error: 'exercise_required' }
+                },
+                {
+                    name: 'تست 10: پاسخ عددی خارج از بازه (چندگزینه‌ای)',
+                    input: { answer: 5, exercise: { type: 'multiple-choice', options: ['A', 'B', 'C'], correctIndices: [1] } },
+                    expected: { valid: false, error: 'index_out_of_range' }
+                },
+                {
+                    name: 'تست 11: پاسخ منفی (چندگزینه‌ای)',
+                    input: { answer: -1, exercise: { type: 'multiple-choice', options: ['A', 'B', 'C'], correctIndices: [1] } },
+                    expected: { valid: false, error: 'index_out_of_range' }
+                },
+                {
+                    name: 'تست 12: acceptedAnswers نامعتبر (رشته)',
+                    input: { answer: 'hello', exercise: { type: 'translation', acceptedAnswers: 'not-an-array' } },
+                    expected: { valid: true, correct: false } // باید به آرایه تبدیل شود
+                },
+                {
+                    name: 'تست 13: options خالی',
+                    input: { answer: 0, exercise: { type: 'multiple-choice', options: [], correctIndices: [0] } },
+                    expected: { valid: false, error: 'index_out_of_range' }
+                },
+                {
+                    name: 'تست 14: پاسخ با تایپو (شباهت بالا)',
+                    input: { answer: 'helo', exercise: { type: 'fill-blank', correctAnswer: 'hello' } },
+                    expected: { valid: true, correct: false, similar: true }
+                },
+                {
+                    name: 'تست اضافه 1: exercise به صورت عدد',
+                    input: { answer: 'test', exercise: 123 },
+                    expected: { valid: false, error: 'invalid_exercise' }
+                },
+                {
+                    name: 'تست اضافه 2: answer به صورت object',
+                    input: { answer: { text: 'hello' }, exercise: { type: 'fill-blank', correctAnswer: 'hello' } },
+                    expected: { valid: false, error: 'answer_must_be_string' }
+                }
+            ];
+
+            // ==================== اجرای تست ====================
+            function runTest(test) {
+                try {
+                    const { answer, exercise } = test.input;
+                    const type = exercise && exercise.type ? exercise.type : null;
+                    
+                    const result = ExerciseValidator.validate(answer, exercise, type);
+                    
+                    // بررسی نتیجه
+                    let passed = true;
+                    const expected = test.expected;
+                    
+                    if (expected.valid !== undefined && result.valid !== expected.valid) passed = false;
+                    if (expected.error !== undefined && result.error !== expected.error) passed = false;
+                    if (expected.correct !== undefined && result.correct !== expected.correct) passed = false;
+                    if (expected.similar !== undefined && result.similar !== expected.similar) passed = false;
+                    
+                    return { passed, result, error: null };
+                } catch (error) {
+                    return { passed: false, result: null, error: error.message };
+                }
+            }
+
+            // ==================== نمایش نتایج ====================
+            function displayResults() {
+                const resultsDiv = document.getElementById('results');
+                resultsDiv.innerHTML = '';
+                
+                let passedCount = 0;
+                let totalTests = edgeTests.length;
+                
+                edgeTests.forEach((test, index) => {
+                    const { passed, result, error } = runTest(test);
+                    if (passed) passedCount++;
+                    
+                    const testDiv = document.createElement('div');
+                    testDiv.className = `test-case ${passed ? 'passed' : 'failed'}`;
+                    
+                    let resultHtml = '';
+                    if (error) {
+                        resultHtml = `<small style="color: red;">خطا: ${error}</small>`;
+                    } else {
+                        resultHtml = `<small>خروجی: ${JSON.stringify(result)}</small>`;
+                    }
+                    
+                    testDiv.innerHTML = `
+                        <strong>${test.name}</strong><br>
+                        <small>ورودی: ${JSON.stringify(test.input)}</small><br>
+                        ${resultHtml}<br>
+                        <small>انتظار: ${JSON.stringify(test.expected)}</small><br>
+                        <strong style="color: ${passed ? 'green' : 'red'}">${passed ? '✓ پاس' : '✗ شکست'}</strong>
+                    `;
+                    
+                    // دکمه اجرای تکی
+                    const runSingleBtn = document.createElement('button');
+                    runSingleBtn.className = 'btn-test';
+                    runSingleBtn.textContent = 'اجرای مجدد این تست';
+                    runSingleBtn.onclick = function() {
+                        const newResult = runTest(test);
+                        testDiv.style.background = newResult.passed ? '#d4edda' : '#f8d7da';
+                        alert(`نتیجه: ${newResult.passed ? 'پاس' : 'شکست'}\n${JSON.stringify(newResult.result)}`);
+                    };
+                    
+                    testDiv.appendChild(runSingleBtn);
+                    resultsDiv.appendChild(testDiv);
+                });
+                
+                // خلاصه
+                const summaryDiv = document.createElement('div');
+                summaryDiv.style.marginTop = '30px';
+                summaryDiv.style.padding = '20px';
+                summaryDiv.style.background = '#2c3e50';
+                summaryDiv.style.color = 'white';
+                summaryDiv.style.borderRadius = '12px';
+                summaryDiv.style.textAlign = 'center';
+                summaryDiv.innerHTML = `
+                    <h2 style="color:white; margin:0">📊 نتیجه تست‌ها</h2>
+                    <div style="font-size: 48px; margin: 20px 0">${passedCount} / ${totalTests}</div>
+                    <div class="counter" style="background: ${passedCount === totalTests ? '#27ae60' : '#e67e22'}">
+                        ${passedCount === totalTests ? '✅ همه تست‌ها پاس شدند' : '⚠️ برخی تست‌ها شکست خوردند'}
+                    </div>
+                `;
+                resultsDiv.appendChild(summaryDiv);
+            }
+
+            // ==================== اجرای دستی یک تست ====================
+            window.runSingleTest = function(testIndex) {
+                const test = edgeTests[testIndex];
+                const { passed, result, error } = runTest(test);
+                alert(`تست ${testIndex + 1}: ${test.name}\nنتیجه: ${passed ? '✓ پاس' : '✗ شکست'}\n${error ? 'خطا: ' + error : 'خروجی: ' + JSON.stringify(result)}`);
+            };
+
+            // اجرای خودکار هنگام بارگذاری
+            window.onload = function() {
+                displayResults();
+            };
+
+            // اجرای همه با دکمه
+            document.getElementById('runAllBtn').addEventListener('click', function() {
+                displayResults();
+            });
+
+            // اضافه کردن دکمه‌های دستی
+            const manualDiv = document.createElement('div');
+            manualDiv.className = 'manual-section';
+            manualDiv.innerHTML = '<h3>🎮 اجرای دستی تست‌ها</h3>';
+            
+            edgeTests.forEach((test, index) => {
+                const btn = document.createElement('button');
+                btn.className = 'btn-test';
+                btn.textContent = `تست ${index + 1}`;
+                btn.onclick = () => runSingleTest(index);
+                manualDiv.appendChild(btn);
+            });
+            
+            document.body.insertBefore(manualDiv, document.getElementById('results'));
+        })();
+    </script>
+</body>
+</html>
