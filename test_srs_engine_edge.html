@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>تست دستی لبه‌های SRS Engine</title>
+    <style>
+        body {
+            font-family: 'Tahoma', 'Arial', sans-serif;
+            max-width: 800px;
+            margin: 20px auto;
+            padding: 20px;
+            background: #f5f7fa;
+            color: #2c3e50;
+        }
+        h1 {
+            color: #16a085;
+            font-size: 1.5rem;
+            text-align: center;
+            border-bottom: 2px solid #16a085;
+            padding-bottom: 10px;
+        }
+        .test-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+        .test-card {
+            background: white;
+            border-radius: 12px;
+            padding: 15px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            border: 1px solid #e0e0e0;
+            transition: transform 0.2s;
+        }
+        .test-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 12px rgba(0,0,0,0.15);
+        }
+        .test-title {
+            font-weight: bold;
+            color: #2980b9;
+            margin-bottom: 10px;
+            font-size: 1.1rem;
+            border-right: 4px solid #2980b9;
+            padding-right: 8px;
+        }
+        .test-desc {
+            font-size: 0.9rem;
+            color: #7f8c8d;
+            margin-bottom: 15px;
+        }
+        button {
+            background: #16a085;
+            color: white;
+            border: none;
+            padding: 10px 16px;
+            border-radius: 6px;
+            font-size: 0.9rem;
+            cursor: pointer;
+            width: 100%;
+            font-weight: bold;
+            transition: background 0.3s;
+        }
+        button:hover {
+            background: #1abc9c;
+        }
+        .output-box {
+            background: #f8f9fa;
+            border: 1px solid #dde2e5;
+            border-radius: 8px;
+            padding: 12px;
+            margin: 15px 0 5px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.85rem;
+            direction: ltr;
+            text-align: left;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        .badge {
+            display: inline-block;
+            background: #e74c3c;
+            color: white;
+            font-size: 0.7rem;
+            padding: 3px 8px;
+            border-radius: 12px;
+            margin-right: 8px;
+        }
+        .summary {
+            background: #ecf0f1;
+            border-radius: 8px;
+            padding: 15px;
+            margin: 20px 0;
+            font-size: 0.95rem;
+            border-right: 5px solid #16a085;
+        }
+    </style>
+</head>
+<body>
+    <h1>🧪 تست دستی لبه‌های SRS Engine</h1>
+    <p style="text-align: center; color: #34495e;">این صفحه الگوریتم SRS را در شرایط مرزی (Edge Cases) آزمایش می‌کند.</p>
+
+    <div class="summary" id="summary">
+        <strong>📊 خلاصه تست‌ها:</strong> برای اجرا، روی دکمه‌ها کلیک کنید. نتایج در باکس هر تست نمایش داده می‌شود.
+    </div>
+
+    <div class="test-grid" id="testGrid">
+        <!-- تست‌ها توسط JavaScript ساخته می‌شوند -->
+    </div>
+
+    <script>
+        (function() {
+            // --- پیاده‌سازی ساده SRS (همانند نسخه اصلی) ---
+            class SRSEngine {
+                static DEFAULT_EASE = 2.5;
+                static MIN_EASE = 1.3;
+                static MAX_INTERVAL = 365;
+
+                static calculateNextReview(quality, repetitions, easeFactor, interval) {
+                    // ورودی: quality (0-5), repetitions (تعداد پاسخ‌های صحیح متوالی), easeFactor (عامل آسانی), interval (فاصله فعلی)
+                    // خروجی: { interval: number, repetitions: number, easeFactor: number }
+
+                    // اعتبارسنجی ورودی
+                    if (quality === undefined || quality === null || typeof quality !== 'number') {
+                        throw new Error('Quality must be a number');
+                    }
+                    if (quality < 0 || quality > 5) {
+                        throw new Error('Quality must be between 0 and 5');
+                    }
+                    if (repetitions === undefined || repetitions === null || typeof repetitions !== 'number') {
+                        repetitions = 0;
+                    }
+                    if (easeFactor === undefined || easeFactor === null || typeof easeFactor !== 'number') {
+                        easeFactor = this.DEFAULT_EASE;
+                    }
+                    if (interval === undefined || interval === null || typeof interval !== 'number') {
+                        interval = 0;
+                    }
+
+                    // edge: اگر کیفیت کمتر از 3 باشد (پاسخ ضعیف)
+                    if (quality < 3) {
+                        return {
+                            interval: 1,
+                            repetitions: 0,
+                            easeFactor: Math.max(this.MIN_EASE, easeFactor - 0.2)
+                        };
+                    }
+
+                    // پاسخ صحیح
+                    let newEaseFactor = easeFactor + (0.1 - (5 - quality) * (0.08 + (5 - quality) * 0.02));
+                    if (newEaseFactor < this.MIN_EASE) newEaseFactor = this.MIN_EASE;
+
+                    let newRepetitions = repetitions + 1;
+                    let newInterval;
+
+                    if (newRepetitions === 1) {
+                        newInterval = 1;
+                    } else if (newRepetitions === 2) {
+                        newInterval = 6;
+                    } else {
+                        newInterval = Math.round(interval * newEaseFactor);
+                    }
+
+                    // محدودیت حداکثر فاصله
+                    newInterval = Math.min(newInterval, this.MAX_INTERVAL);
+
+                    return {
+                        interval: newInterval,
+                        repetitions: newRepetitions,
+                        easeFactor: newEaseFactor
+                    };
+                }
+
+                static calculateQuality(userAnswer, correctAnswer) {
+                    // شبیه‌سازی ساده کیفیت (برای تست‌های دستی)
+                    if (!userAnswer || !correctAnswer) return 0;
+                    if (userAnswer.toLowerCase().trim() === correctAnswer.toLowerCase().trim()) {
+                        return 5; // عالی
+                    }
+                    return 2; // ضعیف
+                }
+            }
+
+            // --- تعریف تست‌های لبه ---
+            const tests = [
+                {
+                    title: 'ورودی null به جای quality',
+                    desc: 'آیا تابع با quality=null خطای مناسب می‌دهد؟',
+                    action: () => {
+                        try {
+                            const result = SRSEngine.calculateNextReview(null, 1, 2.5, 5);
+                            return JSON.stringify(result, null, 2);
+                        } catch (e) {
+                            return '✅ خطای مطلوب: ' + e.message;
+                        }
+                    }
+                },
+                {
+                    title: 'ورودی undefined به جای repetitions',
+                    desc: 'repetitions=undefined باید به 0 تنظیم شود',
+                    action: () => {
+                        try {
+                            const result = SRSEngine.calculateNextReview(5, undefined, 2.5, 5);
+                            return JSON.stringify(result, null, 2);
+                        } catch (e) {
+                            return '❌ خطا: ' + e.message;
+                        }
+                    }
+                },
+                {
+                    title: 'کیفیت خارج از بازه (6)',
+                    desc: 'quality=6 باید خطا بدهد',
+                    action: () => {
+                        try {
+                            const result = SRSEngine.calculateNextReview(6, 1, 2.5, 5);
+                            return JSON.stringify(result, null, 2);
+                        } catch (e) {
+                            return '✅ خطای مطلوب: ' + e.message;
+                        }
+                    }
+                },
+                {
+                    title: 'کیفیت خارج از بازه (-1)',
+                    desc: 'quality=-1 باید خطا بدهد',
+                    action: () => {
+                        try {
+                            const result = SRSEngine.calculateNextReview(-1, 1, 2.5, 5);
+                            return JSON.stringify(result, null, 2);
+                        } catch (e) {
+                            return '✅ خطای مطلوب: ' + e.message;
+                        }
+                    }
+                },
+                {
+                    title: 'easeFactor خیلی کم (1.0)',
+                    desc: 'easeFactor=1.0 باید به MIN_EASE=1.3 برسد',
+                    action: () => {
+                        const result = SRSEngine.calculateNextReview(5, 3, 1.0, 10);
+                        return JSON.stringify(result, null, 2);
+                    }
+                },
+                {
+                    title: 'easeFactor خیلی زیاد (3.5)',
+                    desc: 'باید بدون محدودیت خاصی محاسبه شود',
+                    action: () => {
+                        const result = SRSEngine.calculateNextReview(5, 5, 3.5, 30);
+                        return JSON.stringify(result, null, 2);
+                    }
+                },
+                {
+                    title: 'interval خیلی بزرگ (400)',
+                    desc: 'باید به MAX_INTERVAL=365 محدود شود',
+                    action: () => {
+                        const result = SRSEngine.calculateNextReview(5, 5, 2.5, 400);
+                        return JSON.stringify(result, null, 2);
+                    }
+                },
+                {
+                    title: 'پاسخ‌های متوالی ضعیف (کیفیت 2)',
+                    desc: 'سه بار پشت سر هم کیفیت 2: باید فاصله به 1 برگردد',
+                    action: () => {
+                        let state = { interval: 5, repetitions: 3, easeFactor: 2.5 };
+                        let log = [];
+                        for (let i = 0; i < 3; i++) {
+                            state = SRSEngine.calculateNextReview(2, state.repetitions, state.easeFactor, state.interval);
+                            log.push({ ...state });
+                        }
+                        return JSON.stringify(log, null, 2);
+                    }
+                },
+                {
+                    title: 'پاسخ‌های متوالی عالی (کیفیت 5)',
+                    desc: 'سه بار پشت سر هم کیفیت 5: افزایش فاصله',
+                    action: () => {
+                        let state = { interval: 1, repetitions: 0, easeFactor: 2.5 };
+                        let log = [];
+                        for (let i = 0; i < 3; i++) {
+                            state = SRSEngine.calculateNextReview(5, state.repetitions, state.easeFactor, state.interval);
+                            log.push({ ...state });
+                        }
+                        return JSON.stringify(log, null, 2);
+                    }
+                },
+                {
+                    title: 'کیفیت 3 (مرز قبول/رد)',
+                    desc: 'کیفیت 3 به عنوان پاسخ صحیح محسوب می‌شود (>=3)',
+                    action: () => {
+                        const result = SRSEngine.calculateNextReview(3, 2, 2.5, 6);
+                        return JSON.stringify(result, null, 2);
+                    }
+                },
+                {
+                    title: 'کیفیت 2.5 (اعشاری)',
+                    desc: 'quality باید عدد صحیح باشد، پس خطا می‌دهد',
+                    action: () => {
+                        try {
+                            const result = SRSEngine.calculateNextReview(2.5, 2, 2.5, 6);
+                            return JSON.stringify(result, null, 2);
+                        } catch (e) {
+                            return '✅ خطای مطلوب: ' + e.message;
+                        }
+                    }
+                },
+                {
+                    title: 'تماس بدون پارامتر',
+                    desc: 'فراخوانی تابع بدون آرگومان',
+                    action: () => {
+                        try {
+                            const result = SRSEngine.calculateNextReview();
+                            return JSON.stringify(result, null, 2);
+                        } catch (e) {
+                            return '✅ خطای مطلوب: ' + e.message;
+                        }
+                    }
+                }
+            ];
+
+            // --- رندر تست‌ها در صفحه ---
+            const grid = document.getElementById('testGrid');
+            tests.forEach((test, index) => {
+                const card = document.createElement('div');
+                card.className = 'test-card';
+                card.id = `test-${index}`;
+
+                const title = document.createElement('div');
+                title.className = 'test-title';
+                title.textContent = `${index + 1}. ${test.title}`;
+
+                const desc = document.createElement('div');
+                desc.className = 'test-desc';
+                desc.textContent = test.desc;
+
+                const button = document.createElement('button');
+                button.textContent = '▶ اجرای تست';
+                button.setAttribute('data-test-index', index);
+
+                const output = document.createElement('div');
+                output.className = 'output-box';
+                output.id = `output-${index}`;
+                output.textContent = 'برای اجرا کلیک کنید...';
+
+                button.addEventListener('click', () => {
+                    try {
+                        const result = test.action();
+                        output.textContent = result;
+                        // به‌روزرسانی خلاصه
+                        document.getElementById('summary').innerHTML = `<strong>📊 آخرین تست:</strong> تست ${index+1} (${test.title}) اجرا شد.`;
+                    } catch (e) {
+                        output.textContent = '❌ خطا: ' + e.message;
+                    }
+                });
+
+                card.appendChild(title);
+                card.appendChild(desc);
+                card.appendChild(button);
+                card.appendChild(output);
+                grid.appendChild(card);
+            });
+
+            // --- تست دستی quality با دکمه شبیه‌ساز ---
+            const extraCard = document.createElement('div');
+            extraCard.className = 'test-card';
+            extraCard.id = 'test-extra';
+            extraCard.innerHTML = `
+                <div class="test-title">🔧 تست دستی کیفیت پاسخ</div>
+                <div class="test-desc">مقدار quality (0-5) را وارد کنید و نتیجه را ببینید</div>
+                <input type="number" id="qualityInput" min="0" max="5" step="1" value="4" style="width: 100%; padding: 8px; margin-bottom: 10px; border-radius: 4px; border: 1px solid #bdc3c7;">
+                <button id="runQualityTest">اجرای تست با quality انتخابی</button>
+                <div class="output-box" id="output-extra">منتظر ورود...</div>
+            `;
+            grid.appendChild(extraCard);
+
+            document.getElementById('runQualityTest').addEventListener('click', () => {
+                const q = parseFloat(document.getElementById('qualityInput').value);
+                try {
+                    const result = SRSEngine.calculateNextReview(q, 2, 2.5, 7);
+                    document.getElementById('output-extra').textContent = JSON.stringify(result, null, 2);
+                } catch (e) {
+                    document.getElementById('output-extra').textContent = '❌ خطا: ' + e.message;
+                }
+            });
+
+        })();
+    </script>
+
+    <div style="margin-top: 30px; text-align: center; font-size: 0.8rem; color: #95a5a6;">
+        Farsinglish - تست دستی لبه‌های SRS (قابل اجرا در مرورگر موبایل)
+    </div>
+</body>
+</html>
