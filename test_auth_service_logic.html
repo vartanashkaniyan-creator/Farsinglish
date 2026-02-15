@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>تست auth-service · منطق محض</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 800px;
+            margin: 20px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        h1 {
+            color: #2c3e50;
+            font-size: 1.5rem;
+            border-bottom: 2px solid #3498db;
+            padding-bottom: 10px;
+        }
+        .test-grid {
+            display: grid;
+            gap: 15px;
+        }
+        .test-card {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            border-right: 4px solid #3498db;
+        }
+        .test-title {
+            font-weight: bold;
+            font-size: 1.1rem;
+            margin-bottom: 10px;
+            color: #2c3e50;
+        }
+        .test-desc {
+            color: #7f8c8d;
+            font-size: 0.9rem;
+            margin-bottom: 15px;
+        }
+        button {
+            background: #3498db;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            margin-left: 10px;
+            margin-bottom: 5px;
+        }
+        button:hover {
+            background: #2980b9;
+        }
+        pre {
+            background: #2d3436;
+            color: #dfe6e9;
+            padding: 15px;
+            border-radius: 8px;
+            overflow-x: auto;
+            font-size: 0.85rem;
+            direction: ltr;
+            text-align: left;
+        }
+        .success { color: #27ae60; }
+        .error { color: #c0392b; }
+        hr { margin: 20px 0; }
+    </style>
+</head>
+<body>
+    <h1>🧪 تست auth-service · منطق محض</h1>
+    <p>همه تست‌ها مستقل از ابزار، با ورودی ثابت و خروجی قابل مشاهده</p>
+
+    <div class="test-grid">
+        <!-- کارت ۱: هش رمز -->
+        <div class="test-card">
+            <div class="test-title">🔐 ۱. هش کردن رمز عبور</div>
+            <div class="test-desc">ورودی: "123456" · خروجی باید ثابت و قابل تأیید باشد</div>
+            <button onclick="runTest1()">اجرای تست ۱</button>
+            <pre id="output1">منتظر اجرا...</pre>
+        </div>
+
+        <!-- کارت ۲: تأیید رمز -->
+        <div class="test-card">
+            <div class="test-title">✅ ۲. تأیید رمز صحیح</div>
+            <div class="test-desc">هش "123456" را با "123456" مقایسه کن → true</div>
+            <button onclick="runTest2()">اجرای تست ۲</button>
+            <pre id="output2">منتظر اجرا...</pre>
+        </div>
+
+        <!-- کارت ۳: تأیید رمز غلط -->
+        <div class="test-card">
+            <div class="test-title">❌ ۳. تأیید رمز غلط</div>
+            <div class="test-desc">هش "123456" را با "wrong" مقایسه کن → false</div>
+            <button onclick="runTest3()">اجرای تست ۳</button>
+            <pre id="output3">منتظر اجرا...</pre>
+        </div>
+
+        <!-- کارت ۴: اعتبارسنجی نام کاربری -->
+        <div class="test-card">
+            <div class="test-title">👤 ۴. اعتبارسنجی نام کاربری</div>
+            <div class="test-desc">"ali123" (۳-۲۰ کاراکتر، حرف/عدد) → true</div>
+            <button onclick="runTest4()">اجرای تست ۴</button>
+            <pre id="output4">منتظر اجرا...</pre>
+        </div>
+
+        <!-- کارت ۵: اعتبارسنجی نام کاربری نامعتبر -->
+        <div class="test-card">
+            <div class="test-title">⚠️ ۵. نام کاربری کوتاه</div>
+            <div class="test-desc">"ab" (کمتر از ۳ کاراکتر) → false</div>
+            <button onclick="runTest5()">اجرای تست ۵</button>
+            <pre id="output5">منتظر اجرا...</pre>
+        </div>
+
+        <!-- کارت ۶: اعتبارسنجی ایمیل -->
+        <div class="test-card">
+            <div class="test-title">📧 ۶. ایمیل معتبر</div>
+            <div class="test-desc">"user@example.com" → true</div>
+            <button onclick="runTest6()">اجرای تست ۶</button>
+            <pre id="output6">منتظر اجرا...</pre>
+        </div>
+
+        <!-- کارت ۷: اعتبارسنجی ایمیل نامعتبر -->
+        <div class="test-card">
+            <div class="test-title">📧 ۷. ایمیل بدون @</div>
+            <div class="test-desc">"userexample.com" → false</div>
+            <button onclick="runTest7()">اجرای تست ۷</button>
+            <pre id="output7">منتظر اجرا...</pre>
+        </div>
+
+        <!-- کارت ۸: تولید توکن JWT ساده -->
+        <div class="test-card">
+            <div class="test-title">🔑 ۸. تولید توکن (JWT نما)</div>
+            <div class="test-desc">ورودی userId=1, username=ali → خروجی base64</div>
+            <button onclick="runTest8()">اجرای تست ۸</button>
+            <pre id="output8">منتظر اجرا...</pre>
+        </div>
+
+        <!-- کارت ۹: اعتبارسنجی توکن صحیح -->
+        <div class="test-card">
+            <div class="test-title">✅ ۹. توکن معتبر</div>
+            <div class="test-desc">توکن تولید شده را اعتبارسنجی کن → true</div>
+            <button onclick="runTest9()">اجرای تست ۹</button>
+            <pre id="output9">منتظر اجرا...</pre>
+        </div>
+
+        <!-- کارت ۱۰: اعتبارسنجی توکن دستکاری‌شده -->
+        <div class="test-card">
+            <div class="test-title">🚫 ۱۰. توکن نامعتبر</div>
+            <div class="test-desc">توکن دستکاری‌شده → false</div>
+            <button onclick="runTest10()">اجرای تست ۱۰</button>
+            <pre id="output10">منتظر اجرا...</pre>
+        </div>
+    </div>
+
+    <hr>
+    <button onclick="runAllTests()" style="background: #27ae60; padding: 12px 24px; font-size: 1rem;">▶ اجرای همه تست‌ها</button>
+    <button onclick="clearOutputs()" style="background: #7f8c8d;">🧹 پاک کردن خروجی</button>
+
+    <script>
+        // ---------- پیاده‌سازی ساده auth-service (منطق محض) ----------
+        const authService = {
+            // هش ساده (هرگز در تولید استفاده نکنید – فقط برای تست)
+            hashPassword(password) {
+                if (!password || typeof password !== 'string') return '';
+                let hash = 0;
+                for (let i = 0; i < password.length; i++) {
+                    const char = password.charCodeAt(i);
+                    hash = ((hash << 5) - hash) + char;
+                    hash = hash & hash; // Convert to 32bit integer
+                }
+                return 'hash_' + Math.abs(hash).toString(16);
+            },
+
+            verifyPassword(inputPassword, storedHash) {
+                return this.hashPassword(inputPassword) === storedHash;
+            },
+
+            validateUsername(username) {
+                if (!username || typeof username !== 'string') return false;
+                return /^[a-zA-Z0-9_]{3,20}$/.test(username);
+            },
+
+            validateEmail(email) {
+                if (!email || typeof email !== 'string') return false;
+                return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+            },
+
+            // شبیه‌سازی JWT ساده (فقط برای نمایش منطق)
+            generateToken(userId, username) {
+                const header = btoa(JSON.stringify({ alg: 'HS256', typ: 'JWT' }));
+                const payload = btoa(JSON.stringify({ userId, username, iat: Date.now() }));
+                const signature = btoa('fake_signature_' + userId + username);
+                return `${header}.${payload}.${signature}`;
+            },
+
+            verifyToken(token) {
+                if (!token || typeof token !== 'string') return false;
+                const parts = token.split('.');
+                if (parts.length !== 3) return false;
+                try {
+                    const payload = JSON.parse(atob(parts[1]));
+                    return payload && payload.userId && payload.username;
+                } catch {
+                    return false;
+                }
+            }
+        };
+
+        // ذخیره هش برای تست‌های ۱-۳
+        const testHash = authService.hashPassword('123456');
+
+        // ---------- توابع اجرای تست‌ها ----------
+        function runTest1() {
+            const input = '123456';
+            const hash = authService.hashPassword(input);
+            const expected = hash; // ثبات خروجی
+            const output = `
+هش برای "${input}":
+${hash}
+✅ طول: ${hash.length} کاراکتر
+⚠️  این هش فقط برای تست است، الگوریتم واقعی نیست.
+            `;
+            document.getElementById('output1').innerText = output;
+        }
+
+        function runTest2() {
+            const input = '123456';
+            const storedHash = testHash;
+            const result = authService.verifyPassword(input, storedHash);
+            const output = `تأیید "${input}" با هش "${storedHash}":
+🔹 نتیجه: ${result ? '✅ true (صحیح)' : '❌ false (خطا)'}
+            `;
+            document.getElementById('output2').innerText = output;
+        }
+
+        function runTest3() {
+            const input = 'wrong';
+            const storedHash = testHash;
+            const result = authService.verifyPassword(input, storedHash);
+            const output = `تأیید "${input}" با هش "${storedHash}":
+🔹 نتیجه: ${result ? '❌ true (نباید باشد)' : '✅ false (درست)'}
+            `;
+            document.getElementById('output3').innerText = output;
+        }
+
+        function runTest4() {
+            const username = 'ali123';
+            const result = authService.validateUsername(username);
+            const output = `نام کاربری "${username}":
+🔹 نتیجه: ${result ? '✅ معتبر' : '❌ نامعتبر'}
+            `;
+            document.getElementById('output4').innerText = output;
+        }
+
+        function runTest5() {
+            const username = 'ab';
+            const result = authService.validateUsername(username);
+            const output = `نام کاربری "${username}":
+🔹 نتیجه: ${result ? '❌ معتبر (نباید باشد)' : '✅ نامعتبر (درست)'}
+            `;
+            document.getElementById('output5').innerText = output;
+        }
+
+        function runTest6() {
+            const email = 'user@example.com';
+            const result = authService.validateEmail(email);
+            const output = `ایمیل "${email}":
+🔹 نتیجه: ${result ? '✅ معتبر' : '❌ نامعتبر'}
+            `;
+            document.getElementById('output6').innerText = output;
+        }
+
+        function runTest7() {
+            const email = 'userexample.com';
+            const result = authService.validateEmail(email);
+            const output = `ایمیل "${email}":
+🔹 نتیجه: ${result ? '❌ معتبر (نباید باشد)' : '✅ نامعتبر (درست)'}
+            `;
+            document.getElementById('output7').innerText = output;
+        }
+
+        function runTest8() {
+            const token = authService.generateToken(1, 'ali');
+            const output = `توکن تولید شده برای userId=1, username=ali:
+🔹 ${token}
+🔹 تعداد بخش‌ها: ${token.split('.').length}
+            `;
+            document.getElementById('output8').innerText = output;
+        }
+
+        function runTest9() {
+            const token = authService.generateToken(1, 'ali');
+            const isValid = authService.verifyToken(token);
+            const output = `توکن: ${token}
+🔹 اعتبارسنجی: ${isValid ? '✅ معتبر' : '❌ نامعتبر'}
+            `;
+            document.getElementById('output9').innerText = output;
+        }
+
+        function runTest10() {
+            const token = authService.generateToken(1, 'ali');
+            const tampered = token.slice(0, -5) + 'xyz'; // دستکاری
+            const isValid = authService.verifyToken(tampered);
+            const output = `توکن اصلی: ${token}
+توکن دستکاری‌شده: ${tampered}
+🔹 اعتبارسنجی: ${isValid ? '❌ معتبر (نباید باشد)' : '✅ نامعتبر (درست)'}
+            `;
+            document.getElementById('output10').innerText = output;
+        }
+
+        function runAllTests() {
+            runTest1();
+            runTest2();
+            runTest3();
+            runTest4();
+            runTest5();
+            runTest6();
+            runTest7();
+            runTest8();
+            runTest9();
+            runTest10();
+        }
+
+        function clearOutputs() {
+            for (let i = 1; i <= 10; i++) {
+                document.getElementById(`output${i}`).innerText = 'منتظر اجرا...';
+            }
+        }
+    </script>
+</body>
+</html>
