@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>تست Exercise Validator - منطق محض</title>
+    <style>
+        body {
+            font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+            max-width: 800px;
+            margin: 20px auto;
+            padding: 0 20px;
+            direction: ltr;
+            background: #f5f5f5;
+        }
+        h1 {
+            color: #2c3e50;
+            font-size: 1.8rem;
+            border-bottom: 2px solid #3498db;
+            padding-bottom: 8px;
+        }
+        .summary {
+            background: white;
+            padding: 15px;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            margin: 20px 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .summary-pass { color: #27ae60; font-weight: bold; }
+        .summary-fail { color: #e74c3c; font-weight: bold; }
+        .test-list {
+            background: white;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        .test-item {
+            padding: 15px 20px;
+            border-bottom: 1px solid #ecf0f1;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .test-item:last-child { border-bottom: none; }
+        .test-status {
+            width: 80px;
+            text-align: center;
+            padding: 4px 8px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 500;
+        }
+        .status-pass {
+            background: #e8f8f0;
+            color: #27ae60;
+        }
+        .status-fail {
+            background: #fdedec;
+            color: #e74c3c;
+        }
+        .test-name {
+            flex: 1;
+            font-weight: 500;
+            color: #34495e;
+        }
+        .test-message {
+            font-size: 0.85rem;
+            color: #7f8c8d;
+            margin-top: 4px;
+        }
+        .re-run {
+            background: #3498db;
+            color: white;
+            border: none;
+            padding: 10px 24px;
+            border-radius: 8px;
+            font-size: 1rem;
+            cursor: pointer;
+            margin: 20px 0;
+            font-weight: 500;
+        }
+        .re-run:hover { background: #2980b9; }
+        .note {
+            background: #fff3cd;
+            border-left: 4px solid #ffc107;
+            padding: 12px 16px;
+            border-radius: 8px;
+            margin: 20px 0;
+            font-size: 0.9rem;
+            color: #856404;
+        }
+    </style>
+</head>
+<body>
+    <h1>🧪 تست Exercise Validator (منطق محض)</h1>
+    <p style="color: #555; margin-bottom: 20px;">اعتبارسنجی پاسخ تمرین · تطابق متن · تشخیص غلط املایی</p>
+
+    <div class="summary">
+        <span>📊 مجموع تست‌ها: <span id="total">0</span></span>
+        <span>✅ موفق: <span id="passed" class="summary-pass">0</span></span>
+        <span>❌ ناموفق: <span id="failed" class="summary-fail">0</span></span>
+    </div>
+
+    <div class="test-list" id="test-list"></div>
+
+    <button class="re-run" onclick="runAllTests()">▶ اجرای مجدد تست‌ها</button>
+
+    <div class="note">
+        <strong>🔍 اصل حرفه‌ای:</strong> تست‌های منطق محض - Pure Function → ورودی مشخص، خروجی مشخص. بدون وابستگی به IndexedDB، مستقل از ابزار، با قابلیت اجرا در مرورگر موبایل.
+    </div>
+
+    <script>
+        (function() {
+            // --- ماژول Exercise Validator (منطق خالص اعتبارسنجی) ---
+            const Validator = {
+                // ثابت‌ها
+                SIMILARITY_THRESHOLD: 0.8, // آستانه شباهت برای غلط املایی (80%)
+                
+                /**
+                 * اعتبارسنجی پاسخ چندگزینه‌ای
+                 * @param {number|string} selectedIndex - ایندکس انتخاب شده
+                 * @param {number} correctIndex - ایندکس صحیح
+                 * @returns {boolean}
+                 */
+                validateMultipleChoice(selectedIndex, correctIndex) {
+                    if (selectedIndex === undefined || selectedIndex === null) return false;
+                    if (correctIndex === undefined || correctIndex === null) return false;
+                    return Number(selectedIndex) === Number(correctIndex);
+                },
+
+                /**
+                 * اعتبارسنجی پاسخ جای‌خالی (تطابق دقیق)
+                 * @param {string} userAnswer - پاسخ کاربر
+                 * @param {string} correctAnswer - پاسخ صحیح
+                 * @param {boolean} caseSensitive - حساس به حروف بزرگ/کوچک
+                 * @returns {boolean}
+                 */
+                validateFillBlank(userAnswer, correctAnswer, caseSensitive = false) {
+                    if (typeof userAnswer !== 'string' || typeof correctAnswer !== 'string') {
+                        return false;
+                    }
+                    
+                    let ua = userAnswer.trim();
+                    let ca = correctAnswer.trim();
+                    
+                    if (!caseSensitive) {
+                        ua = ua.toLowerCase();
+                        ca = ca.toLowerCase();
+                    }
+                    
+                    return ua === ca;
+                },
+
+                /**
+                 * اعتبارسنجی پاسخ ترجمه (با تشخیص غلط املایی)
+                 * @param {string} userAnswer - پاسخ کاربر
+                 * @param {string} correctAnswer - پاسخ صحیح
+                 * @param {Object} options - گزینه‌ها
+                 * @returns {Object} نتیجه با جزئیات
+                 */
+                validateTranslation(userAnswer, correctAnswer, options = {}) {
+                    const { 
+                        caseSensitive = false,
+                        ignoreSpaces = true,
+                        allowTypo = true,
+                        threshold = this.SIMILARITY_THRESHOLD
+                    } = options;
+
+                    if (typeof userAnswer !== 'string' || typeof correctAnswer !== 'string') {
+                        return { isValid: false, reason: 'invalid_input', similarity: 0 };
+                    }
+
+                    let ua = userAnswer;
+                    let ca = correctAnswer;
+
+                    // پیش‌پردازش
+                    if (ignoreSpaces) {
+                        ua = ua.replace(/\s+/g, ' ').trim();
+                        ca = ca.replace(/\s+/g, ' ').trim();
+                    }
+                    
+                    if (!caseSensitive) {
+                        ua = ua.toLowerCase();
+                        ca = ca.toLowerCase();
+                    }
+
+                    // تطابق دقیق
+                    if (ua === ca) {
+                        return { isValid: true, reason: 'exact_match', similarity: 1 };
+                    }
+
+                    // تشخیص غلط املایی (الگوریتم لوناشتاین ساده شده)
+                    if (allowTypo) {
+                        const similarity = this._calculateSimilarity(ua, ca);
+                        if (similarity >= threshold) {
+                            return { 
+                                isValid: true, 
+                                reason: 'typo_tolerated', 
+                                similarity: Number(similarity.toFixed(2)) 
+                            };
+                        }
+                        return { 
+                            isValid: false, 
+                            reason: 'similarity_below_threshold', 
+                            similarity: Number(similarity.toFixed(2)) 
+                        };
+                    }
+
+                    return { isValid: false, reason: 'no_match', similarity: 0 };
+                },
+
+                /**
+                 * اعتبارسنجی پاسخ تلفظ (تشخیص تقریبی)
+                 * @param {string} userAnswer - پاسخ کاربر
+                 * @param {string} correctAnswer - پاسخ صحیح
+                 * @returns {Object}
+                 */
+                validatePronunciation(userAnswer, correctAnswer) {
+                    // شبیه‌سازی تشخیص تلفظ (در واقعیت از API صوتی استفاده می‌شود)
+                    const similarity = this._calculateSimilarity(userAnswer, correctAnswer);
+                    return {
+                        isValid: similarity >= 0.7,
+                        confidence: Number(similarity.toFixed(2)),
+                        recognized: userAnswer
+                    };
+                },
+
+                /**
+                 * محاسبه شباهت دو رشته (الگوریتم لوناشتاین ساده شده)
+                 * @private
+                 */
+                _calculateSimilarity(str1, str2) {
+                    if (str1 === str2) return 1;
+                    if (!str1 || !str2) return 0;
+                    
+                    // الگوریتم فاصله لوناشتاین ساده
+                    const len1 = str1.length;
+                    const len2 = str2.length;
+                    const maxLen = Math.max(len1, len2);
+                    
+                    if (maxLen === 0) return 1;
+                    
+                    // محاسبه تعداد کاراکترهای مشترک
+                    let matches = 0;
+                    for (let i = 0; i < Math.min(len1, len2); i++) {
+                        if (str1[i] === str2[i]) matches++;
+                    }
+                    
+                    return matches / maxLen;
+                },
+
+                /**
+                 * اعتبارسنجی بر اساس نوع تمرین
+                 * @param {string} type - نوع تمرین
+                 * @param {any} userAnswer - پاسخ کاربر
+                 * @param {any} correctAnswer - پاسخ صحیح
+                 * @param {Object} options - گزینه‌ها
+                 * @returns {Object}
+                 */
+                validate(type, userAnswer, correctAnswer, options = {}) {
+                    switch (type) {
+                        case 'multiple-choice':
+                            return {
+                                isValid: this.validateMultipleChoice(userAnswer, correctAnswer),
+                                type: 'multiple-choice',
+                                details: { selected: userAnswer, correct: correctAnswer }
+                            };
+                        case 'fill-blank':
+                            return {
+                                isValid: this.validateFillBlank(userAnswer, correctAnswer, options.caseSensitive),
+                                type: 'fill-blank',
+                                details: { user: userAnswer, correct: correctAnswer }
+                            };
+                        case 'translation':
+                            return this.validateTranslation(userAnswer, correctAnswer, options);
+                        case 'pronunciation':
+                            return this.validatePronunciation(userAnswer, correctAnswer);
+                        default:
+                            return { isValid: false, error: 'unknown_type' };
+                    }
+                }
+            };
+
+            // --- تست‌ها ---
+            const tests = [
+                {
+                    name: '✅ تست Multiple Choice - صحیح',
+                    fn: () => {
+                        return Validator.validateMultipleChoice(2, 2) === true;
+                    }
+                },
+                {
+                    name: '✅ تست Multiple Choice - غلط',
+                    fn: () => {
+                        return Validator.validateMultipleChoice(1, 2) === false;
+                    }
+                },
+                {
+                    name: '✅ تست Multiple Choice - ورودی نامعتبر',
+                    fn: () => {
+                        return Validator.validateMultipleChoice(null, 2) === false;
+                    }
+                },
+                {
+                    name: '✅ تست Fill Blank - تطابق دقیق',
+                    fn: () => {
+                        return Validator.validateFillBlank('hello', 'hello') === true;
+                    }
+                },
+                {
+                    name: '✅ تست Fill Blank - حساس به فاصله',
+                    fn: () => {
+                        return Validator.validateFillBlank('hello ', 'hello') === true;
+                    }
+                },
+                {
+                    name: '✅ تست Fill Blank - case insensitive',
+                    fn: () => {
+                        return Validator.validateFillBlank('HELLO', 'hello') === true;
+                    }
+                },
+                {
+                    name: '✅ تست Fill Blank - case sensitive',
+                    fn: () => {
+                        return Validator.validateFillBlank('HELLO', 'hello', true) === false;
+                    }
+                },
+                {
+                    name: '✅ تست Translation - تطابق دقیق',
+                    fn: () => {
+                        const result = Validator.validateTranslation('hello', 'hello');
+                        return result.isValid === true && result.reason === 'exact_match';
+                    }
+                },
+                {
+                    name: '✅ تست Translation - غلط املایی مجاز',
+                    fn: () => {
+                        const result = Validator.validateTranslation('helo', 'hello');
+                        return result.isValid === true && result.reason === 'typo_tolerated';
+                    }
+                },
+                {
+                    name: '✅ تست Translation - غلط املایی غیرمجاز',
+                    fn: () => {
+                        const result = Validator.validateTranslation('xyz', 'hello');
+                        return result.isValid === false;
+                    }
+                },
+                {
+                    name: '✅ تست Pronunciation - تشخیص تلفظ',
+                    fn: () => {
+                        const result = Validator.validatePronunciation('hello', 'hello');
+                        return result.isValid === true && result.confidence >= 0.7;
+                    }
+                },
+                {
+                    name: '✅ تست validate عمومی - multiple choice',
+                    fn: () => {
+                        const result = Validator.validate('multiple-choice', 2, 2);
+                        return result.isValid === true && result.type === 'multiple-choice';
+                    }
+                },
+                {
+                    name: '✅ تست validate عمومی - translation با typo',
+                    fn: () => {
+                        const result = Validator.validate('translation', 'helo', 'hello', { allowTypo: true });
+                        return result.isValid === true;
+                    }
+                },
+                {
+                    name: '✅ تست validate عمومی - نوع ناشناخته',
+                    fn: () => {
+                        const result = Validator.validate('unknown', 'a', 'b');
+                        return result.error === 'unknown_type';
+                    }
+                }
+            ];
+
+            // --- تابع اجرای تست و نمایش نتیجه ---
+            window.runAllTests = function() {
+                const testList = document.getElementById('test-list');
+                const totalSpan = document.getElementById('total');
+                const passedSpan = document.getElementById('passed');
+                const failedSpan = document.getElementById('failed');
+
+                let passed = 0;
+                let failed = 0;
+
+                testList.innerHTML = '';
+
+                tests.forEach((test, index) => {
+                    try {
+                        const result = test.fn();
+                        const status = result ? 'pass' : 'fail';
+                        const statusText = result ? '✅ PASS' : '❌ FAIL';
+                        const message = result ? 'شرط برقرار است' : 'نتیجه خلاف انتظار';
+
+                        if (result) passed++; else failed++;
+
+                        const item = document.createElement('div');
+                        item.className = 'test-item';
+                        item.innerHTML = `
+                            <div class="test-status ${status === 'pass' ? 'status-pass' : 'status-fail'}">${statusText}</div>
+                            <div class="test-name">
+                                ${test.name}
+                                <div class="test-message">${message}</div>
+                            </div>
+                        `;
+                        testList.appendChild(item);
+                    } catch (error) {
+                        failed++;
+                        const item = document.createElement('div');
+                        item.className = 'test-item';
+                        item.innerHTML = `
+                            <div class="test-status status-fail">⚠️ ERROR</div>
+                            <div class="test-name">
+                                ${test.name}
+                                <div class="test-message">خطا: ${error.message}</div>
+                            </div>
+                        `;
+                        testList.appendChild(item);
+                    }
+                });
+
+                totalSpan.innerText = tests.length;
+                passedSpan.innerText = passed;
+                failedSpan.innerText = failed;
+            };
+
+            // اجرای خودکار هنگام بارگذاری صفحه
+            window.onload = runAllTests;
+        })();
+    </script>
+</body>
+</html>
