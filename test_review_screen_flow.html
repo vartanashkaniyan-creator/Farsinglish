@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>تست دستی: جریان صفحه مرور (Review Screen Flow)</title>
+    <style>
+        body {
+            font-family: system-ui, sans-serif;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f7f9fc;
+            color: #1e293b;
+        }
+        h1 {
+            font-size: 1.5rem;
+            margin-bottom: 1rem;
+            color: #0f172a;
+            border-bottom: 2px solid #e2e8f0;
+            padding-bottom: 0.5rem;
+        }
+        .card {
+            background: white;
+            border-radius: 16px;
+            padding: 20px;
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+            margin-bottom: 20px;
+            border: 1px solid #e2e8f0;
+        }
+        .status {
+            background: #f1f5f9;
+            padding: 12px;
+            border-radius: 12px;
+            font-family: monospace;
+            white-space: pre-wrap;
+            direction: ltr;
+            text-align: left;
+            max-height: 200px;
+            overflow-y: auto;
+            font-size: 0.9rem;
+            border: 1px solid #cbd5e1;
+        }
+        button {
+            background: #3b82f6;
+            color: white;
+            border: none;
+            padding: 10px 18px;
+            border-radius: 40px;
+            font-size: 1rem;
+            font-weight: 500;
+            margin: 6px 6px 6px 0;
+            cursor: pointer;
+            transition: 0.2s;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            border: 1px solid #2563eb;
+        }
+        button:hover {
+            background: #2563eb;
+            transform: translateY(-1px);
+        }
+        button.secondary {
+            background: white;
+            color: #1e293b;
+            border: 1px solid #94a3b8;
+        }
+        button.secondary:hover {
+            background: #f1f5f9;
+        }
+        .log {
+            color: #0f172a;
+        }
+        .success { color: #15803d; font-weight: bold; }
+        .error { color: #b91c1c; font-weight: bold; }
+        .info { color: #2563eb; }
+        hr {
+            border: none;
+            border-top: 2px dashed #cbd5e1;
+            margin: 20px 0;
+        }
+        .step {
+            background: #f8fafc;
+            border-right: 4px solid #3b82f6;
+            padding: 10px;
+            margin: 10px 0;
+        }
+    </style>
+</head>
+<body>
+    <h1>🧪 تست دستی: جریان صفحه مرور (Review Screen)</h1>
+    <div class="card">
+        <p><strong>هدف:</strong> شبیه‌سازی گام‌به‌گام صفحه مرور درس‌ها با SRS</p>
+        <p><strong>سناریو:</strong> بارگذاری درس‌های نیاز به مرور ← اجرای تمرین ← ثبت پاسخ ← به‌روزرسانی SRS</p>
+    </div>
+
+    <div class="card">
+        <div style="display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 20px;">
+            <button onclick="initTest()">🔄 راه‌اندازی اولیه</button>
+            <button onclick="loadReviews()" class="secondary">📚 بارگذاری مرورها</button>
+            <button onclick="startExercise()" class="secondary">✏️ شروع تمرین</button>
+            <button onclick="submitAnswer(true)" class="secondary">✅ پاسخ صحیح</button>
+            <button onclick="submitAnswer(false)" class="secondary">❌ پاسخ غلط</button>
+            <button onclick="resetTest()">🔄 ریست کامل</button>
+        </div>
+        <div>
+            <button onclick="logState()" class="secondary">📋 نمایش وضعیت</button>
+            <button onclick="clearLog()" class="secondary">🗑️ پاک کردن لاگ</button>
+        </div>
+    </div>
+
+    <div class="card">
+        <h3>📋 لاگ رویدادها</h3>
+        <div id="log" class="status">[سیستم آماده است]</div>
+    </div>
+
+    <script>
+        // ---------- مدل‌های ساده (Mock) ----------
+        const mockLessons = [
+            { id: 'l1', title: 'درس ۱: احوالپرسی', stage: 2, nextReview: Date.now() - 10000 },
+            { id: 'l2', title: 'درس ۲: اعداد', stage: 1, nextReview: Date.now() - 5000 },
+            { id: 'l3', title: 'درس ۳: خانواده', stage: 0, nextReview: Date.now() + 100000 }
+        ];
+
+        const mockExercises = [
+            { type: 'multiple-choice', question: 'Hello به چه معناست؟', options: ['سلام', 'خداحافظ', 'صبح بخیر'], answer: 0 },
+            { type: 'flashcard', front: 'Good morning', back: 'صبح بخیر' },
+            { type: 'fill-blank', text: 'I ___ a student.', answer: 'am' }
+        ];
+
+        // ---------- وضعیت داخلی ----------
+        let reviewState = {
+            lessons: [],
+            currentLessonIndex: -1,
+            currentExercise: null,
+            exerciseIndex: -1,
+            history: []
+        };
+
+        let mockDb = {
+            lessons: [...mockLessons],
+            progress: {}
+        };
+
+        // ---------- توابع کمکی ----------
+        function addLog(message, type = 'info') {
+            const logDiv = document.getElementById('log');
+            const time = new Date().toLocaleTimeString('fa-IR');
+            let className = 'log';
+            if (type === 'success') className = 'success';
+            if (type === 'error') className = 'error';
+            if (type === 'info') className = 'info';
+            logDiv.innerHTML += `<div class="${className}">[${time}] ${message}</div>`;
+            logDiv.scrollTop = logDiv.scrollHeight;
+        }
+
+        function clearLog() {
+            document.getElementById('log').innerHTML = '';
+            addLog('لاگ پاک شد');
+        }
+
+        // ---------- شبیه‌سازی SRS ساده ----------
+        function calculateNextStage(currentStage, quality) {
+            if (quality < 3) return 0;  // پاسخ ضعیف → برگشت به مرحله ۰
+            if (currentStage === 0) return 1;
+            if (currentStage === 1) return 3;
+            return currentStage + 2; // تصاعدی
+        }
+
+        function calculateNextReview(stage) {
+            const intervals = [0, 1, 3, 7, 14, 30]; // روز
+            const days = intervals[stage] || 30;
+            return Date.now() + days * 24 * 60 * 60 * 1000;
+        }
+
+        // ---------- توابع اصلی سناریو ----------
+        function initTest() {
+            addLog('🔄 راه‌اندازی اولیه: بارگذاری درس‌های نمونه و ریست وضعیت', 'info');
+            reviewState.lessons = mockDb.lessons.filter(l => l.nextReview <= Date.now());
+            reviewState.currentLessonIndex = -1;
+            reviewState.currentExercise = null;
+            reviewState.exerciseIndex = -1;
+            addLog(`✅ ${reviewState.lessons.length} درس نیاز به مرور دارند.`, 'success');
+            logState();
+        }
+
+        function loadReviews() {
+            if (reviewState.lessons.length === 0) {
+                addLog('⚠️ ابتدا دکمه "راه‌اندازی اولیه" را بزنید.', 'error');
+                return;
+            }
+            addLog(`📚 بارگذاری مرورها: ${reviewState.lessons.map(l => l.title).join('، ')}`, 'info');
+        }
+
+        function startExercise() {
+            if (reviewState.lessons.length === 0) {
+                addLog('⚠️ ابتدا مرورها را بارگذاری کنید.', 'error');
+                return;
+            }
+            if (reviewState.currentLessonIndex + 1 >= reviewState.lessons.length) {
+                addLog('🎉 همه درس‌های این جلسه مرور شدند.', 'success');
+                return;
+            }
+
+            reviewState.currentLessonIndex++;
+            const lesson = reviewState.lessons[reviewState.currentLessonIndex];
+            // انتخاب تمرین تصادفی برای این درس
+            const randomIndex = Math.floor(Math.random() * mockExercises.length);
+            reviewState.currentExercise = { ...mockExercises[randomIndex], lessonId: lesson.id };
+            reviewState.exerciseIndex = randomIndex;
+
+            addLog(`✏️ شروع تمرین برای "${lesson.title}":`, 'info');
+            addLog(`   پرسش: ${reviewState.currentExercise.question || reviewState.currentExercise.front || 'تمرین'}`, 'info');
+        }
+
+        function submitAnswer(isCorrect) {
+            if (!reviewState.currentExercise) {
+                addLog('⚠️ ابتدا یک تمرین را شروع کنید.', 'error');
+                return;
+            }
+
+            const lesson = reviewState.lessons[reviewState.currentLessonIndex];
+            const quality = isCorrect ? 5 : 2; // کیفیت پاسخ (۰-۵)
+            const oldStage = lesson.stage;
+
+            // محاسبه stage جدید
+            lesson.stage = calculateNextStage(oldStage, quality);
+            lesson.nextReview = calculateNextReview(lesson.stage);
+
+            addLog(`✅ پاسخ ${isCorrect ? 'صحیح' : 'غلط'} ثبت شد.`, isCorrect ? 'success' : 'error');
+            addLog(`   مرحله SRS: ${oldStage} → ${lesson.stage}`, 'info');
+            addLog(`   مرور بعدی: ${new Date(lesson.nextReview).toLocaleString('fa-IR')}`, 'info');
+
+            // ذخیره در تاریخچه
+            reviewState.history.push({
+                lessonId: lesson.id,
+                correct: isCorrect,
+                newStage: lesson.stage,
+                time: new Date()
+            });
+
+            // پاک کردن تمرین فعلی برای شروع بعدی
+            reviewState.currentExercise = null;
+        }
+
+        function resetTest() {
+            mockDb.lessons = JSON.parse(JSON.stringify(mockLessons)); // ریست به حالت اول
+            reviewState = {
+                lessons: [],
+                currentLessonIndex: -1,
+                currentExercise: null,
+                exerciseIndex: -1,
+                history: []
+            };
+            addLog('🔄 ریست کامل: همه چیز به حالت اولیه بازگشت.', 'info');
+            initTest(); // راه‌اندازی مجدد خودکار
+        }
+
+        function logState() {
+            addLog('📋 وضعیت فعلی:', 'info');
+            addLog(`   درس‌های نیاز به مرور: ${reviewState.lessons.length}`, 'info');
+            if (reviewState.currentLessonIndex >= 0) {
+                addLog(`   درس جاری: ${reviewState.lessons[reviewState.currentLessonIndex]?.title || 'نداریم'}`, 'info');
+            } else {
+                addLog(`   درس جاری: شروع نشده`, 'info');
+            }
+            addLog(`   تمرین فعال: ${reviewState.currentExercise ? 'داریم' : 'نداریم'}`, 'info');
+            addLog(`   تاریخچه پاسخ‌ها: ${reviewState.history.length} مورد`, 'info');
+        }
+
+        // راه‌اندازی اولیه خودکار
+        window.onload = function() {
+            initTest();
+        };
+    </script>
+</body>
+</html>
