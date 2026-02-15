@@ -1,0 +1,358 @@
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>تست Multiple Choice - منطق محض</title>
+    <style>
+        body {
+            font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+            max-width: 800px;
+            margin: 20px auto;
+            padding: 0 20px;
+            direction: ltr;
+            background: #f5f5f5;
+        }
+        h1 {
+            color: #2c3e50;
+            font-size: 1.8rem;
+            border-bottom: 2px solid #9b59b6;
+            padding-bottom: 8px;
+        }
+        .summary {
+            background: white;
+            padding: 15px;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            margin: 20px 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .summary-pass { color: #27ae60; font-weight: bold; }
+        .summary-fail { color: #e74c3c; font-weight: bold; }
+        .test-list {
+            background: white;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        .test-item {
+            padding: 15px 20px;
+            border-bottom: 1px solid #ecf0f1;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .test-item:last-child { border-bottom: none; }
+        .test-status {
+            width: 80px;
+            text-align: center;
+            padding: 4px 8px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 500;
+        }
+        .status-pass {
+            background: #e8f8f0;
+            color: #27ae60;
+        }
+        .status-fail {
+            background: #fdedec;
+            color: #e74c3c;
+        }
+        .test-name {
+            flex: 1;
+            font-weight: 500;
+            color: #34495e;
+        }
+        .test-message {
+            font-size: 0.85rem;
+            color: #7f8c8d;
+            margin-top: 4px;
+        }
+        .re-run {
+            background: #9b59b6;
+            color: white;
+            border: none;
+            padding: 10px 24px;
+            border-radius: 8px;
+            font-size: 1rem;
+            cursor: pointer;
+            margin: 20px 0;
+            font-weight: 500;
+        }
+        .re-run:hover { background: #8e44ad; }
+        .note {
+            background: #f3e8ff;
+            border-left: 4px solid #9b59b6;
+            padding: 12px 16px;
+            border-radius: 8px;
+            margin: 20px 0;
+            font-size: 0.9rem;
+            color: #2c3e50;
+        }
+    </style>
+</head>
+<body>
+    <h1>🧪 تست Multiple Choice (منطق محض)</h1>
+    <p style="color: #555; margin-bottom: 20px;">تولید گزینه · تشخیص پاسخ · حالت‌های لبه · فقط با دکمه دستی</p>
+
+    <div class="summary">
+        <span>📊 مجموع تست‌ها: <span id="total">0</span></span>
+        <span>✅ موفق: <span id="passed" class="summary-pass">0</span></span>
+        <span>❌ ناموفق: <span id="failed" class="summary-fail">0</span></span>
+    </div>
+
+    <div class="test-list" id="test-list"></div>
+
+    <button class="re-run" onclick="runAllTests()">▶ اجرای تست‌ها (دستی)</button>
+
+    <div class="note">
+        <strong>🧪 تست دستی:</strong> برای اجرا حتماً دکمه بالا را کلیک کنید. هیچ تستی خودکار اجرا نمی‌شود.
+    </div>
+
+    <script>
+        (function() {
+            // --- ماژول Multiple Choice (منطق محض) ---
+            const MultipleChoice = {
+                /**
+                 * تولید گزینه‌های تصادفی بر اساس پاسخ صحیح
+                 */
+                generateOptions: (correctAnswer, count = 4, distractors = []) => {
+                    if (!correctAnswer) return [];
+                    
+                    let options = [correctAnswer];
+                    
+                    // اضافه کردن گزینه‌های انحرافی
+                    if (distractors && distractors.length > 0) {
+                        options = [correctAnswer, ...distractors.slice(0, count - 1)];
+                    } else {
+                        // گزینه‌های پیش‌فرض
+                        const defaults = ['گزینه ۱', 'گزینه ۲', 'گزینه ۳'];
+                        options = [correctAnswer, ...defaults.slice(0, count - 1)];
+                    }
+                    
+                    // تصادفی‌سازی ترتیب
+                    return options.sort(() => Math.random() - 0.5);
+                },
+
+                /**
+                 * بررسی صحت پاسخ
+                 */
+                checkAnswer: (selectedIndex, options, correctAnswer) => {
+                    if (selectedIndex === undefined || selectedIndex === null) return false;
+                    if (!options || !Array.isArray(options)) return false;
+                    if (selectedIndex < 0 || selectedIndex >= options.length) return false;
+                    
+                    return options[selectedIndex] === correctAnswer;
+                },
+
+                /**
+                 * پیدا کردن ایندکس پاسخ صحیح
+                 */
+                findCorrectIndex: (options, correctAnswer) => {
+                    if (!options || !Array.isArray(options)) return -1;
+                    return options.indexOf(correctAnswer);
+                },
+
+                /**
+                 * اعتبارسنجی ساختار تمرین
+                 */
+                validateExercise: (exercise) => {
+                    if (!exercise) return { valid: false, reason: 'ورودی خالی' };
+                    if (!exercise.question) return { valid: false, reason: 'سوال وجود ندارد' };
+                    if (!exercise.options || !Array.isArray(exercise.options) || exercise.options.length < 2) {
+                        return { valid: false, reason: 'گزینه‌ها باید حداقل ۲ تا باشند' };
+                    }
+                    if (exercise.correctIndex === undefined || exercise.correctIndex < 0 || exercise.correctIndex >= exercise.options.length) {
+                        return { valid: false, reason: 'ایندکس صحیح نامعتبر' };
+                    }
+                    return { valid: true };
+                },
+
+                /**
+                 * ترکیب گزینه‌ها (برای جلوگیری از تکرار)
+                 */
+                deduplicateOptions: (options) => {
+                    return [...new Set(options)];
+                },
+
+                /**
+                 * شافل کردن گزینه‌ها (بدون تغییر ایندکس صحیح)
+                 */
+                shuffleOptions: (options, correctIndex) => {
+                    const correctValue = options[correctIndex];
+                    const otherOptions = options.filter((_, i) => i !== correctIndex);
+                    
+                    // شافل کردن سایر گزینه‌ها
+                    for (let i = otherOptions.length - 1; i > 0; i--) {
+                        const j = Math.floor(Math.random() * (i + 1));
+                        [otherOptions[i], otherOptions[j]] = [otherOptions[j], otherOptions[i]];
+                    }
+                    
+                    // قرار دادن پاسخ صحیح در یک موقعیت تصادفی
+                    const newCorrectIndex = Math.floor(Math.random() * (otherOptions.length + 1));
+                    const newOptions = [...otherOptions];
+                    newOptions.splice(newCorrectIndex, 0, correctValue);
+                    
+                    return {
+                        options: newOptions,
+                        correctIndex: newCorrectIndex
+                    };
+                }
+            };
+
+            // --- تست‌ها (10 تست دستی) ---
+            const tests = [
+                {
+                    name: '✅ تولید گزینه - با پاسخ صحیح',
+                    fn: () => {
+                        const options = MultipleChoice.generateOptions('سلام', 4, ['خداحافظ', 'صبح بخیر', 'عصر بخیر']);
+                        return options.includes('سلام') && options.length === 4;
+                    }
+                },
+                {
+                    name: '✅ تولید گزینه - بدون گزینه انحرافی',
+                    fn: () => {
+                        const options = MultipleChoice.generateOptions('سلام', 3);
+                        return options.includes('سلام') && options.length === 3;
+                    }
+                },
+                {
+                    name: '✅ بررسی پاسخ - صحیح',
+                    fn: () => {
+                        const options = ['سلام', 'خداحافظ', 'صبح بخیر'];
+                        const result = MultipleChoice.checkAnswer(0, options, 'سلام');
+                        return result === true;
+                    }
+                },
+                {
+                    name: '✅ بررسی پاسخ - غلط',
+                    fn: () => {
+                        const options = ['سلام', 'خداحافظ', 'صبح بخیر'];
+                        const result = MultipleChoice.checkAnswer(1, options, 'سلام');
+                        return result === false;
+                    }
+                },
+                {
+                    name: '✅ بررسی پاسخ - ایندکس خارج از محدوده',
+                    fn: () => {
+                        const options = ['سلام', 'خداحافظ'];
+                        const result = MultipleChoice.checkAnswer(5, options, 'سلام');
+                        return result === false;
+                    }
+                },
+                {
+                    name: '✅ پیدا کردن ایندکس صحیح',
+                    fn: () => {
+                        const options = ['خداحافظ', 'سلام', 'صبح بخیر'];
+                        const index = MultipleChoice.findCorrectIndex(options, 'سلام');
+                        return index === 1;
+                    }
+                },
+                {
+                    name: '✅ اعتبارسنجی تمرین - معتبر',
+                    fn: () => {
+                        const exercise = {
+                            question: 'سلام به انگلیسی؟',
+                            options: ['hello', 'goodbye', 'morning'],
+                            correctIndex: 0
+                        };
+                        const result = MultipleChoice.validateExercise(exercise);
+                        return result.valid === true;
+                    }
+                },
+                {
+                    name: '❌ اعتبارسنجی تمرین - بدون سوال',
+                    fn: () => {
+                        const exercise = {
+                            options: ['hello', 'goodbye'],
+                            correctIndex: 0
+                        };
+                        const result = MultipleChoice.validateExercise(exercise);
+                        return result.valid === false && result.reason === 'سوال وجود ندارد';
+                    }
+                },
+                {
+                    name: '✅ حذف گزینه‌های تکراری',
+                    fn: () => {
+                        const options = ['سلام', 'خداحافظ', 'سلام', 'صبح بخیر', 'خداحافظ'];
+                        const unique = MultipleChoice.deduplicateOptions(options);
+                        return unique.length === 3 && unique.includes('سلام') && unique.includes('خداحافظ');
+                    }
+                },
+                {
+                    name: '✅ شافل کردن با حفظ پاسخ صحیح',
+                    fn: () => {
+                        const options = ['سلام', 'خداحافظ', 'صبح بخیر', 'عصر بخیر'];
+                        const correctIndex = 0;
+                        const result = MultipleChoice.shuffleOptions(options, correctIndex);
+                        
+                        // بررسی اینکه پاسخ صحیح هنوز در گزینه‌ها هست
+                        return result.options.includes('سلام') && 
+                               result.correctIndex >= 0 && 
+                               result.correctIndex < result.options.length &&
+                               result.options[result.correctIndex] === 'سلام';
+                    }
+                }
+            ];
+
+            // --- تابع اجرای تست (فقط با دکمه) ---
+            window.runAllTests = function() {
+                const testList = document.getElementById('test-list');
+                const totalSpan = document.getElementById('total');
+                const passedSpan = document.getElementById('passed');
+                const failedSpan = document.getElementById('failed');
+
+                let passed = 0;
+                let failed = 0;
+
+                testList.innerHTML = '';
+
+                tests.forEach((test, index) => {
+                    try {
+                        const result = test.fn();
+                        const status = result ? 'pass' : 'fail';
+                        const statusText = result ? '✅ PASS' : '❌ FAIL';
+                        const message = result ? 'شرط برقرار است' : 'نتیجه خلاف انتظار';
+
+                        if (result) passed++; else failed++;
+
+                        const item = document.createElement('div');
+                        item.className = 'test-item';
+                        item.innerHTML = `
+                            <div class="test-status ${status === 'pass' ? 'status-pass' : 'status-fail'}">${statusText}</div>
+                            <div class="test-name">
+                                ${test.name}
+                                <div class="test-message">${message}</div>
+                            </div>
+                        `;
+                        testList.appendChild(item);
+                    } catch (error) {
+                        failed++;
+                        const item = document.createElement('div');
+                        item.className = 'test-item';
+                        item.innerHTML = `
+                            <div class="test-status status-fail">⚠️ ERROR</div>
+                            <div class="test-name">
+                                ${test.name}
+                                <div class="test-message">خطا: ${error.message}</div>
+                            </div>
+                        `;
+                        testList.appendChild(item);
+                    }
+                });
+
+                totalSpan.innerText = tests.length;
+                passedSpan.innerText = passed;
+                failedSpan.innerText = failed;
+            };
+
+            // ❌ هیچ اجرای خودکاری وجود ندارد - فقط دکمه
+        })();
+    </script>
+</body>
+</html>
+```
