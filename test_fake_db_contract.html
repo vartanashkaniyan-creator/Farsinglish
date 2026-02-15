@@ -1,0 +1,446 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>تست دستی: قرارداد Fake DB (Farsinglish)</title>
+    <style>
+        body {
+            font-family: 'Vazir', 'Tahoma', sans-serif;
+            background: #f5f7fa;
+            margin: 0;
+            padding: 20px;
+            color: #1e293b;
+        }
+        .container {
+            max-width: 1100px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 24px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            padding: 25px;
+        }
+        h1 {
+            font-size: 1.8rem;
+            margin-top: 0;
+            margin-bottom: 8px;
+            color: #0f172a;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .subtitle {
+            color: #475569;
+            border-bottom: 2px solid #e2e8f0;
+            padding-bottom: 15px;
+            margin-bottom: 25px;
+            font-size: 1rem;
+        }
+        .test-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+        .test-card {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 20px;
+            padding: 16px;
+            transition: 0.2s;
+        }
+        .test-card:hover {
+            border-color: #94a3b8;
+            background: #f1f5f9;
+        }
+        .test-title {
+            font-weight: 700;
+            font-size: 1.1rem;
+            margin-bottom: 12px;
+            color: #0f172a;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        .test-title span {
+            background: #334155;
+            color: white;
+            font-size: 0.7rem;
+            padding: 2px 8px;
+            border-radius: 30px;
+        }
+        .btn-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin: 15px 0 10px;
+        }
+        button {
+            background: white;
+            border: 1px solid #cbd5e1;
+            border-radius: 40px;
+            padding: 8px 16px;
+            font-size: 0.85rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: 0.15s;
+            color: #1e293b;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.02);
+        }
+        button.primary {
+            background: #2563eb;
+            border-color: #2563eb;
+            color: white;
+        }
+        button.success {
+            background: #16a34a;
+            border-color: #16a34a;
+            color: white;
+        }
+        button.warning {
+            background: #ca8a04;
+            border-color: #ca8a04;
+            color: white;
+        }
+        button.small {
+            padding: 4px 12px;
+            font-size: 0.75rem;
+        }
+        .log-area {
+            background: #0f172a;
+            color: #cbd5e1;
+            border-radius: 16px;
+            padding: 18px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9rem;
+            direction: ltr;
+            text-align: left;
+            max-height: 300px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+            margin-top: 25px;
+            border: 1px solid #334155;
+        }
+        .badge {
+            background: #e2e8f0;
+            color: #334155;
+            padding: 2px 10px;
+            border-radius: 50px;
+            font-size: 0.8rem;
+        }
+        .summary {
+            background: #e6f7e6;
+            border-right: 6px solid #2e7d32;
+            padding: 12px 20px;
+            border-radius: 14px;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>🧪 تست دستی · قرارداد Fake DB</h1>
+    <div class="subtitle">
+        <span class="badge">🔷 core/storage/fake-db.js</span>
+        <span class="badge">📌 متدهای get / save / delete / clear</span>
+        <span class="badge">🎭 شبیه‌سازی رفتار ایزوله (بدون IndexedDB واقعی)</span>
+    </div>
+
+    <!-- کارت‌های تست (۹ تست + سناریوهای ترکیبی) -->
+    <div class="test-grid" id="testGrid"></div>
+
+    <!-- دکمه‌های کنترلی کلی -->
+    <div style="display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 25px;">
+        <button class="primary" id="runAllContractTestsBtn">▶ اجرای همه تست‌های قرارداد (۹ مورد)</button>
+        <button class="warning" id="resetFakeDbBtn">🔄 ریست Fake DB (پاک کردن کامل)</button>
+        <button id="clearLogBtn">🗑 پاک کردن لاگ</button>
+    </div>
+
+    <!-- لاگ خروجی -->
+    <div class="log-area" id="logContainer">
+        [کنسول مجازی] برای شروع یک دکمه را بزنید.
+    </div>
+
+    <!-- خلاصه وضعیت -->
+    <div class="summary" id="summaryArea">
+        <strong>📋 خلاصه :</strong> هیچ تستی اجرا نشده.
+    </div>
+</div>
+
+<script>
+    (function() {
+        // ----- پیاده‌سازی Fake DB (مطابق قرارداد) -----
+        function createFakeDB(initialData = {}) {
+            let store = { ...initialData };   // آبجکت داخلی (شبیه‌سازی حافظه)
+
+            return {
+                // get: دریافت داده با کلید (پرامیس)
+                get: (key) => {
+                    return Promise.resolve(store[key] !== undefined ? store[key] : null);
+                },
+                // save: ذخیره داده (key, value)
+                save: (key, value) => {
+                    store[key] = value;
+                    return Promise.resolve(true);
+                },
+                // delete: حذف یک کلید
+                delete: (key) => {
+                    delete store[key];
+                    return Promise.resolve(true);
+                },
+                // clear: پاک کردن کل فروشگاه
+                clear: () => {
+                    store = {};
+                    return Promise.resolve(true);
+                },
+                // getAll: (اختیاری) دریافت همه کلیدها
+                getAll: () => {
+                    return Promise.resolve({ ...store });
+                },
+                // متد ویژه برای دسترسی به وضعیت داخلی (صرفاً برای تست)
+                _raw: () => store
+            };
+        }
+
+        // نمونه Fake DB برای تمام تست‌ها (با چند داده اولیه)
+        let fakeDB = createFakeDB({
+            'user:1': { id: 1, name: 'علی', level: 3 },
+            'settings:app': { theme: 'dark', lang: 'fa' }
+        });
+
+        // ----- مدیریت لاگ (کنسول مجازی) -----
+        const logContainer = document.getElementById('logContainer');
+        function logToPanel(message, type = 'info') {
+            const prefix = type === 'success' ? '✅' : (type === 'error' ? '❌' : '➡️');
+            const time = new Date().toLocaleTimeString('fa-IR', { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' });
+            logContainer.innerHTML += `\n[${time}] ${prefix} ${message}`;
+            logContainer.scrollTop = logContainer.scrollHeight;
+        }
+
+        function clearLog() {
+            logContainer.innerHTML = '[کنسول مجازی] لاگ پاک شد.';
+        }
+
+        // ----- به‌روزرسانی خلاصه تست‌ها -----
+        function updateSummary(results) {
+            const total = results.length;
+            const passed = results.filter(r => r.passed).length;
+            const failed = total - passed;
+            const summaryDiv = document.getElementById('summaryArea');
+            summaryDiv.innerHTML = `<strong>📋 خلاصه تست‌ها :</strong> ✅ ${passed} موفق  |  ❌ ${failed} ناموفق  |  📊 مجموع: ${total} تست قرارداد`;
+            if (failed === 0 && total > 0) summaryDiv.style.background = '#e6f7e6';
+            else if (failed > 0) summaryDiv.style.background = '#ffebee';
+        }
+
+        // ----- آرایه نتایج تست‌ها (برای خلاصه) -----
+        let testResults = [];
+
+        // ----- تعریف تست‌های قرارداد (به‌صورت دستی با دکمه) -----
+
+        // 1. تست get برای کلید موجود
+        async function testGetExisting() {
+            try {
+                const val = await fakeDB.get('user:1');
+                const passed = val && val.name === 'علی';
+                logToPanel(`get('user:1') → ${passed ? '✅ دریافت شد' : '❌ مقدار نادرست'}: ${JSON.stringify(val)}`, passed ? 'success' : 'error');
+                return { name: 'get موجود', passed };
+            } catch (e) {
+                logToPanel(`get موجود خطا: ${e.message}`, 'error');
+                return { name: 'get موجود', passed: false };
+            }
+        }
+
+        // 2. تست get برای کلید ناموجود (باید null برگرداند)
+        async function testGetMissing() {
+            try {
+                const val = await fakeDB.get('key:notfound');
+                const passed = val === null;
+                logToPanel(`get('key:notfound') → null? ${passed ? '✅' : '❌'} (دریافت: ${val})`, passed ? 'success' : 'error');
+                return { name: 'get ناموجود', passed };
+            } catch (e) {
+                logToPanel(`get ناموجود خطا: ${e.message}`, 'error');
+                return { name: 'get ناموجود', passed: false };
+            }
+        }
+
+        // 3. تست save و سپس get (بررسی ذخیره)
+        async function testSaveAndGet() {
+            try {
+                await fakeDB.save('test:color', 'blue');
+                const retrieved = await fakeDB.get('test:color');
+                const passed = retrieved === 'blue';
+                logToPanel(`save('test:color','blue') → get → ${passed ? '✅' : '❌'} (دریافت: ${retrieved})`, passed ? 'success' : 'error');
+                return { name: 'save + get', passed };
+            } catch (e) {
+                logToPanel(`save+get خطا: ${e.message}`, 'error');
+                return { name: 'save + get', passed: false };
+            }
+        }
+
+        // 4. تست بازنویسی مقدار (overwrite)
+        async function testOverwrite() {
+            try {
+                await fakeDB.save('user:1', { id: 1, name: 'رضا', level: 5 });
+                const updated = await fakeDB.get('user:1');
+                const passed = updated && updated.name === 'رضا' && updated.level === 5;
+                logToPanel(`overwrite user:1 → name: رضا سطح 5 → ${passed ? '✅' : '❌'}`, passed ? 'success' : 'error');
+                // برگرداندن به حالت اول برای عدم تداخل (اختیاری)
+                await fakeDB.save('user:1', { id: 1, name: 'علی', level: 3 });
+                return { name: 'بازنویسی', passed };
+            } catch (e) {
+                logToPanel(`بازنویسی خطا: ${e.message}`, 'error');
+                return { name: 'بازنویسی', passed: false };
+            }
+        }
+
+        // 5. تست delete (حذف)
+        async function testDelete() {
+            try {
+                await fakeDB.save('temp:delete', 'value');
+                await fakeDB.delete('temp:delete');
+                const val = await fakeDB.get('temp:delete');
+                const passed = val === null;
+                logToPanel(`delete('temp:delete') → بعدش get → null? ${passed ? '✅' : '❌'}`, passed ? 'success' : 'error');
+                return { name: 'delete', passed };
+            } catch (e) {
+                logToPanel(`delete خطا: ${e.message}`, 'error');
+                return { name: 'delete', passed: false };
+            }
+        }
+
+        // 6. تست clear (پاک کردن همه)
+        async function testClear() {
+            try {
+                await fakeDB.save('temp:a', 1);
+                await fakeDB.save('temp:b', 2);
+                await fakeDB.clear();
+                const valA = await fakeDB.get('temp:a');
+                const valB = await fakeDB.get('temp:b');
+                const settings = await fakeDB.get('settings:app');
+                const passed = (valA === null && valB === null && settings === null);
+                logToPanel(`clear() → همه مقادیر پاک شدند? ${passed ? '✅' : '❌'} (settings:${settings})`, passed ? 'success' : 'error');
+                // ریستور داده‌های اولیه
+                fakeDB = createFakeDB({ 'user:1': { id: 1, name: 'علی', level: 3 }, 'settings:app': { theme: 'dark', lang: 'fa' } });
+                return { name: 'clear', passed };
+            } catch (e) {
+                logToPanel(`clear خطا: ${e.message}`, 'error');
+                return { name: 'clear', passed: false };
+            }
+        }
+
+        // 7. تست getAll (همه داده‌ها)
+        async function testGetAll() {
+            try {
+                const all = await fakeDB.getAll();
+                const keys = Object.keys(all);
+                const passed = keys.includes('user:1') && keys.includes('settings:app');
+                logToPanel(`getAll() → تعداد: ${keys.length} - دارای کلیدهای اصلی? ${passed ? '✅' : '❌'}`, passed ? 'success' : 'error');
+                return { name: 'getAll', passed };
+            } catch (e) {
+                logToPanel(`getAll خطا: ${e.message}`, 'error');
+                return { name: 'getAll', passed: false };
+            }
+        }
+
+        // 8. تست ایزولیشن (آیا دو نمونه جداگانه روی هم اثر دارند؟)
+        async function testIsolation() {
+            try {
+                const anotherDB = createFakeDB({ isolated: true });
+                await anotherDB.save('key1', 100);
+                const valMain = await fakeDB.get('key1');
+                const passed = (valMain === null);
+                logToPanel(`ایزولیشن: anotherDB ذخیره key1 → fakeDB اصلی نباید داشته باشد. passed? ${passed ? '✅' : '❌'}`, passed ? 'success' : 'error');
+                return { name: 'ایزولیشن', passed };
+            } catch (e) {
+                logToPanel(`ایزولیشن خطا: ${e.message}`, 'error');
+                return { name: 'ایزولیشن', passed: false };
+            }
+        }
+
+        // 9. تست رفتار پرامیس (آیا واقعاً پرامیس برمی‌گرداند)
+        async function testPromiseBehavior() {
+            try {
+                const p = fakeDB.get('user:1');
+                const isPromise = p && typeof p.then === 'function';
+                const result = await p;
+                const passed = isPromise && result && result.id === 1;
+                logToPanel(`رفتار پرامیس: ${passed ? '✅ promise درست' : '❌ promise معیوب'}`, passed ? 'success' : 'error');
+                return { name: 'پرامیس', passed };
+            } catch (e) {
+                logToPanel(`پرامیس خطا: ${e.message}`, 'error');
+                return { name: 'پرامیس', passed: false };
+            }
+        }
+
+        // اجرای مجموعه‌ای از تست‌ها
+        async function runContractTests(tests) {
+            clearLog();
+            logToPanel('🔥 شروع اجرای تست‌های قرارداد (Fake DB) ...');
+            testResults = [];
+            for (let testFn of tests) {
+                const result = await testFn();
+                testResults.push(result);
+            }
+            updateSummary(testResults);
+            logToPanel('🏁 پایان تست‌ها.');
+        }
+
+        // ساخت دکمه‌های پویا در گرید
+        function buildTestGrid() {
+            const grid = document.getElementById('testGrid');
+            const testsList = [
+                { name: 'get (موجود)', fn: testGetExisting, desc: 'بازیابی داده عادی' },
+                { name: 'get (ناموجود)', fn: testGetMissing, desc: 'باید null برگرداند' },
+                { name: 'save + get', fn: testSaveAndGet, desc: 'ذخیره و بازیابی' },
+                { name: 'بازنویسی', fn: testOverwrite, desc: 'آپدیت مقدار' },
+                { name: 'delete', fn: testDelete, desc: 'حذف یک کلید' },
+                { name: 'clear', fn: testClear, desc: 'پاک کردن کل فروشگاه' },
+                { name: 'getAll', fn: testGetAll, desc: 'دریافت همه' },
+                { name: 'ایزولیشن', fn: testIsolation, desc: 'نمونه‌های مجزا' },
+                { name: 'پرامیس', fn: testPromiseBehavior, desc: 'بررسی thenable' }
+            ];
+
+            testsList.forEach((t, index) => {
+                const card = document.createElement('div');
+                card.className = 'test-card';
+                card.innerHTML = `
+                    <div class="test-title"><span>#${index+1}</span> ${t.name}</div>
+                    <div style="font-size:0.8rem; color:#475569; margin-bottom:12px;">${t.desc}</div>
+                    <button class="small primary" data-test-index="${index}">اجرای این تست</button>
+                `;
+                card.querySelector('button').addEventListener('click', async (e) => {
+                    e.stopPropagation();
+                    clearLog();
+                    logToPanel(`🔍 اجرای تست "${t.name}" ...`);
+                    const res = await t.fn();
+                    updateSummary([res]);
+                });
+                grid.appendChild(card);
+            });
+        }
+
+        // ------ اتصال رویدادها -----
+        document.getElementById('runAllContractTestsBtn').addEventListener('click', async () => {
+            const tests = [testGetExisting, testGetMissing, testSaveAndGet, testOverwrite, testDelete, testClear, testGetAll, testIsolation, testPromiseBehavior];
+            await runContractTests(tests);
+        });
+
+        document.getElementById('resetFakeDbBtn').addEventListener('click', async () => {
+            fakeDB = createFakeDB({ 'user:1': { id: 1, name: 'علی', level: 3 }, 'settings:app': { theme: 'dark', lang: 'fa' } });
+            logToPanel('🔄 Fake DB به حالت اولیه بازگردانده شد.', 'info');
+        });
+
+        document.getElementById('clearLogBtn').addEventListener('click', () => {
+            clearLog();
+        });
+
+        // مقداردهی اولیه
+        buildTestGrid();
+        clearLog();
+    })();
+</script>
+</body>
+</html>
