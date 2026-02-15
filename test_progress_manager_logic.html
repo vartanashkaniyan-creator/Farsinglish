@@ -1,0 +1,705 @@
+<!DOCTYPE html>
+<html dir="rtl" lang="fa">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>تست منطق Progress Manager - Farsinglish</title>
+    <style>
+        body {
+            font-family: 'Vazir', 'Tahoma', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            margin: 0;
+            padding: 20px;
+            min-height: 100vh;
+            color: #333;
+        }
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+        h1 {
+            text-align: center;
+            color: #553c9a;
+            margin-bottom: 30px;
+            font-size: 28px;
+            border-bottom: 3px solid #f0f0f0;
+            padding-bottom: 15px;
+        }
+        h2 {
+            color: #2d3748;
+            font-size: 20px;
+            margin-top: 25px;
+            margin-bottom: 15px;
+            padding-right: 10px;
+            border-right: 4px solid #667eea;
+        }
+        .button-container {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            justify-content: center;
+            margin: 25px 0;
+        }
+        button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 50px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+            border: 1px solid rgba(255,255,255,0.2);
+            font-family: 'Vazir', 'Tahoma', sans-serif;
+        }
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
+        }
+        button.reset {
+            background: linear-gradient(135deg, #f56565 0%, #c53030 100%);
+        }
+        .test-card {
+            background: #f7fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+        }
+        .test-title {
+            font-size: 18px;
+            font-weight: bold;
+            color: #2d3748;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .test-title span {
+            background: #667eea;
+            color: white;
+            padding: 3px 10px;
+            border-radius: 20px;
+            font-size: 14px;
+        }
+        .test-result {
+            background: #edf2f7;
+            border-radius: 10px;
+            padding: 15px;
+            font-family: 'Courier New', monospace;
+            direction: ltr;
+            text-align: left;
+            white-space: pre-wrap;
+            word-break: break-word;
+            max-height: 200px;
+            overflow-y: auto;
+            border: 1px solid #cbd5e0;
+            margin-top: 10px;
+        }
+        .success { color: #38a169; font-weight: bold; }
+        .error { color: #e53e3e; font-weight: bold; }
+        .warning { color: #d69e2e; font-weight: bold; }
+        .info { color: #3182ce; font-weight: bold; }
+        .footer {
+            text-align: center;
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 2px dashed #e2e8f0;
+            color: #718096;
+            font-size: 14px;
+        }
+        .summary {
+            background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 25px;
+            border: 2px solid #fbbf24;
+        }
+        .summary h3 {
+            color: #92400e;
+            margin-top: 0;
+            margin-bottom: 15px;
+        }
+        .summary-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid #fcd34d;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧪 تست منطق Progress Manager</h1>
+        <p style="text-align: center; color: #4a5568; margin-bottom: 30px;">
+            تست محاسبات پیشرفت، درصد، سطح‌بندی و ذخیره‌سازی
+        </p>
+
+        <div class="button-container">
+            <button onclick="runAllTests()">▶ اجرای همه تست‌ها</button>
+            <button onclick="resetState()" class="reset">⟲ ریست حالت</button>
+        </div>
+
+        <div id="summary" class="summary">
+            <h3>📊 خلاصه تست‌ها</h3>
+            <div id="summaryContent">
+                <div class="summary-item">⏳ برای مشاهده نتایج، تست‌ها را اجرا کنید...</div>
+            </div>
+        </div>
+
+        <!-- تست‌ها -->
+        <div id="tests">
+            <div class="test-card" id="test1">
+                <div class="test-title">
+                    <span>۱</span>
+                    تست محاسبه درصد پیشرفت پایه
+                </div>
+                <button onclick="runTest(1)">اجرای این تست</button>
+                <div id="result1" class="test-result">⏺ برای اجرا کلیک کنید</div>
+            </div>
+
+            <div class="test-card" id="test2">
+                <div class="test-title">
+                    <span>۲</span>
+                    تست سطح‌بندی بر اساس XP
+                </div>
+                <button onclick="runTest(2)">اجرای این تست</button>
+                <div id="result2" class="test-result">⏺ برای اجرا کلیک کنید</div>
+            </div>
+
+            <div class="test-card" id="test3">
+                <div class="test-title">
+                    <span>۳</span>
+                    تست ذخیره و بازیابی پیشرفت
+                </div>
+                <button onclick="runTest(3)">اجرای این تست</button>
+                <div id="result3" class="test-result">⏺ برای اجرا کلیک کنید</div>
+            </div>
+
+            <div class="test-card" id="test4">
+                <div class="test-title">
+                    <span>۴</span>
+                    تست بروزرسانی پس از پاسخ صحیح
+                </div>
+                <button onclick="runTest(4)">اجرای این تست</button>
+                <div id="result4" class="test-result">⏺ برای اجرا کلیک کنید</div>
+            </div>
+
+            <div class="test-card" id="test5">
+                <div class="test-title">
+                    <span>۵</span>
+                    تست بروزرسانی پس از پاسخ غلط
+                </div>
+                <button onclick="runTest(5)">اجرای این تست</button>
+                <div id="result5" class="test-result">⏺ برای اجرا کلیک کنید</div>
+            </div>
+
+            <div class="test-card" id="test6">
+                <div class="test-title">
+                    <span>۶</span>
+                    تست لبه: درس بدون پیشرفت
+                </div>
+                <button onclick="runTest(6)">اجرای این تست</button>
+                <div id="result6" class="test-result">⏺ برای اجرا کلیک کنید</div>
+            </div>
+
+            <div class="test-card" id="test7">
+                <div class="test-title">
+                    <span>۷</span>
+                    تست محاسبه streak روزانه
+                </div>
+                <button onclick="runTest(7)">اجرای این تست</button>
+                <div id="result7" class="test-result">⏺ برای اجرا کلیک کنید</div>
+            </div>
+
+            <div class="test-card" id="test8">
+                <div class="test-title">
+                    <span>۸</span>
+                    تست یکپارچگی داده‌ها
+                </div>
+                <button onclick="runTest(8)">اجرای این تست</button>
+                <div id="result8" class="test-result">⏺ برای اجرا کلیک کنید</div>
+            </div>
+        </div>
+
+        <div class="footer">
+            <p>Farsinglish - تست دستی Progress Manager</p>
+            <p id="timestamp"></p>
+        </div>
+    </div>
+
+    <script>
+        // پیش‌نیاز: کلاس ProgressManager (شبیه‌سازی شده)
+        class ProgressManager {
+            constructor(initialProgress = null) {
+                this.progress = initialProgress || {
+                    userId: 'test-user',
+                    lessons: {},
+                    totalXp: 0,
+                    level: 1,
+                    streak: 0,
+                    lastActive: null
+                };
+            }
+
+            // محاسبه درصد پیشرفت یک درس
+            calculateLessonProgress(lessonId, completedItems, totalItems) {
+                if (!lessonId || totalItems <= 0) return 0;
+                const percentage = Math.min(100, Math.round((completedItems / totalItems) * 100));
+                return percentage;
+            }
+
+            // محاسبه سطح بر اساس XP
+            calculateLevel(xp) {
+                if (xp < 0) return 1;
+                return Math.floor(xp / 100) + 1;
+            }
+
+            // ذخیره پیشرفت درس
+            saveLessonProgress(lessonId, progressData) {
+                if (!lessonId || !progressData) return false;
+                this.progress.lessons[lessonId] = {
+                    ...progressData,
+                    lastUpdated: new Date().toISOString()
+                };
+                return true;
+            }
+
+            // بارگذاری پیشرفت درس
+            loadLessonProgress(lessonId) {
+                return this.progress.lessons[lessonId] || null;
+            }
+
+            // بروزرسانی پس از پاسخ
+            updateAfterAnswer(lessonId, isCorrect, xpGain = 10) {
+                if (!lessonId) return false;
+                
+                const progress = this.loadLessonProgress(lessonId) || {
+                    completed: 0,
+                    total: 10,
+                    correct: 0,
+                    wrong: 0
+                };
+
+                if (isCorrect) {
+                    progress.correct = (progress.correct || 0) + 1;
+                    this.progress.totalXp += xpGain;
+                } else {
+                    progress.wrong = (progress.wrong || 0) + 1;
+                }
+
+                progress.completed = (progress.completed || 0) + 1;
+                this.saveLessonProgress(lessonId, progress);
+                
+                // بروزرسانی سطح
+                this.progress.level = this.calculateLevel(this.progress.totalXp);
+                
+                return true;
+            }
+
+            // محاسبه streak
+            updateStreak() {
+                const today = new Date().toDateString();
+                const lastActive = this.progress.lastActive ? new Date(this.progress.lastActive).toDateString() : null;
+                
+                if (!lastActive) {
+                    this.progress.streak = 1;
+                } else if (lastActive === today) {
+                    // امروز قبلاً ثبت شده
+                    return this.progress.streak;
+                } else {
+                    const yesterday = new Date();
+                    yesterday.setDate(yesterday.getDate() - 1);
+                    
+                    if (lastActive === yesterday.toDateString()) {
+                        this.progress.streak++;
+                    } else {
+                        this.progress.streak = 1;
+                    }
+                }
+                
+                this.progress.lastActive = new Date().toISOString();
+                return this.progress.streak;
+            }
+
+            // اعتبارسنجی یکپارچگی
+            validateIntegrity() {
+                if (!this.progress.userId) return false;
+                if (this.progress.totalXp < 0) return false;
+                if (this.progress.level !== this.calculateLevel(this.progress.totalXp)) return false;
+                return true;
+            }
+
+            // ریست state
+            reset() {
+                this.progress = {
+                    userId: 'test-user',
+                    lessons: {},
+                    totalXp: 0,
+                    level: 1,
+                    streak: 0,
+                    lastActive: null
+                };
+            }
+
+            // دریافت وضعیت فعلی
+            getState() {
+                return JSON.parse(JSON.stringify(this.progress));
+            }
+        }
+
+        // نمونه اصلی
+        const progressManager = new ProgressManager();
+        const originalState = progressManager.getState();
+
+        // تابع کمکی برای لاگ
+        function log(message, type = 'info') {
+            const timestamp = new Date().toLocaleTimeString('fa-IR');
+            return `[${timestamp}] ${message}`;
+        }
+
+        // بروزرسانی خلاصه
+        function updateSummary() {
+            const state = progressManager.getState();
+            const summaryHtml = `
+                <div class="summary-item"><span>👤 کاربر:</span> <span>${state.userId}</span></div>
+                <div class="summary-item"><span>✨ XP کل:</span> <span class="success">${state.totalXp}</span></div>
+                <div class="summary-item"><span>📊 سطح:</span> <span class="info">${state.level}</span></div>
+                <div class="summary-item"><span>🔥 Streak:</span> <span class="warning">${state.streak}</span></div>
+                <div class="summary-item"><span>📚 درس‌های دارای پیشرفت:</span> <span>${Object.keys(state.lessons).length}</span></div>
+            `;
+            document.getElementById('summaryContent').innerHTML = summaryHtml;
+        }
+
+        // ریست state
+        function resetState() {
+            progressManager.reset();
+            updateSummary();
+            for (let i = 1; i <= 8; i++) {
+                document.getElementById(`result${i}`).innerHTML = '⏺ ریست شد - دوباره تست را اجرا کنید';
+            }
+        }
+
+        // اجرای تست خاص
+        function runTest(testId) {
+            const resultDiv = document.getElementById(`result${testId}`);
+            resultDiv.innerHTML = '';
+            
+            try {
+                let output = '';
+                
+                switch(testId) {
+                    case 1:
+                        output = testProgressPercentage();
+                        break;
+                    case 2:
+                        output = testLevelCalculation();
+                        break;
+                    case 3:
+                        output = testSaveLoadProgress();
+                        break;
+                    case 4:
+                        output = testCorrectAnswer();
+                        break;
+                    case 5:
+                        output = testWrongAnswer();
+                        break;
+                    case 6:
+                        output = testNoProgress();
+                        break;
+                    case 7:
+                        output = testStreak();
+                        break;
+                    case 8:
+                        output = testIntegrity();
+                        break;
+                }
+                
+                resultDiv.innerHTML = output;
+                updateSummary();
+            } catch (error) {
+                resultDiv.innerHTML = `<span class="error">❌ خطا: ${error.message}</span>`;
+            }
+        }
+
+        // اجرای همه تست‌ها
+        function runAllTests() {
+            resetState();
+            for (let i = 1; i <= 8; i++) {
+                runTest(i);
+            }
+        }
+
+        // تست ۱: درصد پیشرفت
+        function testProgressPercentage() {
+            let result = log('🧪 تست درصد پیشرفت پایه') + '\n';
+            result += '─'.repeat(50) + '\n';
+            
+            const tests = [
+                { completed: 5, total: 10, expected: 50 },
+                { completed: 0, total: 10, expected: 0 },
+                { completed: 10, total: 10, expected: 100 },
+                { completed: 3, total: 4, expected: 75 },
+                { completed: 1, total: 3, expected: 33 }
+            ];
+            
+            let passed = 0;
+            tests.forEach((t, index) => {
+                const res = progressManager.calculateLessonProgress('test', t.completed, t.total);
+                const status = res === t.expected ? '✓' : '✗';
+                if (res === t.expected) passed++;
+                
+                result += `${status} تست ${index + 1}: ${t.completed}/${t.total} = ${res}% (expected: ${t.expected}%)`;
+                if (res !== t.expected) result += ' ← ❌';
+                result += '\n';
+            });
+            
+            result += '─'.repeat(50) + '\n';
+            result += passed === tests.length ? 
+                '<span class="success">✅ همه تست‌های درصد با موفقیت گذشتند</span>' : 
+                `<span class="error">❌ ${tests.length - passed} تست شکست خورد</span>`;
+            
+            return result;
+        }
+
+        // تست ۲: سطح‌بندی
+        function testLevelCalculation() {
+            let result = log('🧪 تست محاسبه سطح بر اساس XP') + '\n';
+            result += '─'.repeat(50) + '\n';
+            
+            const tests = [
+                { xp: 0, expected: 1 },
+                { xp: 50, expected: 1 },
+                { xp: 100, expected: 2 },
+                { xp: 150, expected: 2 },
+                { xp: 200, expected: 3 },
+                { xp: 999, expected: 10 }
+            ];
+            
+            let passed = 0;
+            tests.forEach((t, index) => {
+                const res = progressManager.calculateLevel(t.xp);
+                const status = res === t.expected ? '✓' : '✗';
+                if (res === t.expected) passed++;
+                
+                result += `${status} تست ${index + 1}: XP=${t.xp} → سطح ${res} (expected: ${t.expected})`;
+                if (res !== t.expected) result += ' ← ❌';
+                result += '\n';
+            });
+            
+            result += '─'.repeat(50) + '\n';
+            result += passed === tests.length ? 
+                '<span class="success">✅ همه تست‌های سطح‌بندی با موفقیت گذشتند</span>' : 
+                `<span class="error">❌ ${tests.length - passed} تست شکست خورد</span>`;
+            
+            return result;
+        }
+
+        // تست ۳: ذخیره و بازیابی
+        function testSaveLoadProgress() {
+            let result = log('🧪 تست ذخیره و بازیابی پیشرفت') + '\n';
+            result += '─'.repeat(50) + '\n';
+            
+            const lessonId = 'lesson-1';
+            const progressData = {
+                completed: 5,
+                total: 10,
+                correct: 4,
+                wrong: 1
+            };
+            
+            result += '۱. ذخیره پیشرفت...\n';
+            const saveResult = progressManager.saveLessonProgress(lessonId, progressData);
+            result += saveResult ? '✓ ذخیره موفق' : '✗ خطا در ذخیره';
+            result += '\n\n';
+            
+            result += '۲. بازیابی پیشرفت...\n';
+            const loaded = progressManager.loadLessonProgress(lessonId);
+            if (loaded) {
+                result += `✓ بازیابی موفق:\n`;
+                result += `   - تکمیل شده: ${loaded.completed}\n`;
+                result += `   - صحیح: ${loaded.correct}\n`;
+                result += `   - غلط: ${loaded.wrong}\n`;
+            } else {
+                result += '✗ خطا در بازیابی\n';
+            }
+            
+            result += '\n۳. بررسی یکپارچگی داده...\n';
+            const isValid = loaded && 
+                           loaded.completed === progressData.completed &&
+                           loaded.correct === progressData.correct &&
+                           loaded.wrong === progressData.wrong;
+            
+            result += isValid ? 
+                '<span class="success">✓ داده‌ها سالم و یکسان هستند</span>' : 
+                '<span class="error">✗ داده‌ها مغایرت دارند</span>';
+            
+            return result;
+        }
+
+        // تست ۴: پاسخ صحیح
+        function testCorrectAnswer() {
+            let result = log('🧪 تست بروزرسانی پس از پاسخ صحیح') + '\n';
+            result += '─'.repeat(50) + '\n';
+            
+            const lessonId = 'lesson-correct';
+            const initialXp = progressManager.progress.totalXp;
+            
+            result += `XP اولیه: ${initialXp}\n`;
+            result += 'اجرای ۳ پاسخ صحیح متوالی...\n';
+            
+            for (let i = 1; i <= 3; i++) {
+                progressManager.updateAfterAnswer(lessonId, true, 10);
+                result += `  پاسخ ${i}: XP=${progressManager.progress.totalXp}\n`;
+            }
+            
+            const finalXp = progressManager.progress.totalXp;
+            const xpGained = finalXp - initialXp;
+            
+            result += '─'.repeat(30) + '\n';
+            result += `XP نهایی: ${finalXp}\n`;
+            result += `XP کسب شده: ${xpGained}\n`;
+            
+            const expectedXp = 30;
+            result += xpGained === expectedXp ? 
+                '<span class="success">✓ افزایش XP صحیح است</span>' : 
+                `<span class="error">✗ خطا: انتظار ${expectedXp} XP، دریافت ${xpGained} XP</span>`;
+            
+            return result;
+        }
+
+        // تست ۵: پاسخ غلط
+        function testWrongAnswer() {
+            let result = log('🧪 تست بروزرسانی پس از پاسخ غلط') + '\n';
+            result += '─'.repeat(50) + '\n';
+            
+            const lessonId = 'lesson-wrong';
+            const initialProgress = progressManager.loadLessonProgress(lessonId) || { wrong: 0 };
+            const initialWrong = initialProgress.wrong || 0;
+            
+            result += `تعداد پاسخ‌های غلط اولیه: ${initialWrong}\n`;
+            result += 'اجرای ۲ پاسخ غلط...\n';
+            
+            progressManager.updateAfterAnswer(lessonId, false);
+            progressManager.updateAfterAnswer(lessonId, false);
+            
+            const finalProgress = progressManager.loadLessonProgress(lessonId);
+            const finalWrong = finalProgress.wrong || 0;
+            
+            result += `تعداد پاسخ‌های غلط نهایی: ${finalWrong}\n`;
+            
+            const expectedWrong = initialWrong + 2;
+            result += finalWrong === expectedWrong ? 
+                '<span class="success">✓ شمارش پاسخ‌های غلط صحیح است</span>' : 
+                `<span class="error">✗ خطا: انتظار ${expectedWrong} غلط، دریافت ${finalWrong} غلط</span>`;
+            
+            return result;
+        }
+
+        // تست ۶: درس بدون پیشرفت
+        function testNoProgress() {
+            let result = log('🧪 تست لبه: درس بدون پیشرفت') + '\n';
+            result += '─'.repeat(50) + '\n';
+            
+            const nonExistentLesson = 'non-existent-lesson';
+            
+            result += `بارگذاری درس با ID "${nonExistentLesson}" که وجود ندارد...\n`;
+            const progress = progressManager.loadLessonProgress(nonExistentLesson);
+            
+            result += progress === null ? 
+                '<span class="success">✓ null برگردانده شد (رفتار صحیح)</span>' : 
+                `<span class="error">✗ خطا: انتظار null، دریافت ${JSON.stringify(progress)}</span>`;
+            
+            result += '\n\nمحاسبه درصد برای درس ناموجود...\n';
+            const percentage = progressManager.calculateLessonProgress(nonExistentLesson, 0, 0);
+            
+            result += percentage === 0 ? 
+                '<span class="success">✓ درصد صفر برگردانده شد (رفتار صحیح)</span>' : 
+                `<span class="error">✗ خطا: انتظار 0، دریافت ${percentage}</span>`;
+            
+            return result;
+        }
+
+        // تست ۷: Streak روزانه
+        function testStreak() {
+            let result = log('🧪 تست محاسبه Streak روزانه') + '\n';
+            result += '─'.repeat(50) + '\n';
+            
+            // شبیه‌سازی streak
+            result += 'روز اول: فعالیت\n';
+            progressManager.updateStreak();
+            result += `Streak: ${progressManager.progress.streak}\n`;
+            
+            // تقلب: تغییر lastActive به دیروز
+            const yesterday = new Date();
+            yesterday.setDate(yesterday.getDate() - 1);
+            progressManager.progress.lastActive = yesterday.toISOString();
+            
+            result += '\nروز دوم (شبیه‌سازی شده): فعالیت\n';
+            progressManager.updateStreak();
+            result += `Streak: ${progressManager.progress.streak}\n`;
+            
+            // تقلب: تغییر به ۳ روز قبل
+            const threeDaysAgo = new Date();
+            threeDaysAgo.setDate(threeDaysAgo.getDate() - 3);
+            progressManager.progress.lastActive = threeDaysAgo.toISOString();
+            
+            result += '\nفعالیت بعد از ۳ روز وقفه:\n';
+            progressManager.updateStreak();
+            result += `Streak: ${progressManager.progress.streak} (باید ریست شود به ۱)\n`;
+            
+            const finalStreak = progressManager.progress.streak;
+            result += finalStreak === 1 ? 
+                '<span class="success">✓ Streak به درستی ریست شد</span>' : 
+                `<span class="error">✗ خطا: Streak باید ۱ باشد، ولی ${finalStreak} است</span>`;
+            
+            return result;
+        }
+
+        // تست ۸: یکپارچگی داده
+        function testIntegrity() {
+            let result = log('🧪 تست یکپارچگی داده‌ها') + '\n';
+            result += '─'.repeat(50) + '\n';
+            
+            result += 'وضعیت فعلی:\n';
+            const state = progressManager.getState();
+            result += `- userId: ${state.userId}\n`;
+            result += `- totalXp: ${state.totalXp}\n`;
+            result += `- level: ${state.level}\n`;
+            result += `- محاسبه سطح از روی XP: ${progressManager.calculateLevel(state.totalXp)}\n`;
+            
+            const isValid = progressManager.validateIntegrity();
+            
+            result += '─'.repeat(30) + '\n';
+            result += isValid ? 
+                '<span class="success">✅ داده‌ها یکپارچه و سالم هستند</span>' : 
+                '<span class="error">❌ مشکل یکپارچگی داده‌ها</span>';
+            
+            // تست خراب کردن عمدی
+            result += '\n\n🧪 تست تشخیص داده خراب:\n';
+            progressManager.progress.level = 100; // سطح غیرمنطقی
+            const shouldBeFalse = progressManager.validateIntegrity();
+            
+            result += shouldBeFalse ? 
+                '<span class="error">✗ سیستم خرابی را تشخیص نداد</span>' : 
+                '<span class="success">✓ خرابی به درستی تشخیص داده شد</span>';
+            
+            // برگرداندن به حالت اول
+            progressManager.progress.level = progressManager.calculateLevel(progressManager.progress.totalXp);
+            
+            return result;
+        }
+
+        // مقداردهی اولیه
+        document.getElementById('timestamp').innerHTML = `آخرین بروزرسانی: ${new Date().toLocaleString('fa-IR')}`;
+        updateSummary();
+    </script>
+</body>
+</html>
