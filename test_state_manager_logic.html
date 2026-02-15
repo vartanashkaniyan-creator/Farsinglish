@@ -1,0 +1,542 @@
+<!DOCTYPE html>
+<html dir="rtl" lang="fa">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>تست دستی State Manager - منطق پایه</title>
+    <style>
+        body {
+            font-family: 'Vazir', 'Tahoma', sans-serif;
+            background: #f5f7fa;
+            margin: 0;
+            padding: 20px;
+            color: #2c3e50;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            padding: 24px;
+        }
+        h1 {
+            font-size: 1.8rem;
+            color: #2c3e50;
+            border-bottom: 2px solid #3498db;
+            padding-bottom: 10px;
+            margin-top: 0;
+        }
+        h2 {
+            font-size: 1.3rem;
+            margin: 20px 0 10px;
+            color: #34495e;
+        }
+        .section {
+            background: #f8fafc;
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 24px;
+            border: 1px solid #e2e8f0;
+        }
+        .button-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin: 15px 0;
+        }
+        button {
+            background: #3498db;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 30px;
+            font-size: 0.95rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            border: 1px solid #2980b9;
+            flex: 1 1 auto;
+            min-width: 150px;
+        }
+        button:hover {
+            background: #2980b9;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+        }
+        button.secondary {
+            background: #95a5a6;
+            border-color: #7f8c8d;
+        }
+        button.secondary:hover {
+            background: #7f8c8d;
+        }
+        button.success {
+            background: #2ecc71;
+            border-color: #27ae60;
+        }
+        button.success:hover {
+            background: #27ae60;
+        }
+        button.warning {
+            background: #f39c12;
+            border-color: #e67e22;
+        }
+        button.warning:hover {
+            background: #e67e22;
+        }
+        .output {
+            background: #1e293b;
+            color: #e2e8f0;
+            padding: 16px;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            direction: ltr;
+            text-align: left;
+            font-size: 14px;
+            max-height: 300px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+            margin: 15px 0;
+            border: 2px solid #334155;
+        }
+        .status-box {
+            background: #d1fae5;
+            border-right: 6px solid #10b981;
+            padding: 12px 16px;
+            border-radius: 8px;
+            margin: 15px 0;
+            font-weight: 500;
+        }
+        .test-row {
+            background: white;
+            border-radius: 10px;
+            padding: 12px;
+            margin-bottom: 12px;
+            border: 1px solid #e2e8f0;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        }
+        .test-title {
+            font-weight: bold;
+            margin-bottom: 8px;
+            color: #2c3e50;
+        }
+        .test-desc {
+            color: #4a5568;
+            margin-bottom: 10px;
+            font-size: 0.95rem;
+        }
+        .success-badge {
+            background: #2ecc71;
+            color: white;
+            padding: 4px 12px;
+            border-radius: 30px;
+            font-size: 0.85rem;
+            display: inline-block;
+            margin-right: 8px;
+        }
+        .fail-badge {
+            background: #e74c3c;
+            color: white;
+            padding: 4px 12px;
+            border-radius: 30px;
+            font-size: 0.85rem;
+            display: inline-block;
+            margin-right: 8px;
+        }
+        hr {
+            border: none;
+            border-top: 2px dashed #cbd5e0;
+            margin: 25px 0 15px;
+        }
+        .footer-note {
+            text-align: center;
+            color: #7f8c8d;
+            font-size: 0.9rem;
+            margin-top: 30px;
+            border-top: 1px solid #e2e8f0;
+            padding-top: 20px;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>🧪 تست دستی State Manager (منطق پایه)</h1>
+    <p>این فایل برای تست ایزوله و دستی <code>core/state/state-manager.js</code> طراحی شده است. تمام تست‌ها با دکمه قابل اجرا هستند و خروجی در کنسول مجازی نمایش داده می‌شود.</p>
+
+    <div class="status-box" id="initStatus">
+        ⚡ در انتظار مقداردهی اولیه...
+    </div>
+
+    <div class="section">
+        <h2>📦 ۱. مقداردهی اولیه State</h2>
+        <div class="button-group">
+            <button id="initBtn" class="success">📦 مقداردهی اولیه (init)</button>
+            <button id="showStateBtn" class="secondary">👁 نمایش State فعلی</button>
+            <button id="resetBtn" class="warning">🔄 ریست State</button>
+        </div>
+        <div class="output" id="output">برای مشاهده خروجی، دکمه‌ها را کلیک کنید...</div>
+    </div>
+
+    <hr>
+
+    <div class="section">
+        <h2>🧪 ۲. تست‌های ایزوله منطق State</h2>
+
+        <!-- تست ۱: set/get ساده -->
+        <div class="test-row">
+            <div class="test-title">✅ تست ۱: set/get ساده <span class="success-badge" id="badge1">منتظر اجرا</span></div>
+            <div class="test-desc">مقداردهی یک فیلد و بازیابی آن. باید مقدار ذخیره‌شده با مقدار اصلی برابر باشد.</div>
+            <button id="test1Btn" class="secondary">اجرای تست ۱</button>
+        </div>
+
+        <!-- تست ۲: به‌روزرسانی partial -->
+        <div class="test-row">
+            <div class="test-title">✅ تست ۲: به‌روزرسانی جزئی (partial update) <span class="success-badge" id="badge2">منتظر اجرا</span></div>
+            <div class="test-desc">تنها فیلد مورد نظر تغییر کند و سایر فیلدها دست‌نخورده باقی بمانند.</div>
+            <button id="test2Btn" class="secondary">اجرای تست ۲</button>
+        </div>
+
+        <!-- تست ۳: Immutability (تغییرناپذیری) -->
+        <div class="test-row">
+            <div class="test-title">✅ تست ۳: بررسی Immutability <span class="success-badge" id="badge3">منتظر اجرا</span></div>
+            <div class="test-desc">شیء برگشتی از getState نباید با تغییر مستقیم، state اصلی را تغییر دهد.</div>
+            <button id="test3Btn" class="secondary">اجرای تست ۳</button>
+        </div>
+
+        <!-- تست ۴: لایه عمیق (deep object) -->
+        <div class="test-row">
+            <div class="test-title">✅ تست ۴: به‌روزرسانی آبجکت تو در تو <span class="success-badge" id="badge4">منتظر اجرا</span></div>
+            <div class="test-desc">تغییر یک فیلد در عمق آبجکت، بدون تأثیر بر بقیه ساختار.</div>
+            <button id="test4Btn" class="secondary">اجرای تست ۴</button>
+        </div>
+
+        <!-- تست ۵: مدیریت آرایه (push بدون تغییر مستقیم) -->
+        <div class="test-row">
+            <div class="test-title">✅ تست ۵: افزودن به آرایه (immutable) <span class="success-badge" id="badge5">منتظر اجرا</span></div>
+            <div class="test-desc">افزودن آیتم به آرایه بدون تغییر مستقیم آرایه اصلی.</div>
+            <button id="test5Btn" class="secondary">اجرای تست ۵</button>
+        </div>
+
+        <!-- تست ۶: مقدار نامعتبر (undefined) -->
+        <div class="test-row">
+            <div class="test-title">⚠ تست ۶: مقدار نامعتبر (undefined) <span class="fail-badge" id="badge6">منتظر اجرا</span></div>
+            <div class="test-desc">تلاش برای set کردن undefined باید نادیده گرفته شود یا مقدار پیش‌فرض برگرداند.</div>
+            <button id="test6Btn" class="secondary">اجرای تست ۶</button>
+        </div>
+
+        <!-- تست ۷: بازگشت به حالت پیش‌فرض -->
+        <div class="test-row">
+            <div class="test-title">🔄 تست ۷: بازگشت به initialState <span class="success-badge" id="badge7">منتظر اجرا</span></div>
+            <div class="test-desc">پس از تغییرات، فراخوانی resetState باید state را به initialState برگرداند.</div>
+            <button id="test7Btn" class="secondary">اجرای تست ۷</button>
+        </div>
+    </div>
+
+    <hr>
+
+    <div class="footer-note">
+        🔬 این تست‌ها به صورت دستی و با دکمه اجرا می‌شوند. هر تست باید نتیجه سبز (موفق) یا قرمز (ناموفق) را نشان دهد.
+    </div>
+</div>
+
+<script>
+    // ---------- State Manager ساده (برای تست) ----------
+    class StateManager {
+        constructor(initialState = {}) {
+            this._state = this._deepClone(initialState);
+            this._initialState = this._deepClone(initialState);
+            this._listeners = [];
+        }
+
+        // کلون عمیق برای حفظ immutable
+        _deepClone(obj) {
+            if (obj === null || typeof obj !== 'object') return obj;
+            if (Array.isArray(obj)) {
+                return obj.map(item => this._deepClone(item));
+            }
+            const cloned = {};
+            for (const key in obj) {
+                if (Object.prototype.hasOwnProperty.call(obj, key)) {
+                    cloned[key] = this._deepClone(obj[key]);
+                }
+            }
+            return cloned;
+        }
+
+        getState() {
+            return this._deepClone(this._state);
+        }
+
+        setState(newState) {
+            if (!newState || typeof newState !== 'object') {
+                console.warn('setState: مقدار نامعتبر');
+                return false;
+            }
+            // ترکیب عمیق (merge)
+            this._state = this._deepMerge(this._state, newState);
+            this._notify();
+            return true;
+        }
+
+        _deepMerge(target, source) {
+            const output = this._deepClone(target);
+            for (const key in source) {
+                if (Object.prototype.hasOwnProperty.call(source, key)) {
+                    if (source[key] !== null && typeof source[key] === 'object' && !Array.isArray(source[key])) {
+                        if (!output[key] || typeof output[key] !== 'object') {
+                            output[key] = {};
+                        }
+                        output[key] = this._deepMerge(output[key], source[key]);
+                    } else {
+                        output[key] = this._deepClone(source[key]);
+                    }
+                }
+            }
+            return output;
+        }
+
+        resetState() {
+            this._state = this._deepClone(this._initialState);
+            this._notify();
+        }
+
+        subscribe(listener) {
+            this._listeners.push(listener);
+            return () => {
+                this._listeners = this._listeners.filter(l => l !== listener);
+            };
+        }
+
+        _notify() {
+            this._listeners.forEach(listener => listener(this.getState()));
+        }
+    }
+
+    // ---------- State اولیه برای تست ----------
+    const initialState = {
+        user: {
+            name: 'علی',
+            level: 1,
+            settings: {
+                theme: 'light',
+                sound: true
+            }
+        },
+        lessons: ['درس ۱', 'درس ۲'],
+        progress: {
+            completed: 0,
+            total: 10
+        },
+        meta: {
+            lastVisit: null
+        }
+    };
+
+    // ---------- ایجاد instance StateManager ----------
+    let stateManager = new StateManager(initialState);
+    const logOutput = document.getElementById('output');
+    const initStatus = document.getElementById('initStatus');
+
+    // تابع به‌روزرسانی خروجی
+    function updateOutput(message, append = false) {
+        if (append) {
+            logOutput.innerHTML += '\n' + message;
+        } else {
+            logOutput.innerHTML = message;
+        }
+        logOutput.scrollTop = logOutput.scrollHeight;
+    }
+
+    // تابع بررسی badge
+    function setBadge(badgeId, status, message = '') {
+        const badge = document.getElementById(badgeId);
+        if (badge) {
+            badge.className = status ? 'success-badge' : 'fail-badge';
+            badge.textContent = status ? '✓ موفق' : (message || '✗ ناموفق');
+        }
+    }
+
+    // نمایش state اولیه
+    function showCurrentState() {
+        const state = stateManager.getState();
+        updateOutput(JSON.stringify(state, null, 2));
+    }
+
+    // ---------- دکمه‌های عمومی ----------
+    document.getElementById('initBtn').addEventListener('click', () => {
+        stateManager = new StateManager(initialState);
+        updateOutput('✅ State با initialState مقداردهی شد:\n' + JSON.stringify(stateManager.getState(), null, 2));
+        initStatus.innerHTML = '✅ State فعال است';
+    });
+
+    document.getElementById('showStateBtn').addEventListener('click', () => {
+        showCurrentState();
+    });
+
+    document.getElementById('resetBtn').addEventListener('click', () => {
+        stateManager.resetState();
+        updateOutput('🔄 State به initialState بازگشت:\n' + JSON.stringify(stateManager.getState(), null, 2));
+        initStatus.innerHTML = '🔄 State ریست شد';
+        // ریست کردن badgeها
+        for (let i = 1; i <= 7; i++) {
+            const b = document.getElementById(`badge${i}`);
+            if (b) {
+                b.className = 'success-badge';
+                b.textContent = 'منتظر اجرا';
+            }
+        }
+    });
+
+    // ---------- تست ۱: set/get ساده ----------
+    document.getElementById('test1Btn').addEventListener('click', () => {
+        try {
+            const oldState = stateManager.getState();
+            stateManager.setState({ user: { name: 'محمد' } });
+            const newState = stateManager.getState();
+
+            if (newState.user.name === 'محمد' && oldState.user.name === 'علی') {
+                updateOutput('✅ تست ۱ موفق: نام کاربر به "محمد" تغییر کرد.\n' + JSON.stringify(newState, null, 2));
+                setBadge('badge1', true);
+            } else {
+                updateOutput('❌ تست ۱ ناموفق: مقدار تغییر نکرده یا نادرست است.');
+                setBadge('badge1', false);
+            }
+        } catch (e) {
+            updateOutput('❌ خطا در تست ۱: ' + e.message);
+            setBadge('badge1', false);
+        }
+    });
+
+    // ---------- تست ۲: partial update ----------
+    document.getElementById('test2Btn').addEventListener('click', () => {
+        try {
+            stateManager.setState({ user: { level: 5 } });
+            const state = stateManager.getState();
+            // بررسی: name نباید تغییر کند، level باید 5 شود
+            if (state.user.name === 'محمد' && state.user.level === 5 && state.user.settings.theme === 'light') {
+                updateOutput('✅ تست ۲ موفق: فقط level به ۵ تغییر کرد، بقیه مقادیر دست‌نخورده:\n' + JSON.stringify(state, null, 2));
+                setBadge('badge2', true);
+            } else {
+                updateOutput('❌ تست ۲ ناموفق: سایر فیلدها تغییر کرده‌اند یا level درست تنظیم نشده.');
+                setBadge('badge2', false);
+            }
+        } catch (e) {
+            updateOutput('❌ خطا در تست ۲: ' + e.message);
+            setBadge('badge2', false);
+        }
+    });
+
+    // ---------- تست ۳: Immutability ----------
+    document.getElementById('test3Btn').addEventListener('click', () => {
+        try {
+            const beforeState = stateManager.getState();
+            // تغییر مستقیم state گرفته شده
+            beforeState.user.name = 'تغییر مستقیم';
+            const afterState = stateManager.getState();
+
+            if (afterState.user.name !== 'تغییر مستقیم' && afterState.user.name === 'محمد') {
+                updateOutput('✅ تست ۳ موفق: تغییر مستقیم روی state تأثیری نداشت. مقدار still محمد است.');
+                setBadge('badge3', true);
+            } else {
+                updateOutput('❌ تست ۳ ناموفق: state اصلی با تغییر مستقیم تغییر کرد!');
+                setBadge('badge3', false);
+            }
+        } catch (e) {
+            updateOutput('❌ خطا در تست ۳: ' + e.message);
+            setBadge('badge3', false);
+        }
+    });
+
+    // ---------- تست ۴: آبجکت تو در تو ----------
+    document.getElementById('test4Btn').addEventListener('click', () => {
+        try {
+            stateManager.setState({ user: { settings: { theme: 'dark' } } });
+            const state = stateManager.getState();
+
+            if (state.user.settings.theme === 'dark' && state.user.settings.sound === true) {
+                updateOutput('✅ تست ۴ موفق: theme به dark تغییر کرد، sound دست‌نخورده:\n' + JSON.stringify(state, null, 2));
+                setBadge('badge4', true);
+            } else {
+                updateOutput('❌ تست ۴ ناموفق: sound تغییر کرده یا theme درست تنظیم نشده.');
+                setBadge('badge4', false);
+            }
+        } catch (e) {
+            updateOutput('❌ خطا در تست ۴: ' + e.message);
+            setBadge('badge4', false);
+        }
+    });
+
+    // ---------- تست ۵: آرایه (immutable) ----------
+    document.getElementById('test5Btn').addEventListener('click', () => {
+        try {
+            const beforeState = stateManager.getState();
+            stateManager.setState({ lessons: [...beforeState.lessons, 'درس ۳'] });
+            const afterState = stateManager.getState();
+
+            if (afterState.lessons.length === 3 && afterState.lessons.includes('درس ۳')) {
+                // بررسی اینکه آرایه قبلی تغییر نکرده (ایمیوتبلیتی)
+                if (beforeState.lessons.length === 2 && !beforeState.lessons.includes('درس ۳')) {
+                    updateOutput('✅ تست ۵ موفق: آرایه جدید شامل درس ۳ است و آرایه قبلی unchanged:\n' + JSON.stringify(afterState, null, 2));
+                    setBadge('badge5', true);
+                } else {
+                    updateOutput('❌ تست ۵: آرایه قبلی تغییر کرده است!');
+                    setBadge('badge5', false);
+                }
+            } else {
+                updateOutput('❌ تست ۵ ناموفق: افزودن به آرایه درست کار نکرد.');
+                setBadge('badge5', false);
+            }
+        } catch (e) {
+            updateOutput('❌ خطا در تست ۵: ' + e.message);
+            setBadge('badge5', false);
+        }
+    });
+
+    // ---------- تست ۶: مقدار نامعتبر ----------
+    document.getElementById('test6Btn').addEventListener('click', () => {
+        try {
+            const beforeState = stateManager.getState();
+            const result = stateManager.setState(undefined); // undefined
+            const afterState = stateManager.getState();
+
+            // انتظار داریم state تغییر نکند
+            if (!result && JSON.stringify(beforeState) === JSON.stringify(afterState)) {
+                updateOutput('✅ تست ۶ موفق: set با undefined نادیده گرفته شد و state unchanged.');
+                setBadge('badge6', true);
+            } else {
+                updateOutput('❌ تست ۶ ناموفق: set با undefined باعث تغییر state شد.');
+                setBadge('badge6', false);
+            }
+        } catch (e) {
+            updateOutput('❌ خطا در تست ۶: ' + e.message);
+            setBadge('badge6', false);
+        }
+    });
+
+    // ---------- تست ۷: بازگشت به initialState ----------
+    document.getElementById('test7Btn').addEventListener('click', () => {
+        try {
+            stateManager.resetState();
+            const state = stateManager.getState();
+
+            if (state.user.name === 'علی' && state.user.level === 1 && state.lessons.length === 2) {
+                updateOutput('✅ تست ۷ موفق: state به initialState بازگشت:\n' + JSON.stringify(state, null, 2));
+                setBadge('badge7', true);
+            } else {
+                updateOutput('❌ تست ۷ ناموفق: بازگشت به initialState درست کار نکرد.');
+                setBadge('badge7', false);
+            }
+        } catch (e) {
+            updateOutput('❌ خطا در تست ۷: ' + e.message);
+            setBadge('badge7', false);
+        }
+    });
+
+    // مقداردهی اولیه
+    initStatus.innerHTML = '✅ State آماده است. برای شروع، دکمه مقداردهی اولیه را بزنید.';
+    updateOutput('👈 برای شروع، دکمه "مقداردهی اولیه" را کلیک کنید.');
+</script>
+</body>
+</html>
