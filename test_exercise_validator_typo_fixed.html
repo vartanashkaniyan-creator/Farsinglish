@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>تست لبه‌های اعتبارسنجی - رفع مشکل تایپو - Farsinglish</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; direction: ltr; max-width: 900px; margin: 0 auto; padding: 20px; background: #f5f5f5; }
+        h1 { color: #2c3e50; text-align: center; border-bottom: 3px solid #3498db; padding-bottom: 10px; }
+        .test-case { background: #f8f9fa; border-left: 4px solid #27ae60; padding: 15px; margin: 15px 0; font-family: 'Courier New', monospace; border-radius: 0 8px 8px 0; }
+        .passed { background: #d4edda; border-left-color: #28a745; }
+        .failed { background: #f8d7da; border-left-color: #dc3545; }
+        .btn-run { background: #3498db; color: white; border: none; padding: 12px 30px; font-size: 18px; border-radius: 50px; cursor: pointer; display: block; margin: 20px auto; }
+        .btn-test { background: #27ae60; color: white; border: none; padding: 5px 15px; border-radius: 20px; cursor: pointer; margin: 5px; }
+        .manual-section { background: #fff3cd; padding: 20px; border-radius: 12px; margin: 30px 0; }
+        pre { background: #2d2d2d; color: #f8f8f2; padding: 10px; border-radius: 5px; }
+    </style>
+</head>
+<body>
+    <h1>🧪 تست لبه اعتبارسنجی - رفع مشکل تشخصی تایپو</h1>
+    
+    <button class="btn-run" id="runAllBtn">▶ اجرای تمام تست‌ها</button>
+
+    <div id="results"></div>
+
+    <script>
+        (function() {
+            // ==================== ماژول اعتبارسنجی با الگوریتم لووناشتاین دقیق ====================
+            const ExerciseValidator = {
+                validate: function(answer, exercise, type) {
+                    if (exercise === null || exercise === undefined) return { valid: false, error: 'exercise_required' };
+                    if (typeof exercise !== 'object') return { valid: false, error: 'invalid_exercise' };
+                    
+                    const exerciseType = type || exercise.type;
+                    if (!exerciseType) return { valid: false, error: 'unknown_exercise_type' };
+                    
+                    if (answer === null || answer === undefined) {
+                        if (exerciseType === 'pronunciation') return { valid: true, simulated: true };
+                        return { valid: false, error: 'answer_required' };
+                    }
+                    
+                    switch(exerciseType) {
+                        case 'fill-blank': return this.validateFillBlank(answer, exercise);
+                        default: return { valid: false, error: 'unknown_exercise_type' };
+                    }
+                },
+
+                validateFillBlank: function(answer, exercise) {
+                    if (typeof answer !== 'string') return { valid: false, error: 'answer_must_be_string' };
+                    
+                    const trimmedAnswer = answer.trim();
+                    if (trimmedAnswer === '') return { valid: false, error: 'empty_answer' };
+                    if (!exercise.correctAnswer) return { valid: false, error: 'no_correct_answer' };
+                    
+                    const normalizedAnswer = trimmedAnswer.toLowerCase();
+                    const normalizedCorrect = exercise.correctAnswer.trim().toLowerCase();
+                    
+                    const isExactMatch = (normalizedAnswer === normalizedCorrect);
+                    
+                    // محاسبه شباهت لووناشتاین دقیق
+                    const similarity = this.levenshteinSimilarity(normalizedAnswer, normalizedCorrect);
+                    
+                    // آستانه شباهت برای تایپوهای مجاز (80%)
+                    const isSimilar = similarity >= 0.8;
+                    
+                    // لاگ برای دیباگ
+                    console.log(`Compare: "${normalizedAnswer}" vs "${normalizedCorrect}" = ${similarity}`);
+                    
+                    return { 
+                        valid: true, 
+                        correct: isExactMatch,
+                        similar: isSimilar,
+                        similarity: similarity,
+                        normalizedAnswer: normalizedAnswer
+                    };
+                },
+
+                // پیاده‌سازی دقیق الگوریتم لووناشتاین
+                levenshteinDistance: function(a, b) {
+                    if (a.length === 0) return b.length;
+                    if (b.length === 0) return a.length;
+                    
+                    const matrix = [];
+                    
+                    for (let i = 0; i <= b.length; i++) matrix[i] = [i];
+                    for (let j = 0; j <= a.length; j++) matrix[0][j] = j;
+                    
+                    for (let i = 1; i <= b.length; i++) {
+                        for (let j = 1; j <= a.length; j++) {
+                            const cost = a[j-1] === b[i-1] ? 0 : 1;
+                            matrix[i][j] = Math.min(
+                                matrix[i-1][j] + 1,
+                                matrix[i][j-1] + 1,
+                                matrix[i-1][j-1] + cost
+                            );
+                        }
+                    }
+                    
+                    return matrix[b.length][a.length];
+                },
+
+                levenshteinSimilarity: function(a, b) {
+                    if (!a || !b) return 0;
+                    const distance = this.levenshteinDistance(a, b);
+                    const maxLength = Math.max(a.length, b.length);
+                    if (maxLength === 0) return 1;
+                    return 1 - (distance / maxLength);
+                }
+            };
+
+            // ==================== تست تایپو با مقادیر مختلف ====================
+            const typoTests = [
+                {
+                    name: 'تست 1: "helo" vs "hello" (یک حرف کم)',
+                    input: { answer: 'helo', exercise: { type: 'fill-blank', correctAnswer: 'hello' } },
+                    expectedSimilar: true,
+                    expectedCorrect: false
+                },
+                {
+                    name: 'تست 2: "helloo" vs "hello" (یک حرف اضافه)',
+                    input: { answer: 'helloo', exercise: { type: 'fill-blank', correctAnswer: 'hello' } },
+                    expectedSimilar: true,
+                    expectedCorrect: false
+                },
+                {
+                    name: 'تست 3: "hillo" vs "hello" (یک حرف متفاوت)',
+                    input: { answer: 'hillo', exercise: { type: 'fill-blank', correctAnswer: 'hello' } },
+                    expectedSimilar: true,
+                    expectedCorrect: false
+                },
+                {
+                    name: 'تست 4: "HELO" (حروف بزرگ) vs "hello"',
+                    input: { answer: 'HELO', exercise: { type: 'fill-blank', correctAnswer: 'hello' } },
+                    expectedSimilar: true,
+                    expectedCorrect: false
+                },
+                {
+                    name: 'تست 5: "  helo  " (با فاصله) vs "hello"',
+                    input: { answer: '  helo  ', exercise: { type: 'fill-blank', correctAnswer: 'hello' } },
+                    expectedSimilar: true,
+                    expectedCorrect: false
+                },
+                {
+                    name: 'تست 6: "hello" دقیق vs "hello"',
+                    input: { answer: 'hello', exercise: { type: 'fill-blank', correctAnswer: 'hello' } },
+                    expectedSimilar: true,
+                    expectedCorrect: true
+                },
+                {
+                    name: 'تست 7: "xyz" (کاملاً متفاوت) vs "hello"',
+                    input: { answer: 'xyz', exercise: { type: 'fill-blank', correctAnswer: 'hello' } },
+                    expectedSimilar: false,
+                    expectedCorrect: false
+                },
+                {
+                    name: 'تست 8: "hell" (شباهت 80%) vs "hello"',
+                    input: { answer: 'hell', exercise: { type: 'fill-blank', correctAnswer: 'hello' } },
+                    expectedSimilar: true,  // 4/5 = 0.8
+                    expectedCorrect: false
+                }
+            ];
+
+            function runTest(test) {
+                try {
+                    const result = ExerciseValidator.validate(test.input.answer, test.input.exercise);
+                    
+                    let passed = true;
+                    if (test.expectedSimilar !== undefined && result.similar !== test.expectedSimilar) passed = false;
+                    if (test.expectedCorrect !== undefined && result.correct !== test.expectedCorrect) passed = false;
+                    
+                    return { passed, result, error: null };
+                } catch (error) {
+                    return { passed: false, result: null, error: error.message };
+                }
+            }
+
+            function displayResults() {
+                const resultsDiv = document.getElementById('results');
+                resultsDiv.innerHTML = '';
+                
+                let passedCount = 0;
+                
+                typoTests.forEach((test, index) => {
+                    const { passed, result, error } = runTest(test);
+                    if (passed) passedCount++;
+                    
+                    const testDiv = document.createElement('div');
+                    testDiv.className = `test-case ${passed ? 'passed' : 'failed'}`;
+                    
+                    let similarityText = '';
+                    if (result && result.similarity !== undefined) {
+                        similarityText = `<br><small>شباهت محاسبه شده: ${(result.similarity * 100).toFixed(1)}%</small>`;
+                    }
+                    
+                    testDiv.innerHTML = `
+                        <strong>${test.name}</strong><br>
+                        <small>ورودی: "${test.input.answer}" | صحیح: "${test.input.exercise.correctAnswer}"</small><br>
+                        ${error ? `<small style="color:red;">خطا: ${error}</small>` : `<small>خروجی: ${JSON.stringify(result)}</small>`}
+                        ${similarityText}
+                        <br><strong style="color: ${passed ? 'green' : 'red'}">${passed ? '✓ پاس' : '✗ شکست'}</strong>
+                    `;
+                    
+                    resultsDiv.appendChild(testDiv);
+                });
+                
+                const summaryDiv = document.createElement('div');
+                summaryDiv.style.marginTop = '20px';
+                summaryDiv.style.padding = '20px';
+                summaryDiv.style.background = '#2c3e50';
+                summaryDiv.style.color = 'white';
+                summaryDiv.style.borderRadius = '12px';
+                summaryDiv.innerHTML = `
+                    <h3>📊 نتیجه: ${passedCount} / ${typoTests.length}</h3>
+                    <div style="font-size: 24px;">${passedCount === typoTests.length ? '✅ همه پاس شدند' : '⚠️ برخی شکست خوردند'}</div>
+                `;
+                resultsDiv.appendChild(summaryDiv);
+            }
+
+            // دکمه‌های دستی
+            const manualDiv = document.createElement('div');
+            manualDiv.className = 'manual-section';
+            manualDiv.innerHTML = '<h3>🎮 اجرای دستی تست‌ها</h3>';
+            
+            typoTests.forEach((test, index) => {
+                const btn = document.createElement('button');
+                btn.className = 'btn-test';
+                btn.textContent = `تست ${index + 1}`;
+                btn.onclick = () => {
+                    const result = ExerciseValidator.validate(test.input.answer, test.input.exercise);
+                    alert(`نتیجه تست ${index + 1}:\n${JSON.stringify(result, null, 2)}`);
+                };
+                manualDiv.appendChild(btn);
+            });
+            
+            document.body.insertBefore(manualDiv, document.getElementById('results'));
+
+            window.onload = displayResults;
+            document.getElementById('runAllBtn').addEventListener('click', displayResults);
+        })();
+    </script>
+</body>
+</html>
