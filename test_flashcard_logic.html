@@ -1,0 +1,511 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>تست فلش کارت - Farsinglish</title>
+    <style>
+        body {
+            font-family: 'Vazir', 'Tahoma', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            margin: 0;
+            padding: 20px;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .container {
+            max-width: 800px;
+            width: 100%;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            padding: 30px;
+            margin: 20px auto;
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 24px;
+            border-bottom: 2px solid #667eea;
+            padding-bottom: 10px;
+        }
+        h2 {
+            color: #555;
+            font-size: 18px;
+            margin-top: 25px;
+            margin-bottom: 15px;
+        }
+        .card {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+            border-right: 4px solid #667eea;
+        }
+        .flashcard-preview {
+            background: #fff;
+            border: 2px solid #667eea;
+            border-radius: 15px;
+            padding: 40px;
+            margin: 20px 0;
+            text-align: center;
+            font-size: 24px;
+            font-weight: bold;
+            color: #333;
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.2);
+            transition: all 0.3s;
+        }
+        .flashcard-preview.flipped {
+            background: #667eea;
+            color: white;
+            transform: scale(1.02);
+        }
+        button {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-size: 14px;
+            cursor: pointer;
+            margin: 5px;
+            transition: all 0.3s;
+            font-family: 'Vazir', 'Tahoma', sans-serif;
+        }
+        button:hover {
+            background: #764ba2;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+        .test-row {
+            background: #fff;
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 15px;
+            border: 1px solid #ddd;
+        }
+        .test-title {
+            font-weight: bold;
+            color: #667eea;
+            margin-bottom: 10px;
+        }
+        .success {
+            color: #28a745;
+            font-weight: bold;
+        }
+        .error {
+            color: #dc3545;
+            font-weight: bold;
+        }
+        .output {
+            background: #272822;
+            color: #f8f8f2;
+            padding: 10px;
+            border-radius: 5px;
+            font-family: monospace;
+            margin-top: 10px;
+            white-space: pre-wrap;
+            direction: ltr;
+            text-align: left;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 15px 0;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: center;
+        }
+        th {
+            background: #667eea;
+            color: white;
+        }
+        .summary {
+            background: #28a745;
+            color: white;
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+            font-size: 18px;
+            font-weight: bold;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎴 تست فلش کارت - Farsinglish</h1>
+        <p style="text-align: center; color: #666; margin-bottom: 30px;">تست دستی منطق فلش کارت با دکمه‌های کنترلی</p>
+
+        <div class="flashcard-preview" id="previewCard">
+            👆 برای تست، یک سناریو را اجرا کنید
+        </div>
+
+        <!-- FlashCard Class -->
+        <div class="card">
+            <h2>📦 کلاس FlashCard</h2>
+            <button onclick="runAllTests()">▶ اجرای همه تست‌ها</button>
+            <button onclick="resetAll()">🔄 ریست همه</button>
+        </div>
+
+        <!-- Test 1: ساخت فلش کارت -->
+        <div class="test-row" id="test1">
+            <div class="test-title">🧪 تست ۱: ساخت فلش کارت معتبر</div>
+            <button onclick="testCreateValidCard()">اجرای تست</button>
+            <button onclick="resetTest(1)">ریزست</button>
+            <div id="output1" class="output">منتظر اجرای تست...</div>
+        </div>
+
+        <!-- Test 2: Flip کارت -->
+        <div class="test-row" id="test2">
+            <div class="test-title">🔄 تست ۲: Flip کارت</div>
+            <button onclick="testFlipCard()">اجرای تست</button>
+            <button onclick="resetTest(2)">ریزست</button>
+            <div id="output2" class="output">منتظر اجرای تست...</div>
+        </div>
+
+        <!-- Test 3: Reveal پاسخ -->
+        <div class="test-row" id="test3">
+            <div class="test-title">🔍 تست ۳: Reveal پاسخ</div>
+            <button onclick="testRevealAnswer()">اجرای تست</button>
+            <button onclick="resetTest(3)">ریزست</button>
+            <div id="output3" class="output">منتظر اجرای تست...</div>
+        </div>
+
+        <!-- Test 4: Reset کارت -->
+        <div class="test-row" id="test4">
+            <div class="test-title">🔄 تست ۴: Reset کارت</div>
+            <button onclick="testResetCard()">اجرای تست</button>
+            <button onclick="resetTest(4)">ریزست</button>
+            <div id="output4" class="output">منتظر اجرای تست...</div>
+        </div>
+
+        <!-- Test 5: Edge Cases -->
+        <div class="test-row" id="test5">
+            <div class="test-title">⚠️ تست ۵: Edge Cases</div>
+            <button onclick="testEdgeCases()">اجرای تست</button>
+            <button onclick="resetTest(5)">ریزست</button>
+            <div id="output5" class="output">منتظر اجرای تست...</div>
+        </div>
+
+        <!-- خلاصه نتایج -->
+        <div id="summary" class="summary">
+            ✅ مجموع تست‌ها: ۰ از ۵ موفق
+        </div>
+    </div>
+
+    <script>
+        // FlashCard Class
+        class FlashCard {
+            constructor(question, answer, options = {}) {
+                if (!question || typeof question !== 'string') {
+                    throw new Error('سوال معتبر نیست');
+                }
+                if (!answer || typeof answer !== 'string') {
+                    throw new Error('پاسخ معتبر نیست');
+                }
+                
+                this.id = options.id || Date.now() + Math.random().toString(36);
+                this.question = question;
+                this.answer = answer;
+                this.isFlipped = false;
+                this.isAnswered = false;
+                this.userAnswer = null;
+                this.isCorrect = null;
+                this.createdAt = new Date();
+                this.lastReviewed = null;
+            }
+
+            flip() {
+                this.isFlipped = !this.isFlipped;
+                return this.isFlipped;
+            }
+
+            reveal() {
+                this.isFlipped = true;
+                return this.answer;
+            }
+
+            reset() {
+                this.isFlipped = false;
+                this.isAnswered = false;
+                this.userAnswer = null;
+                this.isCorrect = null;
+                this.lastReviewed = null;
+            }
+
+            checkAnswer(userAnswer) {
+                this.userAnswer = userAnswer;
+                this.isAnswered = true;
+                this.lastReviewed = new Date();
+                
+                // مقایسه ساده (بدون در نظر گرفتن case و space)
+                const normalizedUser = userAnswer.trim().toLowerCase();
+                const normalizedCorrect = this.answer.trim().toLowerCase();
+                this.isCorrect = normalizedUser === normalizedCorrect;
+                
+                return this.isCorrect;
+            }
+
+            getState() {
+                return {
+                    id: this.id,
+                    question: this.question,
+                    answer: this.answer,
+                    isFlipped: this.isFlipped,
+                    isAnswered: this.isAnswered,
+                    userAnswer: this.userAnswer,
+                    isCorrect: this.isCorrect,
+                    createdAt: this.createdAt,
+                    lastReviewed: this.lastReviewed
+                };
+            }
+        }
+
+        // Test Results
+        let testResults = {
+            1: false,
+            2: false,
+            3: false,
+            4: false,
+            5: false
+        };
+
+        // Helper function for logging
+        function log(outputId, message, isSuccess = true) {
+            const output = document.getElementById(outputId);
+            if (output) {
+                const icon = isSuccess ? '✅' : '❌';
+                output.innerHTML = `${icon} ${message}`;
+            }
+        }
+
+        // Update summary
+        function updateSummary() {
+            const total = Object.values(testResults).filter(v => v).length;
+            document.getElementById('summary').innerHTML = `✅ مجموع تست‌ها: ${total} از ۵ موفق`;
+            
+            // Update preview card
+            const preview = document.getElementById('previewCard');
+            if (total === 5) {
+                preview.innerHTML = '🎉 همه تست‌ها موفق! فلش کارت سالم است';
+                preview.classList.add('flipped');
+            } else {
+                preview.innerHTML = `📊 ${total} از ۵ تست موفق`;
+                preview.classList.remove('flipped');
+            }
+        }
+
+        // Reset single test
+        function resetTest(testNumber) {
+            testResults[testNumber] = false;
+            document.getElementById(`output${testNumber}`).innerHTML = 'منتظر اجرای تست...';
+            updateSummary();
+        }
+
+        // Reset all tests
+        function resetAll() {
+            for (let i = 1; i <= 5; i++) {
+                testResults[i] = false;
+                document.getElementById(`output${i}`).innerHTML = 'منتظر اجرای تست...';
+            }
+            updateSummary();
+        }
+
+        // Test 1: Create Valid Card
+        function testCreateValidCard() {
+            try {
+                // تست 1.1: ساخت با مقادیر معتبر
+                const card1 = new FlashCard('What is "book" in Persian?', 'کتاب');
+                if (card1.question !== 'What is "book" in Persian?') throw new Error('سوال درست ذخیره نشده');
+                if (card1.answer !== 'کتاب') throw new Error('پاسخ درست ذخیره نشده');
+                if (card1.isFlipped !== false) throw new Error('isFlipped باید false باشد');
+                
+                // تست 1.2: ساخت با ID دلخواه
+                const card2 = new FlashCard('Q2', 'A2', { id: 'test123' });
+                if (card2.id !== 'test123') throw new Error('ID دلخواه اعمال نشده');
+                
+                // تست 1.3: خطا با ورودی نامعتبر
+                let error1 = false, error2 = false;
+                try { new FlashCard('', 'answer'); } catch(e) { error1 = true; }
+                try { new FlashCard('question', ''); } catch(e) { error2 = true; }
+                
+                if (!error1 || !error2) throw new Error('اعتبارسنجی ورودی کار نمی‌کند');
+                
+                log('output1', 'همه تست‌های ساخت فلش کارت موفق', true);
+                testResults[1] = true;
+            } catch (error) {
+                log('output1', `خطا: ${error.message}`, false);
+                testResults[1] = false;
+            }
+            updateSummary();
+        }
+
+        // Test 2: Flip Card
+        function testFlipCard() {
+            try {
+                const card = new FlashCard('Question', 'Answer');
+                
+                // تست 2.1: Flip اول
+                const result1 = card.flip();
+                if (result1 !== true || card.isFlipped !== true) {
+                    throw new Error('Flip اول کار نمی‌کند');
+                }
+                
+                // تست 2.2: Flip دوم (برگشتن)
+                const result2 = card.flip();
+                if (result2 !== false || card.isFlipped !== false) {
+                    throw new Error('Flip دوم (برگشت) کار نمی‌کند');
+                }
+                
+                // تست 2.3: Flip متوالی
+                card.flip();
+                card.flip();
+                card.flip();
+                if (card.isFlipped !== true) {
+                    throw new Error('Flip متوالی درست کار نمی‌کند');
+                }
+                
+                log('output2', 'همه تست‌های Flip موفق', true);
+                testResults[2] = true;
+            } catch (error) {
+                log('output2', `خطا: ${error.message}`, false);
+                testResults[2] = false;
+            }
+            updateSummary();
+        }
+
+        // Test 3: Reveal Answer
+        function testRevealAnswer() {
+            try {
+                const card = new FlashCard('Question', 'Secret Answer');
+                
+                // تست 3.1: Reveal اولیه
+                const answer = card.reveal();
+                if (answer !== 'Secret Answer') {
+                    throw new Error('Reveal پاسخ درست را برنمی‌گرداند');
+                }
+                if (card.isFlipped !== true) {
+                    throw new Error('Reveal باید isFlipped را true کند');
+                }
+                
+                // تست 3.2: Reveal مجدد
+                const answer2 = card.reveal();
+                if (answer2 !== 'Secret Answer') {
+                    throw new Error('Reveal مجدد پاسخ متفاوت می‌دهد');
+                }
+                
+                // تست 3.3: Check after reveal
+                card.checkAnswer('wrong');
+                const answer3 = card.reveal();
+                if (answer3 !== 'Secret Answer') {
+                    throw new Error('Reveal بعد از پاسخ کار نمی‌کند');
+                }
+                
+                log('output3', 'همه تست‌های Reveal موفق', true);
+                testResults[3] = true;
+            } catch (error) {
+                log('output3', `خطا: ${error.message}`, false);
+                testResults[3] = false;
+            }
+            updateSummary();
+        }
+
+        // Test 4: Reset Card
+        function testResetCard() {
+            try {
+                const card = new FlashCard('Question', 'Answer');
+                
+                // تغییر وضعیت کارت
+                card.flip();
+                card.checkAnswer('wrong');
+                
+                // تست 4.1: Reset
+                card.reset();
+                if (card.isFlipped !== false) {
+                    throw new Error('Reset isFlipped را false نکرده');
+                }
+                if (card.isAnswered !== false) {
+                    throw new Error('Reset isAnswered را false نکرده');
+                }
+                if (card.userAnswer !== null) {
+                    throw new Error('Reset userAnswer را پاک نکرده');
+                }
+                if (card.isCorrect !== null) {
+                    throw new Error('Reset isCorrect را پاک نکرده');
+                }
+                
+                // تست 4.2: Reset بعد از پاسخ درست
+                const card2 = new FlashCard('Q2', 'A2');
+                card2.checkAnswer('A2');
+                card2.reset();
+                if (card2.isCorrect !== null) {
+                    throw new Error('Reset بعد از پاسخ درست کار نمی‌کند');
+                }
+                
+                log('output4', 'همه تست‌های Reset موفق', true);
+                testResults[4] = true;
+            } catch (error) {
+                log('output4', `خطا: ${error.message}`, false);
+                testResults[4] = false;
+            }
+            updateSummary();
+        }
+
+        // Test 5: Edge Cases
+        function testEdgeCases() {
+            try {
+                // تست 5.1: CheckAnswer با مقادیر مختلف
+                const card = new FlashCard('Question', 'Hello');
+                
+                const test1 = card.checkAnswer('Hello');
+                if (test1 !== true || card.isCorrect !== true) throw new Error('پاسخ درست تشخیص داده نشده');
+                
+                card.reset();
+                const test2 = card.checkAnswer('hello');
+                if (test2 !== true) throw new Error('Case sensitivity مشکل دارد');
+                
+                card.reset();
+                const test3 = card.checkAnswer('  Hello  ');
+                if (test3 !== true) throw new Error('فضای اضافی مدیریت نشده');
+                
+                // تست 5.2: پاسخ خالی
+                card.reset();
+                const test4 = card.checkAnswer('');
+                if (test4 !== false) throw new Error('پاسخ خالی باید false برگرداند');
+                
+                // تست 5.3: getState
+                const card2 = new FlashCard('Q', 'A', { id: 'state-test' });
+                card2.flip();
+                const state = card2.getState();
+                
+                if (state.id !== 'state-test') throw new Error('state.id مشکل دارد');
+                if (state.question !== 'Q') throw new Error('state.question مشکل دارد');
+                if (state.answer !== 'A') throw new Error('state.answer مشکل دارد');
+                if (state.isFlipped !== true) throw new Error('state.isFlipped مشکل دارد');
+                
+                log('output5', 'همه Edge Cases با موفقیت تست شدند', true);
+                testResults[5] = true;
+            } catch (error) {
+                log('output5', `خطا: ${error.message}`, false);
+                testResults[5] = false;
+            }
+            updateSummary();
+        }
+
+        // Run all tests
+        function runAllTests() {
+            testCreateValidCard();
+            testFlipCard();
+            testRevealAnswer();
+            testResetCard();
+            testEdgeCases();
+        }
+    </script>
+</body>
+</html>
