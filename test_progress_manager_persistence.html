@@ -1,0 +1,379 @@
+```html
+<!DOCTYPE html>
+<html dir="rtl" lang="fa">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>تست پیشرفت管理器 - Farsinglish</title>
+    <style>
+        body {
+            font-family: system-ui, 'Segoe UI', Roboto, sans-serif;
+            background: #f5f7fb;
+            margin: 0;
+            padding: 20px;
+            color: #1e293b;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        h1 {
+            font-size: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: #0f172a;
+            border-bottom: 2px solid #cbd5e1;
+            padding-bottom: 12px;
+        }
+        .card {
+            background: white;
+            border-radius: 24px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+            border: 1px solid #e2e8f0;
+        }
+        .test-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+        .test-title {
+            font-weight: 600;
+            background: #e0f2fe;
+            padding: 6px 14px;
+            border-radius: 40px;
+            font-size: 0.85rem;
+            color: #0369a1;
+        }
+        .btn {
+            background: #f1f5f9;
+            border: 1px solid #cbd5e1;
+            padding: 8px 16px;
+            border-radius: 40px;
+            font-size: 0.9rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: 0.1s;
+            margin: 4px;
+        }
+        .btn-primary {
+            background: #1e3a8a;
+            border-color: #1e3a8a;
+            color: white;
+        }
+        .btn-success {
+            background: #166534;
+            border-color: #166534;
+            color: white;
+    }
+        .btn:active {
+            transform: scale(0.97);
+        }
+        .log {
+            background: #0f172a;
+            color: #e2e8f0;
+            padding: 14px;
+            border-radius: 16px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.85rem;
+            white-space: pre-wrap;
+            direction: ltr;
+            text-align: left;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        .log-entry {
+            border-bottom: 1px solid #334155;
+            padding: 4px 0;
+            margin: 4px 0;
+        }
+        .progress-bar {
+            height: 8px;
+            background: #e2e8f0;
+            border-radius: 40px;
+            overflow: hidden;
+            margin: 16px 0 8px;
+        }
+        .progress-fill {
+            height: 100%;
+            background: #2563eb;
+            width: 0%;
+            transition: width 0.2s;
+        }
+        .status-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 40px;
+            font-size: 0.8rem;
+            font-weight: 500;
+        }
+        .status-pass { background: #bbf7d0; color: #14532d; }
+        .status-fail { background: #fecaca; color: #7f1d1d; }
+    </style>
+</head>
+<body>
+    <h1>📊 تست Progress Manager · ذخیره/بازیابی</h1>
+
+    <div class="card">
+        <div class="test-header">
+            <span class="test-title">🧪 ۱. ذخیره پیشرفت</span>
+            <button class="btn" id="btnSave">💾 ذخیره وضعیت فعلی</button>
+        </div>
+        <div class="test-header">
+            <span class="test-title">🧪 ۲. بارگذاری پیشرفت</span>
+            <button class="btn" id="btnLoad">📂 بارگذاری آخرین ذخیره</button>
+        </div>
+        <div class="test-header">
+            <span class="test-title">🧪 ۳. بازنشانی (کاربر جدید)</span>
+            <button class="btn" id="btnReset">🔄 بازنشانی به صفر</button>
+        </div>
+        <div class="test-header">
+            <span class="test-title">🧪 ۴. شبیه‌سازی پاسخ درست</span>
+            <button class="btn" id="btnCorrect">✅ پاسخ صحیح</button>
+            <button class="btn" id="btnWrong">❌ پاسخ غلط</button>
+        </div>
+    </div>
+
+    <!-- نمایش پیشرفت جاری -->
+    <div class="card">
+        <h3 style="margin-top:0">📈 پیشرفت جلسه جاری (درون‌حافظه)</h3>
+        <div><strong>درس‌های تکمیل‌شده:</strong> <span id="completedCount">۰</span></div>
+        <div><strong>امتیاز کل:</strong> <span id="totalXp">۰</span></div>
+        <div><strong>درس فعلی:</strong> <span id="currentLesson">lesson_1</span></div>
+        <div><strong>آخرین ذخیره:</strong> <span id="lastSaved">—</span></div>
+        <div class="progress-bar"><div class="progress-fill" id="progressFill" style="width:0%"></div></div>
+    </div>
+
+    <!-- نمایش وضعیت ذخیره‌شده -->
+    <div class="card">
+        <h3 style="margin-top:0">🗃️ داده‌های ذخیره‌شده (persisted)</h3>
+        <pre class="log" id="storageLog">هنوز ذخیره‌ای انجام نشده</pre>
+    </div>
+
+    <!-- گزارش تست -->
+    <div class="card">
+        <div class="test-header">
+            <span class="test-title">📋 گزارش عملیات</span>
+            <button class="btn" id="btnClearLog">🧹 پاک کردن لاگ</button>
+        </div>
+        <div class="log" id="logContainer"></div>
+    </div>
+
+    <script>
+        (function() {
+            // --- مدل ساده پیشرفت (progress-manager) ---
+            const STORAGE_KEY = 'farsinglish_progress_test';
+
+            // وضعیت پیشرفت جاری (در حافظه)
+            let currentProgress = {
+                completedLessons: [],
+                totalXp: 0,
+                currentLessonId: 'lesson_1',
+                lastUpdated: new Date().toISOString()
+            };
+
+            // --- توابع اصلی (تست‌شونده) ---
+            function saveProgress(progress) {
+                try {
+                    // شبیه‌سازی ذخیره در localStorage (به‌جای IndexedDB برای سادگی)
+                    const dataToStore = {
+                        ...progress,
+                        lastSaved: new Date().toLocaleTimeString('fa-IR')
+                    };
+                    localStorage.setItem(STORAGE_KEY, JSON.stringify(dataToStore));
+                    addLog(`💾 ذخیره انجام شد: ${progress.completedLessons.length} درس، XP: ${progress.totalXp}`);
+                    return true;
+                } catch (e) {
+                    addLog(`❌ خطا در ذخیره: ${e.message}`, 'error');
+                    return false;
+                }
+            }
+
+            function loadProgress() {
+                try {
+                    const raw = localStorage.getItem(STORAGE_KEY);
+                    if (!raw) {
+                        addLog('⚠️ داده‌ای برای بارگذاری وجود ندارد');
+                        return null;
+                    }
+                    const loaded = JSON.parse(raw);
+                    addLog(`📂 بارگذاری شد: ${loaded.completedLessons?.length || 0} درس، XP: ${loaded.totalXp || 0}`);
+                    return loaded;
+                } catch (e) {
+                    addLog(`❌ خطا در بارگذاری: ${e.message}`, 'error');
+                    return null;
+                }
+            }
+
+            function resetProgress() {
+                currentProgress = {
+                    completedLessons: [],
+                    totalXp: 0,
+                    currentLessonId: 'lesson_1',
+                    lastUpdated: new Date().toISOString()
+                };
+                updateUi();
+                addLog('🔄 پیشرفت به حالت اولیه بازنشانی شد');
+            }
+
+            function handleCorrectAnswer() {
+                // شبیه‌سازی پاسخ درست: اضافه کردن درس فعلی به completed اگر نبود، افزایش XP
+                const lessonId = currentProgress.currentLessonId;
+                if (!currentProgress.completedLessons.includes(lessonId)) {
+                    currentProgress.completedLessons.push(lessonId);
+                    currentProgress.totalXp += 10; // ۱۰ امتیاز برای درس جدید
+                    addLog(`✅ درس ${lessonId} تکمیل شد +۱۰ XP`);
+                    
+                    // رفتن به درس بعدی (ساده)
+                    const nextNum = parseInt(lessonId.split('_')[1] || '1') + 1;
+                    currentProgress.currentLessonId = `lesson_${nextNum}`;
+                } else {
+                    // درس تکراری، امتیاز کمتر
+                    currentProgress.totalXp += 2;
+                    addLog(`🔄 درس تکراری +۲ XP`);
+                }
+                updateUi();
+            }
+
+            function handleWrongAnswer() {
+                // پاسخ غلط: جریمه جزئی
+                currentProgress.totalXp = Math.max(0, currentProgress.totalXp - 1);
+                addLog(`❌ پاسخ غلط -۱ XP (کل: ${currentProgress.totalXp})`);
+                updateUi();
+            }
+
+            // --- به‌روزرسانی رابط ---
+            function updateUi() {
+                document.getElementById('completedCount').textContent = currentProgress.completedLessons.length;
+                document.getElementById('totalXp').textContent = currentProgress.totalXp;
+                document.getElementById('currentLesson').textContent = currentProgress.currentLessonId;
+                
+                const percent = Math.min(100, (currentProgress.completedLessons.length * 10)); // هر درس ۱۰٪ فرضی
+                document.getElementById('progressFill').style.width = percent + '%';
+            }
+
+            // نمایش آخرین داده ذخیره‌شده
+            function refreshStorageLog() {
+                const raw = localStorage.getItem(STORAGE_KEY);
+                if (raw) {
+                    try {
+                        const parsed = JSON.parse(raw);
+                        document.getElementById('storageLog').textContent = JSON.stringify(parsed, null, 2);
+                    } catch {
+                        document.getElementById('storageLog').textContent = raw;
+                    }
+                } else {
+                    document.getElementById('storageLog').textContent = 'هیچ داده ذخیره‌شده‌ای یافت نشد';
+                }
+            }
+
+            // --- سیستم لاگ داخلی (دقیقاً مثل کنسول، اما با دکمه) ---
+            const logContainer = document.getElementById('logContainer');
+            function addLog(message, type = 'info') {
+                const entry = document.createElement('div');
+                entry.className = 'log-entry';
+                const time = new Date().toLocaleTimeString('fa-IR', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+                entry.textContent = `[${time}] ${message}`;
+                logContainer.appendChild(entry);
+                logContainer.scrollTop = logContainer.scrollHeight;
+                
+                // همزمان در کنسول هم نمایش بده (برای بررسی دقیق)
+                console.log(`%c[ProgressTest] ${message}`, type === 'error' ? 'color:red' : 'color:green');
+            }
+
+            // --- مقدمات: نمایش وضعیت اولیه ---
+            updateUi();
+            refreshStorageLog();
+            addLog('🚀 تست Progress Manager آغاز شد');
+
+            // --- رویدادهای دکمه‌ها ---
+            document.getElementById('btnSave').addEventListener('click', () => {
+                saveProgress(currentProgress);
+                refreshStorageLog();
+            });
+
+            document.getElementById('btnLoad').addEventListener('click', () => {
+                const loaded = loadProgress();
+                if (loaded) {
+                    // اعمال داده بارگذاری‌شده روی currentProgress
+                    currentProgress = {
+                        completedLessons: loaded.completedLessons || [],
+                        totalXp: loaded.totalXp || 0,
+                        currentLessonId: loaded.currentLessonId || 'lesson_1',
+                        lastUpdated: new Date().toISOString()
+                    };
+                    updateUi();
+                    addLog(`✅ بارگذاری روی وضعیت جاری اعمال شد`);
+                }
+                refreshStorageLog();
+            });
+
+            document.getElementById('btnReset').addEventListener('click', () => {
+                resetProgress();
+                refreshStorageLog(); // شاید خالی بودن storage رو نشون بده
+            });
+
+            document.getElementById('btnCorrect').addEventListener('click', () => {
+                handleCorrectAnswer();
+            });
+
+            document.getElementById('btnWrong').addEventListener('click', () => {
+                handleWrongAnswer();
+            });
+
+            document.getElementById('btnClearLog').addEventListener('click', () => {
+                logContainer.innerHTML = '';
+                addLog('🧹 لاگ پاک شد');
+            });
+
+            // تست ذخیره و بارگذاری با overwrite (شبیه‌سازی)
+            window.testOverwrite = function() {
+                // ذخیره یک وضعیت، تغییر، ذخیره مجدد، بارگذاری که آخرین وضعیت بیاد
+                addLog('🧪 اجرای سناریوی overwrite ...');
+                const tempProgress = {
+                    completedLessons: ['test1', 'test2'],
+                    totalXp: 50,
+                    currentLessonId: 'test_lesson'
+                };
+                saveProgress(tempProgress);
+                refreshStorageLog();
+                
+                // تغییر و ذخیره مجدد
+                tempProgress.totalXp = 99;
+                tempProgress.completedLessons.push('test3');
+                saveProgress(tempProgress);
+                refreshStorageLog();
+                
+                // بارگذاری باید state دوم رو برگردونه
+                const loaded = loadProgress();
+                if (loaded && loaded.totalXp === 99 && loaded.completedLessons.length === 3) {
+                    addLog('✅ تست overwrite موفق: آخرین ذخیره بازگشت');
+                } else {
+                    addLog('❌ تست overwrite ناموفق', 'error');
+                }
+            };
+
+            // دکمه اضافی برای تست overwrite (می‌تونیم به صورت دستی از کنسول صدا بزنیم)
+            addLog('💡 برای تست overwrite، در کنسول دستور testOverwrite() را اجرا کنید');
+        })();
+    </script>
+
+    <!-- راهنمای تست‌های مدنظر -->
+    <div class="card" style="background:#f0f9ff">
+        <details>
+            <summary style="font-weight:600; cursor:pointer">📋 سناریوهای تست (persistence)</summary>
+            <ul style="margin-top:12px; padding-right:20px">
+                <li>✅ ذخیره وضعیت (دکمه Save) ← localStorage بررسی شود</li>
+                <li>✅ بارگذاری وضعیت (Load) ← مقادیر بازیابی شود</li>
+                <li>✅ بازنشانی (Reset) ← همه مقادیر به صفر</li>
+                <li>✅ پاسخ درست/غلط ← تغییرات در UI و امکان ذخیره</li>
+                <li>🧪 <strong>تست overwrite</strong>: دو بار ذخیره پشت‌سرهم، آخرین وضعیت برگردد</li>
+                <li>🧪 <strong>edge case</strong>: localStorage خالی، بارگذاری پیام خطا بدهد</li>
+                <li>🧪 <strong>داده خراب</strong>: (با دستکاری دستی localStorage تست کنید)</li>
+            </ul>
+        </details>
+    </div>
+</body>
+</html>
+```
