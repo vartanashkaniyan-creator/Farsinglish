@@ -1,0 +1,875 @@
+```html
+<!DOCTYPE html>
+<html dir="rtl" lang="fa">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>تست State صفحه مرور (Review Screen State)</title>
+    <style>
+        body {
+            font-family: 'Vazir', 'Tahoma', sans-serif;
+            background: #f5f7fa;
+            margin: 0;
+            padding: 20px;
+            color: #2c3e50;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+            padding: 24px;
+        }
+        h1 {
+            font-size: 1.8rem;
+            color: #2c3e50;
+            border-bottom: 2px solid #3498db;
+            padding-bottom: 10px;
+            margin-top: 0;
+        }
+        h2 {
+            font-size: 1.3rem;
+            margin-top: 25px;
+            color: #34495e;
+        }
+        .test-section {
+            background: #f8fafd;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 25px;
+            border: 1px solid #e2e8f0;
+        }
+        .state-panel {
+            background: #1e293b;
+            color: #e2e8f0;
+            padding: 15px;
+            border-radius: 10px;
+            font-family: 'Courier New', monospace;
+            direction: ltr;
+            text-align: left;
+            margin: 15px 0;
+            white-space: pre-wrap;
+            word-break: break-word;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+        .button-grid {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin: 15px 0;
+        }
+        button {
+            background: #3498db;
+            color: white;
+            border: none;
+            padding: 10px 18px;
+            border-radius: 30px;
+            font-size: 0.95rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            box-shadow: 0 2px 5px rgba(52,152,219,0.3);
+            border: 1px solid #2980b9;
+            min-width: 120px;
+            font-family: 'Vazir', 'Tahoma', sans-serif;
+        }
+        button:hover {
+            background: #2980b9;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(52,152,219,0.4);
+        }
+        button.secondary {
+            background: #95a5a6;
+            border-color: #7f8c8d;
+            box-shadow: 0 2px 5px rgba(149,165,166,0.3);
+        }
+        button.secondary:hover {
+            background: #7f8c8d;
+        }
+        button.success {
+            background: #2ecc71;
+            border-color: #27ae60;
+            box-shadow: 0 2px 5px rgba(46,204,113,0.3);
+        }
+        button.success:hover {
+            background: #27ae60;
+        }
+        button.warning {
+            background: #f39c12;
+            border-color: #e67e22;
+            box-shadow: 0 2px 5px rgba(243,156,18,0.3);
+        }
+        button.warning:hover {
+            background: #e67e22;
+        }
+        button.danger {
+            background: #e74c3c;
+            border-color: #c0392b;
+            box-shadow: 0 2px 5px rgba(231,76,60,0.3);
+        }
+        button.danger:hover {
+            background: #c0392b;
+        }
+        .test-result {
+            background: #2ecc71;
+            color: white;
+            padding: 12px 20px;
+            border-radius: 8px;
+            margin: 15px 0;
+            font-weight: bold;
+            display: none;
+        }
+        .test-result.fail {
+            background: #e74c3c;
+        }
+        .log-panel {
+            background: #2d3748;
+            color: #a0aec0;
+            padding: 15px;
+            border-radius: 10px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.85rem;
+            direction: ltr;
+            text-align: left;
+            height: 150px;
+            overflow-y: auto;
+            margin: 15px 0;
+            border: 1px solid #4a5568;
+        }
+        .log-entry {
+            color: #a0aec0;
+            margin: 2px 0;
+            border-bottom: 1px dotted #4a5568;
+            padding: 2px 0;
+        }
+        .log-entry.debug { color: #63b3ed; }
+        .log-entry.info { color: #68d391; }
+        .log-entry.warn { color: #fbbf24; }
+        .log-entry.error { color: #fc8181; }
+        .badge {
+            background: #3498db;
+            color: white;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            margin-left: 10px;
+        }
+        .flex-row {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+        .stat-card {
+            background: white;
+            border: 1px solid #e2e8f0;
+            border-radius: 10px;
+            padding: 15px;
+            text-align: center;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+        }
+        .stat-value {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #2c3e50;
+            margin: 5px 0;
+        }
+        .stat-label {
+            color: #7f8c8d;
+            font-size: 0.9rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧪 تست State صفحه مرور (Review Screen) <span class="badge">دستی + دکمه‌ای</span></h1>
+        
+        <!-- نمایش State فعلی -->
+        <div class="test-section">
+            <div class="flex-row" style="justify-content: space-between;">
+                <h2>📊 State فعلی صفحه مرور</h2>
+                <div>
+                    <button class="secondary" onclick="refreshStateDisplay()">🔄 بروزرسانی نمایش</button>
+                </div>
+            </div>
+            <div id="stateDisplay" class="state-panel">{
+  "lessons": [],
+  "currentLessonIndex": 0,
+  "currentExerciseIndex": 0,
+  "userAnswer": "",
+  "showResult": false,
+  "isCorrect": null,
+  "loading": false,
+  "error": null,
+  "reviewComplete": false
+}</div>
+        </div>
+
+        <!-- آمار -->
+        <div class="stats">
+            <div class="stat-card">
+                <div class="stat-value" id="statLessons">0</div>
+                <div class="stat-label">تعداد درس‌ها</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="statCurrent">-</div>
+                <div class="stat-label">درس فعلی</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="statExercise">-</div>
+                <div class="stat-label">تمرین فعلی</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="statProgress">0%</div>
+                <div class="stat-label">پیشرفت</div>
+            </div>
+        </div>
+
+        <!-- دکمه‌های تست State -->
+        <div class="test-section">
+            <h2>🎮 تست‌های State</h2>
+            
+            <div class="button-grid">
+                <button onclick="testInitialState()">🆕 بررسی State اولیه</button>
+                <button onclick="testLoadLessons()">📚 بارگذاری درس‌ها</button>
+                <button onclick="testNextLesson()">⏭️ رفتن به درس بعدی</button>
+                <button onclick="testPrevLesson()">⏮️ بازگشت به درس قبل</button>
+                <button onclick="testNextExercise()">➡️ تمرین بعدی</button>
+                <button onclick="testPrevExercise()">⬅️ تمرین قبلی</button>
+                <button onclick="testSubmitAnswer(true)">✅ پاسخ صحیح</button>
+                <button onclick="testSubmitAnswer(false)">❌ پاسخ غلط</button>
+                <button onclick="testResetResult()">🔄 ریست نتیجه</button>
+                <button onclick="testSetLoading(true)">⏳ فعال‌سازی loading</button>
+                <button onclick="testSetLoading(false)">✅ غیرفعال loading</button>
+                <button onclick="testSetError()">⚠️ شبیه‌سازی خطا</button>
+                <button onclick="testClearError()">🧹 پاک کردن خطا</button>
+                <button onclick="testCompleteReview()">🏁 تکمیل مرور</button>
+                <button onclick="testResetState()">🔄 ریست کامل State</button>
+            </div>
+
+            <div style="margin-top: 20px;">
+                <button class="success" onclick="runAllStateTests()">🧪 اجرای تمام تست‌های State</button>
+                <button class="secondary" onclick="clearLog()">🗑️ پاک کردن لاگ</button>
+            </div>
+        </div>
+
+        <!-- نتایج تست -->
+        <div id="testResult" class="test-result">✅ تست با موفقیت پاس شد</div>
+
+        <!-- لاگ رویدادها -->
+        <div class="test-section">
+            <h2>📋 لاگ تغییرات State</h2>
+            <div id="logPanel" class="log-panel">
+                <div class="log-entry info">⏱️ آماده‌ی تست‌ها...</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ==================== ReviewScreen State Manager ====================
+        // شبیه‌سازی State صفحه مرور با اصول Immutability
+        const ReviewScreenState = (() => {
+            // داده‌های نمونه درس‌ها
+            const sampleLessons = [
+                { id: 1, title: 'درس ۱: مقدماتی', exercises: ['تمرین ۱-۱', 'تمرین ۱-۲', 'تمرین ۱-۳'] },
+                { id: 2, title: 'درس ۲: افعال', exercises: ['تمرین ۲-۱', 'تمرین ۲-۲'] },
+                { id: 3, title: 'درس ۳: لغات', exercises: ['تمرین ۳-۱', 'تمرین ۳-۲', 'تمرین ۳-۳', 'تمرین ۳-۴'] },
+                { id: 4, title: 'درس ۴: اصطلاحات', exercises: ['تمرین ۴-۱'] }
+            ];
+
+            // State اولیه (immutable)
+            let state = {
+                lessons: [],  // در ابتدا خالی
+                currentLessonIndex: 0,
+                currentExerciseIndex: 0,
+                userAnswer: "",
+                showResult: false,
+                isCorrect: null,
+                loading: false,
+                error: null,
+                reviewComplete: false
+            };
+
+            // تاریخچه تغییرات برای time travel (اختیاری)
+            const history = [];
+            const maxHistory = 20;
+
+            // شنوندگان تغییرات
+            const listeners = [];
+
+            // ========== متدهای خصوصی ==========
+            function deepClone(obj) {
+                return JSON.parse(JSON.stringify(obj));
+            }
+
+            function notifyListeners(prevState, newState, action) {
+                listeners.forEach(listener => {
+                    try {
+                        listener(deepClone(prevState), deepClone(newState), action);
+                    } catch (e) {
+                        console.error('خطا در listener:', e);
+                    }
+                });
+            }
+
+            // ========== API عمومی ==========
+            return {
+                // دریافت کپی از state (immutability)
+                getState() {
+                    return deepClone(state);
+                },
+
+                // تغییر state با اکشن (همیشه immutable)
+                dispatch(action, payload) {
+                    const prevState = deepClone(state);
+                    
+                    try {
+                        switch(action) {
+                            case 'SET_LESSONS':
+                                state.lessons = payload ? deepClone(payload) : [];
+                                state.currentLessonIndex = 0;
+                                state.currentExerciseIndex = 0;
+                                state.reviewComplete = false;
+                                break;
+
+                            case 'LOAD_SAMPLE_LESSONS':
+                                state.lessons = deepClone(sampleLessons);
+                                state.currentLessonIndex = 0;
+                                state.currentExerciseIndex = 0;
+                                state.reviewComplete = false;
+                                break;
+
+                            case 'NEXT_LESSON':
+                                if (state.lessons.length === 0) break;
+                                if (state.currentLessonIndex < state.lessons.length - 1) {
+                                    state.currentLessonIndex++;
+                                    state.currentExerciseIndex = 0;
+                                    state.showResult = false;
+                                    state.isCorrect = null;
+                                }
+                                break;
+
+                            case 'PREV_LESSON':
+                                if (state.lessons.length === 0) break;
+                                if (state.currentLessonIndex > 0) {
+                                    state.currentLessonIndex--;
+                                    state.currentExerciseIndex = 0;
+                                    state.showResult = false;
+                                    state.isCorrect = null;
+                                }
+                                break;
+
+                            case 'NEXT_EXERCISE':
+                                if (state.lessons.length === 0) break;
+                                const currentLesson = state.lessons[state.currentLessonIndex];
+                                if (!currentLesson) break;
+                                
+                                if (state.currentExerciseIndex < currentLesson.exercises.length - 1) {
+                                    state.currentExerciseIndex++;
+                                    state.showResult = false;
+                                    state.isCorrect = null;
+                                    state.userAnswer = "";
+                                } else {
+                                    // به آخرین تمرین رسیده‌ایم
+                                    if (state.currentLessonIndex === state.lessons.length - 1) {
+                                        state.reviewComplete = true;
+                                    }
+                                }
+                                break;
+
+                            case 'PREV_EXERCISE':
+                                if (state.lessons.length === 0) break;
+                                if (state.currentExerciseIndex > 0) {
+                                    state.currentExerciseIndex--;
+                                    state.showResult = false;
+                                    state.isCorrect = null;
+                                    state.userAnswer = "";
+                                }
+                                break;
+
+                            case 'SUBMIT_ANSWER':
+                                state.userAnswer = payload?.answer || "";
+                                state.isCorrect = payload?.isCorrect || false;
+                                state.showResult = true;
+                                break;
+
+                            case 'RESET_RESULT':
+                                state.showResult = false;
+                                state.isCorrect = null;
+                                state.userAnswer = "";
+                                break;
+
+                            case 'SET_LOADING':
+                                state.loading = !!payload;
+                                break;
+
+                            case 'SET_ERROR':
+                                state.error = payload || 'خطای ناشناخته';
+                                break;
+
+                            case 'CLEAR_ERROR':
+                                state.error = null;
+                                break;
+
+                            case 'COMPLETE_REVIEW':
+                                state.reviewComplete = true;
+                                break;
+
+                            case 'RESET_STATE':
+                                state = {
+                                    lessons: [],
+                                    currentLessonIndex: 0,
+                                    currentExerciseIndex: 0,
+                                    userAnswer: "",
+                                    showResult: false,
+                                    isCorrect: null,
+                                    loading: false,
+                                    error: null,
+                                    reviewComplete: false
+                                };
+                                break;
+
+                            default:
+                                console.warn('اکشن ناشناخته:', action);
+                        }
+
+                        // ثبت در تاریخچه
+                        history.push({ action, payload, state: deepClone(state) });
+                        if (history.length > maxHistory) history.shift();
+
+                        // اطلاع به شنوندگان
+                        notifyListeners(prevState, deepClone(state), action);
+                        
+                        return true;
+                    } catch (error) {
+                        console.error('خطا در dispatch:', error);
+                        return false;
+                    }
+                },
+
+                // افزودن شنونده
+                subscribe(listener) {
+                    listeners.push(listener);
+                    return () => {
+                        const index = listeners.indexOf(listener);
+                        if (index > -1) listeners.splice(index, 1);
+                    };
+                },
+
+                // دریافت تاریخچه
+                getHistory() {
+                    return deepClone(history);
+                }
+            };
+        })();
+
+        // ==================== سیستم لاگ ====================
+        const TestLogger = {
+            log(message, type = 'info') {
+                const panel = document.getElementById('logPanel');
+                const entry = document.createElement('div');
+                entry.className = `log-entry ${type}`;
+                entry.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
+                panel.appendChild(entry);
+                panel.scrollTop = panel.scrollHeight;
+            },
+            clear() {
+                document.getElementById('logPanel').innerHTML = '<div class="log-entry info">⏱️ لاگ پاک شد...</div>';
+            }
+        };
+
+        // ==================== نمایش State ====================
+        function refreshStateDisplay() {
+            const state = ReviewScreenState.getState();
+            document.getElementById('stateDisplay').textContent = JSON.stringify(state, null, 2);
+            
+            // آمار
+            document.getElementById('statLessons').textContent = state.lessons.length;
+            
+            if (state.lessons.length > 0 && state.currentLessonIndex >= 0) {
+                const lesson = state.lessons[state.currentLessonIndex];
+                document.getElementById('statCurrent').textContent = lesson?.title || 'نامشخص';
+                
+                if (lesson) {
+                    document.getElementById('statExercise').textContent = 
+                        `تمرین ${state.currentExerciseIndex + 1} از ${lesson.exercises.length}`;
+                    
+                    const progress = ((state.currentExerciseIndex + 1) / lesson.exercises.length) * 100;
+                    document.getElementById('statProgress').textContent = Math.round(progress) + '%';
+                }
+            } else {
+                document.getElementById('statCurrent').textContent = '-';
+                document.getElementById('statExercise').textContent = '-';
+                document.getElementById('statProgress').textContent = '0%';
+            }
+        }
+
+        // ==================== تست‌های State ====================
+        function showResult(success, message) {
+            const resultDiv = document.getElementById('testResult');
+            resultDiv.style.display = 'block';
+            resultDiv.className = `test-result ${success ? 'success' : 'fail'}`;
+            resultDiv.textContent = success ? `✅ ${message}` : `❌ ${message}`;
+            
+            setTimeout(() => {
+                resultDiv.style.display = 'none';
+            }, 3000);
+        }
+
+        // تست State اولیه
+        function testInitialState() {
+            ReviewScreenState.dispatch('RESET_STATE');
+            const state = ReviewScreenState.getState();
+            
+            if (state.lessons.length === 0 && 
+                state.currentLessonIndex === 0 && 
+                state.currentExerciseIndex === 0 &&
+                state.loading === false &&
+                state.error === null &&
+                state.reviewComplete === false) {
+                TestLogger.log('✅ State اولیه صحیح است', 'info');
+                showResult(true, 'State اولیه تأیید شد');
+            } else {
+                TestLogger.log('❌ State اولیه نادرست است', 'error');
+                showResult(false, 'State اولیه نادرست است');
+            }
+            refreshStateDisplay();
+        }
+
+        // تست بارگذاری درس‌ها
+        function testLoadLessons() {
+            ReviewScreenState.dispatch('LOAD_SAMPLE_LESSONS');
+            const state = ReviewScreenState.getState();
+            
+            if (state.lessons.length === 4) {
+                TestLogger.log(`✅ بارگذاری ${state.lessons.length} درس با موفقیت`, 'info');
+                showResult(true, 'بارگذاری درس‌ها موفق');
+            } else {
+                TestLogger.log('❌ بارگذاری درس‌ها ناموفق', 'error');
+                showResult(false, 'بارگذاری درس‌ها ناموفق');
+            }
+            refreshStateDisplay();
+        }
+
+        // تست رفتن به درس بعدی
+        function testNextLesson() {
+            const before = ReviewScreenState.getState();
+            if (before.lessons.length === 0) {
+                TestLogger.log('⚠️ ابتدا درس‌ها را بارگذاری کنید', 'warn');
+                showResult(false, 'ابتدا درس‌ها را بارگذاری کنید');
+                return;
+            }
+            
+            ReviewScreenState.dispatch('NEXT_LESSON');
+            const after = ReviewScreenState.getState();
+            
+            if (before.currentLessonIndex < before.lessons.length - 1) {
+                if (after.currentLessonIndex === before.currentLessonIndex + 1) {
+                    TestLogger.log(`✅ رفتن به درس بعدی: ${after.lessons[after.currentLessonIndex]?.title}`, 'info');
+                    showResult(true, 'رفتن به درس بعدی موفق');
+                } else {
+                    TestLogger.log('❌ رفتن به درس بعدی ناموفق', 'error');
+                    showResult(false, 'رفتن به درس بعدی ناموفق');
+                }
+            } else {
+                if (after.currentLessonIndex === before.currentLessonIndex) {
+                    TestLogger.log('ℹ️ آخرین درس است - تغییری نکرد', 'debug');
+                    showResult(true, 'آخرین درس - تغییری نکرد');
+                }
+            }
+            refreshStateDisplay();
+        }
+
+        // تست بازگشت به درس قبل
+        function testPrevLesson() {
+            const before = ReviewScreenState.getState();
+            if (before.lessons.length === 0) {
+                TestLogger.log('⚠️ ابتدا درس‌ها را بارگذاری کنید', 'warn');
+                showResult(false, 'ابتدا درس‌ها را بارگذاری کنید');
+                return;
+            }
+            
+            ReviewScreenState.dispatch('PREV_LESSON');
+            const after = ReviewScreenState.getState();
+            
+            if (before.currentLessonIndex > 0) {
+                if (after.currentLessonIndex === before.currentLessonIndex - 1) {
+                    TestLogger.log(`✅ بازگشت به درس قبل: ${after.lessons[after.currentLessonIndex]?.title}`, 'info');
+                    showResult(true, 'بازگشت به درس قبل موفق');
+                } else {
+                    TestLogger.log('❌ بازگشت به درس قبل ناموفق', 'error');
+                    showResult(false, 'بازگشت به درس قبل ناموفق');
+                }
+            } else {
+                if (after.currentLessonIndex === 0) {
+                    TestLogger.log('ℹ️ اولین درس است - تغییری نکرد', 'debug');
+                    showResult(true, 'اولین درس - تغییری نکرد');
+                }
+            }
+            refreshStateDisplay();
+        }
+
+        // تست تمرین بعدی
+        function testNextExercise() {
+            const before = ReviewScreenState.getState();
+            if (before.lessons.length === 0) {
+                TestLogger.log('⚠️ ابتدا درس‌ها را بارگذاری کنید', 'warn');
+                showResult(false, 'ابتدا درس‌ها را بارگذاری کنید');
+                return;
+            }
+            
+            const currentLesson = before.lessons[before.currentLessonIndex];
+            if (!currentLesson) return;
+            
+            ReviewScreenState.dispatch('NEXT_EXERCISE');
+            const after = ReviewScreenState.getState();
+            
+            if (before.currentExerciseIndex < currentLesson.exercises.length - 1) {
+                if (after.currentExerciseIndex === before.currentExerciseIndex + 1) {
+                    TestLogger.log(`✅ تمرین بعدی: ${currentLesson.exercises[after.currentExerciseIndex]}`, 'info');
+                    showResult(true, 'رفتن به تمرین بعدی موفق');
+                } else {
+                    TestLogger.log('❌ رفتن به تمرین بعدی ناموفق', 'error');
+                    showResult(false, 'رفتن به تمرین بعدی ناموفق');
+                }
+            } else {
+                // اگر آخرین تمرین بود، بررسی کنیم که reviewComplete شده یا نه
+                if (before.currentLessonIndex === before.lessons.length - 1) {
+                    if (after.reviewComplete) {
+                        TestLogger.log('✅ مرور کامل شد', 'info');
+                        showResult(true, 'مرور کامل شد');
+                    }
+                } else {
+                    TestLogger.log('ℹ️ آخرین تمرین درس فعلی - تغییری نکرد', 'debug');
+                    showResult(true, 'آخرین تمرین - تغییری نکرد');
+                }
+            }
+            refreshStateDisplay();
+        }
+
+        // تست تمرین قبلی
+        function testPrevExercise() {
+            const before = ReviewScreenState.getState();
+            if (before.lessons.length === 0) {
+                TestLogger.log('⚠️ ابتدا درس‌ها را بارگذاری کنید', 'warn');
+                showResult(false, 'ابتدا درس‌ها را بارگذاری کنید');
+                return;
+            }
+            
+            ReviewScreenState.dispatch('PREV_EXERCISE');
+            const after = ReviewScreenState.getState();
+            
+            if (before.currentExerciseIndex > 0) {
+                if (after.currentExerciseIndex === before.currentExerciseIndex - 1) {
+                    TestLogger.log(`✅ بازگشت به تمرین قبلی: ${before.lessons[before.currentLessonIndex]?.exercises[after.currentExerciseIndex]}`, 'info');
+                    showResult(true, 'بازگشت به تمرین قبلی موفق');
+                } else {
+                    TestLogger.log('❌ بازگشت به تمرین قبلی ناموفق', 'error');
+                    showResult(false, 'بازگشت به تمرین قبلی ناموفق');
+                }
+            } else {
+                TestLogger.log('ℹ️ اولین تمرین است - تغییری نکرد', 'debug');
+                showResult(true, 'اولین تمرین - تغییری نکرد');
+            }
+            refreshStateDisplay();
+        }
+
+        // تست ثبت پاسخ
+        function testSubmitAnswer(isCorrect) {
+            const before = ReviewScreenState.getState();
+            if (before.lessons.length === 0) {
+                TestLogger.log('⚠️ ابتدا درس‌ها را بارگذاری کنید', 'warn');
+                showResult(false, 'ابتدا درس‌ها را بارگذاری کنید');
+                return;
+            }
+            
+            ReviewScreenState.dispatch('SUBMIT_ANSWER', {
+                answer: isCorrect ? 'پاسخ صحیح' : 'پاسخ غلط',
+                isCorrect: isCorrect
+            });
+            
+            const after = ReviewScreenState.getState();
+            
+            if (after.showResult === true && after.isCorrect === isCorrect) {
+                TestLogger.log(`✅ ثبت پاسخ ${isCorrect ? 'صحیح' : 'غلط'} با موفقیت`, 'info');
+                showResult(true, `پاسخ ${isCorrect ? 'صحیح' : 'غلط'} ثبت شد`);
+            } else {
+                TestLogger.log('❌ ثبت پاسخ ناموفق', 'error');
+                showResult(false, 'ثبت پاسخ ناموفق');
+            }
+            refreshStateDisplay();
+        }
+
+        // تست ریست نتیجه
+        function testResetResult() {
+            ReviewScreenState.dispatch('RESET_RESULT');
+            const after = ReviewScreenState.getState();
+            
+            if (after.showResult === false && after.isCorrect === null && after.userAnswer === "") {
+                TestLogger.log('✅ ریست نتیجه با موفقیت', 'info');
+                showResult(true, 'ریست نتیجه موفق');
+            } else {
+                TestLogger.log('❌ ریست نتیجه ناموفق', 'error');
+                showResult(false, 'ریست نتیجه ناموفق');
+            }
+            refreshStateDisplay();
+        }
+
+        // تست set loading
+        function testSetLoading(loading) {
+            ReviewScreenState.dispatch('SET_LOADING', loading);
+            const after = ReviewScreenState.getState();
+            
+            if (after.loading === loading) {
+                TestLogger.log(`✅ تغییر loading به ${loading}`, 'info');
+                showResult(true, `loading: ${loading}`);
+            } else {
+                TestLogger.log('❌ تغییر loading ناموفق', 'error');
+                showResult(false, 'تغییر loading ناموفق');
+            }
+            refreshStateDisplay();
+        }
+
+        // تست set error
+        function testSetError() {
+            ReviewScreenState.dispatch('SET_ERROR', 'خطای شبیه‌سازی شده');
+            const after = ReviewScreenState.getState();
+            
+            if (after.error === 'خطای شبیه‌سازی شده') {
+                TestLogger.log('✅ خطا با موفقیت ثبت شد', 'info');
+                showResult(true, 'خطا ثبت شد');
+            } else {
+                TestLogger.log('❌ ثبت خطا ناموفق', 'error');
+                showResult(false, 'ثبت خطا ناموفق');
+            }
+            refreshStateDisplay();
+        }
+
+        // تست clear error
+        function testClearError() {
+            ReviewScreenState.dispatch('CLEAR_ERROR');
+            const after = ReviewScreenState.getState();
+            
+            if (after.error === null) {
+                TestLogger.log('✅ خطا پاک شد', 'info');
+                showResult(true, 'خطا پاک شد');
+            } else {
+                TestLogger.log('❌ پاک کردن خطا ناموفق', 'error');
+                showResult(false, 'پاک کردن خطا ناموفق');
+            }
+            refreshStateDisplay();
+        }
+
+        // تست تکمیل مرور
+        function testCompleteReview() {
+            ReviewScreenState.dispatch('COMPLETE_REVIEW');
+            const after = ReviewScreenState.getState();
+            
+            if (after.reviewComplete === true) {
+                TestLogger.log('✅ مرور با موفقیت تکمیل شد', 'info');
+                showResult(true, 'مرور تکمیل شد');
+            } else {
+                TestLogger.log('❌ تکمیل مرور ناموفق', 'error');
+                showResult(false, 'تکمیل مرور ناموفق');
+            }
+            refreshStateDisplay();
+        }
+
+        // تست ریست کامل state
+        function testResetState() {
+            ReviewScreenState.dispatch('RESET_STATE');
+            const after = ReviewScreenState.getState();
+            
+            if (after.lessons.length === 0 && after.currentLessonIndex === 0 && 
+                after.currentExerciseIndex === 0 && after.error === null) {
+                TestLogger.log('✅ ریست کامل state با موفقیت', 'info');
+                showResult(true, 'ریست state موفق');
+            } else {
+                TestLogger.log('❌ ریست state ناموفق', 'error');
+                showResult(false, 'ریست state ناموفق');
+            }
+            refreshStateDisplay();
+        }
+
+        // اجرای تمام تست‌ها به ترتیب
+        function runAllStateTests() {
+            TestLogger.log('🧪 شروع اجرای تمام تست‌های State...', 'info');
+            
+            // 1. ریست state
+            testResetState();
+            
+            // 2. بارگذاری درس‌ها
+            setTimeout(() => {
+                testLoadLessons();
+                
+                // 3. رفتن به درس بعدی
+                setTimeout(() => {
+                    testNextLesson();
+                    
+                    // 4. تمرین بعدی
+                    setTimeout(() => {
+                        testNextExercise();
+                        
+                        // 5. ثبت پاسخ صحیح
+                        setTimeout(() => {
+                            testSubmitAnswer(true);
+                            
+                            // 6. ریست نتیجه
+                            setTimeout(() => {
+                                testResetResult();
+                                
+                                // 7. ثبت پاسخ غلط
+                                setTimeout(() => {
+                                    testSubmitAnswer(false);
+                                    
+                                    // 8. تمرین بعدی
+                                    setTimeout(() => {
+                                        testNextExercise();
+                                        
+                                        // 9. رفتن به درس قبل
+                                        setTimeout(() => {
+                                            testPrevLesson();
+                                            
+                                            // 10. ریست نهایی
+                                            setTimeout(() => {
+                                                testResetState();
+                                                TestLogger.log('✅ تمام تست‌ها با موفقیت اجرا شدند', 'info');
+                                                showResult(true, 'تمامی تست‌ها پاس شدند');
+                                            }, 500);
+                                        }, 500);
+                                    }, 500);
+                                }, 500);
+                            }, 500);
+                        }, 500);
+                    }, 500);
+                }, 500);
+            }, 500);
+        }
+
+        // پاک کردن لاگ
+        function clearLog() {
+            TestLogger.clear();
+        }
+
+        // شنونده تغییرات state برای لاگ خودکار
+        ReviewScreenState.subscribe((prev, next, action) => {
+            TestLogger.log(`اکشن: ${action} - State تغییر کرد`, 'debug');
+        });
+
+        // مقداردهی اولیه
+        window.onload = function() {
+            testInitialState();
+            TestLogger.log('🚀 صفحه تست State آماده است', 'info');
+        };
+    </script>
+</body>
+</html>
+```
