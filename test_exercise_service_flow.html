@@ -1,0 +1,623 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>تست جریان تمرین - Exercise Service Flow</title>
+    <style>
+        body {
+            font-family: 'Vazir', 'Tahoma', sans-serif;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            margin: 0;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 15px;
+            box-sizing: border-box;
+        }
+        .test-container {
+            max-width: 1100px;
+            width: 100%;
+            background: white;
+            border-radius: 32px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.2);
+        }
+        .header {
+            background: #2c3e50;
+            color: white;
+            padding: 25px 30px;
+        }
+        .header h1 {
+            margin: 0;
+            font-size: 28px;
+            font-weight: 600;
+            letter-spacing: 1px;
+        }
+        .header p {
+            margin: 10px 0 0;
+            opacity: 0.9;
+            font-size: 16px;
+        }
+        .content {
+            padding: 30px;
+            background: #f8fafc;
+        }
+        .section {
+            background: white;
+            border-radius: 24px;
+            padding: 25px;
+            margin-bottom: 30px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.05);
+            border: 1px solid #e9ecef;
+        }
+        .section h2 {
+            margin: 0 0 20px 0;
+            font-size: 22px;
+            color: #1e293b;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .section h2:before {
+            content: '🧪';
+            font-size: 28px;
+        }
+        .step-indicator {
+            background: #f1f5f9;
+            border-radius: 100px;
+            padding: 15px 25px;
+            margin-bottom: 30px;
+            display: flex;
+            justify-content: space-between;
+            border: 1px solid #cbd5e1;
+        }
+        .step {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+            flex: 1;
+        }
+        .step-number {
+            width: 36px;
+            height: 36px;
+            background: #94a3b8;
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            transition: all 0.3s;
+        }
+        .step.active .step-number {
+            background: #2563eb;
+            transform: scale(1.1);
+            box-shadow: 0 0 0 4px rgba(37,99,235,0.2);
+        }
+        .step.completed .step-number {
+            background: #10b981;
+        }
+        .step-label {
+            font-size: 13px;
+            font-weight: 500;
+            color: #334155;
+        }
+        .button-grid {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin: 25px 0 15px;
+        }
+        .btn {
+            padding: 14px 28px;
+            border: none;
+            border-radius: 60px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+            border: 1px solid rgba(255,255,255,0.3);
+        }
+        .btn-primary {
+            background: #2563eb;
+            color: white;
+        }
+        .btn-primary:hover {
+            background: #1d4ed8;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(37,99,235,0.4);
+        }
+        .btn-success {
+            background: #10b981;
+            color: white;
+        }
+        .btn-success:hover {
+            background: #059669;
+        }
+        .btn-warning {
+            background: #f59e0b;
+            color: white;
+        }
+        .btn-outline {
+            background: transparent;
+            border: 2px solid #2563eb;
+            color: #2563eb;
+            box-shadow: none;
+        }
+        .btn-outline:hover {
+            background: #eef2ff;
+        }
+        .log-panel {
+            background: #0f172a;
+            color: #e2e8f0;
+            border-radius: 20px;
+            padding: 20px;
+            font-family: 'Consolas', monospace;
+            font-size: 14px;
+            direction: ltr;
+            text-align: left;
+            max-height: 300px;
+            overflow-y: auto;
+            margin-top: 25px;
+            border: 1px solid #334155;
+            box-shadow: inset 0 0 10px rgba(0,0,0,0.5);
+        }
+        .log-entry {
+            padding: 8px;
+            border-bottom: 1px solid #334155;
+            color: #a5f3fc;
+        }
+        .log-entry:last-child {
+            border-bottom: none;
+        }
+        .log-entry.error {
+            color: #fca5a5;
+        }
+        .log-entry.success {
+            color: #86efac;
+        }
+        .data-view {
+            background: #f1f5f9;
+            border-radius: 16px;
+            padding: 15px;
+            font-family: 'Consolas', monospace;
+            font-size: 13px;
+            direction: ltr;
+            border: 1px dashed #64748b;
+            margin-top: 15px;
+        }
+        .flex-row {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+        .badge {
+            background: #e2e8f0;
+            padding: 6px 12px;
+            border-radius: 40px;
+            font-size: 13px;
+            font-weight: 600;
+            color: #334155;
+        }
+        hr {
+            border: none;
+            border-top: 2px dashed #cbd5e1;
+            margin: 25px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <div class="header">
+            <h1>📋 تست جریان تمرین (Exercise Service Flow)</h1>
+            <p>شبیه‌سازی دستی گام‌به‌گام فرآیند تمرین - کاملاً تعاملی با دکمه‌ها</p>
+        </div>
+        <div class="content">
+            <!-- مرحله‌نما -->
+            <div class="step-indicator" id="stepIndicator">
+                <div class="step" data-step="1">
+                    <span class="step-number">۱</span>
+                    <span class="step-label">بارگذاری</span>
+                </div>
+                <div class="step" data-step="2">
+                    <span class="step-number">۲</span>
+                    <span class="step-label">نوع تمرین</span>
+                </div>
+                <div class="step" data-step="3">
+                    <span class="step-number">۳</span>
+                    <span class="step-label">اعتبارسنجی</span>
+                </div>
+                <div class="step" data-step="4">
+                    <span class="step-number">۴</span>
+                    <span class="step-label">ثبت نتیجه</span>
+                </div>
+                <div class="step" data-step="5">
+                    <span class="step-number">۵</span>
+                    <span class="step-label">SRS</span>
+                </div>
+                <div class="step" data-step="6">
+                    <span class="step-number">۶</span>
+                    <span class="step-label">بازخورد</span>
+                </div>
+            </div>
+
+            <!-- بخش ۱: ماژول‌های جعلی (Fake Modules) -->
+            <div class="section">
+                <h2>⚙️ ماژول‌های آماده</h2>
+                <div class="flex-row">
+                    <span class="badge">✅ exerciseService</span>
+                    <span class="badge">✅ exerciseValidator</span>
+                    <span class="badge">✅ multipleChoice</span>
+                    <span class="badge">✅ flashcard</span>
+                    <span class="badge">✅ progressManager</span>
+                    <span class="badge">✅ srsEngine</span>
+                </div>
+                <div class="data-view" id="moduleStatus">
+{
+  "exerciseService": "آماده",
+  "validator": "آماده",
+  "multipleChoice": "آماده",
+  "flashcard": "آماده",
+  "progressManager": "آماده",
+  "srsEngine": "آماده"
+}
+                </div>
+            </div>
+
+            <!-- بخش ۲: کنترل تست -->
+            <div class="section">
+                <h2>🎮 کنترل جریان تمرین</h2>
+                <div class="button-grid">
+                    <button class="btn btn-primary" id="loadLessonBtn">📥 ۱. بارگذاری درس نمونه</button>
+                    <button class="btn btn-primary" id="selectExerciseBtn">۲. انتخاب نوع تمرین</button>
+                    <button class="btn btn-primary" id="generateExerciseBtn">⚡ ۳. تولید تمرین</button>
+                    <button class="btn btn-success" id="validateCorrectBtn">✅ ۴. ارسال پاسخ صحیح</button>
+                    <button class="btn btn-warning" id="validateWrongBtn">❌ ۴. ارسال پاسخ غلط</button>
+                    <button class="btn btn-outline" id="saveProgressBtn">💾 ۵. ذخیره پیشرفت</button>
+                    <button class="btn btn-outline" id="runSrsBtn">🧠 ۶. اعمال SRS</button>
+                    <button class="btn btn-outline" id="showFeedbackBtn">📢 ۷. نمایش بازخورد</button>
+                </div>
+                <div class="flex-row" style="margin-top: 20px;">
+                    <button class="btn btn-outline" id="resetFlowBtn">⟲ ریست جریان</button>
+                    <button class="btn btn-outline" id="clearLogBtn">🗑 پاک کردن لاگ</button>
+                </div>
+
+                <!-- نمایش وضعیت فعلی -->
+                <hr>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                    <div>
+                        <h3 style="margin: 0 0 10px 0;">📌 وضعیت جلسه</h3>
+                        <div class="data-view" id="sessionState">
+{
+  "currentLesson": null,
+  "exerciseType": null,
+  "currentExercise": null,
+  "lastAnswer": null,
+  "isCorrect": null,
+  "progress": {}
+}
+                        </div>
+                    </div>
+                    <div>
+                        <h3 style="margin: 0 0 10px 0;">📊 آخرین خروجی</h3>
+                        <div class="data-view" id="lastOutput">
+{
+  "output": "منتظر عملیات..."
+}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- بخش ۳: لاگ تست -->
+            <div class="section">
+                <h2>📋 گزارش گام‌به‌گام (Log)</h2>
+                <div class="log-panel" id="logPanel">
+                    <div class="log-entry">🟢 آماده‌سازی ماژول‌ها انجام شد.</div>
+                    <div class="log-entry">⏳ منتظر تعامل کاربر...</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ==================== ماژول‌های جعلی حرفه‌ای ====================
+        
+        // ۱. ماژول درس نمونه
+        const fakeLessonModule = {
+            getSampleLesson: () => ({
+                id: 'lesson_1',
+                title: 'Lesson 1: Greetings',
+                exercises: [
+                    { id: 'ex1', type: 'multiple-choice', question: 'Hello', options: ['سلام', 'خداحافظ', 'صبح بخیر', 'شب بخیر'], correct: 0 },
+                    { id: 'ex2', type: 'flashcard', front: 'Good morning', back: 'صبح بخیر' },
+                    { id: 'ex3', type: 'multiple-choice', question: 'Goodbye', options: ['سلام', 'خداحافظ', 'صبح بخیر', 'شب بخیر'], correct: 1 },
+                ]
+            })
+        };
+
+        // ۲. سرویس تمرین (Exercise Service) - با قابلیت تزریق وابستگی
+        const exerciseService = (function() {
+            let currentLesson = null;
+            let currentExercise = null;
+            let exerciseType = 'multiple-choice'; // پیش‌فرض
+            
+            return {
+                loadLesson: (lessonId) => {
+                    try {
+                        currentLesson = fakeLessonModule.getSampleLesson();
+                        currentExercise = null;
+                        logMessage(`📚 درس "${currentLesson.title}" بارگذاری شد (${currentLesson.exercises.length} تمرین)`);
+                        updateSessionState({ currentLesson, exerciseType: null, currentExercise: null });
+                        return { success: true, lesson: currentLesson };
+                    } catch (e) {
+                        logMessage(`❌ خطا در بارگذاری درس: ${e.message}`, 'error');
+                        return { success: false, error: e.message };
+                    }
+                },
+                setExerciseType: (type) => {
+                    if (!currentLesson) {
+                        logMessage('⚠️ ابتدا درس را بارگذاری کنید', 'error');
+                        return { success: false };
+                    }
+                    if (!['multiple-choice', 'flashcard'].includes(type)) {
+                        logMessage('⚠️ نوع تمرین نامعتبر', 'error');
+                        return { success: false };
+                    }
+                    exerciseType = type;
+                    // فیلتر تمرین‌ها بر اساس نوع
+                    const available = currentLesson.exercises.filter(ex => ex.type === type);
+                    logMessage(`🎯 نوع تمرین "${type}" انتخاب شد (${available.length} تمرین موجود)`);
+                    updateSessionState({ exerciseType: type });
+                    return { success: true, count: available.length };
+                },
+                generateExercise: () => {
+                    if (!currentLesson) {
+                        logMessage('⚠️ ابتدا درس را بارگذاری کنید', 'error');
+                        return { success: false };
+                    }
+                    const filtered = currentLesson.exercises.filter(ex => ex.type === exerciseType);
+                    if (filtered.length === 0) {
+                        logMessage(`⚠️ تمرینی از نوع "${exerciseType}" یافت نشد`, 'error');
+                        return { success: false };
+                    }
+                    // انتخاب تصادفی ساده
+                    const randomIndex = Math.floor(Math.random() * filtered.length);
+                    currentExercise = { ...filtered[randomIndex] }; // کپی
+                    logMessage(`🔧 تمرین جدید تولید شد: ${currentExercise.question || currentExercise.front}`);
+                    updateSessionState({ currentExercise });
+                    return { success: true, exercise: currentExercise };
+                },
+                validateAnswer: (answer) => {
+                    if (!currentExercise) {
+                        logMessage('⚠️ تمرینی فعال نیست', 'error');
+                        return { success: false };
+                    }
+                    
+                    let isValid = false;
+                    // استفاده از validator جعلی
+                    if (currentExercise.type === 'multiple-choice') {
+                        isValid = (answer === currentExercise.correct);
+                        logMessage(`📝 پاسخ ${isValid ? '✅ صحیح' : '❌ غلط'} برای چندگزینه‌ای`);
+                    } else if (currentExercise.type === 'flashcard') {
+                        // مقایسه ساده (در واقعیت باید از validator حرفه‌ای استفاده شود)
+                        isValid = answer.trim().toLowerCase() === currentExercise.back.trim().toLowerCase();
+                        logMessage(`📝 پاسخ ${isValid ? '✅ صحیح' : '❌ غلط'} برای فلش‌کارت`);
+                    }
+                    
+                    updateSessionState({ lastAnswer: answer, isCorrect: isValid });
+                    return { success: true, isValid, exercise: currentExercise };
+                },
+                getCurrentExercise: () => currentExercise,
+                getLesson: () => currentLesson
+            };
+        })();
+
+        // ۳. اعتبارسنج (Validator) - تابع محض
+        const exerciseValidator = {
+            validateMultipleChoice: (selectedIndex, correctIndex) => selectedIndex === correctIndex,
+            validateFlashcard: (userAnswer, correctAnswer) => userAnswer.trim().toLowerCase() === correctAnswer.trim().toLowerCase(),
+            // می‌توان لوناشتاین و... اضافه کرد
+        };
+
+        // ۴. Progress Manager جعلی
+        const progressManager = (function() {
+            let progress = { completed: 0, total: 0, lastScore: null };
+            return {
+                updateProgress: (isCorrect) => {
+                    progress.completed += 1;
+                    progress.total += 1;
+                    progress.lastScore = isCorrect ? 100 : 0;
+                    logMessage(`📈 پیشرفت به‌روز شد: ${progress.completed}/${progress.total}`);
+                    return progress;
+                },
+                getProgress: () => ({ ...progress })
+            };
+        })();
+
+        // ۵. SRS Engine جعلی
+        const srsEngine = {
+            applyReview: (quality) => {
+                // کیفیت ۰-۵
+                const intervals = [1, 3, 7, 16, 35, 70]; // روز
+                const nextInterval = intervals[quality] || 1;
+                logMessage(`🧠 SRS: کیفیت ${quality} → مرور بعدی ${nextInterval} روز دیگر`);
+                return { nextReviewDays: nextInterval };
+            }
+        };
+
+        // ==================== وضعیت و UI ====================
+        let session = {
+            currentLesson: null,
+            exerciseType: null,
+            currentExercise: null,
+            lastAnswer: null,
+            isCorrect: null,
+            progress: {}
+        };
+
+        function updateSessionState(updates) {
+            session = { ...session, ...updates };
+            document.getElementById('sessionState').innerText = JSON.stringify(session, null, 2);
+        }
+
+        function logMessage(msg, type = 'info') {
+            const panel = document.getElementById('logPanel');
+            const entry = document.createElement('div');
+            entry.className = 'log-entry ' + (type === 'error' ? 'error' : (type === 'success' ? 'success' : ''));
+            entry.textContent = `[${new Date().toLocaleTimeString()}] ${msg}`;
+            panel.appendChild(entry);
+            panel.scrollTop = panel.scrollHeight;
+            
+            // نمایش آخرین خروجی
+            document.getElementById('lastOutput').innerText = JSON.stringify({ output: msg, type }, null, 2);
+            
+            // به‌روزرسانی مرحله‌نما
+            updateStepIndicator();
+        }
+
+        function updateStepIndicator() {
+            // منطق ساده برای مشخص کردن مرحله فعال
+            const steps = document.querySelectorAll('.step');
+            steps.forEach(s => s.classList.remove('active', 'completed'));
+            
+            if (session.currentLesson) steps[0]?.classList.add('completed');
+            if (session.exerciseType) steps[1]?.classList.add('completed');
+            if (session.currentExercise) steps[2]?.classList.add('completed');
+            if (session.lastAnswer !== null) steps[3]?.classList.add('completed');
+            if (session.progress.completed) steps[4]?.classList.add('completed');
+            // مرحله ۵ (SRS) و ۶ (بازخورد) به صورت دستی تعیین می‌شود
+        }
+
+        // ==================== Event Handlers ====================
+        document.getElementById('loadLessonBtn').addEventListener('click', () => {
+            const res = exerciseService.loadLesson('lesson_1');
+            if (res.success) {
+                session.currentLesson = res.lesson;
+                updateSessionState({ currentLesson: res.lesson });
+                logMessage('✅ درس با موفقیت بارگذاری شد', 'success');
+            }
+        });
+
+        document.getElementById('selectExerciseBtn').addEventListener('click', () => {
+            const type = Math.random() > 0.5 ? 'multiple-choice' : 'flashcard';
+            const res = exerciseService.setExerciseType(type);
+            if (res.success) {
+                session.exerciseType = type;
+                updateSessionState({ exerciseType: type });
+            }
+        });
+
+        document.getElementById('generateExerciseBtn').addEventListener('click', () => {
+            const res = exerciseService.generateExercise();
+            if (res.success) {
+                session.currentExercise = res.exercise;
+                updateSessionState({ currentExercise: res.exercise });
+            }
+        });
+
+        document.getElementById('validateCorrectBtn').addEventListener('click', () => {
+            const ex = exerciseService.getCurrentExercise();
+            if (!ex) { logMessage('⚠️ تمرینی وجود ندارد', 'error'); return; }
+            
+            let answer;
+            if (ex.type === 'multiple-choice') {
+                answer = ex.correct; // شاخص صحیح
+            } else {
+                answer = ex.back; // پاسخ صحیح
+            }
+            
+            const res = exerciseService.validateAnswer(answer);
+            if (res.success) {
+                session.isCorrect = res.isValid;
+                session.lastAnswer = answer;
+                updateSessionState({ isCorrect: res.isValid, lastAnswer: answer });
+                logMessage(`✅ پاسخ صحیح ارسال شد (نتیجه: ${res.isValid})`, 'success');
+            }
+        });
+
+        document.getElementById('validateWrongBtn').addEventListener('click', () => {
+            const ex = exerciseService.getCurrentExercise();
+            if (!ex) { logMessage('⚠️ تمرینی وجود ندارد', 'error'); return; }
+            
+            let answer;
+            if (ex.type === 'multiple-choice') {
+                answer = (ex.correct + 1) % ex.options.length; // گزینه اشتباه
+            } else {
+                answer = 'غلط';
+            }
+            
+            const res = exerciseService.validateAnswer(answer);
+            if (res.success) {
+                session.isCorrect = res.isValid;
+                session.lastAnswer = answer;
+                updateSessionState({ isCorrect: res.isValid, lastAnswer: answer });
+                logMessage(`❌ پاسخ غلط ارسال شد (نتیجه: ${res.isValid})`, 'error');
+            }
+        });
+
+        document.getElementById('saveProgressBtn').addEventListener('click', () => {
+            if (session.isCorrect === null) {
+                logMessage('⚠️ ابتدا به تمرین پاسخ دهید', 'error');
+                return;
+            }
+            const prog = progressManager.updateProgress(session.isCorrect);
+            session.progress = prog;
+            updateSessionState({ progress: prog });
+            logMessage(`💾 پیشرفت ذخیره شد: ${prog.completed}/${prog.total}`, 'success');
+        });
+
+        document.getElementById('runSrsBtn').addEventListener('click', () => {
+            if (session.isCorrect === null) {
+                logMessage('⚠️ برای اعمال SRS نیاز به پاسخ است', 'error');
+                return;
+            }
+            const quality = session.isCorrect ? 5 : 1; // کیفیت بر اساس صحت
+            const srsResult = srsEngine.applyReview(quality);
+            logMessage(`🧠 SRS اعمال شد: مرور بعدی ${srsResult.nextReviewDays} روز دیگر`, 'success');
+        });
+
+        document.getElementById('showFeedbackBtn').addEventListener('click', () => {
+            if (session.isCorrect === null) {
+                logMessage('ℹ️ بازخورد: هنوز پاسخی ثبت نشده', 'info');
+            } else {
+                const msg = session.isCorrect ? '🎉 آفرین! پاسخ شما صحیح بود.' : '📘 پاسخ صحیح را مرور کنید.';
+                logMessage(`📢 بازخورد: ${msg}`, session.isCorrect ? 'success' : 'error');
+            }
+        });
+
+        document.getElementById('resetFlowBtn').addEventListener('click', () => {
+            session = {
+                currentLesson: null,
+                exerciseType: null,
+                currentExercise: null,
+                lastAnswer: null,
+                isCorrect: null,
+                progress: {}
+            };
+            updateSessionState(session);
+            logMessage('🔄 جریان ریست شد. از مرحله اول شروع کنید.');
+        });
+
+        document.getElementById('clearLogBtn').addEventListener('click', () => {
+            document.getElementById('logPanel').innerHTML = '<div class="log-entry">🧹 لاگ پاک شد.</div>';
+            logMessage('🔄 آماده برای تست جدید');
+        });
+
+        // مقداردهی اولیه
+        updateSessionState({});
+        logMessage('🚀 تست جریان تمرین آماده است. دکمه‌ها را به ترتیب فشار دهید.');
+    </script>
+</body>
+</html>
