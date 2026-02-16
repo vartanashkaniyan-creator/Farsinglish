@@ -1,0 +1,561 @@
+```html
+<!DOCTYPE html>
+<html dir="rtl" lang="fa">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>تست قرارداد کامپوننت Exercise Card</title>
+    <style>
+        body {
+            font-family: Vazir, Tahoma, Arial, sans-serif;
+            background-color: #f5f7fa;
+            margin: 0;
+            padding: 20px;
+            color: #333;
+        }
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.1);
+            padding: 24px;
+        }
+        h1 {
+            font-size: 1.6rem;
+            color: #2c3e50;
+            border-bottom: 3px solid #3498db;
+            padding-bottom: 10px;
+            margin-top: 0;
+        }
+        h2 {
+            font-size: 1.2rem;
+            color: #34495e;
+            margin: 20px 0 10px;
+        }
+        .card-container {
+            background: #f8fafc;
+            border-radius: 12px;
+            padding: 20px;
+            margin: 20px 0;
+            border: 1px solid #e2e8f0;
+        }
+        .test-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 15px;
+            margin: 15px 0;
+        }
+        .test-case {
+            background: white;
+            border-radius: 10px;
+            padding: 15px;
+            border: 1px solid #e9ecef;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.02);
+        }
+        .test-title {
+            font-weight: 600;
+            color: #2c3e50;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .test-badge {
+            background: #e9ecef;
+            padding: 2px 8px;
+            border-radius: 20px;
+            font-size: 0.7rem;
+            color: #495057;
+        }
+        button {
+            background: #3498db;
+            color: white;
+            border: none;
+            padding: 10px 16px;
+            border-radius: 30px;
+            font-size: 0.9rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: 1px solid #2980b9;
+            margin: 5px;
+            box-shadow: 0 2px 4px rgba(52,152,219,0.2);
+        }
+        button:hover {
+            background: #2980b9;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+        .console-output {
+            background: #1e293b;
+            color: #e2e8f0;
+            font-family: 'Courier New', monospace;
+            padding: 15px;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            direction: ltr;
+            text-align: left;
+            max-height: 300px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+            border: 1px solid #334155;
+        }
+        .btn-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin: 15px 0;
+            justify-content: center;
+        }
+        .reset-btn {
+            background: #95a5a6;
+            border-color: #7f8c8d;
+        }
+        .reset-btn:hover {
+            background: #7f8c8d;
+        }
+        .success {
+            color: #2ecc71;
+            font-weight: 600;
+        }
+        .error {
+            color: #e74c3c;
+            font-weight: 600;
+        }
+        .warning {
+            color: #f39c12;
+        }
+        .summary {
+            background: #d4edda;
+            color: #155724;
+            padding: 12px;
+            border-radius: 8px;
+            border: 1px solid #c3e6cb;
+            margin: 15px 0;
+            font-weight: 500;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>🧪 تست قرارداد کامپوننت Exercise Card</h1>
+    <p>این فایل به‌صورت دستی، قراردادهای ورودی/خروجی کامپوننت ExerciseCard را تست می‌کند.</p>
+
+    <div class="card-container">
+        <h2>📦 کامپوننت ExerciseCard (شبیه‌سازی شده)</h2>
+        <div id="exerciseCardPreview" style="background: white; border-radius: 12px; padding: 20px; border: 2px solid #3498db; margin-bottom: 20px;">
+            <!-- اینجا کارت به‌صورت پویا رندر می‌شود -->
+        </div>
+
+        <div class="btn-group">
+            <button onclick="testPropsContract()">🧾 تست دریافت Props</button>
+            <button onclick="testEventEmission()">📢 تست ارسال Event</button>
+            <button onclick="testUnknownExerciseType()">❓ تست نوع ناشناخته</button>
+            <button onclick="testMissingData()">⚠️ تست داده ناقص</button>
+            <button onclick="runAllTests()">⚡ اجرای همه تست‌ها</button>
+            <button class="reset-btn" onclick="resetTestState()">🔄 ریست</button>
+        </div>
+
+        <div id="testSummary" class="summary" style="display: none;"></div>
+
+        <h2>📋 خروجی کنسول:</h2>
+        <div id="consoleOutput" class="console-output">
+            > برای اجرای تست‌ها روی دکمه‌ها کلیک کنید...
+        </div>
+    </div>
+</div>
+
+<script>
+    (function() {
+        // ==================== شبیه‌سازی کامپوننت ExerciseCard ====================
+        class ExerciseCard {
+            constructor(props) {
+                this.props = props || {};
+                this.events = [];
+                this.container = document.getElementById('exerciseCardPreview');
+                this.render();
+            }
+
+            // متد برای ارسال رویداد به والد
+            emit(eventName, data) {
+                const event = {
+                    name: eventName,
+                    data: data,
+                    timestamp: new Date().toISOString()
+                };
+                this.events.push(event);
+                logToConsole(`[کامپوننت] رویداد "${eventName}" ارسال شد: ${JSON.stringify(data)}`, 'info');
+                if (this.props.onEvent) {
+                    this.props.onEvent(event);
+                }
+                return event;
+            }
+
+            // رندر کامپوننت بر اساس props
+            render() {
+                if (!this.container) return;
+
+                const { exercise = {}, onAnswer, showAnswer = false } = this.props;
+                const exerciseType = exercise.type || 'unknown';
+                const question = exercise.question || 'سوال نامشخص';
+                const options = exercise.options || [];
+                const correctAnswer = exercise.correctAnswer || '';
+
+                let html = `
+                    <div style="background: #f0f7ff; border-radius: 12px; padding: 16px; border: 1px solid #bbdefb;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                            <span style="background: #3498db; color: white; padding: 4px 12px; border-radius: 30px; font-size: 0.8rem;">${exerciseType}</span>
+                            <span style="color: #7f8c8d; font-size: 0.8rem;">🧩 ExerciseCard</span>
+                        </div>
+                        <div style="font-size: 1.2rem; font-weight: 500; margin-bottom: 16px;">${question}</div>
+                `;
+
+                if (exerciseType === 'multiple-choice' && options.length > 0) {
+                    html += `<div style="display: flex; flex-direction: column; gap: 8px;">`;
+                    options.forEach((opt, idx) => {
+                        html += `
+                            <button class="option-btn" data-value="${opt}" style="background: white; border: 1px solid #b0bec5; border-radius: 30px; padding: 10px; text-align: right; cursor: pointer; margin: 2px 0;" onclick="simulateAnswer('${opt}')">
+                                ${opt}
+                            </button>
+                        `;
+                    });
+                    html += `</div>`;
+                } else if (exerciseType === 'flashcard') {
+                    html += `
+                        <div style="background: white; border-radius: 12px; padding: 20px; text-align: center; border: 1px dashed #90a4ae; margin: 10px 0;">
+                            ${showAnswer ? correctAnswer : '❓ کارت (کلیک برای نمایش جواب)'}
+                        </div>
+                        <button style="background: #f39c12; border: none; color: white; border-radius: 30px; padding: 10px 20px; width: 100%;" onclick="simulateFlip()">
+                            نمایش پاسخ
+                        </button>
+                    `;
+                } else {
+                    html += `<div style="color: #e74c3c; padding: 15px; background: #fdeded; border-radius: 8px;">⛔ نوع تمرین ناشناخته یا داده ناقص</div>`;
+                }
+
+                html += `<div style="margin-top: 12px; font-size: 0.7rem; color: #90a4ae; direction: ltr; text-align: left;">props: ${JSON.stringify({ exercise, showAnswer })}</div>`;
+                html += `</div>`;
+
+                this.container.innerHTML = html;
+            }
+
+            // به‌روزرسانی props
+            setProps(newProps) {
+                this.props = { ...this.props, ...newProps };
+                this.render();
+                logToConsole(`[کامپوننت] props به‌روزرسانی شد: ${JSON.stringify(newProps)}`, 'info');
+                this.emit('propsUpdated', newProps);
+            }
+        }
+
+        // ==================== متغیرهای سراسری ====================
+        let currentCard = null;
+        let testResults = [];
+        const consoleDiv = document.getElementById('consoleOutput');
+        const summaryDiv = document.getElementById('testSummary');
+
+        // ==================== توابع کمکی ====================
+        function logToConsole(message, type = 'log') {
+            const prefix = {
+                'log': '📌',
+                'success': '✅',
+                'error': '❌',
+                'warning': '⚠️',
+                'info': 'ℹ️'
+            }[type] || '📌';
+            const timestamp = new Date().toLocaleTimeString('fa-IR');
+            const line = `[${timestamp}] ${prefix} ${message}`;
+            consoleDiv.innerHTML += line + '\n';
+            consoleDiv.scrollTop = consoleDiv.scrollHeight;
+        }
+
+        function clearConsole() {
+            consoleDiv.innerHTML = '';
+        }
+
+        function addTestResult(name, passed, message) {
+            testResults.push({ name, passed, message });
+            const status = passed ? '✅' : '❌';
+            logToConsole(`${status} تست "${name}": ${message}`, passed ? 'success' : 'error');
+        }
+
+        function showSummary() {
+            const total = testResults.length;
+            const passed = testResults.filter(r => r.passed).length;
+            const failed = total - passed;
+            summaryDiv.style.display = 'block';
+            summaryDiv.className = failed === 0 ? 'summary success' : 'summary error';
+            summaryDiv.innerHTML = `📊 خلاصه: ${passed} از ${total} تست موفق (${failed} شکست)`;
+        }
+
+        function resetTestState() {
+            clearConsole();
+            testResults = [];
+            summaryDiv.style.display = 'none';
+            if (currentCard) {
+                currentCard.setProps({ exercise: { type: 'multiple-choice', question: 'سوال نمونه', options: ['گزینه ۱', 'گزینه ۲'] } });
+            } else {
+                initializeCard();
+            }
+            logToConsole('🔄 حالت تست ریست شد.', 'info');
+        }
+
+        // مقداردهی اولیه کارت
+        function initializeCard() {
+            const defaultExercise = {
+                type: 'multiple-choice',
+                question: 'معنی "apple" چیست؟',
+                options: ['سیب', 'پرتقال', 'موز', 'انگور'],
+                correctAnswer: 'سیب'
+            };
+            currentCard = new ExerciseCard({
+                exercise: defaultExercise,
+                onEvent: (event) => {
+                    logToConsole(`[والد] رویداد "${event.name}" دریافت شد با داده: ${JSON.stringify(event.data)}`, 'info');
+                }
+            });
+            logToConsole('✅ کامپوننت ExerciseCard مقداردهی شد.', 'success');
+        }
+
+        // شبیه‌سازی کلیک روی گزینه (برای تست دستی)
+        window.simulateAnswer = function(answer) {
+            if (currentCard) {
+                logToConsole(`[کاربر] گزینه "${answer}" انتخاب شد.`, 'log');
+                currentCard.emit('answerSelected', { answer, exercise: currentCard.props.exercise });
+            }
+        };
+
+        window.simulateFlip = function() {
+            if (currentCard) {
+                currentCard.setProps({ showAnswer: true });
+                currentCard.emit('cardFlipped', {});
+            }
+        };
+
+        // ==================== تست‌های قرارداد ====================
+        function testPropsContract() {
+            clearConsole();
+            testResults = [];
+            logToConsole('🧾 شروع تست دریافت Props...', 'info');
+
+            // تست 1: دریافت exercise از نوع multiple-choice
+            try {
+                const exerciseMC = {
+                    type: 'multiple-choice',
+                    question: 'سوال تستی؟',
+                    options: ['opt1', 'opt2'],
+                    correctAnswer: 'opt1'
+                };
+                currentCard.setProps({ exercise: exerciseMC });
+                const propsReceived = currentCard.props.exercise;
+                if (propsReceived.type === 'multiple-choice' && propsReceived.question === 'سوال تستی؟') {
+                    addTestResult('دریافت props (multiple-choice)', true, 'props به درستی دریافت شد.');
+                } else {
+                    addTestResult('دریافت props (multiple-choice)', false, 'props نادرست دریافت شد.');
+                }
+            } catch (e) {
+                addTestResult('دریافت props (multiple-choice)', false, 'خطا: ' + e.message);
+            }
+
+            // تست 2: دریافت exercise از نوع flashcard
+            try {
+                const exerciseFC = {
+                    type: 'flashcard',
+                    question: 'خانه',
+                    correctAnswer: 'house'
+                };
+                currentCard.setProps({ exercise: exerciseFC });
+                const propsReceived = currentCard.props.exercise;
+                if (propsReceived.type === 'flashcard' && propsReceived.question === 'خانه') {
+                    addTestResult('دریافت props (flashcard)', true, 'props به درستی دریافت شد.');
+                } else {
+                    addTestResult('دریافت props (flashcard)', false, 'props نادرست دریافت شد.');
+                }
+            } catch (e) {
+                addTestResult('دریافت props (flashcard)', false, 'خطا: ' + e.message);
+            }
+
+            // تست 3: بررسی وجود متدهای ضروری در props (onEvent)
+            try {
+                const hasOnEvent = typeof currentCard.props.onEvent === 'function';
+                if (hasOnEvent) {
+                    addTestResult('وجود onEvent در props', true, 'متد onEvent وجود دارد.');
+                } else {
+                    addTestResult('وجود onEvent در props', false, 'متد onEvent وجود ندارد.');
+                }
+            } catch (e) {
+                addTestResult('وجود onEvent در props', false, 'خطا: ' + e.message);
+            }
+
+            showSummary();
+        }
+
+        function testEventEmission() {
+            clearConsole();
+            testResults = [];
+            logToConsole('📢 شروع تست ارسال Event...', 'info');
+
+            // ریست کارت به حالت multiple-choice
+            currentCard.setProps({
+                exercise: {
+                    type: 'multiple-choice',
+                    question: 'سوال رویداد',
+                    options: ['الف', 'ب'],
+                    correctAnswer: 'الف'
+                }
+            });
+
+            // تست ارسال رویداد answerSelected
+            try {
+                const eventName = 'answerSelected';
+                const oldEventCount = currentCard.events.length;
+                currentCard.emit(eventName, { answer: 'الف' });
+                const newEventCount = currentCard.events.length;
+                if (newEventCount > oldEventCount && currentCard.events[currentCard.events.length-1].name === eventName) {
+                    addTestResult('ارسال رویداد answerSelected', true, 'رویداد با موفقیت ارسال شد.');
+                } else {
+                    addTestResult('ارسال رویداد answerSelected', false, 'رویداد ارسال نشد.');
+                }
+            } catch (e) {
+                addTestResult('ارسال رویداد answerSelected', false, 'خطا: ' + e.message);
+            }
+
+            // تست ارسال رویداد cardFlipped (با فلش کارت)
+            try {
+                currentCard.setProps({
+                    exercise: { type: 'flashcard', question: 'تست', correctAnswer: 'test' },
+                    showAnswer: false
+                });
+                const oldEventCount = currentCard.events.length;
+                currentCard.emit('cardFlipped', {});
+                const newEventCount = currentCard.events.length;
+                if (newEventCount > oldEventCount && currentCard.events[currentCard.events.length-1].name === 'cardFlipped') {
+                    addTestResult('ارسال رویداد cardFlipped', true, 'رویداد با موفقیت ارسال شد.');
+                } else {
+                    addTestResult('ارسال رویداد cardFlipped', false, 'رویداد ارسال نشد.');
+                }
+            } catch (e) {
+                addTestResult('ارسال رویداد cardFlipped', false, 'خطا: ' + e.message);
+            }
+
+            // تست ارسال رویداد propsUpdated
+            try {
+                const oldEventCount = currentCard.events.length;
+                currentCard.setProps({ showAnswer: true });
+                const newEventCount = currentCard.events.length;
+                const lastEvent = currentCard.events[currentCard.events.length-1];
+                if (newEventCount > oldEventCount && lastEvent.name === 'propsUpdated') {
+                    addTestResult('ارسال رویداد propsUpdated', true, 'رویداد با موفقیت ارسال شد.');
+                } else {
+                    addTestResult('ارسال رویداد propsUpdated', false, 'رویداد ارسال نشد.');
+                }
+            } catch (e) {
+                addTestResult('ارسال رویداد propsUpdated', false, 'خطا: ' + e.message);
+            }
+
+            showSummary();
+        }
+
+        function testUnknownExerciseType() {
+            clearConsole();
+            testResults = [];
+            logToConsole('❓ شروع تست نوع ناشناخته تمرین...', 'info');
+
+            try {
+                currentCard.setProps({
+                    exercise: { type: 'unknown-type', question: 'چیست؟' }
+                });
+                // بررسی اینکه آیا کامپوننت بدون خطا رندر می‌شود
+                const containerHtml = document.getElementById('exerciseCardPreview').innerHTML;
+                if (containerHtml.includes('نوع تمرین ناشناخته') || containerHtml.includes('⛔')) {
+                    addTestResult('نوع ناشناخته', true, 'کامپوننت خطای مناسب نمایش داد.');
+                } else {
+                    addTestResult('نوع ناشناخته', false, 'کامپوننت خطای مناسب نمایش نداد.');
+                }
+            } catch (e) {
+                addTestResult('نوع ناشناخته', false, 'کامپوننت کرش کرد: ' + e.message);
+            }
+
+            showSummary();
+        }
+
+        function testMissingData() {
+            clearConsole();
+            testResults = [];
+            logToConsole('⚠️ شروع تست داده ناقص...', 'info');
+
+            // تست 1: exercise خالی
+            try {
+                currentCard.setProps({ exercise: {} });
+                const html = document.getElementById('exerciseCardPreview').innerHTML;
+                if (html.includes('سوال نامشخص') || html.includes('نوع تمرین ناشناخته')) {
+                    addTestResult('exercise خالی', true, 'کامپوننت با داده خالی کار کرد.');
+                } else {
+                    addTestResult('exercise خالی', false, 'کامپوننت رفتار غیرمنتظره داشت.');
+                }
+            } catch (e) {
+                addTestResult('exercise خالی', false, 'کامپوننت کرش کرد: ' + e.message);
+            }
+
+            // تست 2: multiple-choice بدون options
+            try {
+                currentCard.setProps({
+                    exercise: { type: 'multiple-choice', question: 'بدون گزینه' }
+                });
+                const html = document.getElementById('exerciseCardPreview').innerHTML;
+                if (html.includes('گزینه') || html.includes('نوع تمرین ناشناخته')) {
+                    addTestResult('multiple-choice بدون options', true, 'کامپوننت با داده ناقص کار کرد.');
+                } else {
+                    addTestResult('multiple-choice بدون options', false, 'کامپوننت رفتار غیرمنتظره داشت.');
+                }
+            } catch (e) {
+                addTestResult('multiple-choice بدون options', false, 'کامپوننت کرش کرد: ' + e.message);
+            }
+
+            // تست 3: flashcard بدون correctAnswer
+            try {
+                currentCard.setProps({
+                    exercise: { type: 'flashcard', question: 'بدون جواب' }
+                });
+                const html = document.getElementById('exerciseCardPreview').innerHTML;
+                if (html.includes('❓') || html.includes('نوع تمرین ناشناخته')) {
+                    addTestResult('flashcard بدون correctAnswer', true, 'کامپوننت با داده ناقص کار کرد.');
+                } else {
+                    addTestResult('flashcard بدون correctAnswer', false, 'کامپوننت رفتار غیرمنتظره داشت.');
+                }
+            } catch (e) {
+                addTestResult('flashcard بدون correctAnswer', false, 'کامپوننت کرش کرد: ' + e.message);
+            }
+
+            showSummary();
+        }
+
+        function runAllTests() {
+            clearConsole();
+            testResults = [];
+            logToConsole('⚡ اجرای تمام تست‌های قرارداد...', 'info');
+            testPropsContract();
+            testEventEmission();
+            testUnknownExerciseType();
+            testMissingData();
+            logToConsole('🏁 تمام تست‌ها اجرا شدند.', 'success');
+        }
+
+        // مقداردهی اولیه هنگام بارگذاری صفحه
+        window.onload = function() {
+            initializeCard();
+        };
+
+        // قرار دادن توابع در scope سراسری
+        window.testPropsContract = testPropsContract;
+        window.testEventEmission = testEventEmission;
+        window.testUnknownExerciseType = testUnknownExerciseType;
+        window.testMissingData = testMissingData;
+        window.runAllTests = runAllTests;
+        window.resetTestState = resetTestState;
+    })();
+</script>
+</body>
+</html>
+```
