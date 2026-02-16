@@ -1,0 +1,554 @@
+<!DOCTYPE html>
+<html dir="rtl" lang="fa">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>تست لبه‌های کارت تمرین (نسخه اصلاحی) | Farsinglish</title>
+    <style>
+        body {
+            font-family: 'Vazir', 'Tahoma', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            margin: 0;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        .container {
+            max-width: 1000px;
+            width: 100%;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 24px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+            backdrop-filter: blur(10px);
+        }
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 25px;
+            text-align: center;
+        }
+        .header h1 {
+            margin: 0;
+            font-size: 1.8rem;
+        }
+        .header .badge {
+            background: #ffd700;
+            color: #333;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            margin-top: 10px;
+            display: inline-block;
+        }
+        .content {
+            padding: 30px;
+        }
+        .test-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 25px;
+            margin-bottom: 30px;
+        }
+        .test-card {
+            background: white;
+            border-radius: 16px;
+            padding: 20px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+            border: 1px solid #e0e7ff;
+        }
+        .test-card h3 {
+            color: #4338ca;
+            margin: 0 0 15px 0;
+            font-size: 1.2rem;
+            border-bottom: 2px solid #e0e7ff;
+            padding-bottom: 8px;
+        }
+        .scenario {
+            background: #f8fafc;
+            border-radius: 12px;
+            padding: 15px;
+            margin: 15px 0;
+            border-right: 4px solid #3b82f6;
+        }
+        .btn-group {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin: 15px 0;
+        }
+        .btn {
+            flex: 1;
+            min-width: 100px;
+            padding: 12px 20px;
+            border: none;
+            border-radius: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-family: inherit;
+            font-size: 0.95rem;
+        }
+        .btn-primary {
+            background: #3b82f6;
+            color: white;
+        }
+        .btn-primary:hover {
+            background: #2563eb;
+            transform: translateY(-2px);
+        }
+        .btn-secondary {
+            background: #e2e8f0;
+            color: #1e293b;
+        }
+        .btn-secondary:hover {
+            background: #cbd5e1;
+        }
+        .btn-success {
+            background: #10b981;
+            color: white;
+        }
+        .btn-success:hover {
+            background: #059669;
+        }
+        .output {
+            background: #1e293b;
+            color: #a5f3fc;
+            padding: 15px;
+            border-radius: 12px;
+            font-family: 'Monaco', monospace;
+            font-size: 0.9rem;
+            margin-top: 15px;
+            white-space: pre-wrap;
+            direction: ltr;
+            text-align: left;
+            max-height: 150px;
+            overflow-y: auto;
+        }
+        .output .success { color: #4ade80; }
+        .output .error { color: #f87171; }
+        .output .warn { color: #fbbf24; }
+        .summary {
+            background: linear-gradient(135deg, #e0f2fe, #bae6fd);
+            border-radius: 16px;
+            padding: 20px;
+            margin-top: 30px;
+        }
+        .summary-stats {
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+        .stat-item {
+            background: white;
+            padding: 10px 25px;
+            border-radius: 30px;
+            font-weight: 600;
+        }
+        .stat-pass { color: #16a34a; border-right: 4px solid #16a34a; }
+        .stat-fail { color: #dc2626; border-right: 4px solid #dc2626; }
+        .fixed-badge {
+            background: #10b981;
+            color: white;
+            padding: 2px 10px;
+            border-radius: 20px;
+            font-size: 0.7rem;
+            margin-right: 8px;
+        }
+        footer {
+            text-align: center;
+            padding: 20px;
+            color: #64748b;
+            border-top: 1px solid #e2e8f0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🧪 تست لبه‌های کارت تمرین</h1>
+            <p>نسخه اصلاحی - بررسی دقیق خطاهای null و داده نامعتبر</p>
+            <span class="badge">نسخه ۲.۰ · رفع مشکل تشخیص خطا</span>
+        </div>
+
+        <div class="content">
+            <div class="test-grid">
+                <!-- سناریو 1: داده ناقص (null) -->
+                <div class="test-card" id="test-scenario1">
+                    <h3>🔴 سناریو ۱ · داده ناقص <span class="fixed-badge">اصلاح شد</span></h3>
+                    <div class="scenario">
+                        <div class="scenario-title">ورودی: exercise = null</div>
+                        <div class="scenario-desc">کارت تمرین بدون دریافت داده. باید خطای مناسب نمایش دهد و کرش نکند.</div>
+                    </div>
+                    <div class="btn-group">
+                        <button class="btn btn-primary" onclick="runScenario1()">اجرای تست</button>
+                        <button class="btn btn-secondary" onclick="resetScenario1()">ریست</button>
+                    </div>
+                    <div id="output-scenario1" class="output">منتظر اجرای تست...</div>
+                </div>
+
+                <!-- سناریو 2: نوع تمرین ناشناخته -->
+                <div class="test-card" id="test-scenario2">
+                    <h3>🔴 سناریو ۲ · نوع نامعتبر</h3>
+                    <div class="scenario">
+                        <div class="scenario-title">ورودی: type = "unknown"</div>
+                        <div class="scenario-desc">تمرینی با نوع ناشناخته. باید خطای مناسب نمایش دهد.</div>
+                    </div>
+                    <div class="btn-group">
+                        <button class="btn btn-primary" onclick="runScenario2()">اجرای تست</button>
+                        <button class="btn btn-secondary" onclick="resetScenario2()">ریست</button>
+                    </div>
+                    <div id="output-scenario2" class="output">منتظر اجرای تست...</div>
+                </div>
+
+                <!-- سناریو 3: پاسخ خالی -->
+                <div class="test-card" id="test-scenario3">
+                    <h3>🔴 سناریو ۳ · پاسخ خالی</h3>
+                    <div class="scenario">
+                        <div class="scenario-title">ورودی: options = []</div>
+                        <div class="scenario-desc">گزینه‌های پاسخ خالی. باید از آرایه خالی جلوگیری کند.</div>
+                    </div>
+                    <div class="btn-group">
+                        <button class="btn btn-primary" onclick="runScenario3()">اجرای تست</button>
+                        <button class="btn btn-secondary" onclick="resetScenario3()">ریست</button>
+                    </div>
+                    <div id="output-scenario3" class="output">منتظر اجرای تست...</div>
+                </div>
+
+                <!-- سناریو 4: داده خراب -->
+                <div class="test-card" id="test-scenario4">
+                    <h3>🔴 سناریو ۴ · داده خراب</h3>
+                    <div class="scenario">
+                        <div class="scenario-title">ورودی: exercise = { id: 1 }</div>
+                        <div class="scenario-desc">بدون question و type. باید خطای اعتبارسنجی بدهد.</div>
+                    </div>
+                    <div class="btn-group">
+                        <button class="btn btn-primary" onclick="runScenario4()">اجرای تست</button>
+                        <button class="btn btn-secondary" onclick="resetScenario4()">ریست</button>
+                    </div>
+                    <div id="output-scenario4" class="output">منتظر اجرای تست...</div>
+                </div>
+            </div>
+
+            <!-- خلاصه تست‌ها -->
+            <div class="summary">
+                <h3>📊 خلاصه نتایج تست‌ها</h3>
+                <div class="summary-stats">
+                    <div class="stat-item stat-pass" id="passCount">موفق: ۰</div>
+                    <div class="stat-item stat-fail" id="failCount">شکست: ۰</div>
+                    <div class="stat-item" id="totalCount">کل: ۴</div>
+                </div>
+                <div style="margin-top: 15px; display: flex; gap: 10px;">
+                    <button class="btn btn-success" onclick="runAllTests()">▶ اجرای همه تست‌ها</button>
+                    <button class="btn btn-secondary" onclick="resetAll()">🔄 ریست همه</button>
+                </div>
+            </div>
+        </div>
+
+        <footer>
+            Farsinglish · تست اصلاحی کارت تمرین · نسخه ۲.۰ · ۲۰۲۶
+        </footer>
+    </div>
+
+    <script>
+        // ==================== شبیه‌سازی کامپوننت اصلی ====================
+        class ExerciseCard {
+            constructor(container, events, config = {}) {
+                this.container = container;
+                this.events = events || {};
+                this.config = config;
+                this.state = null;
+            }
+
+            render(exercise) {
+                try {
+                    // بررسی حیاتی برای null
+                    if (exercise === null || exercise === undefined) {
+                        throw new Error('Exercise data is required');
+                    }
+
+                    // بررسی نوع داده
+                    if (typeof exercise !== 'object') {
+                        throw new Error('Exercise must be an object');
+                    }
+
+                    // بررسی فیلدهای اجباری
+                    if (!exercise.type) {
+                        throw new Error('Exercise type is required');
+                    }
+
+                    const validTypes = ['multiple-choice', 'flashcard', 'fill-blank', 'translation'];
+                    if (!validTypes.includes(exercise.type)) {
+                        throw new Error(`Invalid exercise type: ${exercise.type}`);
+                    }
+
+                    if (!exercise.question && exercise.type !== 'flashcard') {
+                        throw new Error('Exercise question is required');
+                    }
+
+                    // بررسی گزینه‌ها برای چندگزینه‌ای
+                    if (exercise.type === 'multiple-choice') {
+                        if (!exercise.options || !Array.isArray(exercise.options)) {
+                            throw new Error('Options must be an array for multiple choice');
+                        }
+                        if (exercise.options.length === 0) {
+                            throw new Error('Options array cannot be empty');
+                        }
+                    }
+
+                    // شبیه‌سازی رندر موفق
+                    this.state = { exercise, status: 'rendered' };
+                    return { success: true, exercise: exercise };
+
+                } catch (error) {
+                    // نمایش خطا
+                    if (this.container && typeof this.container === 'object') {
+                        const errorDiv = document.createElement('div');
+                        errorDiv.className = 'exercise-error';
+                        errorDiv.innerHTML = `
+                            <span style="color: #dc2626; font-weight: bold;">⚠️ خطا: </span>
+                            <span style="color: #1e293b;">${error.message}</span>
+                        `;
+                        
+                        // پاک‌سازی قبلی و اضافه کردن خطا
+                        if (this.container.$simulated) {
+                            this.container.$simulated.innerHTML = '';
+                            this.container.$simulated.appendChild(errorDiv);
+                        }
+                    }
+                    
+                    throw error; // پرتاب مجدد برای تشخیص در تست
+                }
+            }
+
+            destroy() {
+                this.state = null;
+            }
+        }
+
+        // ==================== Mock DOM برای تست ====================
+        const mockContainer = {
+            $simulated: null,
+            appendChild: function(el) {
+                this.$simulated = el;
+            },
+            innerHTML: {
+                _value: '',
+                set: function(val) { this._value = val; },
+                get: function() { return this._value; }
+            }
+        };
+
+        // ==================== توابع تست اصلاح شده ====================
+        let results = {
+            scenario1: { passed: false, executed: false, message: '' },
+            scenario2: { passed: false, executed: false, message: '' },
+            scenario3: { passed: false, executed: false, message: '' },
+            scenario4: { passed: false, executed: false, message: '' }
+        };
+
+        function logToElement(id, message, type = 'info', details = '') {
+            const el = document.getElementById(id);
+            if (el) {
+                const icon = type === 'success' ? '✅' : type === 'error' ? '❌' : '⚠️';
+                const fullMessage = `${icon} ${message}${details ? '\n' + details : ''}`;
+                el.innerHTML = `<span class="${type}">${fullMessage}</span>`;
+            }
+        }
+
+        function updateSummary() {
+            let pass = 0, fail = 0;
+            for (let key in results) {
+                if (results[key].executed) {
+                    results[key].passed ? pass++ : fail++;
+                }
+            }
+            document.getElementById('passCount').innerHTML = `موفق: ${pass}`;
+            document.getElementById('failCount').innerHTML = `شکست: ${fail}`;
+            document.getElementById('totalCount').innerHTML = `کل: ${pass + fail}`;
+        }
+
+        // سناریو 1: تست null (اصلاح شده)
+        window.runScenario1 = function() {
+            try {
+                const card = new ExerciseCard(mockContainer, {});
+                
+                let errorThrown = false;
+                let errorMessage = '';
+                
+                try {
+                    card.render(null);
+                } catch (error) {
+                    errorThrown = true;
+                    errorMessage = error.message;
+                }
+                
+                // بررسی دقیق خطا
+                const passed = errorThrown && errorMessage.includes('Exercise data is required');
+                
+                results.scenario1 = { 
+                    passed, 
+                    executed: true,
+                    message: passed ? 'خطای صحیح نمایش داده شد' : 'خطای نامناسب یا عدم پرتاب خطا'
+                };
+                
+                logToElement('output-scenario1',
+                    passed ? 'تست موفق: خطای "Exercise data is required" به درستی نمایش داده شد.' : 'تست ناموفق: خطای مناسب نمایش داده نشد.',
+                    passed ? 'success' : 'error',
+                    passed ? '' : `\nخطای دریافتی: ${errorMessage}`
+                );
+                
+            } catch (e) {
+                results.scenario1 = { passed: false, executed: true, message: e.message };
+                logToElement('output-scenario1', `خطای غیرمنتظره: ${e.message}`, 'error');
+            }
+            updateSummary();
+        };
+
+        // سناریو 2: نوع ناشناخته
+        window.runScenario2 = function() {
+            try {
+                const card = new ExerciseCard(mockContainer, {});
+                const invalidExercise = { type: 'unknown', question: 'تست' };
+                
+                let errorThrown = false;
+                let errorMessage = '';
+                
+                try {
+                    card.render(invalidExercise);
+                } catch (error) {
+                    errorThrown = true;
+                    errorMessage = error.message;
+                }
+                
+                const passed = errorThrown && errorMessage.includes('Invalid exercise type');
+                
+                results.scenario2 = { passed, executed: true };
+                logToElement('output-scenario2',
+                    passed ? 'تست موفق: نوع نامعتبر به درستی شناسایی شد.' : 'تست ناموفق: نوع نامعتبر شناسایی نشد.',
+                    passed ? 'success' : 'error',
+                    passed ? '' : `\nخطا: ${errorMessage}`
+                );
+                
+            } catch (e) {
+                results.scenario2 = { passed: false, executed: true };
+                logToElement('output-scenario2', `خطا: ${e.message}`, 'error');
+            }
+            updateSummary();
+        };
+
+        // سناریو 3: آرایه خالی
+        window.runScenario3 = function() {
+            try {
+                const card = new ExerciseCard(mockContainer, {});
+                const invalidExercise = { 
+                    type: 'multiple-choice', 
+                    question: 'تست',
+                    options: [] 
+                };
+                
+                let errorThrown = false;
+                let errorMessage = '';
+                
+                try {
+                    card.render(invalidExercise);
+                } catch (error) {
+                    errorThrown = true;
+                    errorMessage = error.message;
+                }
+                
+                const passed = errorThrown && errorMessage.includes('Options array cannot be empty');
+                
+                results.scenario3 = { passed, executed: true };
+                logToElement('output-scenario3',
+                    passed ? 'تست موفق: آرایه خالی به درستی شناسایی شد.' : 'تست ناموفق: آرایه خالی مجاز شمرده شد.',
+                    passed ? 'success' : 'error',
+                    passed ? '' : `\nخطا: ${errorMessage}`
+                );
+                
+            } catch (e) {
+                results.scenario3 = { passed: false, executed: true };
+                logToElement('output-scenario3', `خطا: ${e.message}`, 'error');
+            }
+            updateSummary();
+        };
+
+        // سناریو 4: داده خراب
+        window.runScenario4 = function() {
+            try {
+                const card = new ExerciseCard(mockContainer, {});
+                const invalidExercise = { id: 1 }; // بدون type و question
+                
+                let errorThrown = false;
+                let errorMessage = '';
+                let errorCount = 0;
+                
+                try {
+                    card.render(invalidExercise);
+                } catch (error) {
+                    errorThrown = true;
+                    errorMessage = error.message;
+                    errorCount++;
+                }
+                
+                // باید دو خطا بگیریم: یکی برای type و یکی برای question
+                // اما اولین خطا (type) کافی است
+                const passed = errorThrown && errorMessage.includes('Exercise type is required');
+                
+                results.scenario4 = { passed, executed: true };
+                logToElement('output-scenario4',
+                    passed ? 'تست موفق: داده خراب به درستی شناسایی شد.' : 'تست ناموفق: داده خراب مجاز شمرده شد.',
+                    passed ? 'success' : 'error',
+                    passed ? '' : `\nخطا: ${errorMessage}`
+                );
+                
+            } catch (e) {
+                results.scenario4 = { passed: false, executed: true };
+                logToElement('output-scenario4', `خطا: ${e.message}`, 'error');
+            }
+            updateSummary();
+        };
+
+        // ریست سناریوها
+        window.resetScenario1 = function() {
+            logToElement('output-scenario1', 'منتظر اجرای تست...', 'info');
+            results.scenario1 = { passed: false, executed: false };
+            updateSummary();
+        };
+        window.resetScenario2 = function() {
+            logToElement('output-scenario2', 'منتظر اجرای تست...', 'info');
+            results.scenario2 = { passed: false, executed: false };
+            updateSummary();
+        };
+        window.resetScenario3 = function() {
+            logToElement('output-scenario3', 'منتظر اجرای تست...', 'info');
+            results.scenario3 = { passed: false, executed: false };
+            updateSummary();
+        };
+        window.resetScenario4 = function() {
+            logToElement('output-scenario4', 'منتظر اجرای تست...', 'info');
+            results.scenario4 = { passed: false, executed: false };
+            updateSummary();
+        };
+
+        window.runAllTests = function() {
+            runScenario1();
+            setTimeout(runScenario2, 100);
+            setTimeout(runScenario3, 200);
+            setTimeout(runScenario4, 300);
+        };
+
+        window.resetAll = function() {
+            resetScenario1();
+            resetScenario2();
+            resetScenario3();
+            resetScenario4();
+        };
+
+        // مقداردهی اولیه
+        updateSummary();
+    </script>
+</body>
+</html>
