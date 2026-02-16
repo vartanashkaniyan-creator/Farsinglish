@@ -1,5 +1,4 @@
-
-// core/db/schema-v1.js
+// core/db/schema_v1.js
 // ============================================================
 // Advanced Database Schema Definition - Version 1
 // ============================================================
@@ -15,7 +14,7 @@
 // - DIP: Depends on abstractions (interfaces) not concretions
 //
 // Design Patterns: Singleton, Strategy (for validation), Factory (for stores)
-// Total Lines: ~650 (with comprehensive comments and features)
+// Total Lines: ~850 (with comprehensive comments and features)
 
 // ============================================================
 // INTERFACES & ABSTRACTIONS
@@ -28,6 +27,8 @@
 class IValidator {
   validate(data) { throw new Error('Must implement validate()'); }
   getErrors() { throw new Error('Must implement getErrors()'); }
+  getWarnings() { throw new Error('Must implement getWarnings()'); }
+  hasErrors() { throw new Error('Must implement hasErrors()'); }
 }
 
 /**
@@ -104,7 +105,7 @@ class UserValidator extends BaseValidator {
       this._addWarning('id', 'User ID should be a valid UUID', 'FORMAT_SUGGESTION');
     }
 
-    // Email Validation (comprehensive)
+    // Email Validation
     if (!user.email) {
       this._addError('email', 'Email is required', 'REQUIRED');
     } else if (typeof user.email !== 'string') {
@@ -131,18 +132,18 @@ class UserValidator extends BaseValidator {
       if (user.username.length > 50) {
         this._addError('username', 'Username cannot exceed 50 characters', 'MAX_LENGTH_EXCEEDED');
       }
-      if (!/^[a-zA-Z0-9_]+$/.test(user.username)) {
+      if (!/^[a-zA-Z0-9_\u0600-\u06FF]+$/.test(user.username)) {
         this._addError('username', 'Username can only contain letters, numbers, and underscores', 'INVALID_CHARS');
       }
     }
 
     // Password Hash Validation
-    if (!user.passwordHash) {
-      this._addError('passwordHash', 'Password hash is required', 'REQUIRED');
-    } else if (typeof user.passwordHash !== 'string') {
-      this._addError('passwordHash', 'Password hash must be a string', 'INVALID_TYPE');
-    } else if (user.passwordHash.length < 60) {
-      this._addWarning('passwordHash', 'Password hash seems too short for bcrypt', 'SECURITY_WARNING');
+    if (!user.password_hash) {
+      this._addError('password_hash', 'Password hash is required', 'REQUIRED');
+    } else if (typeof user.password_hash !== 'string') {
+      this._addError('password_hash', 'Password hash must be a string', 'INVALID_TYPE');
+    } else if (user.password_hash.length < 60) {
+      this._addWarning('password_hash', 'Password hash seems too short for bcrypt', 'SECURITY_WARNING');
     }
 
     // Profile Data Validation
@@ -150,14 +151,14 @@ class UserValidator extends BaseValidator {
       if (typeof user.profile !== 'object') {
         this._addError('profile', 'Profile must be an object', 'INVALID_TYPE');
       } else {
-        if (user.profile.fullName && typeof user.profile.fullName !== 'string') {
-          this._addError('profile.fullName', 'Full name must be a string', 'INVALID_TYPE');
+        if (user.profile.full_name && typeof user.profile.full_name !== 'string') {
+          this._addError('profile.full_name', 'Full name must be a string', 'INVALID_TYPE');
         }
         if (user.profile.age && (typeof user.profile.age !== 'number' || user.profile.age < 0 || user.profile.age > 150)) {
           this._addError('profile.age', 'Age must be a number between 0 and 150', 'INVALID_RANGE');
         }
-        if (user.profile.nativeLanguage && typeof user.profile.nativeLanguage !== 'string') {
-          this._addError('profile.nativeLanguage', 'Native language must be a string', 'INVALID_TYPE');
+        if (user.profile.native_language && typeof user.profile.native_language !== 'string') {
+          this._addError('profile.native_language', 'Native language must be a string', 'INVALID_TYPE');
         }
       }
     }
@@ -167,7 +168,7 @@ class UserValidator extends BaseValidator {
       if (typeof user.stats !== 'object') {
         this._addError('stats', 'Stats must be an object', 'INVALID_TYPE');
       } else {
-        const validStats = ['level', 'xp', 'streak', 'totalLessons', 'totalReviews', 'accuracy'];
+        const validStats = ['level', 'xp', 'streak', 'total_lessons', 'total_reviews', 'accuracy'];
         for (const stat of validStats) {
           if (user.stats[stat] !== undefined && typeof user.stats[stat] !== 'number') {
             this._addError(`stats.${stat}`, `${stat} must be a number`, 'INVALID_TYPE');
@@ -196,24 +197,24 @@ class UserValidator extends BaseValidator {
         if (user.settings.notifications !== undefined && typeof user.settings.notifications !== 'boolean') {
           this._addError('settings.notifications', 'Notifications must be a boolean', 'INVALID_TYPE');
         }
-        if (user.settings.audioEnabled !== undefined && typeof user.settings.audioEnabled !== 'boolean') {
-          this._addError('settings.audioEnabled', 'Audio enabled must be a boolean', 'INVALID_TYPE');
+        if (user.settings.audio_enabled !== undefined && typeof user.settings.audio_enabled !== 'boolean') {
+          this._addError('settings.audio_enabled', 'Audio enabled must be a boolean', 'INVALID_TYPE');
         }
       }
     }
 
     // Timestamps Validation
-    if (user.createdAt) {
-      if (!this._isValidDate(user.createdAt)) {
-        this._addError('createdAt', 'Created at must be a valid date', 'INVALID_DATE');
+    if (user.created_at) {
+      if (!this._isValidDate(user.created_at)) {
+        this._addError('created_at', 'Created at must be a valid date', 'INVALID_DATE');
       }
     } else {
-      this._addWarning('createdAt', 'Created at timestamp is missing', 'MISSING_FIELD');
+      this._addWarning('created_at', 'Created at timestamp is missing', 'MISSING_FIELD');
     }
 
-    if (user.updatedAt) {
-      if (!this._isValidDate(user.updatedAt)) {
-        this._addError('updatedAt', 'Updated at must be a valid date', 'INVALID_DATE');
+    if (user.updated_at) {
+      if (!this._isValidDate(user.updated_at)) {
+        this._addError('updated_at', 'Updated at must be a valid date', 'INVALID_DATE');
       }
     }
 
@@ -246,8 +247,8 @@ class LessonValidator extends BaseValidator {
       this._addError('id', 'Lesson ID is required', 'REQUIRED');
     } else if (typeof lesson.id !== 'string') {
       this._addError('id', 'Lesson ID must be a string', 'INVALID_TYPE');
-    } else if (!/^lesson-[a-zA-Z0-9_-]+$/.test(lesson.id)) {
-      this._addWarning('id', 'Lesson ID should follow pattern "lesson-{name}"', 'FORMAT_SUGGESTION');
+    } else if (!/^lesson_[a-zA-Z0-9_-]+$/.test(lesson.id)) {
+      this._addWarning('id', 'Lesson ID should follow pattern "lesson_{name}"', 'FORMAT_SUGGESTION');
     }
 
     // Title Validation
@@ -347,31 +348,93 @@ class LessonValidator extends BaseValidator {
   }
 
   _validateVocabulary(vocab) {
-    for (let i = 0; i < Math.min(vocab.length, 100); i++) {
+    if (!Array.isArray(vocab)) {
+      this._addError('content.vocabulary', 'Vocabulary must be an array', 'INVALID_TYPE');
+      return;
+    }
+    
+    const seenWords = new Set();
+    for (let i = 0; i < vocab.length; i++) {
       const item = vocab[i];
+      
       if (!item.word || typeof item.word !== 'string') {
         this._addError(`content.vocabulary[${i}].word`, 'Word is required and must be string', 'INVALID');
+      } else {
+        // جلوگیری از کلمات تکراری
+        const wordLower = item.word.toLowerCase();
+        if (seenWords.has(wordLower)) {
+          this._addWarning(`content.vocabulary[${i}]`, `Duplicate word: ${item.word}`, 'DUPLICATE');
+        }
+        seenWords.add(wordLower);
       }
+      
       if (!item.translation || typeof item.translation !== 'string') {
         this._addError(`content.vocabulary[${i}].translation`, 'Translation is required and must be string', 'INVALID');
       }
+      
       if (item.pronunciation && typeof item.pronunciation !== 'string') {
         this._addError(`content.vocabulary[${i}].pronunciation`, 'Pronunciation must be string', 'INVALID');
+      }
+      
+      // اعتبارسنجی مثال‌ها
+      if (item.examples && !Array.isArray(item.examples)) {
+        this._addError(`content.vocabulary[${i}].examples`, 'Examples must be an array', 'INVALID_TYPE');
+      }
+      
+      // اعتبارسنجی تصویر
+      if (item.image_url && typeof item.image_url !== 'string') {
+        this._addError(`content.vocabulary[${i}].image_url`, 'Image URL must be a string', 'INVALID_TYPE');
+      } else if (item.image_url && !item.image_url.startsWith('http')) {
+        this._addWarning(`content.vocabulary[${i}].image_url`, 'Image URL should start with http', 'FORMAT_WARNING');
       }
     }
   }
 
   _validateExercises(exercises) {
-    for (let i = 0; i < Math.min(exercises.length, 50); i++) {
+    for (let i = 0; i < exercises.length; i++) {
       const ex = exercises[i];
+      
       if (!ex.id || typeof ex.id !== 'string') {
         this._addError(`content.exercises[${i}].id`, 'Exercise ID is required and must be string', 'INVALID');
       }
-      if (!ex.type || !['multiple-choice', 'fill-blank', 'matching', 'pronunciation'].includes(ex.type)) {
+      
+      if (!ex.type || !['multiple_choice', 'fill_blank', 'matching', 'pronunciation'].includes(ex.type)) {
         this._addError(`content.exercises[${i}].type`, 'Valid exercise type is required', 'INVALID');
       }
+      
       if (!ex.question || typeof ex.question !== 'string') {
         this._addError(`content.exercises[${i}].question`, 'Question is required and must be string', 'INVALID');
+      }
+      
+      // اعتبارسنجی بر اساس نوع تمرین
+      switch (ex.type) {
+        case 'multiple_choice':
+          if (!ex.options || !Array.isArray(ex.options) || ex.options.length < 2) {
+            this._addError(`content.exercises[${i}].options`, 'Multiple choice needs at least 2 options', 'INVALID');
+          }
+          if (ex.correct_answer === undefined || ex.correct_answer < 0 || ex.correct_answer >= ex.options?.length) {
+            this._addError(`content.exercises[${i}].correct_answer`, 'Valid correct answer index required', 'INVALID');
+          }
+          break;
+          
+        case 'fill_blank':
+          if (!ex.correct_answer || typeof ex.correct_answer !== 'string') {
+            this._addError(`content.exercises[${i}].correct_answer`, 'Fill blank needs a correct answer string', 'INVALID');
+          }
+          break;
+          
+        case 'matching':
+          if (!ex.pairs || !Array.isArray(ex.pairs) || ex.pairs.length < 2) {
+            this._addError(`content.exercises[${i}].pairs`, 'Matching needs at least 2 pairs', 'INVALID');
+          }
+          break;
+      }
+      
+      // اعتبارسنجی سطح سختی
+      if (ex.difficulty !== undefined) {
+        if (typeof ex.difficulty !== 'number' || ex.difficulty < 1 || ex.difficulty > 5) {
+          this._addError(`content.exercises[${i}].difficulty`, 'Difficulty must be 1-5', 'INVALID_RANGE');
+        }
       }
     }
   }
@@ -388,88 +451,88 @@ class ProgressValidator extends BaseValidator {
     }
 
     // User ID Validation
-    if (!progress.userId) {
-      this._addError('userId', 'User ID is required', 'REQUIRED');
-    } else if (typeof progress.userId !== 'string') {
-      this._addError('userId', 'User ID must be a string', 'INVALID_TYPE');
+    if (!progress.user_id) {
+      this._addError('user_id', 'User ID is required', 'REQUIRED');
+    } else if (typeof progress.user_id !== 'string') {
+      this._addError('user_id', 'User ID must be a string', 'INVALID_TYPE');
     }
 
     // Lesson ID Validation
-    if (!progress.lessonId) {
-      this._addError('lessonId', 'Lesson ID is required', 'REQUIRED');
-    } else if (typeof progress.lessonId !== 'string') {
-      this._addError('lessonId', 'Lesson ID must be a string', 'INVALID_TYPE');
+    if (!progress.lesson_id) {
+      this._addError('lesson_id', 'Lesson ID is required', 'REQUIRED');
+    } else if (typeof progress.lesson_id !== 'string') {
+      this._addError('lesson_id', 'Lesson ID must be a string', 'INVALID_TYPE');
     }
 
     // SRS Data Validation
-    if (!progress.srsData) {
-      this._addError('srsData', 'SRS data is required', 'REQUIRED');
-    } else if (typeof progress.srsData !== 'object') {
-      this._addError('srsData', 'SRS data must be an object', 'INVALID_TYPE');
+    if (!progress.srs_data) {
+      this._addError('srs_data', 'SRS data is required', 'REQUIRED');
+    } else if (typeof progress.srs_data !== 'object') {
+      this._addError('srs_data', 'SRS data must be an object', 'INVALID_TYPE');
     } else {
       // Stage validation (0-10 for SM-2 algorithm)
-      if (progress.srsData.stage === undefined) {
-        this._addError('srsData.stage', 'SRS stage is required', 'REQUIRED');
-      } else if (typeof progress.srsData.stage !== 'number') {
-        this._addError('srsData.stage', 'SRS stage must be a number', 'INVALID_TYPE');
-      } else if (progress.srsData.stage < 0 || progress.srsData.stage > 10) {
-        this._addError('srsData.stage', 'SRS stage must be between 0 and 10', 'INVALID_RANGE');
+      if (progress.srs_data.stage === undefined) {
+        this._addError('srs_data.stage', 'SRS stage is required', 'REQUIRED');
+      } else if (typeof progress.srs_data.stage !== 'number') {
+        this._addError('srs_data.stage', 'SRS stage must be a number', 'INVALID_TYPE');
+      } else if (progress.srs_data.stage < 0 || progress.srs_data.stage > 10) {
+        this._addError('srs_data.stage', 'SRS stage must be between 0 and 10', 'INVALID_RANGE');
       }
 
       // Easiness factor validation (1.3 - 5.0 for SM-2)
-      if (progress.srsData.easinessFactor === undefined) {
-        this._addError('srsData.easinessFactor', 'Easiness factor is required', 'REQUIRED');
-      } else if (typeof progress.srsData.easinessFactor !== 'number') {
-        this._addError('srsData.easinessFactor', 'Easiness factor must be a number', 'INVALID_TYPE');
-      } else if (progress.srsData.easinessFactor < 1.3 || progress.srsData.easinessFactor > 5.0) {
-        this._addError('srsData.easinessFactor', 'Easiness factor must be between 1.3 and 5.0', 'INVALID_RANGE');
+      if (progress.srs_data.easiness_factor === undefined) {
+        this._addError('srs_data.easiness_factor', 'Easiness factor is required', 'REQUIRED');
+      } else if (typeof progress.srs_data.easiness_factor !== 'number') {
+        this._addError('srs_data.easiness_factor', 'Easiness factor must be a number', 'INVALID_TYPE');
+      } else if (progress.srs_data.easiness_factor < 1.3 || progress.srs_data.easiness_factor > 5.0) {
+        this._addError('srs_data.easiness_factor', 'Easiness factor must be between 1.3 and 5.0', 'INVALID_RANGE');
       }
 
       // Interval validation (days)
-      if (progress.srsData.interval === undefined) {
-        this._addError('srsData.interval', 'Interval is required', 'REQUIRED');
-      } else if (typeof progress.srsData.interval !== 'number') {
-        this._addError('srsData.interval', 'Interval must be a number', 'INVALID_TYPE');
-      } else if (progress.srsData.interval < 0) {
-        this._addError('srsData.interval', 'Interval cannot be negative', 'INVALID_RANGE');
-      } else if (progress.srsData.interval > 365) {
-        this._addWarning('srsData.interval', 'Interval exceeds 1 year, verify', 'UNUSUAL_VALUE');
+      if (progress.srs_data.interval === undefined) {
+        this._addError('srs_data.interval', 'Interval is required', 'REQUIRED');
+      } else if (typeof progress.srs_data.interval !== 'number') {
+        this._addError('srs_data.interval', 'Interval must be a number', 'INVALID_TYPE');
+      } else if (progress.srs_data.interval < 0) {
+        this._addError('srs_data.interval', 'Interval cannot be negative', 'INVALID_RANGE');
+      } else if (progress.srs_data.interval > 365) {
+        this._addWarning('srs_data.interval', 'Interval exceeds 1 year, verify', 'UNUSUAL_VALUE');
       }
 
       // Review count validation
-      if (progress.srsData.reviewCount !== undefined) {
-        if (typeof progress.srsData.reviewCount !== 'number') {
-          this._addError('srsData.reviewCount', 'Review count must be a number', 'INVALID_TYPE');
-        } else if (progress.srsData.reviewCount < 0) {
-          this._addError('srsData.reviewCount', 'Review count cannot be negative', 'INVALID_RANGE');
+      if (progress.srs_data.review_count !== undefined) {
+        if (typeof progress.srs_data.review_count !== 'number') {
+          this._addError('srs_data.review_count', 'Review count must be a number', 'INVALID_TYPE');
+        } else if (progress.srs_data.review_count < 0) {
+          this._addError('srs_data.review_count', 'Review count cannot be negative', 'INVALID_RANGE');
         }
       }
 
       // Lapse count validation
-      if (progress.srsData.lapseCount !== undefined) {
-        if (typeof progress.srsData.lapseCount !== 'number') {
-          this._addError('srsData.lapseCount', 'Lapse count must be a number', 'INVALID_TYPE');
-        } else if (progress.srsData.lapseCount < 0) {
-          this._addError('srsData.lapseCount', 'Lapse count cannot be negative', 'INVALID_RANGE');
+      if (progress.srs_data.lapse_count !== undefined) {
+        if (typeof progress.srs_data.lapse_count !== 'number') {
+          this._addError('srs_data.lapse_count', 'Lapse count must be a number', 'INVALID_TYPE');
+        } else if (progress.srs_data.lapse_count < 0) {
+          this._addError('srs_data.lapse_count', 'Lapse count cannot be negative', 'INVALID_RANGE');
         }
       }
     }
 
     // Next review date validation
-    if (!progress.nextReview) {
-      this._addError('nextReview', 'Next review date is required', 'REQUIRED');
+    if (!progress.next_review) {
+      this._addError('next_review', 'Next review date is required', 'REQUIRED');
     } else {
-      const reviewDate = new Date(progress.nextReview);
+      const reviewDate = new Date(progress.next_review);
       if (isNaN(reviewDate.getTime())) {
-        this._addError('nextReview', 'Next review must be a valid date', 'INVALID_DATE');
+        this._addError('next_review', 'Next review must be a valid date', 'INVALID_DATE');
       }
     }
 
     // Last reviewed date validation
-    if (progress.lastReviewed) {
-      const lastDate = new Date(progress.lastReviewed);
+    if (progress.last_reviewed) {
+      const lastDate = new Date(progress.last_reviewed);
       if (isNaN(lastDate.getTime())) {
-        this._addError('lastReviewed', 'Last reviewed must be a valid date', 'INVALID_DATE');
+        this._addError('last_reviewed', 'Last reviewed must be a valid date', 'INVALID_DATE');
       }
     }
 
@@ -526,7 +589,7 @@ class UsersStoreIndexes {
     return [
       new BaseIndex('email', 'email', { unique: true }),
       new BaseIndex('username', 'username', { unique: true }),
-      new BaseIndex('createdAt', 'createdAt', { unique: false }),
+      new BaseIndex('created_at', 'created_at', { unique: false }),
       new BaseIndex('level', 'stats.level', { unique: false }),
       new BaseIndex('streak', 'stats.streak', { unique: false })
     ];
@@ -559,13 +622,13 @@ class ProgressStoreIndexes {
   
   static getAll() {
     return [
-      new BaseIndex('userId', 'userId', { unique: false }),
-      new BaseIndex('lessonId', 'lessonId', { unique: false }),
-      new BaseIndex('nextReview', 'nextReview', { unique: false }),
-      new BaseIndex('user_lesson', ['userId', 'lessonId'], { unique: true }),
+      new BaseIndex('user_id', 'user_id', { unique: false }),
+      new BaseIndex('lesson_id', 'lesson_id', { unique: false }),
+      new BaseIndex('next_review', 'next_review', { unique: false }),
+      new BaseIndex('user_lesson', ['user_id', 'lesson_id'], { unique: true }),
       new BaseIndex('completed', 'completed', { unique: false }),
       new BaseIndex('score', 'score', { unique: false }),
-      new BaseIndex('stage', 'srsData.stage', { unique: false })
+      new BaseIndex('stage', 'srs_data.stage', { unique: false })
     ];
   }
 }
@@ -609,8 +672,8 @@ class MigrationV0ToV1 extends BaseMigration {
     }
     
     // Add default timestamps if missing
-    if (!oldData.createdAt) {
-      oldData.createdAt = new Date().toISOString();
+    if (!oldData.created_at) {
+      oldData.created_at = new Date().toISOString();
     }
     
     return oldData;
@@ -647,6 +710,52 @@ class MigrationManager {
     
     return currentData;
   }
+  
+  /**
+   * Migrates multiple items in batch
+   */
+  migrateBatch(items, oldVersion, onProgress) {
+    const total = items.length;
+    const migrated = [];
+    const failed = [];
+    
+    for (let i = 0; i < items.length; i++) {
+      try {
+        const migratedItem = this.migrate(items[i], oldVersion, this.getLatestVersion());
+        migrated.push(migratedItem);
+        
+        if (onProgress) {
+          onProgress({
+            current: i + 1,
+            total,
+            success: true,
+            item: items[i]
+          });
+        }
+      } catch (error) {
+        failed.push({
+          item: items[i],
+          error: error.message
+        });
+        
+        if (onProgress) {
+          onProgress({
+            current: i + 1,
+            total,
+            success: false,
+            error: error.message
+          });
+        }
+      }
+    }
+    
+    return {
+      migrated,
+      failed,
+      total_migrated: migrated.length,
+      total_failed: failed.length
+    };
+  }
 }
 
 // ============================================================
@@ -657,10 +766,10 @@ class MigrationManager {
  * Advanced Database Schema - Version 1
  * Complete schema definition with validation, migrations, and utilities
  */
-export class DatabaseSchemaV1 {
+class DatabaseSchema_V1 {
   constructor() {
     // Store names as constants
-    this.storeNames = {
+    this.store_names = {
       USERS: 'users',
       LESSONS: 'lessons',
       PROGRESS: 'progress'
@@ -671,34 +780,34 @@ export class DatabaseSchemaV1 {
 
     // Validators for each store
     this.validators = {
-      [this.storeNames.USERS]: new UserValidator(),
-      [this.storeNames.LESSONS]: new LessonValidator(),
-      [this.storeNames.PROGRESS]: new ProgressValidator()
+      [this.store_names.USERS]: new UserValidator(),
+      [this.store_names.LESSONS]: new LessonValidator(),
+      [this.store_names.PROGRESS]: new ProgressValidator()
     };
 
     // Index definitions for each store
     this.indexes = {
-      [this.storeNames.USERS]: UsersStoreIndexes.getAll(),
-      [this.storeNames.LESSONS]: LessonsStoreIndexes.getAll(),
-      [this.storeNames.PROGRESS]: ProgressStoreIndexes.getAll()
+      [this.store_names.USERS]: UsersStoreIndexes.getAll(),
+      [this.store_names.LESSONS]: LessonsStoreIndexes.getAll(),
+      [this.store_names.PROGRESS]: ProgressStoreIndexes.getAll()
     };
 
     // Primary keys
-    this.primaryKeys = {
-      [this.storeNames.USERS]: UsersStoreIndexes.getPrimaryKey(),
-      [this.storeNames.LESSONS]: LessonsStoreIndexes.getPrimaryKey(),
-      [this.storeNames.PROGRESS]: ProgressStoreIndexes.getPrimaryKey()
+    this.primary_keys = {
+      [this.store_names.USERS]: UsersStoreIndexes.getPrimaryKey(),
+      [this.store_names.LESSONS]: LessonsStoreIndexes.getPrimaryKey(),
+      [this.store_names.PROGRESS]: ProgressStoreIndexes.getPrimaryKey()
     };
 
     // Auto-increment settings
-    this.autoIncrement = {
-      [this.storeNames.USERS]: false,
-      [this.storeNames.LESSONS]: false,
-      [this.storeNames.PROGRESS]: ProgressStoreIndexes.getAutoIncrement()
+    this.auto_increment = {
+      [this.store_names.USERS]: false,
+      [this.store_names.LESSONS]: false,
+      [this.store_names.PROGRESS]: ProgressStoreIndexes.getAutoIncrement()
     };
 
     // Migration manager
-    this.migrationManager = new MigrationManager();
+    this.migration_manager = new MigrationManager();
 
     // Schema metadata
     this.metadata = {
@@ -707,14 +816,14 @@ export class DatabaseSchemaV1 {
       author: 'Farsinglish Team',
       created: '2026-02-16',
       version: this.version,
-      stores: Object.keys(this.storeNames).length
+      stores: Object.keys(this.store_names).length
     };
 
     // Validation statistics
     this.stats = {
-      totalValidations: 0,
-      failedValidations: 0,
-      lastValidation: null
+      total_validations: 0,
+      failed_validations: 0,
+      last_validation: null
     };
   }
 
@@ -724,24 +833,23 @@ export class DatabaseSchemaV1 {
    */
   upgrade(db) {
     // Create users store
-    this._createStore(db, this.storeNames.USERS, {
-      keyPath: this.primaryKeys[this.storeNames.USERS],
-      autoIncrement: this.autoIncrement[this.storeNames.USERS]
+    this._createStore(db, this.store_names.USERS, {
+      keyPath: this.primary_keys[this.store_names.USERS],
+      autoIncrement: this.auto_increment[this.store_names.USERS]
     });
 
     // Create lessons store
-    this._createStore(db, this.storeNames.LESSONS, {
-      keyPath: this.primaryKeys[this.storeNames.LESSONS],
-      autoIncrement: this.autoIncrement[this.storeNames.LESSONS]
+    this._createStore(db, this.store_names.LESSONS, {
+      keyPath: this.primary_keys[this.store_names.LESSONS],
+      autoIncrement: this.auto_increment[this.store_names.LESSONS]
     });
 
     // Create progress store
-    this._createStore(db, this.storeNames.PROGRESS, {
-      keyPath: this.primaryKeys[this.storeNames.PROGRESS],
-      autoIncrement: this.autoIncrement[this.storeNames.PROGRESS]
+    this._createStore(db, this.store_names.PROGRESS, {
+      keyPath: this.primary_keys[this.store_names.PROGRESS],
+      autoIncrement: this.auto_increment[this.store_names.PROGRESS]
     });
 
-    // Log successful upgrade
     console.log(`[Schema] Database upgraded to version ${this.version}`);
   }
 
@@ -777,7 +885,7 @@ export class DatabaseSchemaV1 {
    * @returns {Object} Validation result
    */
   validate(storeName, data) {
-    this.stats.totalValidations++;
+    this.stats.total_validations++;
     
     const validator = this.validators[storeName];
     if (!validator) {
@@ -793,14 +901,14 @@ export class DatabaseSchemaV1 {
     const warnings = validator.getWarnings();
 
     if (!isValid) {
-      this.stats.failedValidations++;
+      this.stats.failed_validations++;
     }
 
-    this.stats.lastValidation = {
+    this.stats.last_validation = {
       timestamp: Date.now(),
       store: storeName,
       isValid,
-      errorCount: errors.length
+      error_count: errors.length
     };
 
     return {
@@ -817,7 +925,14 @@ export class DatabaseSchemaV1 {
    * @returns {Object} Migrated data
    */
   migrate(data, oldVersion) {
-    return this.migrationManager.migrate(data, oldVersion, this.version);
+    return this.migration_manager.migrate(data, oldVersion, this.version);
+  }
+  
+  /**
+   * Migrates multiple items in batch
+   */
+  migrateBatch(items, oldVersion, onProgress) {
+    return this.migration_manager.migrateBatch(items, oldVersion, onProgress);
   }
 
   /**
@@ -828,11 +943,11 @@ export class DatabaseSchemaV1 {
   getStoreConfig(storeName) {
     return {
       name: storeName,
-      primaryKey: this.primaryKeys[storeName],
-      autoIncrement: this.autoIncrement[storeName],
+      primary_key: this.primary_keys[storeName],
+      auto_increment: this.auto_increment[storeName],
       indexes: this.indexes[storeName]?.map(idx => ({
         name: idx.getName(),
-        keyPath: idx.getKeyPath(),
+        key_path: idx.getKeyPath(),
         options: idx.getOptions()
       })) || []
     };
@@ -843,7 +958,7 @@ export class DatabaseSchemaV1 {
    * @returns {Array<string>} List of store names
    */
   getStoreNames() {
-    return Object.values(this.storeNames);
+    return Object.values(this.store_names);
   }
 
   /**
@@ -860,7 +975,7 @@ export class DatabaseSchemaV1 {
    * @returns {boolean} True if exists
    */
   hasStore(storeName) {
-    return Object.values(this.storeNames).includes(storeName);
+    return Object.values(this.store_names).includes(storeName);
   }
 
   /**
@@ -870,6 +985,124 @@ export class DatabaseSchemaV1 {
   getMetadata() {
     return { ...this.metadata };
   }
+  
+  /**
+   * Gets query optimization hints for each store
+   */
+  getQueryHints(storeName) {
+    const hints = {
+      [this.store_names.USERS]: {
+        preferred_indexes: ['email', 'username'],
+        coverage: ['email', 'username', 'stats.level', 'created_at'],
+        full_text_search: false
+      },
+      [this.store_names.LESSONS]: {
+        preferred_indexes: ['level', 'order', 'tags'],
+        coverage: ['level', 'order', 'tags', 'title'],
+        full_text_search: true,
+        searchable_fields: ['title', 'description']
+      },
+      [this.store_names.PROGRESS]: {
+        preferred_indexes: ['user_id', 'next_review', 'user_lesson'],
+        coverage: ['user_id', 'lesson_id', 'next_review', 'completed'],
+        compound_queries: ['user_id+next_review', 'user_id+completed']
+      }
+    };
+    
+    return hints[storeName] || null;
+  }
+
+  /**
+   * Gets query plan for common operations
+   */
+  getQueryPlan(storeName, operation, params = {}) {
+    const plans = {
+      [this.store_names.USERS]: {
+        findByEmail: { index: 'email', unique: true },
+        findByUsername: { index: 'username', unique: true },
+        findByLevel: { index: 'level', range: true }
+      },
+      [this.store_names.LESSONS]: {
+        findByLevel: { index: 'level', range: true },
+        findByOrder: { index: 'order', range: true },
+        findByTag: { index: 'tags', multiEntry: true }
+      },
+      [this.store_names.PROGRESS]: {
+        findByUser: { index: 'user_id', unique: false },
+        findDueReviews: { index: 'next_review', range: true },
+        findUserLesson: { index: 'user_lesson', unique: true },
+        findByStage: { index: 'stage', range: true }
+      }
+    };
+    
+    return plans[storeName]?.[operation] || null;
+  }
+
+  /**
+   * Compares with another schema version
+   */
+  compareWith(otherSchema) {
+    const differences = {
+      added: [],
+      removed: [],
+      modified: []
+    };
+    
+    const thisStores = this.getStoreNames();
+    const otherStores = otherSchema.getStoreNames();
+    
+    // Find added/removed stores
+    for (const store of thisStores) {
+      if (!otherStores.includes(store)) {
+        differences.added.push({ type: 'store', name: store });
+      }
+    }
+    
+    for (const store of otherStores) {
+      if (!thisStores.includes(store)) {
+        differences.removed.push({ type: 'store', name: store });
+      }
+    }
+    
+    // Compare indexes for common stores
+    for (const store of thisStores.filter(s => otherStores.includes(s))) {
+      const thisIndexes = this.indexes[store] || [];
+      const otherIndexes = otherSchema.indexes[store] || [];
+      
+      const thisIndexNames = thisIndexes.map(i => i.getName());
+      const otherIndexNames = otherIndexes.map(i => i.getName());
+      
+      for (const index of thisIndexes) {
+        if (!otherIndexNames.includes(index.getName())) {
+          differences.added.push({ type: 'index', store, name: index.getName() });
+        }
+      }
+      
+      for (const index of otherIndexes) {
+        if (!thisIndexNames.includes(index.getName())) {
+          differences.removed.push({ type: 'index', store, name: index.getName() });
+        }
+      }
+    }
+    
+    return differences;
+  }
+
+  /**
+   * Exports schema as JSON
+   */
+  toJSON() {
+    return {
+      version: this.version,
+      metadata: this.metadata,
+      stores: this.getStoreNames().map(name => this.getStoreConfig(name)),
+      validators: Object.keys(this.validators).map(name => ({
+        store: name,
+        rules: Object.getOwnPropertyNames(Object.getPrototypeOf(this.validators[name]))
+          .filter(p => p.startsWith('_validate') || p === 'validate')
+      }))
+    };
+  }
 
   /**
    * Creates a sample data template for a store
@@ -878,36 +1111,36 @@ export class DatabaseSchemaV1 {
    */
   getSampleData(storeName) {
     switch (storeName) {
-      case this.storeNames.USERS:
+      case this.store_names.USERS:
         return {
           id: 'user_' + Date.now(),
           email: 'example@email.com',
           username: 'learner',
-          passwordHash: '$2b$10$...',
+          password_hash: '$2b$10$...',
           profile: {
-            fullName: 'John Doe',
+            full_name: 'John Doe',
             age: 25,
-            nativeLanguage: 'fa'
+            native_language: 'fa'
           },
           stats: {
             level: 1,
             xp: 0,
             streak: 0,
-            totalLessons: 0,
+            total_lessons: 0,
             accuracy: 0
           },
           settings: {
             theme: 'system',
             notifications: true,
-            audioEnabled: true
+            audio_enabled: true
           },
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString()
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
         };
 
-      case this.storeNames.LESSONS:
+      case this.store_names.LESSONS:
         return {
-          id: 'lesson-sample-1',
+          id: 'lesson_sample_1',
           title: 'Sample Lesson',
           description: 'This is a sample lesson',
           level: 1,
@@ -922,27 +1155,27 @@ export class DatabaseSchemaV1 {
             exercises: [
               {
                 id: 'ex1',
-                type: 'multiple-choice',
+                type: 'multiple_choice',
                 question: 'What does "hello" mean?',
                 options: ['سلام', 'خداحافظ', 'صبح بخیر', 'شب بخیر'],
-                correctAnswer: 0
+                correct_answer: 0
               }
             ]
           }
         };
 
-      case this.storeNames.PROGRESS:
+      case this.store_names.PROGRESS:
         return {
-          userId: 'user_123',
-          lessonId: 'lesson-1',
-          srsData: {
+          user_id: 'user_123',
+          lesson_id: 'lesson_1',
+          srs_data: {
             stage: 0,
-            easinessFactor: 2.5,
+            easiness_factor: 2.5,
             interval: 0,
-            reviewCount: 0,
-            lapseCount: 0
+            review_count: 0,
+            lapse_count: 0
           },
-          nextReview: new Date().toISOString(),
+          next_review: new Date().toISOString(),
           completed: false,
           score: 0,
           metadata: {}
@@ -959,7 +1192,8 @@ export class DatabaseSchemaV1 {
 // ============================================================
 
 // Create and freeze the singleton instance
-const schemaV1 = new DatabaseSchemaV1();
-Object.freeze(schemaV1);
+const schema_v1 = new DatabaseSchema_V1();
+Object.freeze(schema_v1);
 
-export default schemaV1;
+export { DatabaseSchema_V1 };
+export default schema_v1;
