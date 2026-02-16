@@ -2,6 +2,9 @@
 /**
  * Lesson Service - موتور اصلی سیستم آموزش و مدیریت SRS
  * مسئولیت: مدیریت درس‌ها، تمرین‌ها و الگوریتم مرور هوشمند با جداسازی کامل لایه‌ها
+ * اصل SRP: فقط عملیات درس و تمرین
+ * اصل DIP: وابستگی به اینترفیس‌ها نه پیاده‌سازی
+ * اصل OCP: قابل توسعه با اضافه کردن ژنراتورهای جدید
  */
 
 // ============ Interfaces ============
@@ -12,6 +15,8 @@ class ILessonRepository {
     async updateLessonProgress(userId, lessonId, progress) {}
     async getNextReviewLesson(userId) {}
     async getUserProgress(userId) {}
+    async getUserStats(userId) {}
+    async updateUserStats(userId, stats) {}
 }
 
 class ISRSEngine {
@@ -21,9 +26,16 @@ class ISRSEngine {
 }
 
 class IExerciseGenerator {
-    generateExercise(lesson, type) {}
+    generateExercise(lesson, count) {}
     validateAnswer(exercise, userAnswer) {}
     calculateScore(exercise, userAnswer, timeSpent) {}
+}
+
+class ICacheProvider {
+    get(key) {}
+    set(key, value, ttl) {}
+    invalidate(key) {}
+    clear() {}
 }
 
 // ============ DTOs ============
@@ -36,6 +48,7 @@ class LessonRequestDTO {
         this.category = data.category;
         this.limit = data.limit || 10;
         this.offset = data.offset || 0;
+        Object.freeze(this);
     }
 }
 
@@ -46,6 +59,7 @@ class ExerciseRequestDTO {
         this.difficulty = data.difficulty;
         this.count = data.count || 5;
         this.userLevel = data.userLevel || 1;
+        Object.freeze(this);
     }
 }
 
@@ -57,6 +71,7 @@ class LessonProgressDTO {
         this.timeSpent = data.timeSpent;
         this.answers = data.answers || [];
         this.completedAt = data.completedAt || new Date().toISOString();
+        Object.freeze(this);
     }
 }
 
@@ -68,6 +83,88 @@ class SRSUpdateDTO {
         this.reviewCount = data.reviewCount;
         this.streak = data.streak;
         this.performance = data.performance;
+        Object.freeze(this);
+    }
+}
+
+// ============ Custom Errors ============
+class LessonError extends Error {
+    constructor(message, code, details = {}) {
+        super(message);
+        this.name = 'LessonError';
+        this.code = code;
+        this.details = details;
+        this.timestamp = new Date().toISOString();
+    }
+}
+
+class LessonNotFoundError extends LessonError {
+    constructor(lessonId) {
+        super(`درس با شناسه ${lessonId} یافت نشد`, 'LESSON_NOT_FOUND', { lessonId });
+        this.name = 'LessonNotFoundError';
+    }
+}
+
+class LessonLockedError extends LessonError {
+    constructor(lessonId, prerequisites) {
+        super('این درس قفل است. ابتدا درس‌های پیش‌نیاز را کامل کنید.', 
+              'LESSON_LOCKED', { lessonId, prerequisites });
+        this.name = 'LessonLockedError';
+    }
+}
+
+class ExerciseGenerationError extends LessonError {
+    constructor(lessonId, exerciseType) {
+        super(`خطا در تولید تمرین برای نوع ${exerciseType}`, 
+              'EXERCISE_GENERATION_FAILED', { lessonId, exerciseType });
+        this.name = 'ExerciseGenerationError';
+    }
+}
+
+// ============ Cache Provider Implementation ============
+class MemoryCacheProvider {
+    constructor(defaultTTL = 5 * 60 * 1000) { // 5 دقیقه پیش‌فرض
+        this.cache = new Map();
+        this.defaultTTL = defaultTTL;
+        this.stats = { hits: 0, misses: 0, sets: 0 };
+    }
+
+    get(key) {
+        const item = this.cache.get(key);
+        if (!item) {
+            this.stats.misses++;
+            return null;
+        }
+        
+        if (Date.now() > item.expiresAt) {
+            this.cache.delete(key);
+            this.stats.misses++;
+            return null;
+        }
+        
+        this.stats.hits++;
+        return item.value;
+    }
+
+    set(key, value, ttl = this.defaultTTL) {
+        this.cache.set(key, {
+            value,
+            expiresAt: Date.now() + ttl
+        });
+        this.stats.sets++;
+    }
+
+    invalidate(key) {
+        return this.cache.delete(key);
+    }
+
+    clear() {
+        this.cache.clear();
+        this.stats = { hits: 0, misses: 0, sets: 0 };
+    }
+
+    getStats() {
+        return { ...this.stats, size: this.cache.size };
     }
 }
 
@@ -76,21 +173,22 @@ class SRSEngineImpl extends ISRSEngine {
     constructor(config = {}) {
         super();
         this.config = {
-            initialInterval: config.initialInterval || 1, // روز
+            initialInterval: config.initialInterval || 1,
             minEaseFactor: config.minEaseFactor || 1.3,
             maxEaseFactor: config.maxEaseFactor || 5.0,
             easeFactorStep: config.easeFactorStep || 0.1,
             intervalModifier: config.intervalModifier || 1.0,
+            passingScore: config.passingScore || 60,
+            excellentScore: config.excellentScore || 90,
             ...config
         };
     }
 
     calculateNextReview(previousInterval, easeFactor, performance) {
         const performanceScore = Math.max(0, Math.min(100, performance));
-        const quality = performanceScore / 100;
         
-        if (quality < 0.6) {
-            // پاسخ ضعیف - بازگشت به ابتدا
+        // پاسخ ضعیف - بازگشت به ابتدا
+        if (performanceScore < this.config.passingScore) {
             return {
                 interval: 1,
                 easeFactor: Math.max(
@@ -100,8 +198,8 @@ class SRSEngineImpl extends ISRSEngine {
             };
         }
         
-        if (quality < 0.8) {
-            // پاسخ متوسط
+        // پاسخ متوسط
+        if (performanceScore < this.config.excellentScore) {
             const newInterval = Math.max(
                 1,
                 Math.round(previousInterval * easeFactor * 0.7)
@@ -154,11 +252,11 @@ class SRSEngineImpl extends ISRSEngine {
 
     getReviewSchedule(difficulty) {
         const schedules = {
-            1: [1, 3, 7, 14, 30, 60, 90],    // آسان
-            2: [1, 2, 5, 10, 21, 40, 70],    // متوسط
-            3: [1, 1, 3, 7, 14, 28, 56],     // سخت
-            4: [1, 1, 2, 5, 10, 20, 40],     // پیشرفته
-            5: [1, 1, 1, 3, 7, 14, 28]       // متخصص
+            1: [1, 3, 7, 14, 30, 60, 90],
+            2: [1, 2, 5, 10, 21, 40, 70],
+            3: [1, 1, 3, 7, 14, 28, 56],
+            4: [1, 1, 2, 5, 10, 20, 40],
+            5: [1, 1, 1, 3, 7, 14, 28]
         };
         
         return schedules[difficulty] || schedules[2];
@@ -172,6 +270,7 @@ class FlashcardGenerator extends IExerciseGenerator {
         const selected = this._selectRandomItems(vocabulary, count);
         
         return selected.map(item => ({
+            id: `flashcard-${Date.now()}-${Math.random()}`,
             type: 'flashcard',
             question: item.word,
             correctAnswer: item.translation,
@@ -186,6 +285,10 @@ class FlashcardGenerator extends IExerciseGenerator {
     }
 
     validateAnswer(exercise, userAnswer) {
+        if (!userAnswer || typeof userAnswer !== 'string') {
+            return { isCorrect: false, score: 0 };
+        }
+
         const normalizedUser = userAnswer.trim().toLowerCase();
         const normalizedCorrect = exercise.correctAnswer.trim().toLowerCase();
         
@@ -194,7 +297,7 @@ class FlashcardGenerator extends IExerciseGenerator {
             return { isCorrect: true, score: 100 };
         }
         
-        // تطابق جزئی (برای اشتباهات املایی)
+        // تطابق جزئی برای اشتباهات املایی
         const similarity = this._calculateSimilarity(normalizedUser, normalizedCorrect);
         if (similarity > 0.8) {
             return { isCorrect: true, score: Math.round(similarity * 100) };
@@ -209,7 +312,7 @@ class FlashcardGenerator extends IExerciseGenerator {
             return { score: 0, timeBonus: 0, total: 0 };
         }
         
-        const timeBonus = Math.max(0, 20 - (timeSpent / 1000)); // ثانیه
+        const timeBonus = Math.max(0, 20 - (timeSpent / 1000));
         const total = Math.min(100, validation.score + timeBonus);
         
         return {
@@ -220,6 +323,7 @@ class FlashcardGenerator extends IExerciseGenerator {
     }
 
     _selectRandomItems(array, count) {
+        if (!array.length) return [];
         const shuffled = [...array].sort(() => 0.5 - Math.random());
         return shuffled.slice(0, Math.min(count, array.length));
     }
@@ -275,8 +379,7 @@ class MultipleChoiceGenerator extends IExerciseGenerator {
         const content = lesson.content;
         const exercises = [];
         
-        // تولید سوالات واژگان
-        if (content.vocabulary && content.vocabulary.length > 0) {
+        if (content.vocabulary?.length) {
             const vocabExercises = this._generateVocabularyExercises(
                 content.vocabulary,
                 Math.min(3, count)
@@ -284,16 +387,18 @@ class MultipleChoiceGenerator extends IExerciseGenerator {
             exercises.push(...vocabExercises);
         }
         
-        // تولید سوالات گرامر
-        if (content.grammarPoints && content.grammarPoints.length > 0) {
+        if (content.grammarPoints?.length && exercises.length < count) {
             const grammarExercises = this._generateGrammarExercises(
                 content.grammarPoints,
-                Math.min(2, count - exercises.length)
+                count - exercises.length
             );
             exercises.push(...grammarExercises);
         }
         
-        return exercises.slice(0, count);
+        return exercises.slice(0, count).map(e => ({
+            ...e,
+            id: `${e.type}-${Date.now()}-${Math.random()}`
+        }));
     }
 
     validateAnswer(exercise, userAnswer) {
@@ -308,7 +413,7 @@ class MultipleChoiceGenerator extends IExerciseGenerator {
 
     calculateScore(exercise, userAnswer, timeSpent) {
         const validation = this.validateAnswer(exercise, userAnswer);
-        const timeBonus = Math.max(0, 10 - (timeSpent / 2000)); // ثانیه
+        const timeBonus = Math.max(0, 10 - (timeSpent / 2000));
         const total = validation.score + timeBonus;
         
         return {
@@ -340,7 +445,7 @@ class MultipleChoiceGenerator extends IExerciseGenerator {
         
         return selected.map(point => ({
             type: 'multiple_choice_grammar',
-            question: point.question || `کدام گزینه درست است؟`,
+            question: point.question || 'کدام گزینه درست است؟',
             correctAnswer: point.correctAnswer,
             options: point.options || this._generateGrammarOptions(point),
             hint: point.rule,
@@ -352,14 +457,14 @@ class MultipleChoiceGenerator extends IExerciseGenerator {
     }
 
     _selectRandomItems(array, count) {
+        if (!array.length) return [];
         const shuffled = [...array].sort(() => 0.5 - Math.random());
         return shuffled.slice(0, Math.min(count, array.length));
     }
 
     _generateOptions(items, correctAnswer, optionCount = 4) {
         const otherItems = items.filter(item => 
-            item.translation !== correctAnswer && 
-            item.translation !== undefined
+            item.translation !== correctAnswer && item.translation
         );
         
         const incorrect = [...otherItems]
@@ -373,84 +478,81 @@ class MultipleChoiceGenerator extends IExerciseGenerator {
 
     _generateGrammarOptions(grammarPoint) {
         const options = [grammarPoint.correctAnswer];
-        
         if (grammarPoint.distractors) {
             options.push(...grammarPoint.distractors);
         }
-        
         while (options.length < 4) {
             options.push(`گزینه ${options.length + 1}`);
         }
-        
         return options.sort(() => 0.5 - Math.random());
     }
 }
 
 // ============ Lesson Service ============
 class LessonService {
-    constructor(lessonRepository, srsEngine, stateManager, logger) {
+    constructor(lessonRepository, srsEngine, stateManager, logger, cacheProvider = null) {
         if (!lessonRepository || !srsEngine || !stateManager || !logger) {
-            throw new Error('تمام وابستگی‌های LessonService باید ارائه شوند');
+            throw new LessonError('همه وابستگی‌های LessonService باید ارائه شوند', 
+                                 'MISSING_DEPENDENCIES');
         }
         
         this.lessonRepository = lessonRepository;
         this.srsEngine = srsEngine;
         this.stateManager = stateManager;
         this.logger = logger;
+        this.cache = cacheProvider || new MemoryCacheProvider();
         
         this.exerciseGenerators = {
             'flashcard': new FlashcardGenerator(),
             'multiple_choice': new MultipleChoiceGenerator()
         };
+        
+        this.metrics = {
+            lessonsStarted: 0,
+            lessonsCompleted: 0,
+            totalTimeSpent: 0,
+            averageScore: 0
+        };
     }
 
-    /**
-     * دریافت درس بر اساس شناسه
-     */
     async getLesson(lessonId) {
         try {
             this.logger.info('دریافت درس', { lessonId });
             
+            // بررسی کش
+            const cacheKey = `lesson:${lessonId}`;
+            const cached = this.cache.get(cacheKey);
+            if (cached) {
+                this.logger.debug('درس از کش بازیابی شد', { lessonId });
+                return cached;
+            }
+            
             const lesson = await this.lessonRepository.getLessonById(lessonId);
             if (!lesson) {
-                throw new Error(`درس با شناسه ${lessonId} یافت نشد`);
+                throw new LessonNotFoundError(lessonId);
             }
             
-            // بررسی قفل بودن درس
-            const currentState = this.stateManager.getState();
-            const user = currentState.auth.user;
-            
-            if (lesson.status === 'locked' && !user?.isPremium) {
-                // بررسی پیش‌نیازها
-                const prerequisites = lesson.prerequisites || [];
-                const userProgress = await this.lessonRepository.getUserProgress(user.id);
-                
-                const unlocked = prerequisites.every(prereqId => 
-                    userProgress.some(progress => 
-                        progress.lessonId === prereqId && 
-                        progress.status === 'completed'
-                    )
-                );
-                
-                if (!unlocked) {
-                    throw new Error('این درس قفل است. ابتدا درس‌های پیش‌نیاز را کامل کنید.');
-                }
-            }
+            // ذخیره در کش
+            this.cache.set(cacheKey, lesson);
             
             return lesson;
             
         } catch (error) {
-            this.logger.error('خطا در دریافت درس', { lessonId, error: error.message });
-            throw error;
+            if (error instanceof LessonError) throw error;
+            throw new LessonError('خطا در دریافت درس', 'LESSON_FETCH_ERROR', { 
+                lessonId, 
+                error: error.message 
+            });
         }
     }
 
-    /**
-     * دریافت لیست درس‌های موجود
-     */
     async getLessons(request) {
         try {
             this.logger.info('دریافت لیست درس‌ها', request);
+            
+            const cacheKey = `lessons:${JSON.stringify(request)}`;
+            const cached = this.cache.get(cacheKey);
+            if (cached) return cached;
             
             const filter = {
                 type: request.type,
@@ -460,139 +562,83 @@ class LessonService {
             };
             
             const lessons = await this.lessonRepository.getLessonsByFilter(filter);
+            const enrichedLessons = await this._enrichLessonsWithProgress(lessons, request.userId);
             
-            // فیلتر کردن بر اساس وضعیت کاربر
-            const currentState = this.stateManager.getState();
-            const user = currentState.auth.user;
-            
-            if (!user) {
-                return lessons.slice(0, request.limit);
-            }
-            
-            const userProgress = await this.lessonRepository.getUserProgress(user.id);
-            const progressMap = new Map(
-                userProgress.map(p => [p.lessonId, p])
-            );
-            
-            const enrichedLessons = lessons.map(lesson => {
-                const progress = progressMap.get(lesson.id);
-                
-                return {
-                    ...lesson,
-                    userProgress: progress || null,
-                    isLocked: this._isLessonLocked(lesson, progressMap, user)
-                };
-            });
-            
-            // مرتب‌سازی: اول درس‌های در حال پیشرفت، سپس درس‌های جدید
-            enrichedLessons.sort((a, b) => {
-                if (a.userProgress?.status === 'in_progress') return -1;
-                if (b.userProgress?.status === 'in_progress') return 1;
-                if (!a.userProgress && b.userProgress) return -1;
-                if (a.userProgress && !b.userProgress) return 1;
-                return a.order - b.order;
-            });
-            
-            return enrichedLessons
+            const result = enrichedLessons
                 .slice(request.offset, request.offset + request.limit);
+            
+            this.cache.set(cacheKey, result, 2 * 60 * 1000); // کش 2 دقیقه
+            return result;
                 
         } catch (error) {
-            this.logger.error('خطا در دریافت لیست درس‌ها', { 
+            throw new LessonError('خطا در دریافت لیست درس‌ها', 'LESSONS_FETCH_ERROR', { 
                 request, 
                 error: error.message 
             });
-            throw error;
         }
     }
 
-    /**
-     * شروع یک درس
-     */
     async startLesson(lessonId) {
         try {
             this.logger.info('شروع درس', { lessonId });
             
             const currentState = this.stateManager.getState();
-            const user = currentState.auth.user;
+            const user = currentState.auth?.user;
             
             if (!user) {
-                throw new Error('کاربر وارد سیستم نشده است');
+                throw new LessonError('کاربر وارد سیستم نشده است', 'USER_NOT_AUTHENTICATED');
             }
             
             const lesson = await this.getLesson(lessonId);
             
-            // به‌روزرسانی پیشرفت کاربر
+            // بررسی قفل بودن درس
+            await this._checkLessonLock(lesson, user);
+            
             const progress = {
                 userId: user.id,
                 lessonId: lesson.id,
                 status: 'in_progress',
                 startedAt: new Date().toISOString(),
-                attempts: 1
+                attempts: 1,
+                srsData: { easeFactor: 2.5, interval: 1, reviewCount: 0 }
             };
             
-            await this.lessonRepository.updateLessonProgress(
-                user.id,
-                lesson.id,
-                progress
-            );
+            await this.lessonRepository.updateLessonProgress(user.id, lesson.id, progress);
+            await this.stateManager.dispatch('LESSON_LOAD', { lesson, progress });
             
-            // به‌روزرسانی state
-            await this.stateManager.dispatch('LESSON_LOAD', {
-                lesson: lesson,
-                progress: progress
-            });
+            this.metrics.lessonsStarted++;
             
-            this.logger.info('درس با موفقیت شروع شد', { 
-                userId: user.id, 
-                lessonId 
-            });
-            
-            return {
-                lesson,
-                progress
-            };
+            return { lesson, progress };
             
         } catch (error) {
-            this.logger.error('خطا در شروع درس', { 
+            if (error instanceof LessonError) throw error;
+            throw new LessonError('خطا در شروع درس', 'LESSON_START_ERROR', { 
                 lessonId, 
                 error: error.message 
             });
-            throw error;
         }
     }
 
-    /**
-     * تکمیل یک درس
-     */
     async completeLesson(lessonId, score, timeSpent, answers = []) {
         try {
             this.logger.info('تکمیل درس', { lessonId, score, timeSpent });
             
             const currentState = this.stateManager.getState();
-            const user = currentState.auth.user;
+            const user = currentState.auth?.user;
             
             if (!user) {
-                throw new Error('کاربر وارد سیستم نشده است');
+                throw new LessonError('کاربر وارد سیستم نشده است', 'USER_NOT_AUTHENTICATED');
             }
             
             const lesson = await this.getLesson(lessonId);
-            const progress = await this.lessonRepository.getUserProgress(user.id)
-                .then(progressList => 
-                    progressList.find(p => p.lessonId === lessonId)
-                );
+            const progress = await this._getUserProgress(user.id, lessonId);
             
             if (!progress) {
-                throw new Error('پیشرفتی برای این درس یافت نشد');
+                throw new LessonError('پیشرفتی برای این درس یافت نشد', 'PROGRESS_NOT_FOUND');
             }
             
-            // محاسبه SRS
-            const srsUpdate = this._calculateSRSUpdate(
-                lesson.difficulty,
-                progress.srsData || { easeFactor: 2.5, interval: 1, reviewCount: 0 },
-                score
-            );
+            const srsUpdate = this._calculateSRSUpdate(lesson.difficulty, progress.srsData, score);
             
-            // به‌روزرسانی پیشرفت
             const updatedProgress = {
                 ...progress,
                 status: 'completed',
@@ -603,28 +649,19 @@ class LessonService {
                 srsData: srsUpdate
             };
             
-            await this.lessonRepository.updateLessonProgress(
-                user.id,
-                lesson.id,
-                updatedProgress
-            );
-            
-            // به‌روزرسانی آمار کاربر
+            await this.lessonRepository.updateLessonProgress(user.id, lesson.id, updatedProgress);
             await this._updateUserStats(user.id, lesson, score, timeSpent);
-            
-            // به‌روزرسانی state
             await this.stateManager.dispatch('LESSON_COMPLETE', {
                 lessonId: lesson.id,
-                score: score,
+                score,
                 xpEarned: lesson.xpReward,
-                srsUpdate: srsUpdate
+                srsUpdate
             });
             
-            this.logger.info('درس با موفقیت تکمیل شد', { 
-                userId: user.id, 
-                lessonId, 
-                score 
-            });
+            this._updateMetrics(score, timeSpent);
+            
+            // اینوالیدیت کش‌های مرتبط
+            this.cache.invalidate(`lessons:${user.id}`);
             
             return {
                 lesson,
@@ -634,17 +671,14 @@ class LessonService {
             };
             
         } catch (error) {
-            this.logger.error('خطا در تکمیل درس', { 
+            if (error instanceof LessonError) throw error;
+            throw new LessonError('خطا در تکمیل درس', 'LESSON_COMPLETE_ERROR', { 
                 lessonId, 
                 error: error.message 
             });
-            throw error;
         }
     }
 
-    /**
-     * تولید تمرین‌های یک درس
-     */
     async generateExercises(lessonId, exerciseType, count = 5) {
         try {
             this.logger.info('تولید تمرین', { lessonId, exerciseType, count });
@@ -653,53 +687,42 @@ class LessonService {
             const generator = this.exerciseGenerators[exerciseType];
             
             if (!generator) {
-                throw new Error(`ژنراتور تمرین برای نوع ${exerciseType} یافت نشد`);
+                throw new ExerciseGenerationError(lessonId, exerciseType);
             }
             
             const exercises = generator.generateExercise(lesson, count);
             
-            // ذخیره تمرین‌ها در state برای اعتبارسنجی بعدی
-            const currentState = this.stateManager.getState();
             await this.stateManager.dispatch('UI_STATE_CHANGE', {
                 currentExercises: exercises,
-                exerciseType: exerciseType,
-                lessonId: lessonId
+                exerciseType,
+                lessonId
             });
             
             return exercises;
             
         } catch (error) {
-            this.logger.error('خطا در تولید تمرین', { 
-                lessonId, 
-                exerciseType, 
-                error: error.message 
-            });
-            throw error;
+            if (error instanceof LessonError) throw error;
+            throw new ExerciseGenerationError(lessonId, exerciseType);
         }
     }
 
-    /**
-     * اعتبارسنجی پاسخ تمرین
-     */
     async validateExercise(exerciseId, userAnswer, timeSpent = 0) {
         try {
             this.logger.info('اعتبارسنجی تمرین', { exerciseId, timeSpent });
             
             const currentState = this.stateManager.getState();
-            const exercises = currentState.ui.currentExercises || [];
+            const exercises = currentState.ui?.currentExercises || [];
             
-            const exercise = exercises.find(e => 
-                e.question === exerciseId || 
-                e.metadata?.word === exerciseId
-            );
-            
+            const exercise = exercises.find(e => e.id === exerciseId);
             if (!exercise) {
-                throw new Error('تمرین یافت نشد');
+                throw new LessonError('تمرین یافت نشد', 'EXERCISE_NOT_FOUND', { exerciseId });
             }
             
             const generator = this.exerciseGenerators[exercise.type];
             if (!generator) {
-                throw new Error(`ژنراتور برای نوع ${exercise.type} یافت نشد`);
+                throw new LessonError('ژنراتور یافت نشد', 'GENERATOR_NOT_FOUND', { 
+                    type: exercise.type 
+                });
             }
             
             const result = generator.calculateScore(exercise, userAnswer, timeSpent);
@@ -713,66 +736,74 @@ class LessonService {
             return result;
             
         } catch (error) {
-            this.logger.error('خطا در اعتبارسنجی تمرین', { 
+            if (error instanceof LessonError) throw error;
+            throw new LessonError('خطا در اعتبارسنجی تمرین', 'EXERCISE_VALIDATION_ERROR', { 
                 exerciseId, 
                 error: error.message 
             });
-            throw error;
         }
     }
 
-    /**
-     * دریافت درس بعدی برای مرور
-     */
     async getNextReviewLesson() {
         try {
             this.logger.info('دریافت درس بعدی برای مرور');
             
             const currentState = this.stateManager.getState();
-            const user = currentState.auth.user;
+            const user = currentState.auth?.user;
             
             if (!user) {
-                throw new Error('کاربر وارد سیستم نشده است');
+                throw new LessonError('کاربر وارد سیستم نشده است', 'USER_NOT_AUTHENTICATED');
             }
             
             const nextLesson = await this.lessonRepository.getNextReviewLesson(user.id);
             
             if (!nextLesson) {
-                // اگر درس برای مرور نبود، درس جدید پیشنهاد بده
                 const availableLessons = await this.getLessons({
                     userId: user.id,
                     limit: 10,
                     offset: 0
                 });
                 
-                const nextNewLesson = availableLessons.find(lesson => 
-                    !lesson.userProgress || 
-                    lesson.userProgress.status === 'not_started'
-                );
-                
-                return nextNewLesson || null;
+                return availableLessons.find(lesson => 
+                    !lesson.userProgress || lesson.userProgress.status === 'not_started'
+                ) || null;
             }
             
             return nextLesson;
             
         } catch (error) {
-            this.logger.error('خطا در دریافت درس مرور', { 
+            throw new LessonError('خطا در دریافت درس مرور', 'NEXT_REVIEW_FETCH_ERROR', { 
                 error: error.message 
             });
-            throw error;
         }
+    }
+
+    getMetrics() {
+        return { ...this.metrics };
+    }
+
+    clearCache() {
+        this.cache.clear();
+        this.logger.info('کش پاک‌سازی شد');
     }
 
     // ============ Private Methods ============
 
-    /**
-     * بررسی قفل بودن درس
-     * @private
-     */
-    _isLessonLocked(lesson, progressMap, user) {
-        if (lesson.status === 'locked' && !user.isPremium) {
-            return true;
-        }
+    async _enrichLessonsWithProgress(lessons, userId) {
+        if (!userId) return lessons;
+        
+        const userProgress = await this.lessonRepository.getUserProgress(userId);
+        const progressMap = new Map(userProgress.map(p => [p.lessonId, p]));
+        
+        return lessons.map(lesson => ({
+            ...lesson,
+            userProgress: progressMap.get(lesson.id) || null,
+            isLocked: this._isLessonLocked(lesson, progressMap)
+        }));
+    }
+
+    _isLessonLocked(lesson, progressMap) {
+        if (lesson.status === 'locked') return true;
         
         const prerequisites = lesson.prerequisites || [];
         return prerequisites.some(prereqId => {
@@ -781,22 +812,27 @@ class LessonService {
         });
     }
 
-    /**
-     * محاسبه به‌روزرسانی SRS
-     * @private
-     */
+    async _checkLessonLock(lesson, user) {
+        if (lesson.status === 'locked' && !user.isPremium) {
+            throw new LessonLockedError(lesson.id, lesson.prerequisites || []);
+        }
+    }
+
+    async _getUserProgress(userId, lessonId) {
+        const progressList = await this.lessonRepository.getUserProgress(userId);
+        return progressList.find(p => p.lessonId === lessonId);
+    }
+
     _calculateSRSUpdate(difficulty, currentSRS, score) {
-        const performance = score;
         const schedule = this.srsEngine.getReviewSchedule(difficulty);
-        
-        const currentReviewCount = currentSRS.reviewCount || 0;
+        const currentReviewCount = currentSRS?.reviewCount || 0;
         const nextScheduleIndex = Math.min(currentReviewCount, schedule.length - 1);
         
         const baseInterval = schedule[nextScheduleIndex] || 1;
         const srsResult = this.srsEngine.calculateNextReview(
             baseInterval,
-            currentSRS.easeFactor || 2.5,
-            performance
+            currentSRS?.easeFactor || 2.5,
+            score
         );
         
         const nextReview = new Date();
@@ -808,33 +844,41 @@ class LessonService {
             nextReview: nextReview.toISOString(),
             reviewCount: currentReviewCount + 1,
             lastReviewed: new Date().toISOString(),
-            streak: performance >= 70 ? (currentSRS.streak || 0) + 1 : 0
+            streak: score >= 70 ? (currentSRS?.streak || 0) + 1 : 0
         };
     }
 
-    /**
-     * به‌روزرسانی آمار کاربر
-     * @private
-     */
     async _updateUserStats(userId, lesson, score, timeSpent) {
         try {
-            // در اینجا باید به User Repository وصل شویم
-            // فعلاً فقط لاگ می‌کنیم
-            this.logger.info('به‌روزرسانی آمار کاربر', {
-                userId,
-                lessonId: lesson.id,
-                score,
-                timeSpent,
-                xpReward: lesson.xpReward
-            });
+            const stats = await this.lessonRepository.getUserStats(userId) || {
+                totalXp: 0,
+                completedLessons: 0,
+                averageScore: 0,
+                totalTimeSpent: 0
+            };
             
-            // TODO: اتصال به UserService برای به‌روزرسانی XP و آمار
+            stats.totalXp += lesson.xpReward || 0;
+            stats.completedLessons += 1;
+            stats.totalTimeSpent += timeSpent;
+            stats.averageScore = (
+                (stats.averageScore * (stats.completedLessons - 1) + score) / 
+                stats.completedLessons
+            );
+            
+            await this.lessonRepository.updateUserStats(userId, stats);
+            
         } catch (error) {
-            this.logger.error('خطا در به‌روزرسانی آمار کاربر', { 
-                userId, 
-                error: error.message 
-            });
+            this.logger.error('خطا در به‌روزرسانی آمار کاربر', { userId, error: error.message });
         }
+    }
+
+    _updateMetrics(score, timeSpent) {
+        this.metrics.lessonsCompleted++;
+        this.metrics.totalTimeSpent += timeSpent;
+        this.metrics.averageScore = (
+            (this.metrics.averageScore * (this.metrics.lessonsCompleted - 1) + score) / 
+            this.metrics.lessonsCompleted
+        );
     }
 }
 
@@ -842,7 +886,78 @@ class LessonService {
 class LessonServiceFactory {
     static create(lessonRepository, stateManager, logger, options = {}) {
         const srsEngine = new SRSEngineImpl(options.srsConfig);
-        return new LessonService(lessonRepository, srsEngine, stateManager, logger);
+        const cacheProvider = options.cacheProvider || new MemoryCacheProvider(options.cacheTTL);
+        
+        return new LessonService(
+            lessonRepository,
+            srsEngine,
+            stateManager,
+            logger,
+            cacheProvider
+        );
+    }
+
+    static createWithMock(stateManager, logger, options = {}) {
+        const mockRepository = {
+            lessons: new Map(),
+            progress: new Map(),
+            stats: new Map(),
+            
+            async getLessonById(id) {
+                return this.lessons.get(id) || null;
+            },
+            
+            async getLessonsByFilter(filter) {
+                return Array.from(this.lessons.values())
+                    .filter(l => !filter.isActive || l.isActive);
+            },
+            
+            async updateLessonProgress(userId, lessonId, progress) {
+                const key = `${userId}:${lessonId}`;
+                this.progress.set(key, progress);
+                return progress;
+            },
+            
+            async getUserProgress(userId) {
+                return Array.from(this.progress.values())
+                    .filter(p => p.userId === userId);
+            },
+            
+            async getNextReviewLesson(userId) {
+                const now = new Date();
+                const userProgress = await this.getUserProgress(userId);
+                
+                return userProgress
+                    .filter(p => p.srsData?.nextReview && new Date(p.srsData.nextReview) <= now)
+                    .sort((a, b) => new Date(a.srsData.nextReview) - new Date(b.srsData.nextReview))[0];
+            },
+            
+            async getUserStats(userId) {
+                return this.stats.get(userId) || null;
+            },
+            
+            async updateUserStats(userId, stats) {
+                this.stats.set(userId, stats);
+                return stats;
+            }
+        };
+        
+        // اضافه کردن درس‌های نمونه
+        mockRepository.lessons.set('lesson-1', {
+            id: 'lesson-1',
+            title: 'درس نمونه ۱',
+            difficulty: 2,
+            xpReward: 50,
+            content: {
+                vocabulary: [
+                    { word: 'hello', translation: 'سلام', phonetic: 'هلو' },
+                    { word: 'book', translation: 'کتاب', phonetic: 'بوک' },
+                    { word: 'pen', translation: 'خودکار', phonetic: 'پن' }
+                ]
+            }
+        });
+        
+        return LessonServiceFactory.create(mockRepository, stateManager, logger, options);
     }
 }
 
@@ -853,11 +968,17 @@ export {
     ILessonRepository,
     ISRSEngine,
     IExerciseGenerator,
+    ICacheProvider,
     SRSEngineImpl,
     FlashcardGenerator,
     MultipleChoiceGenerator,
+    MemoryCacheProvider,
     LessonRequestDTO,
     ExerciseRequestDTO,
     LessonProgressDTO,
-    SRSUpdateDTO
+    SRSUpdateDTO,
+    LessonError,
+    LessonNotFoundError,
+    LessonLockedError,
+    ExerciseGenerationError
 };
