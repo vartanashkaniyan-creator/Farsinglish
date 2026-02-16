@@ -1,0 +1,476 @@
+<!DOCTYPE html>
+<html dir="rtl" lang="fa">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>تست: Fake DB Failure · Farsinglish</title>
+    <style>
+        body {
+            font-family: 'Vazir', 'Tahoma', sans-serif;
+            background: #f7f9fc;
+            margin: 0;
+            padding: 20px;
+            color: #1e293b;
+        }
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 24px;
+            box-shadow: 0 12px 30px rgba(0,0,0,0.1);
+            padding: 28px 24px;
+            border: 1px solid #e9eef2;
+        }
+        h1 {
+            font-size: 1.8rem;
+            margin-top: 0;
+            margin-bottom: 8px;
+            color: #0f2b3d;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .subtitle {
+            font-size: 1rem;
+            color: #4b5e71;
+            border-bottom: 2px solid #e2e8f0;
+            padding-bottom: 16px;
+            margin-bottom: 24px;
+            display: flex;
+            justify-content: space-between;
+        }
+        .badge {
+            background: #dbeafe;
+            color: #1e40af;
+            padding: 4px 12px;
+            border-radius: 40px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+        .section {
+            background: #f8fafc;
+            border-radius: 20px;
+            padding: 20px;
+            margin-bottom: 28px;
+            border: 1px solid #dee7ed;
+        }
+        .section h2 {
+            font-size: 1.4rem;
+            margin-top: 0;
+            margin-bottom: 18px;
+            color: #163a5c;
+            border-right: 5px solid #3b82f6;
+            padding-right: 16px;
+        }
+        .test-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(270px, 1fr));
+            gap: 16px;
+            margin: 20px 0;
+        }
+        .test-card {
+            background: white;
+            border-radius: 18px;
+            padding: 18px 16px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.02);
+            border: 1px solid #e2e8f0;
+            transition: all 0.1s ease;
+        }
+        .test-card h3 {
+            font-size: 1.15rem;
+            margin: 0 0 12px 0;
+            color: #1e3a5f;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .btn {
+            background: white;
+            border: 2px solid #3b82f6;
+            color: #3b82f6;
+            padding: 10px 20px;
+            border-radius: 40px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: 0.1s;
+            margin: 8px 6px 8px 0;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.03);
+        }
+        .btn:hover {
+            background: #3b82f6;
+            color: white;
+            border-color: #2563eb;
+        }
+        .btn.small {
+            padding: 6px 16px;
+            font-size: 0.8rem;
+        }
+        .btn.danger {
+            border-color: #dc2626;
+            color: #b91c1c;
+        }
+        .btn.danger:hover {
+            background: #dc2626;
+            color: white;
+        }
+        .btn.secondary {
+            border-color: #64748b;
+            color: #334155;
+        }
+        .btn.secondary:hover {
+            background: #475569;
+            border-color: #334155;
+            color: white;
+        }
+        .log-console {
+            background: #0b1e2e;
+            color: #bbdbf3;
+            border-radius: 16px;
+            padding: 18px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9rem;
+            line-height: 1.7;
+            white-space: pre-wrap;
+            max-height: 270px;
+            overflow-y: auto;
+            border: 1px solid #2d3f53;
+            margin: 18px 0 10px;
+        }
+        .log-success {
+            color: #a3e8a3;
+        }
+        .log-error {
+            color: #f9acac;
+        }
+        .log-warning {
+            color: #fdd98a;
+        }
+        .flex-row {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 10px;
+            margin: 12px 0;
+        }
+        .assertion-list {
+            list-style: none;
+            padding: 0;
+            margin: 12px 0 0;
+        }
+        .assertion-list li {
+            background: #ecfdf5;
+            border-radius: 30px;
+            padding: 8px 18px;
+            margin: 6px 0;
+            border-right: 5px solid #059669;
+            font-size: 0.9rem;
+        }
+        hr {
+            border: none;
+            border-top: 2px dashed #cbd5e1;
+            margin: 24px 0;
+        }
+        .status-badge {
+            display: inline-block;
+            background: #e6f7e6;
+            color: #0a7143;
+            border-radius: 40px;
+            padding: 6px 20px;
+            font-weight: 600;
+            font-size: 0.85rem;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>📦 تست دستی · خرابی‌های Fake DB</h1>
+    <div class="subtitle">
+        <span>🔍 شبیه‌سازی failure / reject / timeout · <span class="badge">Fake DB Failure</span></span>
+        <span>🧪 ۶ سناریوی کنترلی</span>
+    </div>
+
+    <!-- ========== ماژول FakeDB (ساده، شبیه‌ساز) ========== -->
+    <div class="section">
+        <h2>🧰 پیاده‌سازی FakeDB (با قابلیت failure)</h2>
+        <p style="margin: 0 0 14px 0;">یک شیء fake با متدهای get, save, delete که می‌تواند خطا شبیه‌سازی کند.</p>
+        <div class="flex-row">
+            <button class="btn small" id="resetFakeDbBtn">🔄 بازنشانی به حالت عادی (بدون خطا)</button>
+            <button class="btn small danger" id="injectGetFailure">📛 فعال‌سازی خطا در get</button>
+            <button class="btn small danger" id="injectSaveFailure">📛 فعال‌سازی خطا در save</button>
+            <button class="btn small danger" id="injectDeleteFailure">📛 فعال‌سازی خطا در delete</button>
+            <button class="btn small secondary" id="simulateTimeout">⏳ شبیه‌سازی timeout (تأخیر ۵ ثانیه)</button>
+        </div>
+
+        <!-- کنسول لاگ مخصوص این بخش -->
+        <div class="log-console" id="fakeDbConsole">
+[FakeDB] در وضعیت عادی – متدها بدون خطا کار می‌کنند.
+        </div>
+    </div>
+
+    <!-- ========== سناریوهای تست ========== -->
+    <div class="section">
+        <h2>🧪 ۶ تست دستی خرابی (با دکمه)</h2>
+        <div class="test-grid">
+            <!-- کارت 1 -->
+            <div class="test-card">
+                <h3>🔹 ۱. get() با خطای فعال</h3>
+                <p>ابتدا «فعال‌سازی خطا در get» را بزن، سپس این تست را اجرا کن.</p>
+                <button class="btn small" id="testGetFailureBtn">⚡ اجرای get و بررسی rejection</button>
+                <div style="margin-top: 10px; font-size:0.85rem; background:#f1f5f9; padding:8px; border-radius:12px;" id="resultGetFailure">وضعیت: آماده</div>
+            </div>
+            <!-- کارت 2 -->
+            <div class="test-card">
+                <h3>🔹 ۲. save() با خطای فعال</h3>
+                <button class="btn small" id="testSaveFailureBtn">💾 save با rejection</button>
+                <div style="margin-top: 10px; background:#f1f5f9; padding:8px; border-radius:12px;" id="resultSaveFailure">وضعیت: آماده</div>
+            </div>
+            <!-- کارت 3 -->
+            <div class="test-card">
+                <h3>🔹 ۳. delete() با خطای فعال</h3>
+                <button class="btn small" id="testDeleteFailureBtn">🗑️ delete با rejection</button>
+                <div style="margin-top: 10px; background:#f1f5f9; padding:8px; border-radius:12px;" id="resultDeleteFailure">وضعیت: آماده</div>
+            </div>
+            <!-- کارت 4 -->
+            <div class="test-card">
+                <h3>🔹 ۴. timeout شبیه‌سازی‌شده</h3>
+                <button class="btn small" id="testTimeoutBtn">⏱️ درخواست با تأخیر (reject بعد از ۵s)</button>
+                <div style="margin-top: 10px; background:#f1f5f9; padding:8px; border-radius:12px;" id="resultTimeout">وضعیت: آماده</div>
+            </div>
+            <!-- کارت 5 -->
+            <div class="test-card">
+                <h3>🔹 ۵. get روی کلید ناموجود (بدون خطا)</h3>
+                <button class="btn small" id="testGetMissingBtn">🔍 get('ghost')</button>
+                <div style="margin-top: 10px; background:#f1f5f9; padding:8px; border-radius:12px;" id="resultMissing">وضعیت: آماده</div>
+            </div>
+            <!-- کارت 6 -->
+            <div class="test-card">
+                <h3>🔹 ۶. save با داده خراب (null)</h3>
+                <button class="btn small" id="testSaveNullBtn">💾 save(null)</button>
+                <div style="margin-top: 10px; background:#f1f5f9; padding:8px; border-radius:12px;" id="resultSaveNull">وضعیت: آماده</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ========== نمایش قرارداد (contract) ========== -->
+    <div class="section">
+        <h2>📜 قرارداد (Contract) · Fake DB باید ...</h2>
+        <ul class="assertion-list">
+            <li>✅ اگر failure فعال باشد، Promise.reject (با پیام خطا) برگرداند.</li>
+            <li>✅ در حالت عادی داده را برگرداند یا ذخیره‌شده تلقی کند.</li>
+            <li>✅ برای کلید ناموجود reject نکند، بلکه null یا undefined برگرداند.</li>
+            <li>✅ timeout را با reject پس از تأخیر شبیه‌سازی کند.</li>
+            <li>✅ ورودی‌های نامعتبر (null) را دفع کند یا reject کند (بسته به پیاده‌سازی).</li>
+        </ul>
+    </div>
+
+    <hr>
+    <div class="flex-row" style="justify-content: space-between;">
+        <span class="status-badge">✅ تست دستی · بدون خودکار</span>
+        <span>🔸 هر دکمه یک سناریوی مستقل را اجرا می‌کند.</span>
+    </div>
+</div>
+
+<script>
+    (function() {
+        // ----- وضعیت fakeDB و پیکربندی خطا -----
+        let failureConfig = {
+            get: false,
+            save: false,
+            delete: false,
+            timeoutDelay: 0, // 0 یعنی بدون timeout
+        };
+
+        // استور ساده درون‌حافظه‌ای برای شبیه‌سازی
+        const memoryStore = new Map();
+        memoryStore.set('user_1', { id: 1, name: 'علی' });
+        memoryStore.set('lesson_5', { id: 5, title: 'درس نمونه' });
+
+        // ----- ابزار کمکی برای لاگ در کنسول اختصاصی -----
+        const consoleDiv = document.getElementById('fakeDbConsole');
+        function logToConsole(message, type = 'info') {
+            const prefix = {
+                info: '📌',
+                success: '✅',
+                error: '❌',
+                warning: '⚠️'
+            }[type] || '•';
+            const colorClass = type === 'error' ? 'log-error' : (type === 'success' ? 'log-success' : (type === 'warning' ? 'log-warning' : ''));
+            const line = `<span class="${colorClass}">${prefix} ${message}</span>`;
+            consoleDiv.innerHTML += '\n' + line;
+            consoleDiv.scrollTop = consoleDiv.scrollHeight;
+        }
+
+        // پاک‌سازی اولیه کنسول نیست، اما یک خط اضافه می‌کنیم.
+        function resetConsoleToDefault() {
+            consoleDiv.innerHTML = `[FakeDB] در وضعیت عادی – متدها بدون خطا کار می‌کنند.\n(با دکمه‌ها failure را فعال کن)`;
+        }
+
+        // ----- متدهای جعلی (fake) با در نظر گرفتن failureConfig -----
+        function fakeGet(key) {
+            logToConsole(`get("${key}") فراخوانی شد.`, 'info');
+            return new Promise((resolve, reject) => {
+                // شبیه‌سازی timeout اگر فعال باشد
+                if (failureConfig.timeoutDelay > 0) {
+                    logToConsole(`⏳ timeout به مدت ${failureConfig.timeoutDelay}ms فعال است.`, 'warning');
+                    setTimeout(() => {
+                        reject(new Error(`timeout پس از ${failureConfig.timeoutDelay}ms`));
+                    }, failureConfig.timeoutDelay);
+                    return;
+                }
+                // خطای get فعال؟
+                if (failureConfig.get) {
+                    logToConsole(`❌ get با خطای فعال reject می‌شود.`, 'error');
+                    reject(new Error('خطای شبیه‌سازی‌شده: متد get خراب است.'));
+                    return;
+                }
+                // حالت عادی
+                if (memoryStore.has(key)) {
+                    const data = memoryStore.get(key);
+                    logToConsole(`✅ داده‌ی کلید "${key}" پیدا شد.`, 'success');
+                    resolve(data);
+                } else {
+                    logToConsole(`🔸 کلید "${key}" وجود ندارد، null برمی‌گردانیم.`, 'warning');
+                    resolve(null);  // بر اساس قرارداد reject نمی‌کنیم
+                }
+            });
+        }
+
+        function fakeSave(key, value) {
+            logToConsole(`save("${key}", value) فراخوانی شد.`, 'info');
+            return new Promise((resolve, reject) => {
+                if (failureConfig.timeoutDelay > 0) {
+                    logToConsole(`⏳ timeout (save) به مدت ${failureConfig.timeoutDelay}ms`, 'warning');
+                    setTimeout(() => reject(new Error('timeout در save')), failureConfig.timeoutDelay);
+                    return;
+                }
+                if (failureConfig.save) {
+                    logToConsole(`❌ save با خطای فعال reject`, 'error');
+                    reject(new Error('خطای شبیه‌سازی‌شده: save خراب است.'));
+                    return;
+                }
+                if (value === null || value === undefined) {
+                    logToConsole(`⚠️ ورودی null/undefined است.`, 'warning');
+                    // بسته به دیزاین می‌توان reject کرد یا ذخیره نکرد
+                    // اینجا reject می‌کنیم.
+                    reject(new Error('داده نامعتبر: نمی‌توان null ذخیره کرد.'));
+                    return;
+                }
+                memoryStore.set(key, value);
+                logToConsole(`✅ داده با کلید "${key}" ذخیره شد.`, 'success');
+                resolve({ ok: true, key });
+            });
+        }
+
+        function fakeDelete(key) {
+            logToConsole(`delete("${key}")`, 'info');
+            return new Promise((resolve, reject) => {
+                if (failureConfig.timeoutDelay > 0) {
+                    logToConsole(`⏳ timeout (delete)`, 'warning');
+                    setTimeout(() => reject(new Error('timeout delete')), failureConfig.timeoutDelay);
+                    return;
+                }
+                if (failureConfig.delete) {
+                    logToConsole(`❌ delete با خطای فعال reject`, 'error');
+                    reject(new Error('خطای شبیه‌سازی‌شده: delete خراب است.'));
+                    return;
+                }
+                if (memoryStore.has(key)) {
+                    memoryStore.delete(key);
+                    logToConsole(`✅ کلید "${key}" حذف شد.`, 'success');
+                    resolve({ deleted: true });
+                } else {
+                    logToConsole(`🔸 کلید "${key}" وجود نداشت، اما عملیات موفق محسوب می‌شود.`, 'warning');
+                    resolve({ deleted: false });
+                }
+            });
+        }
+
+        // ----- توابع به‌روزرسانی وضعیت دکمه‌ها (برای نمایش) -----
+        function refreshUIAfterAction(elementId, message, isError = false) {
+            const el = document.getElementById(elementId);
+            if (el) {
+                el.innerText = isError ? `❌ خطا: ${message.substring(0, 40)}` : `✅ نتیجه: ${message}`;
+                el.style.background = isError ? '#fee2e2' : '#e6f7e6';
+            }
+        }
+
+        // ----- اتصال دکمه‌های پیکربندی -----
+        document.getElementById('resetFakeDbBtn').addEventListener('click', function() {
+            failureConfig = { get: false, save: false, delete: false, timeoutDelay: 0 };
+            resetConsoleToDefault();
+            // پاک کردن نتایج
+            ['resultGetFailure','resultSaveFailure','resultDeleteFailure','resultTimeout','resultMissing','resultSaveNull'].forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.innerText = 'وضعیت: آماده';
+            });
+            logToConsole('🔁 تنظیمات failure به حالت عادی بازگردانده شد.', 'success');
+        });
+
+        document.getElementById('injectGetFailure').addEventListener('click', function() {
+            failureConfig = { ...failureConfig, get: true, save: false, delete: false, timeoutDelay: 0 };
+            logToConsole('❌❌ failure.get = true (خطای get فعال شد)', 'error');
+        });
+        document.getElementById('injectSaveFailure').addEventListener('click', function() {
+            failureConfig = { ...failureConfig, save: true, get: false, delete: false, timeoutDelay: 0 };
+            logToConsole('❌❌ failure.save = true (خطای save فعال شد)', 'error');
+        });
+        document.getElementById('injectDeleteFailure').addEventListener('click', function() {
+            failureConfig = { ...failureConfig, delete: true, get: false, save: false, timeoutDelay: 0 };
+            logToConsole('❌❌ failure.delete = true (خطای delete فعال شد)', 'error');
+        });
+        document.getElementById('simulateTimeout').addEventListener('click', function() {
+            failureConfig = { ...failureConfig, timeoutDelay: 5000, get: false, save: false, delete: false };
+            logToConsole('⏳⏳ timeout فعال شد: ۵ ثانیه تأخیر (برای فراخوانی بعدی)', 'warning');
+        });
+
+        // ----- سناریوهای تست -----
+        document.getElementById('testGetFailureBtn').addEventListener('click', function() {
+            fakeGet('user_1')
+                .then(data => refreshUIAfterAction('resultGetFailure', `داده دریافتی: ${JSON.stringify(data)}`))
+                .catch(err => refreshUIAfterAction('resultGetFailure', err.message, true));
+        });
+
+        document.getElementById('testSaveFailureBtn').addEventListener('click', function() {
+            fakeSave('tempKey', { value: 123 })
+                .then(res => refreshUIAfterAction('resultSaveFailure', `ذخیره شد: ${JSON.stringify(res)}`))
+                .catch(err => refreshUIAfterAction('resultSaveFailure', err.message, true));
+        });
+
+        document.getElementById('testDeleteFailureBtn').addEventListener('click', function() {
+            fakeDelete('lesson_5')
+                .then(res => refreshUIAfterAction('resultDeleteFailure', `حذف: ${JSON.stringify(res)}`))
+                .catch(err => refreshUIAfterAction('resultDeleteFailure', err.message, true));
+        });
+
+        document.getElementById('testTimeoutBtn').addEventListener('click', function() {
+            // حتماً از timeout استفاده می‌کند، اگر فعال نباشد ببینیم
+            if (failureConfig.timeoutDelay === 0) {
+                logToConsole('⚠️ timeout فعال نیست، اما تست با reject فوری انجام می‌شود؟ (مطمئن شوید دکمه timeout را زده‌اید)', 'warning');
+            }
+            fakeGet('anyKey')
+                .then(data => refreshUIAfterAction('resultTimeout', `عادی: ${JSON.stringify(data)}`))
+                .catch(err => refreshUIAfterAction('resultTimeout', `reject به دلیل: ${err.message}`, true));
+        });
+
+        document.getElementById('testGetMissingBtn').addEventListener('click', function() {
+            fakeGet('ghostKey')
+                .then(data => {
+                    if (data === null) refreshUIAfterAction('resultMissing', 'null (کلید موجود نیست)');
+                    else refreshUIAfterAction('resultMissing', `داده: ${JSON.stringify(data)}`);
+                })
+                .catch(err => refreshUIAfterAction('resultMissing', `خطا: ${err.message}`, true));
+        });
+
+        document.getElementById('testSaveNullBtn').addEventListener('click', function() {
+            fakeSave('nullTest', null)
+                .then(res => refreshUIAfterAction('resultSaveNull', `ذخیره شد: ${JSON.stringify(res)}`))
+                .catch(err => refreshUIAfterAction('resultSaveNull', `خطا: ${err.message}`, true));
+        });
+
+        // مقدار اولیه کنسول
+        resetConsoleToDefault();
+    })();
+</script>
+</body>
+</html>
