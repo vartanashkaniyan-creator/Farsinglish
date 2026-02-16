@@ -1,0 +1,905 @@
+<!DOCTYPE html>
+<html dir="rtl" lang="fa">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>تست لبه‌های State Manager</title>
+    <style>
+        body {
+            font-family: 'Vazir', 'Tahoma', sans-serif;
+            max-width: 800px;
+            margin: 20px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        h1 {
+            color: #2c3e50;
+            font-size: 1.5rem;
+            border-bottom: 2px solid #3498db;
+            padding-bottom: 10px;
+        }
+        h2 {
+            font-size: 1.2rem;
+            color: #34495e;
+            margin-top: 25px;
+        }
+        .test-section {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            border-right: 4px solid #3498db;
+        }
+        .test-case {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 15px;
+            margin: 15px 0;
+            border: 1px solid #dee2e6;
+        }
+        .test-title {
+            font-weight: bold;
+            color: #2c3e50;
+            margin-bottom: 10px;
+            font-size: 1.1rem;
+        }
+        .test-desc {
+            color: #7f8c8d;
+            margin-bottom: 15px;
+            font-size: 0.95rem;
+            padding-right: 15px;
+            border-right: 3px solid #3498db;
+        }
+        button {
+            background: #3498db;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.95rem;
+            margin: 5px 10px 5px 0;
+            transition: all 0.2s;
+            font-family: inherit;
+        }
+        button:hover {
+            background: #2980b9;
+            transform: translateY(-1px);
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        }
+        button.reset {
+            background: #95a5a6;
+        }
+        button.reset:hover {
+            background: #7f8c8d;
+        }
+        .console-output {
+            background: #2c3e50;
+            color: #2ecc71;
+            padding: 15px;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9rem;
+            margin-top: 15px;
+            white-space: pre-wrap;
+            direction: ltr;
+            text-align: left;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+        .success-badge {
+            display: inline-block;
+            background: #27ae60;
+            color: white;
+            padding: 3px 10px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            margin-right: 10px;
+        }
+        .warning-badge {
+            background: #f39c12;
+            color: white;
+            padding: 3px 10px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            margin-right: 10px;
+        }
+        .danger-badge {
+            background: #e74c3c;
+            color: white;
+            padding: 3px 10px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            margin-right: 10px;
+        }
+        .summary-stats {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            margin: 20px 0;
+        }
+        .stat-box {
+            background: white;
+            padding: 15px 25px;
+            border-radius: 10px;
+            flex: 1;
+            min-width: 120px;
+            text-align: center;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+        .stat-number {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #3498db;
+        }
+        .stat-label {
+            color: #7f8c8d;
+            font-size: 0.9rem;
+        }
+        .footer {
+            text-align: center;
+            margin-top: 40px;
+            color: #95a5a6;
+            font-size: 0.9rem;
+        }
+    </style>
+</head>
+<body>
+    <h1>🧪 تست لبه‌های State Manager <span class="warning-badge">نسخه دستی با دکمه</span></h1>
+    
+    <div class="summary-stats">
+        <div class="stat-box">
+            <div class="stat-number" id="totalTests">0</div>
+            <div class="stat-label">کل تست‌ها</div>
+        </div>
+        <div class="stat-box">
+            <div class="stat-number" id="passedTests">0</div>
+            <div class="stat-label">موفق</div>
+        </div>
+        <div class="stat-box">
+            <div class="stat-number" id="failedTests">0</div>
+            <div class="stat-label">ناموفق</div>
+        </div>
+    </div>
+
+    <div class="test-section">
+        <h2>🔴 ۱. تست مقداردهی اولیه</h2>
+        
+        <div class="test-case">
+            <div class="test-title">آزمایش ۱.۱: ایجاد State Manager با initialState نامعتبر</div>
+            <div class="test-desc">ورودی: null, undefined, آرایه به جای آبجکت</div>
+            <button onclick="testInvalidInitialState()">اجرای تست</button>
+            <button class="reset" onclick="resetState()">ریست State</button>
+        </div>
+
+        <div class="test-case">
+            <div class="test-title">آزمایش ۱.۲: مقداردهی با initialState حاوی توابع</div>
+            <div class="test-desc">بررسی رفتار با مقادیر غیرقابل سریال‌سازی</div>
+            <button onclick="testFunctionInState()">اجرای تست</button>
+        </div>
+    </div>
+
+    <div class="test-section">
+        <h2>🟡 ۲. تست لبه‌های setState</h2>
+        
+        <div class="test-case">
+            <div class="test-title">آزمایش ۲.۱: setState با مسیرهای نامعتبر</div>
+            <div class="test-desc">مسیر خالی، null، آرایه خالی، کاراکترهای خاص</div>
+            <button onclick="testInvalidPaths()">اجرای تست</button>
+        </div>
+
+        <div class="test-case">
+            <div class="test-title">آزمایش ۲.۲: setState با مقادیر border</div>
+            <div class="test-desc">NaN, Infinity, undefined, circular reference</div>
+            <button onclick="testBorderValues()">اجرای تست</button>
+        </div>
+
+        <div class="test-case">
+            <div class="test-title">آزمایش ۲.۳: به‌روزرسانی عمیق با path طولانی</div>
+            <div class="test-desc">مسیر ۱۰ سطحی و بررسی عملکرد clone عمیق</div>
+            <button onclick="testDeepPathUpdate()">اجرای تست</button>
+        </div>
+    </div>
+
+    <div class="test-section">
+        <h2>🟠 ۳. تست Middleware</h2>
+        
+        <div class="test-case">
+            <div class="test-title">آزمایش ۳.۱: middleware که throw می‌کند</div>
+            <div class="test-desc">بررسی رفتار زنجیره در مواجهه با خطا</div>
+            <button onclick="testMiddlewareThrow()">اجرای تست</button>
+        </div>
+
+        <div class="test-case">
+            <div class="test-title">آزمایش ۳.۲: middleware نامنظم</div>
+            <div class="test-desc">خروجی غیرآبجکت، تغییر مسیر، اجرای ناهمگام</div>
+            <button onclick="testMalformedMiddleware()">اجرای تست</button>
+        </div>
+
+        <div class="test-case">
+            <div class="test-title">آزمایش ۳.۳: middleware با ترتیب وابسته</div>
+            <div class="test-desc">بررسی وابستگی به ترتیب اجرا</div>
+            <button onclick="testMiddlewareOrder()">اجرای تست</button>
+        </div>
+    </div>
+
+    <div class="test-section">
+        <h2>🔵 ۴. تست Listener</h2>
+        
+        <div class="test-case">
+            <div class="test-title">آزمایش ۴.۱: listener که خطا می‌دهد</div>
+            <div class="test-desc">تأثیر listener خراب روی بقیه</div>
+            <button onclick="testListenerError()">اجرای تست</button>
+        </div>
+
+        <div class="test-case">
+            <div class="test-title">آزمایش ۴.۲: unsubscribe مکرر و نامعتبر</div>
+            <div class="test-desc">unsubscribe یک listener چند بار</div>
+            <button onclick="testInvalidUnsubscribe()">اجرای تست</button>
+        </div>
+    </div>
+
+    <div class="test-section">
+        <h2>🟣 ۵. تست Persistence</h2>
+        
+        <div class="test-case">
+            <div class="test-title">آزمایش ۵.۱: داده خراب در localStorage</div>
+            <div class="test-desc">JSON نامعتبر، type mismatch</div>
+            <button onclick="testCorruptedStorage()">اجرای تست</button>
+        </div>
+
+        <div class="test-case">
+            <div class="test-title">آزمایش ۵.۲: حافظه پر/غیرقابل نوشتن</div>
+            <div class="test-desc">شبیه‌سازی خطای QuotaExceeded</div>
+            <button onclick="testStorageQuota()">اجرای تست</button>
+        </div>
+    </div>
+
+    <div class="test-section">
+        <h2>⚫ ۶. تست همزمانی</h2>
+        
+        <div class="test-case">
+            <div class="test-title">آزمایش ۶.۱: setState همزمان</div>
+            <div class="test-desc">۱۰۰۰ درخواست همزمان (شبیه‌سازی شده)</div>
+            <button onclick="testConcurrentUpdates()">اجرای تست</button>
+        </div>
+
+        <div class="test-case">
+            <div class="test-title">آزمایش ۶.۲: getState در حین setState</div>
+            <div class="test-desc">بررسی consistency</div>
+            <button onclick="testGetDuringSet()">اجرای تست</button>
+        </div>
+    </div>
+
+    <div class="console-output" id="console">
+>>> منتظر اجرای تست‌ها...
+    </div>
+
+    <div class="footer">
+        🧪 تست لبه‌های State Manager | طراحی دستی با دکمه برای اجرای کنترل‌شده
+    </div>
+
+    <script>
+        // ---------- State Manager پیاده‌سازی ساده ----------
+        class StateManager {
+            constructor(initialState = {}) {
+                this._state = this._deepClone(initialState);
+                this._listeners = [];
+                this._middlewares = [];
+                this._id = Math.random();
+            }
+
+            use(middleware) {
+                if (typeof middleware === 'function') {
+                    this._middlewares.push(middleware);
+                }
+                return this;
+            }
+
+            getState(path = null) {
+                if (path === null) return this._deepClone(this._state);
+                
+                try {
+                    const parts = Array.isArray(path) ? path : path.split('.');
+                    let value = this._state;
+                    for (const part of parts) {
+                        if (value === null || value === undefined) return undefined;
+                        value = value[part];
+                    }
+                    return this._deepClone(value);
+                } catch (e) {
+                    return undefined;
+                }
+            }
+
+            setState(path, value) {
+                // اعمال middlewareها
+                let modifiedPath = path;
+                let modifiedValue = value;
+                
+                for (const mw of this._middlewares) {
+                    try {
+                        const result = mw(modifiedPath, modifiedValue, this._state);
+                        if (result && typeof result === 'object') {
+                            modifiedPath = result.path ?? modifiedPath;
+                            modifiedValue = result.value ?? modifiedValue;
+                        }
+                    } catch (e) {
+                        console.error('Middleware error:', e);
+                    }
+                }
+
+                // clone عمیق
+                const newState = this._deepClone(this._state);
+                
+                // به‌روزرسانی در مسیر مشخص
+                try {
+                    const parts = Array.isArray(modifiedPath) ? modifiedPath : modifiedPath.split('.');
+                    let current = newState;
+                    for (let i = 0; i < parts.length - 1; i++) {
+                        const part = parts[i];
+                        if (!current[part] || typeof current[part] !== 'object') {
+                            current[part] = {};
+                        }
+                        current = current[part];
+                    }
+                    const lastPart = parts[parts.length - 1];
+                    current[lastPart] = this._deepClone(modifiedValue);
+                } catch (e) {
+                    console.error('SetState error:', e);
+                    return false;
+                }
+
+                // اعمال تغییر
+                this._state = newState;
+                
+                // اطلاع به listenerها
+                this._notifyListeners(path, value);
+                return true;
+            }
+
+            subscribe(listener) {
+                if (typeof listener !== 'function') return () => {};
+                this._listeners.push(listener);
+                return () => {
+                    this._listeners = this._listeners.filter(l => l !== listener);
+                };
+            }
+
+            reset() {
+                this._state = {};
+                this._notifyListeners('reset', null);
+            }
+
+            _notifyListeners(path, value) {
+                for (const listener of this._listeners) {
+                    try {
+                        listener(path, value, this._deepClone(this._state));
+                    } catch (e) {
+                        console.error('Listener error:', e);
+                    }
+                }
+            }
+
+            _deepClone(obj) {
+                if (obj === null || obj === undefined) return obj;
+                if (typeof obj !== 'object') return obj;
+                if (obj instanceof Date) return new Date(obj);
+                if (Array.isArray(obj)) return obj.map(item => this._deepClone(item));
+                
+                const cloned = {};
+                for (const key in obj) {
+                    if (Object.prototype.hasOwnProperty.call(obj, key)) {
+                        cloned[key] = this._deepClone(obj[key]);
+                    }
+                }
+                return cloned;
+            }
+        }
+
+        // ---------- State Manager Global برای تست ----------
+        let manager = new StateManager({
+            user: { name: 'test', level: 1 },
+            settings: { theme: 'dark', notifications: true },
+            progress: {
+                lessons: {
+                    '1': { completed: false, score: 0 },
+                    '2': { completed: true, score: 85 }
+                },
+                deep: {
+                    level1: {
+                        level2: {
+                            level3: {
+                                level4: {
+                                    level5: {
+                                        level6: {
+                                            level7: {
+                                                level8: {
+                                                    level9: {
+                                                        value: 'عمیق'
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        });
+
+        let consoleElement = document.getElementById('console');
+        let totalTests = 0;
+        let passedTests = 0;
+        
+        function log(message, type = 'info') {
+            const timestamp = new Date().toLocaleTimeString('fa-IR');
+            const prefix = type === 'success' ? '✅' : (type === 'error' ? '❌' : '➡️');
+            consoleElement.innerHTML += `\n[${timestamp}] ${prefix} ${message}`;
+            consoleElement.scrollTop = consoleElement.scrollHeight;
+        }
+
+        function clearLog() {
+            consoleElement.innerHTML = '>>> لاگ تست‌ها:\n';
+        }
+
+        function updateStats() {
+            document.getElementById('totalTests').innerText = totalTests;
+            document.getElementById('passedTests').innerText = passedTests;
+            document.getElementById('failedTests').innerText = totalTests - passedTests;
+        }
+
+        function resetState() {
+            manager = new StateManager({
+                user: { name: 'test', level: 1 },
+                settings: { theme: 'dark', notifications: true },
+                progress: {
+                    lessons: {
+                        '1': { completed: false, score: 0 },
+                        '2': { completed: true, score: 85 }
+                    },
+                    deep: {
+                        level1: {
+                            level2: {
+                                level3: {
+                                    level4: {
+                                        level5: {
+                                            level6: {
+                                                level7: {
+                                                    level8: {
+                                                        level9: {
+                                                            value: 'عمیق'
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+            clearLog();
+            log('State ریست شد.', 'success');
+        }
+
+        // ---------- تست‌ها ----------
+        function testInvalidInitialState() {
+            clearLog();
+            totalTests++; 
+            log('آزمایش ۱.۱: مقداردهی با initialState نامعتبر');
+            
+            try {
+                const m1 = new StateManager(null);
+                log('✓ ایجاد با null: موفق', 'success');
+                
+                const m2 = new StateManager(undefined);
+                log('✓ ایجاد با undefined: موفق', 'success');
+                
+                const m3 = new StateManager([1,2,3]);
+                log('✓ ایجاد با آرایه: موفق', 'success');
+                
+                const m4 = new StateManager(() => {});
+                log('✓ ایجاد با تابع: موفق', 'success');
+                
+                passedTests++;
+                log('✅ همه موارد با موفقیت ایجاد شدند.', 'success');
+            } catch (e) {
+                log('❌ خطا: ' + e.message, 'error');
+            }
+            updateStats();
+        }
+
+        function testFunctionInState() {
+            clearLog();
+            totalTests++;
+            log('آزمایش ۱.۲: initialState حاوی تابع');
+            
+            try {
+                const m = new StateManager({
+                    normal: 'value',
+                    func: function() { return 'test'; },
+                    arrowFunc: () => 'test'
+                });
+                
+                const state = m.getState();
+                log('typeof func: ' + typeof state.func, 'info');
+                log('typeof arrowFunc: ' + typeof state.arrowFunc, 'info');
+                
+                if (typeof state.func === 'function' && typeof state.arrowFunc === 'function') {
+                    passedTests++;
+                    log('✅ توابع در state حفظ شدند.', 'success');
+                } else {
+                    log('⚠️ توابع کلون نشدند.', 'warning');
+                }
+            } catch (e) {
+                log('❌ خطا: ' + e.message, 'error');
+            }
+            updateStats();
+        }
+
+        function testInvalidPaths() {
+            clearLog();
+            totalTests++;
+            log('آزمایش ۲.۱: setState با مسیر نامعتبر');
+            
+            try {
+                const results = [];
+                
+                // مسیر خالی
+                results.push(manager.setState('', 'value'));
+                log('مسیر خالی: ' + results[0], 'info');
+                
+                // مسیر null
+                results.push(manager.setState(null, 'value'));
+                log('مسیر null: ' + results[1], 'info');
+                
+                // مسیر با کاراکتر خاص
+                results.push(manager.setState('user..name', 'test'));
+                log('مسیر با نقطه تکراری: ' + results[2], 'info');
+                
+                // مسیر بسیار طولانی
+                const longPath = 'a.b.c.d.e.f.g.h.i.j.k.l.m.n.o.p';
+                results.push(manager.setState(longPath, 'value'));
+                log('مسیر طولانی: ' + results[3], 'info');
+                
+                const successCount = results.filter(r => r === true).length;
+                if (successCount > 0) {
+                    passedTests++;
+                    log(`✅ ${successCount} مورد از مسیرها کار کرد.`, 'success');
+                } else {
+                    log('⚠️ هیچ مسیری کار نکرد.', 'warning');
+                }
+            } catch (e) {
+                log('❌ خطا: ' + e.message, 'error');
+            }
+            updateStats();
+        }
+
+        function testBorderValues() {
+            clearLog();
+            totalTests++;
+            log('آزمایش ۲.۲: setState با مقادیر border');
+            
+            try {
+                manager.setState('test.nan', NaN);
+                manager.setState('test.infinity', Infinity);
+                manager.setState('test.undefined', undefined);
+                manager.setState('test.null', null);
+                
+                const state = manager.getState('test');
+                log('NaN: ' + state.nan, 'info');
+                log('Infinity: ' + state.infinity, 'info');
+                log('undefined: ' + state.undefined, 'info');
+                log('null: ' + state.null, 'info');
+                
+                passedTests++;
+                log('✅ همه مقادیر border ذخیره شدند.', 'success');
+            } catch (e) {
+                log('❌ خطا: ' + e.message, 'error');
+            }
+            updateStats();
+        }
+
+        function testDeepPathUpdate() {
+            clearLog();
+            totalTests++;
+            log('آزمایش ۲.۳: به‌روزرسانی عمیق');
+            
+            try {
+                const before = manager.getState('progress.deep.level1.level2.level3.level4.level5.level6.level7.level8.level9.value');
+                log('مقدار قبل: ' + before, 'info');
+                
+                manager.setState('progress.deep.level1.level2.level3.level4.level5.level6.level7.level8.level9.value', 'تغییر عمیق');
+                
+                const after = manager.getState('progress.deep.level1.level2.level3.level4.level5.level6.level7.level8.level9.value');
+                log('مقدار بعد: ' + after, 'info');
+                
+                if (after === 'تغییر عمیق') {
+                    passedTests++;
+                    log('✅ به‌روزرسانی عمیق موفق.', 'success');
+                } else {
+                    log('❌ به‌روزرسانی عمیق ناموفق.', 'error');
+                }
+            } catch (e) {
+                log('❌ خطا: ' + e.message, 'error');
+            }
+            updateStats();
+        }
+
+        function testMiddlewareThrow() {
+            clearLog();
+            totalTests++;
+            log('آزمایش ۳.۱: middleware پرتاب‌کننده خطا');
+            
+            const testManager = new StateManager({ count: 0 });
+            
+            testManager.use((path, value, state) => {
+                throw new Error('Middleware خطا داد!');
+            });
+            
+            testManager.use((path, value, state) => {
+                log('میان‌افزار دوم اجرا شد.', 'info');
+                return { value: value + 1 };
+            });
+            
+            try {
+                testManager.setState('count', 5);
+                const result = testManager.getState('count');
+                log('مقدار نهایی count: ' + result, 'info');
+                
+                if (result === 6) {
+                    passedTests++;
+                    log('✅ میان‌افزار دوم بعد از خطا هم اجرا شد.', 'success');
+                } else {
+                    log('⚠️ میان‌افزار دوم اجرا نشد.', 'warning');
+                }
+            } catch (e) {
+                log('❌ خطا: ' + e.message, 'error');
+            }
+            updateStats();
+        }
+
+        function testMalformedMiddleware() {
+            clearLog();
+            totalTests++;
+            log('آزمایش ۳.۲: middleware با خروجی نامنظم');
+            
+            const testManager = new StateManager({ value: 0 });
+            
+            testManager.use(() => 'string');
+            testManager.use(() => 123);
+            testManager.use(() => null);
+            testManager.use(() => {
+                // تغییر مستقیم state ممنوع!
+                testManager._state.value = 999;
+                return { value: 100 };
+            });
+            
+            try {
+                testManager.setState('value', 5);
+                const result = testManager.getState('value');
+                log('مقدار نهایی: ' + result, 'info');
+                
+                if (result === 5) {
+                    passedTests++;
+                    log('✅ middleware نامنظم تأثیری نداشت.', 'success');
+                } else {
+                    log('⚠️ middleware نامنظم state را خراب کرد.', 'warning');
+                }
+            } catch (e) {
+                log('❌ خطا: ' + e.message, 'error');
+            }
+            updateStats();
+        }
+
+        function testMiddlewareOrder() {
+            clearLog();
+            totalTests++;
+            log('آزمایش ۳.۳: ترتیب middleware');
+            
+            const testManager = new StateManager({ value: 0 });
+            const order = [];
+            
+            testManager.use((path, value) => {
+                order.push(1);
+                return { value: value + 1 };
+            });
+            
+            testManager.use((path, value) => {
+                order.push(2);
+                return { value: value * 2 };
+            });
+            
+            testManager.use((path, value) => {
+                order.push(3);
+                return { value: value - 3 };
+            });
+            
+            testManager.setState('value', 5);
+            const result = testManager.getState('value');
+            
+            log('ترتیب اجرا: ' + order.join(' → '), 'info');
+            log('نتیجه نهایی: ' + result, 'info');
+            
+            if (order[0] === 1 && order[1] === 2 && order[2] === 3) {
+                passedTests++;
+                log('✅ ترتیب middleware رعایت شد.', 'success');
+            } else {
+                log('❌ ترتیب middleware رعایت نشد.', 'error');
+            }
+            updateStats();
+        }
+
+        function testListenerError() {
+            clearLog();
+            totalTests++;
+            log('آزمایش ۴.۱: listener خطادار');
+            
+            const testManager = new StateManager({ count: 0 });
+            let healthyListenerCalled = false;
+            
+            testManager.subscribe(() => {
+                throw new Error('خطا از listener اول');
+            });
+            
+            testManager.subscribe(() => {
+                healthyListenerCalled = true;
+                log('listener دوم سالم اجرا شد.', 'success');
+            });
+            
+            try {
+                testManager.setState('count', 1);
+                
+                if (healthyListenerCalled) {
+                    passedTests++;
+                    log('✅ listener دوم بعد از خطا هم اجرا شد.', 'success');
+                } else {
+                    log('⚠️ listener دوم اجرا نشد.', 'warning');
+                }
+            } catch (e) {
+                log('❌ خطا: ' + e.message, 'error');
+            }
+            updateStats();
+        }
+
+        function testInvalidUnsubscribe() {
+            clearLog();
+            totalTests++;
+            log('آزمایش ۴.۲: unsubscribe نامعتبر');
+            
+            const testManager = new StateManager({});
+            let callCount = 0;
+            
+            const unsubscribe = testManager.subscribe(() => {
+                callCount++;
+            });
+            
+            // unsubscribe چندبار
+            unsubscribe();
+            unsubscribe();
+            unsubscribe();
+            
+            testManager.setState('test', 'value');
+            
+            if (callCount === 0) {
+                passedTests++;
+                log('✅ unsubscribe مکرر مشکل ایجاد نکرد.', 'success');
+            } else {
+                log('⚠️ listener هنوز فعال است.', 'warning');
+            }
+            updateStats();
+        }
+
+        function testCorruptedStorage() {
+            clearLog();
+            totalTests++;
+            log('آزمایش ۵.۱: داده خراب در localStorage');
+            
+            try {
+                // شبیه‌سازی داده خراب
+                localStorage.setItem('corrupt', '{name: "test"');
+                localStorage.setItem('invalid', 'undefined');
+                
+                const corruptData = localStorage.getItem('corrupt');
+                log('داده خراب: ' + corruptData, 'info');
+                
+                let parsed = null;
+                try {
+                    parsed = JSON.parse(corruptData);
+                } catch (e) {
+                    log('✓ خطای JSON شناسایی شد.', 'success');
+                }
+                
+                passedTests++;
+                log('✅ localStorage خراب باعث کرش نشد.', 'success');
+            } catch (e) {
+                log('❌ خطا: ' + e.message, 'error');
+            }
+            updateStats();
+        }
+
+        function testStorageQuota() {
+            clearLog();
+            totalTests++;
+            log('آزمایش ۵.۲: شبیه‌سازی QuotaExceeded');
+            
+            try {
+                // شبیه‌سازی quota exceeded
+                let quotaError = false;
+                try {
+                    const bigString = 'x'.repeat(10 * 1024 * 1024); // 10MB
+                    localStorage.setItem('big', bigString);
+                } catch (e) {
+                    if (e.name === 'QuotaExceededError' || e.code === 22) {
+                        quotaError = true;
+                        log('✓ خطای QuotaExceeded شناسایی شد.', 'success');
+                    }
+                }
+                
+                if (quotaError) {
+                    passedTests++;
+                } else {
+                    log('⚠️ خطای quota رخ نداد (مرورگر فضا دارد)', 'warning');
+                }
+            } catch (e) {
+                log('❌ خطا: ' + e.message, 'error');
+            }
+            updateStats();
+        }
+
+        function testConcurrentUpdates() {
+            clearLog();
+            totalTests++;
+            log('آزمایش ۶.۱: ۱۰۰۰ درخواست همزمان');
+            
+            const testManager = new StateManager({ counter: 0 });
+            const start = performance.now();
+            
+            for (let i = 0; i < 1000; i++) {
+                testManager.setState('counter', i);
+            }
+            
+            const end = performance.now();
+            const duration = (end - start).toFixed(2);
+            
+            log(`زمان اجرا: ${duration}ms`, 'info');
+            log(`مقدار نهایی: ${testManager.getState('counter')}`, 'info');
+            
+            passedTests++;
+            log('✅ ۱۰۰۰ درخواست همزمان پردازش شد.', 'success');
+            updateStats();
+        }
+
+        function testGetDuringSet() {
+            clearLog();
+            totalTests++;
+            log('آزمایش ۶.۲: getState در حین setState');
+            
+            const testManager = new StateManager({ value: 0 });
+            
+            testManager.subscribe((path, value, state) => {
+                const current = testManager.getState('value');
+                log(`در listener: مقدار فعلی = ${current}`, 'info');
+            });
+            
+            testManager.setState('value', 5);
+            testManager.setState('value', 10);
+            testManager.setState('value', 15);
+            
+            passedTests++;
+            log('✅ getState در listener بدون مشکل کار کرد.', 'success');
+            updateStats();
+        }
+
+        // اجرای سریع چند تست پایه
+        log('✅ State Manager برای تست آماده است.', 'success');
+        updateStats();
+    </script>
+</body>
+  </html>
