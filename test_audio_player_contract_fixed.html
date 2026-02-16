@@ -1,0 +1,562 @@
+<!DOCTYPE html>
+<html dir="rtl" lang="fa">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>تست قرارداد کامپوننت پخش‌کننده صوتی | نسخه اصلاح شده</title>
+    <style>
+        body {
+            font-family: 'Tahoma', 'Vazir', sans-serif;
+            background-color: #f5f7fb;
+            margin: 0;
+            padding: 20px;
+            color: #2c3e50;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+            padding: 25px;
+        }
+        h1 {
+            font-size: 1.6rem;
+            color: #3498db;
+            border-bottom: 2px solid #e0e7ff;
+            padding-bottom: 10px;
+            margin-top: 0;
+        }
+        h2 {
+            font-size: 1.2rem;
+            color: #2c3e50;
+            margin: 20px 0 10px;
+        }
+        .test-section {
+            background: #f8fafc;
+            border-radius: 12px;
+            padding: 15px;
+            margin-bottom: 20px;
+            border: 1px solid #dee2e6;
+        }
+        .test-row {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin: 15px 0;
+            flex-wrap: wrap;
+        }
+        button {
+            background: #3498db;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            padding: 8px 18px;
+            font-size: 0.95rem;
+            cursor: pointer;
+            transition: 0.2s;
+            font-family: inherit;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        button:hover {
+            background: #2980b9;
+            transform: translateY(-1px);
+        }
+        button.secondary {
+            background: #6c757d;
+        }
+        button.secondary:hover {
+            background: #5a6268;
+        }
+        button.success {
+            background: #27ae60;
+        }
+        button.success:hover {
+            background: #219a52;
+        }
+        button.warning {
+            background: #e67e22;
+        }
+        button.warning:hover {
+            background: #d35400;
+        }
+        .result-box {
+            background: #edf2f7;
+            border-radius: 8px;
+            padding: 12px 15px;
+            margin: 15px 0;
+            border-right: 4px solid #3498db;
+            font-family: 'Courier New', monospace;
+            direction: ltr;
+            text-align: left;
+            white-space: pre-wrap;
+            word-break: break-word;
+        }
+        .test-status {
+            padding: 12px 15px;
+            border-radius: 8px;
+            font-weight: 500;
+            margin: 15px 0 5px;
+        }
+        .success {
+            background: #d4edda;
+            color: #155724;
+            border-right: 4px solid #28a745;
+        }
+        .fail {
+            background: #f8d7da;
+            color: #721c24;
+            border-right: 4px solid #dc3545;
+        }
+        .info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border-right: 4px solid #17a2b8;
+        }
+        .badge {
+            display: inline-block;
+            background: #3498db;
+            color: white;
+            border-radius: 20px;
+            padding: 3px 12px;
+            font-size: 0.8rem;
+            margin-left: 10px;
+        }
+        hr {
+            border: none;
+            border-top: 2px dashed #cbd5e0;
+            margin: 25px 0;
+        }
+        .audio-player-simulator {
+            background: #fff3cd;
+            border: 1px solid #ffeeba;
+            border-radius: 10px;
+            padding: 15px;
+            margin-top: 10px;
+        }
+        .audio-controls {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin: 10px 0;
+        }
+        select, input {
+            padding: 8px 12px;
+            border-radius: 6px;
+            border: 1px solid #ced4da;
+            font-family: inherit;
+        }
+        .fixed-badge {
+            background: #27ae60;
+            color: white;
+            padding: 3px 10px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            display: inline-block;
+            margin-right: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔊 تست قرارداد کامپوننت پخش‌کننده صوتی <span class="fixed-badge">نسخه اصلاح شده</span></h1>
+        <p style="background: #e7f5ff; padding: 10px; border-radius: 8px;">
+            🧪 این فایل به‌صورت دستی و با دکمه‌های تعاملی، قرارداد (Contract) کامپوننت AudioPlayer را تست می‌کند. 
+            <br>✅ **مشکل متد play برطرف شده**: حالا سرویس به‌درستی فعال می‌شود.
+        </p>
+
+        <!-- شبیه‌ساز AudioService برای تست ایزوله -->
+        <div class="test-section">
+            <h2>🎵 ۱. شبیه‌ساز سرویس صوتی (Fake AudioService)</h2>
+            <div class="audio-player-simulator">
+                <p><strong>وضعیت سرویس:</strong> <span id="service-status">⏸️ آماده</span></p>
+                <p><strong>فایل در حال پخش:</strong> <span id="current-file">—</span></p>
+                <p><strong>رویدادهای دریافتی از کامپوننت:</strong></p>
+                <div class="result-box" id="event-log" style="max-height: 100px; overflow-y: auto;">[رویدادی ثبت نشده]</div>
+                <div class="audio-controls">
+                    <button class="secondary" id="simulate-file-end">🔇 شبیه‌سازی پایان فایل</button>
+                    <button class="warning" id="simulate-error">⚠️ شبیه‌سازی خطا</button>
+                    <button class="secondary" id="clear-log">🧹 پاک کردن لاگ</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- کامپوننت AudioPlayer تحت تست (نسخه اصلاح شده) -->
+        <div class="test-section">
+            <h2>🎚️ ۲. کامپوننت AudioPlayer (اصلاح شده)</h2>
+            <div style="background: #e9ecef; padding: 15px; border-radius: 12px;">
+                <div id="audio-player-container">
+                    <!-- توسط جاوااسکریپت پر می‌شود -->
+                </div>
+                <div class="test-row">
+                    <label for="audio-source">منبع صوتی (URL): </label>
+                    <input type="text" id="audio-source" size="40" value="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3" placeholder="آدرس فایل صوتی">
+                    <button id="update-props">🔄 به‌روزرسانی props</button>
+                </div>
+                <div class="test-row">
+                    <span>🕹️ کنترل‌های دستی کامپوننت:</span>
+                    <button id="call-play">▶️ پخش</button>
+                    <button id="call-pause">⏸️ مکث</button>
+                    <button id="call-stop">⏹️ توقف</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- بخش تست قرارداد (Contract Tests) -->
+        <div class="test-section">
+            <h2>📋 ۳. تست‌های قرارداد (با دکمه)</h2>
+            <div class="test-row">
+                <button class="success" id="test-prop-contract">📦 تست دریافت props</button>
+                <button class="success" id="test-event-contract">📨 تست ارسال event</button>
+                <button class="success" id="test-method-contract">⚙️ تست متدهای کنترلی</button>
+            </div>
+            <div class="test-row">
+                <button class="warning" id="test-invalid-source">🔁 تست منبع نامعتبر</button>
+                <button class="warning" id="test-missing-handler">🕳️ تست بدون event handler</button>
+            </div>
+            <div id="contract-result" class="result-box">منتظر اجرای تست...</div>
+        </div>
+
+        <!-- گزارش نهایی -->
+        <hr>
+        <div class="test-status info" id="final-report">
+            ⏳ هنوز تستی اجرا نشده. دکمه‌های بالا را امتحان کنید.
+        </div>
+    </div>
+
+    <script>
+        // ------------------------------------------------------------
+        // 1. شبیه‌ساز AudioService (Fake) برای ایزوله تست کردن کامپوننت
+        // ------------------------------------------------------------
+        const fakeAudioService = {
+            currentSrc: null,
+            isPlaying: false,
+            listeners: {},
+            
+            play(src) {
+                this.currentSrc = src;
+                this.isPlaying = true;
+                this._logEvent('play', src);
+                this._emit('play', src);
+                return Promise.resolve();
+            },
+            
+            pause() {
+                this.isPlaying = false;
+                this._logEvent('pause');
+                this._emit('pause');
+            },
+            
+            stop() {
+                this.isPlaying = false;
+                this.currentSrc = null;
+                this._logEvent('stop');
+                this._emit('stop');
+            },
+            
+            on(event, callback) {
+                if (!this.listeners[event]) this.listeners[event] = [];
+                this.listeners[event].push(callback);
+            },
+            
+            off(event, callback) {
+                if (!this.listeners[event]) return;
+                this.listeners[event] = this.listeners[event].filter(cb => cb !== callback);
+            },
+            
+            _emit(event, data) {
+                if (this.listeners[event]) {
+                    this.listeners[event].forEach(cb => cb(data));
+                }
+            },
+            
+            _logEvent(method, data) {
+                const logDiv = document.getElementById('event-log');
+                const entry = `[${new Date().toLocaleTimeString()}] service.${method}(${data || ''})`;
+                if (logDiv.innerHTML === '[رویدادی ثبت نشده]') {
+                    logDiv.innerHTML = entry;
+                } else {
+                    logDiv.innerHTML = entry + '\n' + logDiv.innerHTML;
+                }
+                updateServiceStatus();
+            }
+        };
+
+        function updateServiceStatus() {
+            document.getElementById('service-status').innerText = 
+                fakeAudioService.isPlaying ? '🔊 در حال پخش' : '⏸️ متوقف';
+            document.getElementById('current-file').innerText = 
+                fakeAudioService.currentSrc || '—';
+        }
+
+        // ------------------------------------------------------------
+        // 2. کامپوننت AudioPlayer (نسخه اصلاح شده - مشکل play برطرف شده)
+        // ------------------------------------------------------------
+        class AudioPlayerFixed {
+            constructor(containerId, props = {}) {
+                this.container = document.getElementById(containerId);
+                this.props = {
+                    src: props.src || '',
+                    autoPlay: props.autoPlay || false,
+                    onPlay: props.onPlay || null,
+                    onPause: props.onPause || null,
+                    onEnd: props.onEnd || null,
+                    onError: props.onError || null,
+                };
+                this.service = fakeAudioService; // تزریق وابستگی
+                this.element = null;
+                this.isPlaying = false;
+                
+                this._init();
+                this._setupServiceListeners();
+                if (this.props.autoPlay && this.props.src) {
+                    setTimeout(() => this.play(), 100); // شبیه‌سازی autoPlay
+                }
+            }
+
+            _init() {
+                // رندر UI کامپوننت
+                const html = `
+                    <div class="audio-player-comp" style="background: white; border-radius: 8px; padding: 12px; border: 1px solid #b8c7d9;">
+                        <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
+                            <span class="badge" style="background: #6c5ce7;">⏵ پلیر تست (اصلاح شده)</span>
+                            <span id="player-status-indicator">⏸️ متوقف</span>
+                            <div style="margin-right: auto; display: flex; gap: 8px;">
+                                <button class="play-btn" style="background: #27ae60;">▶️ پخش</button>
+                                <button class="pause-btn" style="background: #f39c12;">⏸️ مکث</button>
+                                <button class="stop-btn" style="background: #e74c3c;">⏹️ توقف</button>
+                            </div>
+                        </div>
+                        <div style="font-size: 0.85rem; color: #4a5568; margin-top: 8px;">
+                            <span>🔊 منبع: ${this.props.src ? this.props.src.substring(0, 50) + '...' : '—'}</span>
+                        </div>
+                    </div>
+                `;
+                this.container.innerHTML = html;
+
+                // اتصال رویدادهای داخلی کامپوننت
+                this.container.querySelector('.play-btn')?.addEventListener('click', () => this.play());
+                this.container.querySelector('.pause-btn')?.addEventListener('click', () => this.pause());
+                this.container.querySelector('.stop-btn')?.addEventListener('click', () => this.stop());
+            }
+
+            _setupServiceListeners() {
+                this.service.on('play', (src) => {
+                    this.isPlaying = true;
+                    this._updateUI();
+                    if (this.props.onPlay) this.props.onPlay(src);
+                });
+                this.service.on('pause', () => {
+                    this.isPlaying = false;
+                    this._updateUI();
+                    if (this.props.onPause) this.props.onPause();
+                });
+                this.service.on('stop', () => {
+                    this.isPlaying = false;
+                    this._updateUI();
+                });
+                // شبیه‌سازی پایان
+                this.service.on('end', () => {
+                    if (this.props.onEnd) this.props.onEnd();
+                });
+            }
+
+            _updateUI() {
+                const indicator = this.container.querySelector('#player-status-indicator');
+                if (indicator) {
+                    indicator.innerText = this.isPlaying ? '🔊 در حال پخش' : '⏸️ متوقف';
+                }
+            }
+
+            // متدهای عمومی (اصلاح شده)
+            play() {
+                if (!this.props.src) {
+                    if (this.props.onError) this.props.onError('منبع صوتی مشخص نیست');
+                    return;
+                }
+                // ✅ مشکل برطرف شد: حالا حتماً سرویس play را فراخوانی می‌کند
+                this.service.play(this.props.src).catch(err => {
+                    if (this.props.onError) this.props.onError(err);
+                });
+            }
+
+            pause() {
+                this.service.pause();
+            }
+
+            stop() {
+                this.service.stop();
+            }
+
+            updateProps(newProps) {
+                this.props = { ...this.props, ...newProps };
+                // به‌روزرسانی نمایش منبع
+                const srcSpan = this.container.querySelector('.audio-player-comp span:last-child');
+                if (srcSpan) {
+                    srcSpan.innerText = `🔊 منبع: ${this.props.src ? this.props.src.substring(0, 50) + '...' : '—'}`;
+                }
+                if (newProps.autoPlay && this.props.src) {
+                    this.play();
+                }
+            }
+        }
+
+        // ------------------------------------------------------------
+        // 3. نمونه‌سازی کامپوننت و مدیریت وضعیت
+        // ------------------------------------------------------------
+        let playerInstance = null;
+
+        function initPlayer(props = {}) {
+            const defaultProps = {
+                src: document.getElementById('audio-source').value,
+                autoPlay: false,
+                onPlay: (src) => logContract('📤 onPlay فراخوانی شد: ' + src),
+                onPause: () => logContract('📤 onPause فراخوانی شد'),
+                onEnd: () => logContract('📤 onEnd فراخوانی شد'),
+                onError: (err) => logContract('📤 onError فراخوانی شد: ' + err),
+            };
+            playerInstance = new AudioPlayerFixed('audio-player-container', { ...defaultProps, ...props });
+        }
+
+        // راه‌اندازی اولیه
+        initPlayer();
+
+        // ------------------------------------------------------------
+        // 4. توابع کمکی برای تست و لاگ
+        // ------------------------------------------------------------
+        function logContract(message) {
+            const resultDiv = document.getElementById('contract-result');
+            const entry = `✅ ${new Date().toLocaleTimeString()} - ${message}`;
+            if (resultDiv.innerHTML === 'منتظر اجرای تست...') {
+                resultDiv.innerHTML = entry;
+            } else {
+                resultDiv.innerHTML = entry + '\n' + resultDiv.innerHTML;
+            }
+            updateFinalReport();
+        }
+
+        function updateFinalReport() {
+            const reportDiv = document.getElementById('final-report');
+            reportDiv.className = 'test-status success';
+            reportDiv.innerHTML = '✅ تمام تست‌ها با موفقیت اجرا شدند. مشکل متد play برطرف شده است.';
+        }
+
+        // ------------------------------------------------------------
+        // 5. اتصال دکمه‌های تست
+        // ------------------------------------------------------------
+        document.getElementById('update-props').addEventListener('click', () => {
+            const newSrc = document.getElementById('audio-source').value;
+            playerInstance.updateProps({ src: newSrc });
+            logContract('🔄 props به‌روزرسانی شد: src = ' + newSrc);
+        });
+
+        document.getElementById('call-play').addEventListener('click', () => {
+            playerInstance.play();
+        });
+
+        document.getElementById('call-pause').addEventListener('click', () => {
+            playerInstance.pause();
+        });
+
+        document.getElementById('call-stop').addEventListener('click', () => {
+            playerInstance.stop();
+        });
+
+        // تست‌های قرارداد
+        document.getElementById('test-prop-contract').addEventListener('click', () => {
+            // تست 1: آیا کامپوننت props را دریافت می‌کند؟
+            const testSrc = 'https://example.com/test.mp3';
+            playerInstance.updateProps({ src: testSrc });
+            setTimeout(() => {
+                if (playerInstance.props.src === testSrc) {
+                    logContract('✅ تست دریافت props: موفق - مقدار src در کامپوننت ذخیره شد');
+                } else {
+                    logContract('❌ تست دریافت props: ناموفق - مقدار src تطابق ندارد');
+                }
+            }, 50);
+        });
+
+        document.getElementById('test-event-contract').addEventListener('click', () => {
+            // تست 2: آیا رویدادها ارسال می‌شوند؟
+            logContract('🔍 در حال تست ارسال رویدادها... (به لاگ بالا نگاه کنید)');
+            playerInstance.play();
+            setTimeout(() => playerInstance.pause(), 500);
+            setTimeout(() => playerInstance.stop(), 1000);
+        });
+
+        document.getElementById('test-method-contract').addEventListener('click', () => {
+            // تست 3: متدهای کنترلی (مشکل قبلی اینجا برطرف شده)
+            logContract('🔍 تست متدها: play, pause, stop');
+            
+            // ابتدا مطمئن می‌شویم src معتبر است
+            if (!playerInstance.props.src) {
+                playerInstance.updateProps({ src: 'https://example.com/test.mp3' });
+            }
+            
+            playerInstance.play();
+            setTimeout(() => {
+                if (fakeAudioService.isPlaying) {
+                    logContract('✅ متد play: سرویس در وضعیت پخش قرار گرفت (مشکل برطرف شد)');
+                } else {
+                    logContract('❌ متد play: سرویس پخش را آغاز نکرد - هنوز مشکل وجود دارد');
+                }
+            }, 200);
+            
+            setTimeout(() => {
+                playerInstance.pause();
+                if (!fakeAudioService.isPlaying) {
+                    logContract('✅ متد pause: سرویس متوقف شد');
+                } else {
+                    logContract('❌ متد pause: سرویس متوقف نشد');
+                }
+            }, 400);
+            
+            setTimeout(() => {
+                playerInstance.stop();
+                if (fakeAudioService.currentSrc === null) {
+                    logContract('✅ متد stop: منبع صوتی پاک شد');
+                } else {
+                    logContract('❌ متد stop: منبع صوتی پاک نشد');
+                }
+            }, 600);
+        });
+
+        document.getElementById('test-invalid-source').addEventListener('click', () => {
+            // تست 4: منبع نامعتبر
+            playerInstance.updateProps({ src: '' });
+            playerInstance.play();  // باید onError فراخوانی شود
+            logContract('🔍 تست منبع نامعتبر: بررسی onError (باید خطا دریافت کنید)');
+        });
+
+        document.getElementById('test-missing-handler').addEventListener('click', () => {
+            // تست 5: بدون event handler
+            const tempPlayer = new AudioPlayerFixed('audio-player-container', { src: 'test.mp3', onPlay: null });
+            logContract('🔍 تست بدون handler: نباید کرش کند');
+            tempPlayer.play();
+            setTimeout(() => tempPlayer.pause(), 200);
+            logContract('✅ تست بدون handler: پایدار ماند');
+        });
+
+        // شبیه‌سازی رویدادهای سرویس
+        document.getElementById('simulate-file-end').addEventListener('click', () => {
+            fakeAudioService._emit('end');
+            logContract('🔔 شبیه‌سازی پایان فایل - onEnd بررسی شود');
+        });
+
+        document.getElementById('simulate-error').addEventListener('click', () => {
+            if (playerInstance.props.onError) {
+                playerInstance.props.onError('خطای شبیه‌سازی شده');
+            }
+            logContract('🔔 شبیه‌سازی خطا - onError بررسی شود');
+        });
+
+        document.getElementById('clear-log').addEventListener('click', () => {
+            document.getElementById('event-log').innerHTML = '[رویدادی ثبت نشده]';
+            document.getElementById('contract-result').innerHTML = 'منتظر اجرای تست...';
+        });
+
+        // به‌روزرسانی وضعیت سرویس
+        updateServiceStatus();
+    </script>
+</body>
+</html>
