@@ -1,0 +1,488 @@
+<!DOCTYPE html>
+<html dir="rtl" lang="fa">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>تست لبه‌های Auth Service - Farsinglish</title>
+    <style>
+        body {
+            font-family: Tahoma, Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f5f5f5;
+            line-height: 1.6;
+        }
+        h1 {
+            color: #2c3e50;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .test-container {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .test-title {
+            font-size: 18px;
+            font-weight: bold;
+            color: #34495e;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #eee;
+        }
+        .button-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin: 15px 0;
+        }
+        button {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.2s;
+            background: #3498db;
+            color: white;
+        }
+        button:hover {
+            opacity: 0.8;
+            transform: translateY(-1px);
+        }
+        button.danger {
+            background: #e74c3c;
+        }
+        button.success {
+            background: #2ecc71;
+        }
+        button.warning {
+            background: #f39c12;
+        }
+        .output {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 6px;
+            padding: 15px;
+            margin-top: 15px;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            white-space: pre-wrap;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        .output.success {
+            border-right: 4px solid #2ecc71;
+        }
+        .output.error {
+            border-right: 4px solid #e74c3c;
+        }
+        .summary {
+            background: #34495e;
+            color: white;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        .summary span {
+            font-size: 24px;
+            font-weight: bold;
+            color: #f1c40f;
+        }
+    </style>
+</head>
+<body>
+    <h1>🧪 تست لبه‌های Auth Service</h1>
+    <h3 style="text-align: center; color: #7f8c8d;">Farsinglish - تست دستی با دکمه</h3>
+
+    <div class="summary">
+        <div>وضعیت: <span id="status-indicator">⚪</span></div>
+        <div>تعداد تست‌های اجرا شده: <span id="test-count">۰</span></div>
+    </div>
+
+    <!-- تست ۱: توکن منقضی -->
+    <div class="test-container">
+        <div class="test-title">🔴 تست ۱: تشخیص توکن منقضی شده</div>
+        <div class="button-group">
+            <button onclick="runExpiredTokenTest()" class="danger">اجرای تست</button>
+            <button onclick="resetTest('expired-token-output')">پاک کردن خروجی</button>
+        </div>
+        <div id="expired-token-output" class="output">برای اجرای تست کلیک کنید...</div>
+    </div>
+
+    <!-- تست ۲: توکن نامعتبر (فرمت اشتباه) -->
+    <div class="test-container">
+        <div class="test-title">🔴 تست ۲: توکن با فرمت نامعتبر</div>
+        <div class="button-group">
+            <button onclick="runInvalidFormatTokenTest()" class="danger">اجرای تست</button>
+            <button onclick="resetTest('invalid-format-output')">پاک کردن خروجی</button>
+        </div>
+        <div id="invalid-format-output" class="output">برای اجرای تست کلیک کنید...</div>
+    </div>
+
+    <!-- تست ۳: توکن دستکاری شده (امضای نامعتبر) -->
+    <div class="test-container">
+        <div class="test-title">🔴 تست ۳: توکن با امضای نامعتبر</div>
+        <div class="button-group">
+            <button onclick="runInvalidSignatureTest()" class="danger">اجرای تست</button>
+            <button onclick="resetTest('invalid-signature-output')">پاک کردن خروجی</button>
+        </div>
+        <div id="invalid-signature-output" class="output">برای اجرای تست کلیک کنید...</div>
+    </div>
+
+    <!-- تست ۴: تلاش لاگین با نام کاربری خالی -->
+    <div class="test-container">
+        <div class="test-title">🔴 تست ۴: نام کاربری خالی</div>
+        <div class="button-group">
+            <button onclick="runEmptyUsernameTest()" class="danger">اجرای تست</button>
+            <button onclick="resetTest('empty-username-output')">پاک کردن خروجی</button>
+        </div>
+        <div id="empty-username-output" class="output">برای اجرای تست کلیک کنید...</div>
+    </div>
+
+    <!-- تست ۵: تلاش لاگین با رمز خالی -->
+    <div class="test-container">
+        <div class="test-title">🔴 تست ۵: رمز عبور خالی</div>
+        <div class="button-group">
+            <button onclick="runEmptyPasswordTest()" class="danger">اجرای تست</button>
+            <button onclick="resetTest('empty-password-output')">پاک کردن خروجی</button>
+        </div>
+        <div id="empty-password-output" class="output">برای اجرای تست کلیک کنید...</div>
+    </div>
+
+    <!-- تست ۶: تلاش لاگین با کاربر غیرمجاز -->
+    <div class="test-container">
+        <div class="test-title">🔴 تست ۶: کاربر نامعتبر</div>
+        <div class="button-group">
+            <button onclick="runInvalidUserTest()" class="danger">اجرای تست</button>
+            <button onclick="resetTest('invalid-user-output')">پاک کردن خروجی</button>
+        </div>
+        <div id="invalid-user-output" class="output">برای اجرای تست کلیک کنید...</div>
+    </div>
+
+    <!-- تست ۷: تلاش ثبت‌نام با ایمیل تکراری -->
+    <div class="test-container">
+        <div class="test-title">🔴 تست ۷: ایمیل تکراری</div>
+        <div class="button-group">
+            <button onclick="runDuplicateEmailTest()" class="danger">اجرای تست</button>
+            <button onclick="resetTest('duplicate-email-output')">پاک کردن خروجی</button>
+        </div>
+        <div id="duplicate-email-output" class="output">برای اجرای تست کلیک کنید...</div>
+    </div>
+
+    <!-- تست ۸: تلاش ثبت‌نام با نام کاربری تکراری -->
+    <div class="test-container">
+        <div class="test-title">🔴 تست ۸: نام کاربری تکراری</div>
+        <div class="button-group">
+            <button onclick="runDuplicateUsernameTest()" class="danger">اجرای تست</button>
+            <button onclick="resetTest('duplicate-username-output')">پاک کردن خروجی</button>
+        </div>
+        <div id="duplicate-username-output" class="output">برای اجرای تست کلیک کنید...</div>
+    </div>
+
+    <!-- تست ۹: تلاش ثبت‌نام با ایمیل نامعتبر -->
+    <div class="test-container">
+        <div class="test-title">🔴 تست ۹: ایمیل نامعتبر</div>
+        <div class="button-group">
+            <button onclick="runInvalidEmailTest()" class="danger">اجرای تست</button>
+            <button onclick="resetTest('invalid-email-output')">پاک کردن خروجی</button>
+        </div>
+        <div id="invalid-email-output" class="output">برای اجرای تست کلیک کنید...</div>
+    </div>
+
+    <!-- تست ۱۰: تلاش دسترسی با توکن خالی -->
+    <div class="test-container">
+        <div class="test-title">🔴 تست ۱۰: توکن خالی</div>
+        <div class="button-group">
+            <button onclick="runEmptyTokenTest()" class="danger">اجرای تست</button>
+            <button onclick="resetTest('empty-token-output')">پاک کردن خروجی</button>
+        </div>
+        <div id="empty-token-output" class="output">برای اجرای تست کلیک کنید...</div>
+    </div>
+
+    <!-- دکمه‌های کنترلی کلی -->
+    <div class="button-group" style="justify-content: center; margin-top: 30px;">
+        <button onclick="runAllTests()" class="success" style="padding: 15px 30px;">▶ اجرای همه تست‌ها</button>
+        <button onclick="resetAllOutputs()" class="warning" style="padding: 15px 30px;">🔄 پاک کردن همه</button>
+    </div>
+
+    <script>
+        // Auth Service Mock برای تست
+        const AuthService = {
+            // ذخیره کاربران (شبیه‌سازی)
+            _users: [
+                { id: 1, username: 'test', email: 'test@example.com', password: 'hashed_123' }
+            ],
+            
+            // اعتبارسنجی توکن
+            validateToken: function(token) {
+                if (!token) return { valid: false, error: 'TOKEN_EMPTY' };
+                
+                try {
+                    const parts = token.split('.');
+                    if (parts.length !== 3) return { valid: false, error: 'INVALID_FORMAT' };
+                    
+                    const payload = JSON.parse(atob(parts[1]));
+                    
+                    // بررسی انقضا
+                    if (payload.exp && payload.exp < Date.now()) {
+                        return { valid: false, error: 'TOKEN_EXPIRED' };
+                    }
+                    
+                    // بررسی امضا (شبیه‌سازی)
+                    const signature = parts[2];
+                    if (signature === 'invalidsignature') {
+                        return { valid: false, error: 'INVALID_SIGNATURE' };
+                    }
+                    
+                    return { valid: true, user: payload };
+                } catch (e) {
+                    return { valid: false, error: 'TOKEN_PARSE_ERROR' };
+                }
+            },
+
+            // لاگین
+            login: function(username, password) {
+                if (!username) return { success: false, error: 'USERNAME_EMPTY' };
+                if (!password) return { success: false, error: 'PASSWORD_EMPTY' };
+                
+                const user = this._users.find(u => u.username === username);
+                if (!user) return { success: false, error: 'USER_NOT_FOUND' };
+                
+                // شبیه‌سازی بررسی رمز
+                if (password !== 'correct_password') {
+                    return { success: false, error: 'INVALID_PASSWORD' };
+                }
+                
+                return { 
+                    success: true, 
+                    token: 'valid.token.' + btoa(JSON.stringify({ id: user.id, username: user.username, exp: Date.now() + 3600000 }))
+                };
+            },
+
+            // ثبت‌نام
+            register: function(userData) {
+                if (!userData.email || !userData.email.includes('@')) {
+                    return { success: false, error: 'INVALID_EMAIL' };
+                }
+                
+                if (this._users.some(u => u.email === userData.email)) {
+                    return { success: false, error: 'EMAIL_EXISTS' };
+                }
+                
+                if (this._users.some(u => u.username === userData.username)) {
+                    return { success: false, error: 'USERNAME_EXISTS' };
+                }
+                
+                return { success: true, user: { id: Date.now(), ...userData } };
+            }
+        };
+
+        // شمارنده تست‌ها
+        let testCount = 0;
+        const updateTestCount = () => {
+            document.getElementById('test-count').textContent = testCount;
+            document.getElementById('status-indicator').textContent = '🟢';
+        };
+
+        // توابع تست
+        function runExpiredTokenTest() {
+            const output = document.getElementById('expired-token-output');
+            const expiredToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.' + 
+                btoa(JSON.stringify({ user: 'test', exp: Date.now() - 10000 })) + 
+                '.signature';
+            
+            const result = AuthService.validateToken(expiredToken);
+            output.innerHTML = `🔍 تست توکن منقضی:<br>`;
+            output.innerHTML += `ورودی: توکن با تاریخ انقضا گذشته<br>`;
+            output.innerHTML += `نتایج: ${JSON.stringify(result, null, 2)}<br>`;
+            output.innerHTML += result.error === 'TOKEN_EXPIRED' ? 
+                '✅ تست پاس شد - خطای انقضا تشخیص داده شد' : 
+                '❌ تست مردود - خطای مناسب برگردانده نشد';
+            output.className = 'output ' + (result.error === 'TOKEN_EXPIRED' ? 'success' : 'error');
+            testCount++;
+            updateTestCount();
+        }
+
+        function runInvalidFormatTokenTest() {
+            const output = document.getElementById('invalid-format-output');
+            const invalidToken = 'not.a.valid.token';
+            
+            const result = AuthService.validateToken(invalidToken);
+            output.innerHTML = `🔍 تست فرمت نامعتبر:<br>`;
+            output.innerHTML += `ورودی: "${invalidToken}"<br>`;
+            output.innerHTML += `نتایج: ${JSON.stringify(result, null, 2)}<br>`;
+            output.innerHTML += result.error === 'INVALID_FORMAT' ? 
+                '✅ تست پاس شد - فرمت نامعتبر تشخیص داده شد' : 
+                '❌ تست مردود - خطای مناسب برگردانده نشد';
+            output.className = 'output ' + (result.error === 'INVALID_FORMAT' ? 'success' : 'error');
+            testCount++;
+            updateTestCount();
+        }
+
+        function runInvalidSignatureTest() {
+            const output = document.getElementById('invalid-signature-output');
+            const invalidSignatureToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.' + 
+                btoa(JSON.stringify({ user: 'test' })) + 
+                '.invalidsignature';
+            
+            const result = AuthService.validateToken(invalidSignatureToken);
+            output.innerHTML = `🔍 تست امضای نامعتبر:<br>`;
+            output.innerHTML += `ورودی: توکن با امضای جعلی<br>`;
+            output.innerHTML += `نتایج: ${JSON.stringify(result, null, 2)}<br>`;
+            output.innerHTML += result.error === 'INVALID_SIGNATURE' ? 
+                '✅ تست پاس شد - امضای نامعتبر تشخیص داده شد' : 
+                '❌ تست مردود - خطای مناسب برگردانده نشد';
+            output.className = 'output ' + (result.error === 'INVALID_SIGNATURE' ? 'success' : 'error');
+            testCount++;
+            updateTestCount();
+        }
+
+        function runEmptyUsernameTest() {
+            const output = document.getElementById('empty-username-output');
+            const result = AuthService.login('', 'pass');
+            output.innerHTML = `🔍 تست نام کاربری خالی:<br>`;
+            output.innerHTML += `ورودی: username=""<br>`;
+            output.innerHTML += `نتایج: ${JSON.stringify(result, null, 2)}<br>`;
+            output.innerHTML += result.error === 'USERNAME_EMPTY' ? 
+                '✅ تست پاس شد - خطای نام کاربری خالی تشخیص داده شد' : 
+                '❌ تست مردود - خطای مناسب برگردانده نشد';
+            output.className = 'output ' + (result.error === 'USERNAME_EMPTY' ? 'success' : 'error');
+            testCount++;
+            updateTestCount();
+        }
+
+        function runEmptyPasswordTest() {
+            const output = document.getElementById('empty-password-output');
+            const result = AuthService.login('test', '');
+            output.innerHTML = `🔍 تست رمز خالی:<br>`;
+            output.innerHTML += `ورودی: password=""<br>`;
+            output.innerHTML += `نتایج: ${JSON.stringify(result, null, 2)}<br>`;
+            output.innerHTML += result.error === 'PASSWORD_EMPTY' ? 
+                '✅ تست پاس شد - خطای رمز خالی تشخیص داده شد' : 
+                '❌ تست مردود - خطای مناسب برگردانده نشد';
+            output.className = 'output ' + (result.error === 'PASSWORD_EMPTY' ? 'success' : 'error');
+            testCount++;
+            updateTestCount();
+        }
+
+        function runInvalidUserTest() {
+            const output = document.getElementById('invalid-user-output');
+            const result = AuthService.login('nonexistent', 'pass');
+            output.innerHTML = `🔍 تست کاربر نامعتبر:<br>`;
+            output.innerHTML += `ورودی: username="nonexistent"<br>`;
+            output.innerHTML += `نتایج: ${JSON.stringify(result, null, 2)}<br>`;
+            output.innerHTML += result.error === 'USER_NOT_FOUND' ? 
+                '✅ تست پاس شد - خطای کاربر نامعتبر تشخیص داده شد' : 
+                '❌ تست مردود - خطای مناسب برگردانده نشد';
+            output.className = 'output ' + (result.error === 'USER_NOT_FOUND' ? 'success' : 'error');
+            testCount++;
+            updateTestCount();
+        }
+
+        function runDuplicateEmailTest() {
+            const output = document.getElementById('duplicate-email-output');
+            const result = AuthService.register({ 
+                username: 'new', 
+                email: 'test@example.com',
+                password: 'pass' 
+            });
+            output.innerHTML = `🔍 تست ایمیل تکراری:<br>`;
+            output.innerHTML += `ورودی: email="test@example.com" (موجود)<br>`;
+            output.innerHTML += `نتایج: ${JSON.stringify(result, null, 2)}<br>`;
+            output.innerHTML += result.error === 'EMAIL_EXISTS' ? 
+                '✅ تست پاس شد - خطای ایمیل تکراری تشخیص داده شد' : 
+                '❌ تست مردود - خطای مناسب برگردانده نشد';
+            output.className = 'output ' + (result.error === 'EMAIL_EXISTS' ? 'success' : 'error');
+            testCount++;
+            updateTestCount();
+        }
+
+        function runDuplicateUsernameTest() {
+            const output = document.getElementById('duplicate-username-output');
+            const result = AuthService.register({ 
+                username: 'test', 
+                email: 'new@example.com',
+                password: 'pass' 
+            });
+            output.innerHTML = `🔍 تست نام کاربری تکراری:<br>`;
+            output.innerHTML += `ورودی: username="test" (موجود)<br>`;
+            output.innerHTML += `نتایج: ${JSON.stringify(result, null, 2)}<br>`;
+            output.innerHTML += result.error === 'USERNAME_EXISTS' ? 
+                '✅ تست پاس شد - خطای نام کاربری تکراری تشخیص داده شد' : 
+                '❌ تست مردود - خطای مناسب برگردانده نشد';
+            output.className = 'output ' + (result.error === 'USERNAME_EXISTS' ? 'success' : 'error');
+            testCount++;
+            updateTestCount();
+        }
+
+        function runInvalidEmailTest() {
+            const output = document.getElementById('invalid-email-output');
+            const result = AuthService.register({ 
+                username: 'new', 
+                email: 'not-an-email',
+                password: 'pass' 
+            });
+            output.innerHTML = `🔍 تست ایمیل نامعتبر:<br>`;
+            output.innerHTML += `ورودی: email="not-an-email"<br>`;
+            output.innerHTML += `نتایج: ${JSON.stringify(result, null, 2)}<br>`;
+            output.innerHTML += result.error === 'INVALID_EMAIL' ? 
+                '✅ تست پاس شد - خطای ایمیل نامعتبر تشخیص داده شد' : 
+                '❌ تست مردود - خطای مناسب برگردانده نشد';
+            output.className = 'output ' + (result.error === 'INVALID_EMAIL' ? 'success' : 'error');
+            testCount++;
+            updateTestCount();
+        }
+
+        function runEmptyTokenTest() {
+            const output = document.getElementById('empty-token-output');
+            const result = AuthService.validateToken('');
+            output.innerHTML = `🔍 تست توکن خالی:<br>`;
+            output.innerHTML += `ورودی: token=""<br>`;
+            output.innerHTML += `نتایج: ${JSON.stringify(result, null, 2)}<br>`;
+            output.innerHTML += result.error === 'TOKEN_EMPTY' ? 
+                '✅ تست پاس شد - خطای توکن خالی تشخیص داده شد' : 
+                '❌ تست مردود - خطای مناسب برگردانده نشد';
+            output.className = 'output ' + (result.error === 'TOKEN_EMPTY' ? 'success' : 'error');
+            testCount++;
+            updateTestCount();
+        }
+
+        function resetTest(elementId) {
+            document.getElementById(elementId).innerHTML = 'خروجی پاک شد...';
+            document.getElementById(elementId).className = 'output';
+        }
+
+        function resetAllOutputs() {
+            const outputs = document.querySelectorAll('.output');
+            outputs.forEach(output => {
+                output.innerHTML = 'خروجی پاک شد...';
+                output.className = 'output';
+            });
+            testCount = 0;
+            updateTestCount();
+            document.getElementById('status-indicator').textContent = '⚪';
+        }
+
+        function runAllTests() {
+            testCount = 0;
+            runExpiredTokenTest();
+            runInvalidFormatTokenTest();
+            runInvalidSignatureTest();
+            runEmptyUsernameTest();
+            runEmptyPasswordTest();
+            runInvalidUserTest();
+            runDuplicateEmailTest();
+            runDuplicateUsernameTest();
+            runInvalidEmailTest();
+            runEmptyTokenTest();
+            updateTestCount();
+        }
+    </script>
+</body>
+</html>
