@@ -1,0 +1,616 @@
+<!DOCTYPE html>
+<html dir="rtl" lang="fa">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>تست لبه‌های کامپوننت کارت تمرین | Farsinglish</title>
+    <style>
+        body {
+            font-family: 'Vazir', 'Tahoma', sans-serif;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            margin: 0;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        .container {
+            max-width: 900px;
+            width: 100%;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 24px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.2);
+        }
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 25px;
+            text-align: center;
+        }
+        .header h1 {
+            margin: 0;
+            font-size: 1.8rem;
+            font-weight: 600;
+        }
+        .header p {
+            margin: 10px 0 0;
+            opacity: 0.9;
+            font-size: 1rem;
+        }
+        .content {
+            padding: 30px;
+        }
+        .test-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 25px;
+            margin-bottom: 30px;
+        }
+        .test-card {
+            background: white;
+            border-radius: 16px;
+            padding: 20px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+            border: 1px solid #e0e7ff;
+            transition: transform 0.2s;
+        }
+        .test-card:hover {
+            transform: translateY(-5px);
+        }
+        .test-card h3 {
+            color: #4338ca;
+            margin: 0 0 15px 0;
+            font-size: 1.2rem;
+            border-bottom: 2px solid #e0e7ff;
+            padding-bottom: 8px;
+        }
+        .test-card .scenario {
+            background: #f8fafc;
+            border-radius: 12px;
+            padding: 15px;
+            margin: 15px 0;
+            font-size: 0.95rem;
+            border-right: 4px solid #3b82f6;
+        }
+        .test-card .scenario-title {
+            font-weight: bold;
+            color: #1e40af;
+            margin-bottom: 8px;
+        }
+        .test-card .scenario-desc {
+            color: #334155;
+            margin-bottom: 12px;
+        }
+        .btn-group {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin: 15px 0 10px;
+        }
+        .btn {
+            flex: 1;
+            min-width: 100px;
+            padding: 10px 16px;
+            border: none;
+            border-radius: 12px;
+            font-weight: 600;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            font-family: inherit;
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, #3b82f6, #2563eb);
+            color: white;
+        }
+        .btn-primary:hover {
+            background: linear-gradient(135deg, #2563eb, #1d4ed8);
+            transform: scale(1.02);
+        }
+        .btn-secondary {
+            background: #e2e8f0;
+            color: #1e293b;
+        }
+        .btn-secondary:hover {
+            background: #cbd5e1;
+        }
+        .btn-success {
+            background: #10b981;
+            color: white;
+        }
+        .btn-success:hover {
+            background: #059669;
+        }
+        .btn-danger {
+            background: #ef4444;
+            color: white;
+        }
+        .btn-danger:hover {
+            background: #dc2626;
+        }
+        .output {
+            background: #1e293b;
+            color: #a5f3fc;
+            padding: 15px;
+            border-radius: 12px;
+            font-family: 'Monaco', 'Menlo', monospace;
+            font-size: 0.9rem;
+            margin: 15px 0 10px;
+            white-space: pre-wrap;
+            direction: ltr;
+            text-align: left;
+            max-height: 150px;
+            overflow-y: auto;
+        }
+        .output .success { color: #4ade80; }
+        .output .error { color: #f87171; }
+        .output .warn { color: #fbbf24; }
+        .summary {
+            background: linear-gradient(135deg, #e0f2fe, #bae6fd);
+            border-radius: 16px;
+            padding: 20px;
+            margin-top: 30px;
+            border: 1px solid #7dd3fc;
+        }
+        .summary h3 {
+            color: #0369a1;
+            margin: 0 0 10px 0;
+        }
+        .summary-stats {
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+        .stat-item {
+            background: white;
+            padding: 10px 20px;
+            border-radius: 30px;
+            font-weight: 600;
+        }
+        .stat-pass { color: #16a34a; border-left: 4px solid #16a34a; }
+        .stat-fail { color: #dc2626; border-left: 4px solid #dc2626; }
+        .badge {
+            background: #3b82f6;
+            color: white;
+            padding: 3px 10px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            display: inline-block;
+            margin-right: 8px;
+        }
+        footer {
+            text-align: center;
+            padding: 20px;
+            color: #64748b;
+            font-size: 0.9rem;
+            border-top: 1px solid #e2e8f0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🧪 تست لبه‌های کارت تمرین</h1>
+            <p>بررسی رفتار کامپوننت Exercise Card در شرایط غیرعادی | Farsinglish</p>
+        </div>
+
+        <div class="content">
+            <!-- سناریوهای تست -->
+            <div class="test-grid">
+                <!-- سناریو 1: داده ناقص -->
+                <div class="test-card" id="test-scenario1">
+                    <h3>🔴 سناریو ۱ · داده ناقص</h3>
+                    <div class="scenario">
+                        <div class="scenario-title">ورودی: exercise = null</div>
+                        <div class="scenario-desc">کارت تمرین بدون دریافت داده. باید خطای مناسب نمایش دهد و کرش نکند.</div>
+                    </div>
+                    <div class="btn-group">
+                        <button class="btn btn-primary" onclick="runScenario1()">اجرای تست</button>
+                        <button class="btn btn-secondary" onclick="resetScenario1()">ریست</button>
+                    </div>
+                    <div id="output-scenario1" class="output">منتظر اجرای تست...</div>
+                </div>
+
+                <!-- سناریو 2: نوع تمرین ناشناخته -->
+                <div class="test-card" id="test-scenario2">
+                    <h3>🔴 سناریو ۲ · نوع نامعتبر</h3>
+                    <div class="scenario">
+                        <div class="scenario-title">ورودی: type = "unknown"</div>
+                        <div class="scenario-desc">تمرینی با نوع ناشناخته. کامپوننت باید gracefully fallback کند.</div>
+                    </div>
+                    <div class="btn-group">
+                        <button class="btn btn-primary" onclick="runScenario2()">اجرای تست</button>
+                        <button class="btn btn-secondary" onclick="resetScenario2()">ریست</button>
+                    </div>
+                    <div id="output-scenario2" class="output">منتظر اجرای تست...</div>
+                </div>
+
+                <!-- سناریو 3: پاسخ خالی -->
+                <div class="test-card" id="test-scenario3">
+                    <h3>🔴 سناریو ۳ · پاسخ خالی</h3>
+                    <div class="scenario">
+                        <div class="scenario-title">ورودی: options = []</div>
+                        <div class="scenario-desc">گزینه‌های پاسخ خالی. نباید باعث خطای index خارج از بازه شود.</div>
+                    </div>
+                    <div class="btn-group">
+                        <button class="btn btn-primary" onclick="runScenario3()">اجرای تست</button>
+                        <button class="btn btn-secondary" onclick="resetScenario3()">ریست</button>
+                    </div>
+                    <div id="output-scenario3" class="output">منتظر اجرای تست...</div>
+                </div>
+
+                <!-- سناریو 4: داده خراب -->
+                <div class="test-card" id="test-scenario4">
+                    <h3>🔴 سناریو ۴ · داده خراب</h3>
+                    <div class="scenario">
+                        <div class="scenario-title">ورودی: exercise با پراپرتی‌های ناقص</div>
+                        <div class="scenario-desc">مثلاً { id: 1 } بدون question/options. باید مقدار پیش‌فرض بگیرد.</div>
+                    </div>
+                    <div class="btn-group">
+                        <button class="btn btn-primary" onclick="runScenario4()">اجرای تست</button>
+                        <button class="btn btn-secondary" onclick="resetScenario4()">ریست</button>
+                    </div>
+                    <div id="output-scenario4" class="output">منتظر اجرای تست...</div>
+                </div>
+
+                <!-- سناریو 5: تمرین فاقد Validator -->
+                <div class="test-card" id="test-scenario5">
+                    <h3>🔴 سناریو ۵ · بدون اعتبارسنج</h3>
+                    <div class="scenario">
+                        <div class="scenario-title">validator = undefined</div>
+                        <div class="scenario-desc">اگر اعتبارسنج ارسال نشود، آیا متد پیش‌فرض کار می‌کند؟</div>
+                    </div>
+                    <div class="btn-group">
+                        <button class="btn btn-primary" onclick="runScenario5()">اجرای تست</button>
+                        <button class="btn btn-secondary" onclick="resetScenario5()">ریست</button>
+                    </div>
+                    <div id="output-scenario5" class="output">منتظر اجرای تست...</div>
+                </div>
+
+                <!-- سناریو 6: رویداد کلیک بدون هندلر -->
+                <div class="test-card" id="test-scenario6">
+                    <h3>🔴 سناریو ۶ · بدون هندلر رویداد</h3>
+                    <div class="scenario">
+                        <div class="scenario-title">onAnswer = null</div>
+                        <div class="scenario-desc">کاربر پاسخ می‌دهد اما هیچ تابعی تعریف نشده. نباید ارور دهد.</div>
+                    </div>
+                    <div class="btn-group">
+                        <button class="btn btn-primary" onclick="runScenario6()">اجرای تست</button>
+                        <button class="btn btn-secondary" onclick="resetScenario6()">ریست</button>
+                    </div>
+                    <div id="output-scenario6" class="output">منتظر اجرای تست...</div>
+                </div>
+            </div>
+
+            <!-- خلاصه تست‌ها -->
+            <div class="summary">
+                <h3>📊 خلاصه نتایج تست‌های لبه</h3>
+                <div class="summary-stats">
+                    <div class="stat-item stat-pass" id="passCount">موفق: ۰</div>
+                    <div class="stat-item stat-fail" id="failCount">شکست: ۰</div>
+                    <div class="stat-item" id="totalCount">کل: ۶</div>
+                </div>
+                <div style="margin-top: 15px;">
+                    <button class="btn btn-success" onclick="runAllTests()">▶ اجرای همه تست‌ها</button>
+                    <button class="btn btn-secondary" onclick="resetAll()">🔄 ریست همه</button>
+                </div>
+            </div>
+        </div>
+
+        <footer>
+            Farsinglish · تست لبه‌های کامپوننت · ۲۰۲۶
+        </footer>
+    </div>
+
+    <script>
+        // ==================== شبیه‌سازی کامپوننت کارت تمرین ====================
+        class ExerciseCard {
+            constructor(exercise, validator, options = {}) {
+                this.exercise = exercise || {};
+                this.validator = validator || this.defaultValidator;
+                this.onAnswer = options.onAnswer || null;
+                this.state = {
+                    selectedOption: null,
+                    isFlipped: false,
+                    showAnswer: false,
+                    error: null
+                };
+            }
+
+            defaultValidator(answer, exercise) {
+                return answer === (exercise?.correctAnswer || '');
+            }
+
+            // رندر شبیه‌سازی شده (برای تست منطق)
+            render() {
+                // بررسی داده ناقص
+                if (!this.exercise || typeof this.exercise !== 'object') {
+                    this.state.error = 'INVALID_EXERCISE_DATA';
+                    return { error: 'داده تمرین نامعتبر است', component: null };
+                }
+
+                // بررسی نوع ناشناخته
+                const validTypes = ['multiple-choice', 'flashcard', 'fill-blank', 'translation'];
+                if (this.exercise.type && !validTypes.includes(this.exercise.type)) {
+                    console.warn(`نوع تمرین "${this.exercise.type}" ناشناخته است، از fallback استفاده می‌شود.`);
+                    this.exercise.type = 'multiple-choice'; // fallback
+                }
+
+                // بررسی گزینه‌های خالی برای چندگزینه‌ای
+                if (this.exercise.type === 'multiple-choice' && (!this.exercise.options || this.exercise.options.length === 0)) {
+                    this.exercise.options = ['گزینه پیش‌فرض ۱', 'گزینه پیش‌فرض ۲']; // fallback
+                    this.state.warning = 'OPTIONS_EMPTY_FALLBACK';
+                }
+
+                // بررسی پراپرتی‌های اجباری
+                if (!this.exercise.question) {
+                    this.exercise.question = 'سوال پیش‌فرض (fallback)';
+                }
+
+                return {
+                    exercise: this.exercise,
+                    state: this.state,
+                    component: 'ExerciseCard'
+                };
+            }
+
+            handleAnswer(selected) {
+                try {
+                    if (!this.validator || typeof this.validator !== 'function') {
+                        throw new Error('Validator تابع معتبری نیست');
+                    }
+
+                    const isValid = this.validator(selected, this.exercise);
+                    
+                    if (this.onAnswer && typeof this.onAnswer === 'function') {
+                        this.onAnswer({ isValid, selected, exerciseId: this.exercise.id });
+                    }
+
+                    return { success: true, isValid };
+                } catch (error) {
+                    console.error('خطا در پردازش پاسخ:', error);
+                    return { success: false, error: error.message };
+                }
+            }
+
+            reset() {
+                this.state = {
+                    selectedOption: null,
+                    isFlipped: false,
+                    showAnswer: false,
+                    error: null,
+                    warning: null
+                };
+            }
+        }
+
+        // ==================== Mock Validatorها ====================
+        const mockValidator = (answer, exercise) => {
+            if (!exercise || !exercise.correctAnswer) return false;
+            return answer === exercise.correctAnswer;
+        };
+
+        const mockValidatorStrict = (answer, exercise) => {
+            return answer?.trim() === exercise?.correctAnswer?.trim();
+        };
+
+        // ==================== توابع تست ====================
+        let results = {
+            scenario1: { passed: false, executed: false },
+            scenario2: { passed: false, executed: false },
+            scenario3: { passed: false, executed: false },
+            scenario4: { passed: false, executed: false },
+            scenario5: { passed: false, executed: false },
+            scenario6: { passed: false, executed: false }
+        };
+
+        function logToElement(id, message, type = 'info') {
+            const el = document.getElementById(id);
+            if (el) {
+                const icon = type === 'success' ? '✅' : type === 'error' ? '❌' : type === 'warn' ? '⚠️' : 'ℹ️';
+                el.innerHTML = `<span class="${type}">${icon} ${message}</span>`;
+            }
+        }
+
+        function updateSummary() {
+            let pass = 0, fail = 0;
+            for (let key in results) {
+                if (results[key].executed) {
+                    results[key].passed ? pass++ : fail++;
+                }
+            }
+            document.getElementById('passCount').innerHTML = `موفق: ${pass}`;
+            document.getElementById('failCount').innerHTML = `شکست: ${fail}`;
+            document.getElementById('totalCount').innerHTML = `کل: ${pass + fail}`;
+        }
+
+        // سناریو 1: داده ناقص (exercise = null)
+        window.runScenario1 = function() {
+            try {
+                const card = new ExerciseCard(null, mockValidator);
+                const output = card.render();
+                
+                let passed = (output.error && output.error.includes('نامعتبر')) || card.state.error === 'INVALID_EXERCISE_DATA';
+                
+                results.scenario1 = { passed, executed: true };
+                logToElement('output-scenario1', 
+                    passed ? 'تست موفق: کامپوننت کرش نکرد و خطای مناسب نمایش داد.' : 'تست ناموفق: خطای مناسب نمایش داده نشد.',
+                    passed ? 'success' : 'error'
+                );
+            } catch (e) {
+                results.scenario1 = { passed: false, executed: true };
+                logToElement('output-scenario1', `تست شکست: استثنای غیرمنتظره - ${e.message}`, 'error');
+            }
+            updateSummary();
+        };
+
+        // سناریو 2: نوع تمرین ناشناخته
+        window.runScenario2 = function() {
+            try {
+                const exercise = { id: 2, type: 'unknown', question: 'تست؟', options: ['a', 'b'] };
+                const card = new ExerciseCard(exercise, mockValidator);
+                const output = card.render();
+                
+                const passed = output.exercise.type === 'multiple-choice';
+                results.scenario2 = { passed, executed: true };
+                logToElement('output-scenario2',
+                    passed ? 'تست موفق: نوع ناشناخته به multiple-choice fallback شد.' : 'تست ناموفق: fallback انجام نشد.',
+                    passed ? 'success' : 'error'
+                );
+            } catch (e) {
+                results.scenario2 = { passed: false, executed: true };
+                logToElement('output-scenario2', `تست شکست: ${e.message}`, 'error');
+            }
+            updateSummary();
+        };
+
+        // سناریو 3: گزینه‌های خالی
+        window.runScenario3 = function() {
+            try {
+                const exercise = { id: 3, type: 'multiple-choice', question: 'تست گزینه خالی؟', options: [] };
+                const card = new ExerciseCard(exercise, mockValidator);
+                const output = card.render();
+                
+                const passed = output.exercise.options && output.exercise.options.length > 0;
+                results.scenario3 = { passed, executed: true };
+                logToElement('output-scenario3',
+                    passed ? 'تست موفق: آرایه خالی با گزینه‌های پیش‌فرض پر شد.' : 'تست ناموفق: گزینه‌ها خالی ماند.',
+                    passed ? 'success' : 'error'
+                );
+            } catch (e) {
+                results.scenario3 = { passed: false, executed: true };
+                logToElement('output-scenario3', `تست شکست: ${e.message}`, 'error');
+            }
+            updateSummary();
+        };
+
+        // سناریو 4: داده خراب (فاقد پراپرتی‌های لازم)
+        window.runScenario4 = function() {
+            try {
+                const exercise = { id: 4 }; // بدون question و options
+                const card = new ExerciseCard(exercise, mockValidator);
+                const output = card.render();
+                
+                const passed = output.exercise.question && output.exercise.question.includes('پیش‌فرض');
+                results.scenario4 = { passed, executed: true };
+                logToElement('output-scenario4',
+                    passed ? 'تست موفق: پراپرتی‌های گمشده با مقدار پیش‌فرض جایگزین شدند.' : 'تست ناموفق: fallback انجام نشد.',
+                    passed ? 'success' : 'error'
+                );
+            } catch (e) {
+                results.scenario4 = { passed: false, executed: true };
+                logToElement('output-scenario4', `تست شکست: ${e.message}`, 'error');
+            }
+            updateSummary();
+        };
+
+        // سناریو 5: بدون Validator
+        window.runScenario5 = function() {
+            try {
+                const exercise = { id: 5, question: 'تست validator?', correctAnswer: 'a' };
+                const card = new ExerciseCard(exercise, undefined); // validator undefined
+                const output = card.render();
+                
+                // تست عملکرد validator پیش‌فرض
+                const result = card.handleAnswer('a');
+                
+                const passed = result.success && result.isValid === true;
+                results.scenario5 = { passed, executed: true };
+                logToElement('output-scenario5',
+                    passed ? 'تست موفق: validator پیش‌فرض به درستی کار کرد.' : 'تست ناموفق: validator پیش‌فرض خطا داد.',
+                    passed ? 'success' : 'error'
+                );
+            } catch (e) {
+                results.scenario5 = { passed: false, executed: true };
+                logToElement('output-scenario5', `تست شکست: ${e.message}`, 'error');
+            }
+            updateSummary();
+        };
+
+        // سناریو 6: بدون هندلر رویداد
+        window.runScenario6 = function() {
+            try {
+                const exercise = { id: 6, question: 'تست بدون هندلر?', correctAnswer: 'b' };
+                const card = new ExerciseCard(exercise, mockValidator, { onAnswer: null });
+                card.render();
+                
+                // این باید بدون ارور اجرا شود حتی اگر onAnswer null باشد
+                const result = card.handleAnswer('b');
+                
+                const passed = result.success === true;
+                results.scenario6 = { passed, executed: true };
+                logToElement('output-scenario6',
+                    passed ? 'تست موفق: پاسخ بدون هندلر ارسال شد و کرش نکرد.' : 'تست ناموفق: با وجود نبود هندلر، خطا رخ داد.',
+                    passed ? 'success' : 'error'
+                );
+            } catch (e) {
+                results.scenario6 = { passed: false, executed: true };
+                logToElement('output-scenario6', `تست شکست: ${e.message}`, 'error');
+            }
+            updateSummary();
+        };
+
+        // ریست سناریوها
+        window.resetScenario1 = function() {
+            logToElement('output-scenario1', 'منتظر اجرای تست...', 'info');
+            results.scenario1 = { passed: false, executed: false };
+            updateSummary();
+        };
+        window.resetScenario2 = function() {
+            logToElement('output-scenario2', 'منتظر اجرای تست...', 'info');
+            results.scenario2 = { passed: false, executed: false };
+            updateSummary();
+        };
+        window.resetScenario3 = function() {
+            logToElement('output-scenario3', 'منتظر اجرای تست...', 'info');
+            results.scenario3 = { passed: false, executed: false };
+            updateSummary();
+        };
+        window.resetScenario4 = function() {
+            logToElement('output-scenario4', 'منتظر اجرای تست...', 'info');
+            results.scenario4 = { passed: false, executed: false };
+            updateSummary();
+        };
+        window.resetScenario5 = function() {
+            logToElement('output-scenario5', 'منتظر اجرای تست...', 'info');
+            results.scenario5 = { passed: false, executed: false };
+            updateSummary();
+        };
+        window.resetScenario6 = function() {
+            logToElement('output-scenario6', 'منتظر اجرای تست...', 'info');
+            results.scenario6 = { passed: false, executed: false };
+            updateSummary();
+        };
+
+        window.runAllTests = function() {
+            runScenario1();
+            runScenario2();
+            runScenario3();
+            runScenario4();
+            runScenario5();
+            runScenario6();
+        };
+
+        window.resetAll = function() {
+            resetScenario1();
+            resetScenario2();
+            resetScenario3();
+            resetScenario4();
+            resetScenario5();
+            resetScenario6();
+        };
+
+        // مقداردهی اولیه
+        updateSummary();
+    </script>
+</body>
+</html>
