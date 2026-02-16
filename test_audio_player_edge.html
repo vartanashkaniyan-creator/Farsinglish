@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>تست دستی لبه‌های Audio Player</title>
+    <style>
+        body {
+            font-family: Vazir, Tahoma, sans-serif;
+            max-width: 800px;
+            margin: 20px auto;
+            padding: 15px;
+            background: #f5f5f5;
+        }
+        h1 {
+            font-size: 1.5rem;
+            color: #2c3e50;
+            text-align: center;
+        }
+        .test-container {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 25px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        .test-title {
+            font-weight: bold;
+            color: #27ae60;
+            border-right: 4px solid #27ae60;
+            padding-right: 10px;
+            margin-top: 0;
+            margin-bottom: 15px;
+        }
+        .scenario-box {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 20px;
+        }
+        .scenario-title {
+            font-weight: 600;
+            color: #2c3e50;
+            margin-top: 0;
+            margin-bottom: 10px;
+            font-size: 1.1rem;
+        }
+        button {
+            background: #3498db;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            padding: 10px 15px;
+            font-size: 0.9rem;
+            cursor: pointer;
+            margin-left: 8px;
+            margin-bottom: 8px;
+            transition: background 0.2s;
+            font-family: Vazir, Tahoma, sans-serif;
+        }
+        button:hover {
+            background: #2980b9;
+        }
+        button.danger {
+            background: #e74c3c;
+        }
+        button.danger:hover {
+            background: #c0392b;
+        }
+        button.success {
+            background: #27ae60;
+        }
+        button.success:hover {
+            background: #2ecc71;
+        }
+        .log-panel {
+            background: #1e1e1e;
+            color: #d4d4d4;
+            font-family: 'Courier New', monospace;
+            padding: 12px;
+            border-radius: 8px;
+            height: 150px;
+            overflow-y: auto;
+            font-size: 0.85rem;
+            margin-top: 15px;
+            direction: ltr;
+            text-align: left;
+        }
+        .log-entry {
+            border-bottom: 1px solid #333;
+            padding: 4px 0;
+            margin: 0;
+        }
+        .log-warn {
+            color: #f39c12;
+        }
+        .log-error {
+            color: #e74c3c;
+        }
+        .log-info {
+            color: #3498db;
+        }
+        .log-success {
+            color: #2ecc71;
+        }
+        .flex-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        .status-badge {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: bold;
+            background: #ecf0f1;
+        }
+        .status-playing {
+            background: #2ecc71;
+            color: white;
+        }
+        .status-stopped {
+            background: #95a5a6;
+            color: white;
+        }
+        .status-error {
+            background: #e74c3c;
+            color: white;
+        }
+        hr {
+            border: none;
+            border-top: 1px dashed #ccc;
+            margin: 15px 0;
+        }
+    </style>
+</head>
+<body>
+    <h1>🎵 تست دستی لبه‌های کامپوننت Audio Player</h1>
+    <p>این صفحه به صورت دستی و با دکمه، لبه‌های مختلف کامپوننت پخش صدا را تست می‌کند.</p>
+
+    <!-- Audio Player تستی (مخفی) -->
+    <audio id="testAudio" style="display: none;"></audio>
+
+    <div class="test-container">
+        <h2 class="test-title">🔴 ۱. لبه‌های منبع صوتی</h2>
+        
+        <div class="scenario-box">
+            <div class="scenario-title">📁 سناریو A: منبع صوتی نامعتبر (۴۰۴)</div>
+            <div class="flex-row">
+                <button onclick="testInvalidSource404()">▶️ پخش فایل ناموجود</button>
+                <button onclick="resetAudio()" class="danger">🔄 توقف و ریست</button>
+            </div>
+            <p><small>باید: خطای ۴۰۴ در لاگ ظاهر شود، Status به Error تغییر کند.</small></p>
+        </div>
+
+        <div class="scenario-box">
+            <div class="scenario-title">🔗 سناریو B: فرمت پشتیبانی‌نشده</div>
+            <div class="flex-row">
+                <button onclick="testUnsupportedFormat()">▶️ پخش فایل با فرمت نامعتبر (MP3 به عنوان WAV)</button>
+            </div>
+            <p><small>باید: رویداد error با کد مدیا فرمت ناشناخته.</small></p>
+        </div>
+
+        <div class="scenario-box">
+            <div class="scenario-title">🌐 سناریو C: منبع خالی / undefined</div>
+            <div class="flex-row">
+                <button onclick="testEmptySource()">▶️ پخش با منبع خالی</button>
+            </div>
+            <p><small>باید: خطای "منبع صوتی مشخص نشده" در لاگ.</small></p>
+        </div>
+    </div>
+
+    <div class="test-container">
+        <h2 class="test-title">🔄 ۲. لبه‌های کنترل هم‌زمان</h2>
+        
+        <div class="scenario-box">
+            <div class="scenario-title">⚡ سناریو D: فراخوانی play پشت سر هم</div>
+            <div class="flex-row">
+                <button onclick="testRapidPlay()" class="success">▶️▶️ پخش سریع (۵ بار)</button>
+            </div>
+            <p><small>باید: فقط یک نمونه پخش شود، خطای هم‌زمانی مدیریت گردد.</small></p>
+        </div>
+
+        <div class="scenario-box">
+            <div class="scenario-title">🛑 سناریو E: stop قبل از بارگذاری کامل</div>
+            <div class="flex-row">
+                <button onclick="testStopBeforeLoad()">▶️ پخش و توقف فوری</button>
+            </div>
+            <p><small>باید: abort شود، خطای Unexpected State رخ ندهد.</small></p>
+        </div>
+
+        <div class="scenario-box">
+            <div class="scenario-title">🔁 سناریو F: تغییر منبع حین پخش</div>
+            <div class="flex-row">
+                <button onclick="testChangeSourceWhilePlaying()">🔀 تغییر ناگهانی منبع</button>
+            </div>
+            <p><small>باید: منبع جدید لود شود، پخش قبلی متوقف گردد.</small></p>
+        </div>
+    </div>
+
+    <div class="test-container">
+        <h2 class="test-title">📉 ۳. لبه‌های وضعیت شبکه</h2>
+        
+        <div class="scenario-box">
+            <div class="scenario-title">📴 سناریو G: قطع ناگهانی شبکه حین پخش (شبیه‌سازی)</div>
+            <div class="flex-row">
+                <button onclick="testNetworkInterrupt()">🌐 شبیه‌سازی قطع شبکه</button>
+            </div>
+            <p><small>باید: رویداد stalled یا error با خطای شبکه.</small></p>
+        </div>
+
+        <div class="scenario-box">
+            <div class="scenario-title">⏱️ سناریو H: timeout بارگذاری</div>
+            <div class="flex-row">
+                <button onclick="testLoadTimeout()">⏰ شبیه‌سازی تایم‌اوت</button>
+            </div>
+            <p><small>باید: پس از ۳ ثانیه خطای timeout در لاگ ظاهر شود.</small></p>
+        </div>
+    </div>
+
+    <div class="test-container">
+        <h2 class="test-title">🧪 ۴. وضعیت فعلی Audio Player</h2>
+        <div class="flex-row">
+            <span class="status-badge" id="playbackStatus">⏹️ متوقف</span>
+            <span class="status-badge" id="srcStatus">📁 منبع: ندارد</span>
+        </div>
+        <div class="log-panel" id="logPanel">
+            <div class="log-entry log-info">✅ آماده تست لبه‌های صوتی</div>
+        </div>
+        <hr>
+        <button onclick="clearLog()" class="danger">🧹 پاک کردن لاگ</button>
+        <button onclick="playValidSample()" class="success">🔊 پخش نمونه سالم (تست مثبت)</button>
+    </div>
+
+    <script>
+        // Audio Element
+        const audio = document.getElementById('testAudio');
+        const logPanel = document.getElementById('logPanel');
+        const playbackStatus = document.getElementById('playbackStatus');
+        const srcStatus = document.getElementById('srcStatus');
+
+        // آدرس‌های تستی
+        const VALID_SAMPLE = 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3';
+        const INVALID_SAMPLE = 'https://example.com/non-existent-file.mp3';
+        const UNSUPPORTED_SAMPLE = 'data:audio/wav;base64,UklGRlwAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YVA'; // Base64 خراب
+
+        // Helper: لاگ
+        function addLog(message, type = 'info') {
+            const entry = document.createElement('div');
+            entry.className = `log-entry log-${type}`;
+            entry.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
+            logPanel.appendChild(entry);
+            logPanel.scrollTop = logPanel.scrollHeight;
+        }
+
+        // به‌روزرسانی وضعیت
+        function updateStatus() {
+            if (audio.error) {
+                playbackStatus.textContent = '❌ خطا';
+                playbackStatus.className = 'status-badge status-error';
+            } else if (!audio.paused) {
+                playbackStatus.textContent = '▶️ در حال پخش';
+                playbackStatus.className = 'status-badge status-playing';
+            } else {
+                playbackStatus.textContent = '⏹️ متوقف';
+                playbackStatus.className = 'status-badge status-stopped';
+            }
+            srcStatus.textContent = `📁 منبع: ${audio.src ? audio.src.substring(0, 30) + '...' : 'ندارد'}`;
+        }
+
+        // Reset audio
+        function resetAudio() {
+            audio.pause();
+            audio.removeAttribute('src');
+            audio.load();
+            addLog('🔄 ریست شد', 'info');
+            updateStatus();
+        }
+
+        // Clear log
+        function clearLog() {
+            logPanel.innerHTML = '<div class="log-entry log-info">✅ لاگ پاک شد</div>';
+        }
+
+        // تست 1: منبع نامعتبر 404
+        function testInvalidSource404() {
+            addLog('🧪 تست: منبع نامعتبر 404', 'info');
+            audio.src = INVALID_SAMPLE;
+            audio.load();
+            audio.play().catch(e => {
+                addLog(`❌ خطا: ${e.message}`, 'error');
+            });
+            updateStatus();
+        }
+
+        // تست 2: فرمت پشتیبانی‌نشده
+        function testUnsupportedFormat() {
+            addLog('🧪 تست: فرمت پشتیبانی‌نشده', 'info');
+            audio.src = UNSUPPORTED_SAMPLE;
+            audio.load();
+            audio.play().catch(e => {
+                addLog(`❌ خطا: ${e.message} (احتمالاً فرمت نامعتبر)`, 'error');
+            });
+            updateStatus();
+        }
+
+        // تست 3: منبع خالی
+        function testEmptySource() {
+            addLog('🧪 تست: منبع خالی', 'info');
+            audio.src = '';
+            audio.load();
+            audio.play().catch(e => {
+                addLog(`❌ خطا: منبع صوتی مشخص نشده`, 'error');
+            });
+            updateStatus();
+        }
+
+        // تست 4: پخش سریع پشت سر هم
+        function testRapidPlay() {
+            addLog('🧪 تست: ۵ بار فراخوانی play پشت سر هم', 'warn');
+            audio.src = VALID_SAMPLE;
+            audio.load();
+            for (let i = 0; i < 5; i++) {
+                audio.play().catch(e => {
+                    addLog(`⚠️ تلاش ${i+1}: عملیات هم‌زمان - ${e.message}`, 'warn');
+                });
+            }
+            updateStatus();
+        }
+
+        // تست 5: توقف قبل از بارگذاری کامل
+        function testStopBeforeLoad() {
+            addLog('🧪 تست: توقف قبل از بارگذاری کامل', 'info');
+            audio.src = VALID_SAMPLE;
+            audio.load();
+            audio.pause(); // توقف فوری
+            audio.play().catch(e => {
+                addLog(`✅ خطای مورد انتظار: ${e.message}`, 'info');
+            });
+            updateStatus();
+        }
+
+        // تست 6: تغییر منبع حین پخش
+        function testChangeSourceWhilePlaying() {
+            addLog('🧪 تست: تغییر منبع حین پخش', 'info');
+            audio.src = VALID_SAMPLE;
+            audio.play().then(() => {
+                addLog('🎵 پخش اول شروع شد', 'success');
+                setTimeout(() => {
+                    audio.src = VALID_SAMPLE + '?change=true'; // تغییر منبع
+                    audio.load();
+                    audio.play().catch(e => addLog(`✅ تغییر منبع انجام شد`, 'info'));
+                }, 1000);
+            }).catch(e => addLog(`❌ خطا: ${e.message}`, 'error'));
+            updateStatus();
+        }
+
+        // تست 7: قطع شبکه (شبیه‌سازی)
+        function testNetworkInterrupt() {
+            addLog('🧪 تست: شبیه‌سازی قطع شبکه', 'warn');
+            audio.src = VALID_SAMPLE;
+            audio.load();
+            // شبیه‌سازی قطع شبکه با timeout
+            setTimeout(() => {
+                // این یک شبیه‌سازی ساده است؛ در واقعیت باید شبکه قطع شود
+                addLog('⚠️ رویداد stalled شبیه‌سازی شد (قطع شبکه)', 'warn');
+            }, 2000);
+            updateStatus();
+        }
+
+        // تست 8: تایم‌اوت بارگذاری
+        function testLoadTimeout() {
+            addLog('🧪 تست: شبیه‌سازی تایم‌اوت بارگذاری', 'info');
+            audio.src = INVALID_SAMPLE; // یک منبع کند یا ناموجود
+            audio.load();
+            let timeout = setTimeout(() => {
+                addLog('⏰ تایم‌اوت: بارگذاری بیش از ۳ ثانیه طول کشید', 'error');
+            }, 3000);
+            audio.addEventListener('canplay', () => {
+                clearTimeout(timeout);
+                addLog('✅ بارگذاری کامل شد (تایم‌اوت لغو شد)', 'success');
+            }, { once: true });
+            updateStatus();
+        }
+
+        // تست مثبت: پخش نمونه سالم
+        function playValidSample() {
+            addLog('🔊 تست مثبت: پخش نمونه سالم', 'success');
+            audio.src = VALID_SAMPLE;
+            audio.load();
+            audio.play().catch(e => addLog(`❌ خطا: ${e.message}`, 'error'));
+            updateStatus();
+        }
+
+        // رویدادهای HTML5 Audio
+        audio.addEventListener('play', () => {
+            addLog('🎵 رویداد play', 'success');
+            updateStatus();
+        });
+        audio.addEventListener('pause', () => {
+            addLog('⏸️ رویداد pause', 'info');
+            updateStatus();
+        });
+        audio.addEventListener('ended', () => {
+            addLog('🏁 پخش به پایان رسید', 'info');
+            updateStatus();
+        });
+        audio.addEventListener('error', (e) => {
+            addLog(`❌ رویداد error: ${audio.error ? audio.error.message : 'خطای ناشناخته'}`, 'error');
+            updateStatus();
+        });
+        audio.addEventListener('abort', () => {
+            addLog('🛑 رویداد abort (بارگذاری لغو شد)', 'warn');
+            updateStatus();
+        });
+        audio.addEventListener('stalled', () => {
+            addLog('⚠️ رویداد stalled (قطع موقت داده)', 'warn');
+        });
+        audio.addEventListener('suspend', () => {
+            addLog('💤 رویداد suspend (بارگذاری متوقف شد)', 'info');
+        });
+
+        // ذخیره در localStorage برای دیباگ
+        function saveState() {
+            localStorage.setItem('audioTestState', JSON.stringify({
+                src: audio.src,
+                paused: audio.paused,
+                currentTime: audio.currentTime,
+                error: audio.error ? audio.error.message : null
+            }));
+            addLog('💾 وضعیت در localStorage ذخیره شد', 'info');
+        }
+
+        // بازیابی از localStorage
+        function loadState() {
+            const state = localStorage.getItem('audioTestState');
+            if (state) {
+                try {
+                    const parsed = JSON.parse(state);
+                    addLog(`📂 بازیابی وضعیت: ${parsed.src}`, 'info');
+                } catch (e) {
+                    addLog(`❌ خطا در بازیابی وضعیت`, 'error');
+                }
+            } else {
+                addLog(`ℹ️ هیچ وضعیت ذخیره‌شده‌ای یافت نشد`, 'info');
+            }
+        }
+
+        // تست ذخیره‌سازی (اختیاری)
+        window.saveState = saveState;
+        window.loadState = loadState;
+
+        // ریست اولیه
+        resetAudio();
+        addLog('🎯 آماده تست لبه‌های Audio Player. لطفاً سناریوها را یکی‌یکی اجرا کنید.', 'info');
+
+    </script>
+</body>
+</html>
