@@ -1,0 +1,497 @@
+<!DOCTYPE html>
+<html dir="rtl" lang="fa">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>تست دستی: بازیابی وضعیت پس از Reload</title>
+    <style>
+        body {
+            font-family: Tahoma, Arial, sans-serif;
+            line-height: 1.6;
+            margin: 0;
+            padding: 20px;
+            background-color: #f5f5f5;
+            color: #333;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background-color: white;
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #2c3e50;
+            border-bottom: 2px solid #3498db;
+            padding-bottom: 10px;
+            margin-top: 0;
+        }
+        h2 {
+            color: #2c3e50;
+            margin-top: 25px;
+            font-size: 1.3rem;
+        }
+        .section {
+            background-color: #f8f9fa;
+            border-right: 4px solid #3498db;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 8px;
+        }
+        .button-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin: 15px 0;
+        }
+        button {
+            background-color: #3498db;
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: bold;
+            transition: all 0.3s;
+            flex: 1 1 auto;
+            min-width: 150px;
+        }
+        button:hover {
+            background-color: #2980b9;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        }
+        button.warning {
+            background-color: #e67e22;
+        }
+        button.warning:hover {
+            background-color: #d35400;
+        }
+        button.danger {
+            background-color: #e74c3c;
+        }
+        button.danger:hover {
+            background-color: #c0392b;
+        }
+        button.success {
+            background-color: #27ae60;
+        }
+        button.success:hover {
+            background-color: #229954;
+        }
+        .log-container {
+            background-color: #1e1e1e;
+            color: #00ff00;
+            padding: 15px;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            height: 250px;
+            overflow-y: auto;
+            margin: 20px 0;
+            font-size: 13px;
+            direction: ltr;
+            text-align: left;
+        }
+        .log-entry {
+            margin: 3px 0;
+            border-bottom: 1px solid #333;
+            padding: 3px 0;
+        }
+        .status-badge {
+            display: inline-block;
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-weight: bold;
+            margin: 5px 0;
+        }
+        .status-active {
+            background-color: #27ae60;
+            color: white;
+        }
+        .status-inactive {
+            background-color: #95a5a6;
+            color: white;
+        }
+        .card {
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 15px;
+            margin: 15px 0;
+            background-color: white;
+        }
+        .info-row {
+            display: flex;
+            margin: 8px 0;
+            padding: 8px;
+            background-color: #f1f9ff;
+            border-radius: 4px;
+        }
+        .info-label {
+            font-weight: bold;
+            width: 120px;
+            color: #2c3e50;
+        }
+        .info-value {
+            color: #3498db;
+            font-family: monospace;
+        }
+        .persistence-indicator {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-top: 10px;
+        }
+        .indicator-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+        }
+        .dot-green {
+            background-color: #27ae60;
+            box-shadow: 0 0 8px #27ae60;
+        }
+        .dot-red {
+            background-color: #e74c3c;
+            box-shadow: 0 0 8px #e74c3c;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔄 تست دستی: بازیابی وضعیت پس از Reload</h1>
+        <p>این صفحه شبیه‌سازی رفتار واقعی کاربر پس از بستن و باز کردن مجدد مرورگر است.</p>
+
+        <div class="section">
+            <div class="status-badge status-active" id="connectionStatus">🟢 آنلاین</div>
+            <div class="persistence-indicator">
+                <span class="indicator-dot" id="persistenceDot" style="background-color: #e74c3c;"></span>
+                <span id="persistenceText">وضعیت: ذخیره نشده</span>
+            </div>
+        </div>
+
+        <div class="card">
+            <h2>👤 وضعیت احراز هویت</h2>
+            <div class="info-row">
+                <span class="info-label">وضعیت:</span>
+                <span class="info-value" id="authStatus">خارج شده</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">کاربر:</span>
+                <span class="info-value" id="currentUser">-</span>
+            </div>
+            <div class="button-group">
+                <button onclick="simulateLogin()">🔐 ورود (علی)</button>
+                <button class="danger" onclick="simulateLogout()">🚪 خروج</button>
+            </div>
+        </div>
+
+        <div class="card">
+            <h2>📚 پیشرفت درس</h2>
+            <div class="info-row">
+                <span class="info-label">درس فعلی:</span>
+                <span class="info-value" id="currentLesson">-</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">پاسخ‌های درست:</span>
+                <span class="info-value" id="correctAnswers">۰</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">پاسخ‌های غلط:</span>
+                <span class="info-value" id="wrongAnswers">۰</span>
+            </div>
+            <div class="button-group">
+                <button onclick="loadLesson(1)">📖 بارگذاری درس ۱</button>
+                <button onclick="loadLesson(2)">📖 بارگذاری درس ۲</button>
+                <button class="success" onclick="addCorrectAnswer()">✅ پاسخ درست</button>
+                <button class="warning" onclick="addWrongAnswer()">❌ پاسخ غلط</button>
+            </div>
+        </div>
+
+        <div class="card">
+            <h2>💾 ذخیره‌سازی</h2>
+            <div class="button-group">
+                <button class="success" onclick="saveState()">💾 ذخیره دستی</button>
+                <button class="warning" onclick="loadState()">📂 بارگذاری دستی</button>
+                <button onclick="clearStorage()">🗑️ پاک کردن حافظه</button>
+            </div>
+        </div>
+
+        <div class="card">
+            <h2>🔄 شبیه‌سازی Reload</h2>
+            <div class="button-group">
+                <button onclick="simulateReload()">🔄 شبیه‌سازی Reload</button>
+                <button onclick="hardReload()">⚡ Hard Reload (واقعی)</button>
+            </div>
+            <p style="color: #7f8c8d; font-size: 0.9rem;">* Hard Reload صفحه را کاملاً بازخوانی می‌کند</p>
+        </div>
+
+        <div class="log-container" id="logContainer">
+            <div class="log-entry">⏱️ [${new Date().toLocaleTimeString()}] صفحه بارگذاری شد</div>
+        </div>
+    </div>
+
+    <script>
+        // ---------- وضعیت اولیه (State) ----------
+        let appState = {
+            auth: {
+                isLoggedIn: false,
+                username: null,
+                token: null
+            },
+            lesson: {
+                currentLessonId: null,
+                correctCount: 0,
+                wrongCount: 0
+            },
+            lastSaved: null
+        };
+
+        // ---------- المان‌های DOM ----------
+        const authStatusEl = document.getElementById('authStatus');
+        const currentUserEl = document.getElementById('currentUser');
+        const currentLessonEl = document.getElementById('currentLesson');
+        const correctAnswersEl = document.getElementById('correctAnswers');
+        const wrongAnswersEl = document.getElementById('wrongAnswers');
+        const logContainer = document.getElementById('logContainer');
+        const persistenceDot = document.getElementById('persistenceDot');
+        const persistenceText = document.getElementById('persistenceText');
+
+        // ---------- توابع کمکی ----------
+        function addLog(message, type = 'info') {
+            const logEntry = document.createElement('div');
+            logEntry.className = 'log-entry';
+            const timestamp = new Date().toLocaleTimeString('fa-IR');
+            
+            let icon = '📌';
+            if (type === 'success') icon = '✅';
+            if (type === 'error') icon = '❌';
+            if (type === 'warning') icon = '⚠️';
+            if (type === 'save') icon = '💾';
+            if (type === 'load') icon = '📂';
+            
+            logEntry.textContent = `${icon} [${timestamp}] ${message}`;
+            logContainer.appendChild(logEntry);
+            logContainer.scrollTop = logContainer.scrollHeight;
+            
+            // ذخیره در localStorage برای بازیابی بعد از reload
+            const logs = JSON.parse(localStorage.getItem('test_logs') || '[]');
+            logs.push({ message, type, timestamp: new Date().toISOString() });
+            localStorage.setItem('test_logs', JSON.stringify(logs.slice(-50))); // نگه‌داشتن ۵۰ لاگ آخر
+        }
+
+        function updateUI() {
+            // بروزرسانی وضعیت احراز هویت
+            if (appState.auth.isLoggedIn) {
+                authStatusEl.textContent = 'وارد شده';
+                authStatusEl.style.color = '#27ae60';
+                currentUserEl.textContent = appState.auth.username;
+            } else {
+                authStatusEl.textContent = 'خارج شده';
+                authStatusEl.style.color = '#e74c3c';
+                currentUserEl.textContent = '-';
+            }
+
+            // بروزرسانی وضعیت درس
+            currentLessonEl.textContent = appState.lesson.currentLessonId ? `درس ${appState.lesson.currentLessonId}` : '-';
+            correctAnswersEl.textContent = appState.lesson.correctCount;
+            wrongAnswersEl.textContent = appState.lesson.wrongCount;
+
+            // بروزرسانی نشانگر ذخیره‌سازی
+            const savedState = localStorage.getItem('appState');
+            if (savedState) {
+                persistenceDot.style.backgroundColor = '#27ae60';
+                persistenceText.textContent = 'وضعیت: ذخیره شده در localStorage';
+            } else {
+                persistenceDot.style.backgroundColor = '#e74c3c';
+                persistenceText.textContent = 'وضعیت: ذخیره نشده';
+            }
+        }
+
+        // ذخیره وضعیت در localStorage
+        function persistState() {
+            try {
+                const stateToSave = {
+                    auth: {
+                        isLoggedIn: appState.auth.isLoggedIn,
+                        username: appState.auth.username,
+                        token: appState.auth.token
+                    },
+                    lesson: { ...appState.lesson },
+                    lastSaved: new Date().toISOString()
+                };
+                localStorage.setItem('appState', JSON.stringify(stateToSave));
+                appState.lastSaved = new Date().toISOString();
+                persistenceDot.style.backgroundColor = '#27ae60';
+                persistenceText.textContent = `وضعیت: ذخیره شده در ${new Date().toLocaleTimeString()}`;
+                addLog('وضعیت در localStorage ذخیره شد', 'save');
+                return true;
+            } catch (e) {
+                addLog(`خطا در ذخیره‌سازی: ${e.message}`, 'error');
+                return false;
+            }
+        }
+
+        // بارگذاری وضعیت از localStorage
+        function loadPersistedState() {
+            try {
+                const saved = localStorage.getItem('appState');
+                if (saved) {
+                    const parsed = JSON.parse(saved);
+                    appState = {
+                        auth: parsed.auth || { isLoggedIn: false, username: null, token: null },
+                        lesson: parsed.lesson || { currentLessonId: null, correctCount: 0, wrongCount: 0 },
+                        lastSaved: parsed.lastSaved || null
+                    };
+                    addLog('وضعیت از localStorage بازیابی شد', 'load');
+                    updateUI();
+                    return true;
+                } else {
+                    addLog('هیچ وضعیت ذخیره‌شده‌ای یافت نشد', 'warning');
+                    return false;
+                }
+            } catch (e) {
+                addLog(`خطا در بازیابی وضعیت: ${e.message}`, 'error');
+                return false;
+            }
+        }
+
+        // ---------- اکشن‌های کاربر ----------
+        window.simulateLogin = function() {
+            appState.auth.isLoggedIn = true;
+            appState.auth.username = 'علی محمدی';
+            appState.auth.token = 'jwt_token_' + Date.now();
+            addLog(`کاربر "${appState.auth.username}" وارد شد`, 'success');
+            persistState(); // ذخیره خودکار پس از ورود
+            updateUI();
+        };
+
+        window.simulateLogout = function() {
+            appState.auth.isLoggedIn = false;
+            appState.auth.username = null;
+            appState.auth.token = null;
+            addLog('کاربر خارج شد', 'warning');
+            persistState(); // ذخیره خودکار پس از خروج
+            updateUI();
+        };
+
+        window.loadLesson = function(lessonId) {
+            if (!appState.auth.isLoggedIn) {
+                addLog('خطا: برای بارگذاری درس باید وارد شوید', 'error');
+                return;
+            }
+            appState.lesson.currentLessonId = lessonId;
+            addLog(`درس ${lessonId} بارگذاری شد`, 'success');
+            persistState(); // ذخیره خودکار پس از بارگذاری درس
+            updateUI();
+        };
+
+        window.addCorrectAnswer = function() {
+            if (!appState.lesson.currentLessonId) {
+                addLog('خطا: لطفاً ابتدا یک درس بارگذاری کنید', 'error');
+                return;
+            }
+            appState.lesson.correctCount++;
+            addLog(`✅ پاسخ درست ثبت شد (مجموع: ${appState.lesson.correctCount})`, 'success');
+            persistState(); // ذخیره خودکار پس از هر پاسخ
+            updateUI();
+        };
+
+        window.addWrongAnswer = function() {
+            if (!appState.lesson.currentLessonId) {
+                addLog('خطا: لطفاً ابتدا یک درس بارگذاری کنید', 'error');
+                return;
+            }
+            appState.lesson.wrongCount++;
+            addLog(`❌ پاسخ غلط ثبت شد (مجموع: ${appState.lesson.wrongCount})`, 'warning');
+            persistState(); // ذخیره خودکار پس از هر پاسخ
+            updateUI();
+        };
+
+        window.saveState = function() {
+            persistState();
+        };
+
+        window.loadState = function() {
+            loadPersistedState();
+        };
+
+        window.clearStorage = function() {
+            if (confirm('آیا از پاک کردن تمام داده‌های ذخیره شده اطمینان دارید؟')) {
+                localStorage.removeItem('appState');
+                localStorage.removeItem('test_logs');
+                logContainer.innerHTML = '<div class="log-entry">🧹 حافظه پاک شد</div>';
+                appState = {
+                    auth: { isLoggedIn: false, username: null, token: null },
+                    lesson: { currentLessonId: null, correctCount: 0, wrongCount: 0 },
+                    lastSaved: null
+                };
+                updateUI();
+                addLog('همه داده‌های ذخیره شده پاک شدند', 'warning');
+            }
+        };
+
+        window.simulateReload = function() {
+            addLog('🔄 شبیه‌سازی Reload: ذخیره و بازیابی وضعیت', 'info');
+            persistState();
+            setTimeout(() => {
+                loadPersistedState();
+                addLog('✅ شبیه‌سازی Reload کامل شد', 'success');
+            }, 500);
+        };
+
+        window.hardReload = function() {
+            persistState();
+            addLog('⚠️ Hard Reload واقعی در حال اجرا...', 'warning');
+            setTimeout(() => {
+                window.location.reload();
+            }, 1000);
+        };
+
+        // ---------- بازیابی خودکار وضعیت هنگام بارگذاری صفحه ----------
+        (function initialize() {
+            // بازیابی وضعیت ذخیره شده
+            loadPersistedState();
+            
+            // بازیابی لاگ‌های قبلی
+            const savedLogs = localStorage.getItem('test_logs');
+            if (savedLogs) {
+                const logs = JSON.parse(savedLogs);
+                logs.forEach(log => {
+                    const logEntry = document.createElement('div');
+                    logEntry.className = 'log-entry';
+                    let icon = '📌';
+                    if (log.type === 'success') icon = '✅';
+                    if (log.type === 'error') icon = '❌';
+                    if (log.type === 'warning') icon = '⚠️';
+                    const time = new Date(log.timestamp).toLocaleTimeString('fa-IR');
+                    logEntry.textContent = `${icon} [${time}] ${log.message} (بازیابی شده)`;
+                    logContainer.appendChild(logEntry);
+                });
+            }
+            
+            addLog('صفحه بارگذاری شد - وضعیت از localStorage بازیابی گردید', 'info');
+            updateUI();
+        })();
+
+        // نظاره‌گر تغییرات آنلاین/آفلاین
+        window.addEventListener('online', () => {
+            document.getElementById('connectionStatus').className = 'status-badge status-active';
+            document.getElementById('connectionStatus').textContent = '🟢 آنلاین';
+            addLog('اتصال اینترنت برقرار شد', 'success');
+        });
+
+        window.addEventListener('offline', () => {
+            document.getElementById('connectionStatus').className = 'status-badge status-inactive';
+            document.getElementById('connectionStatus').textContent = '🔴 آفلاین';
+            addLog('اتصال اینترنت قطع شد', 'warning');
+        });
+
+        // ذخیره خودکار قبل از بسته شدن صفحه
+        window.addEventListener('beforeunload', function() {
+            persistState();
+        });
+    </script>
+</body>
+</html>
