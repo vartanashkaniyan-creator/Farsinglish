@@ -1,0 +1,565 @@
+```html
+<!DOCTYPE html>
+<html dir="rtl" lang="fa">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>تست رفتار Audio Service - Farsinglish</title>
+    <style>
+        body {
+            font-family: Vazir, Tahoma, Arial, sans-serif;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            margin: 0;
+            padding: 20px;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .container {
+            max-width: 800px;
+            width: 100%;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+            padding: 25px;
+            margin: 20px 0;
+        }
+        h1 {
+            color: #2c3e50;
+            text-align: center;
+            margin-bottom: 10px;
+            font-size: 1.8rem;
+        }
+        .subtitle {
+            text-align: center;
+            color: #7f8c8d;
+            margin-bottom: 30px;
+            font-size: 1rem;
+            border-bottom: 2px solid #ecf0f1;
+            padding-bottom: 15px;
+        }
+        .test-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+            margin: 30px 0;
+        }
+        .test-card {
+            background: #f8f9fa;
+            border-radius: 12px;
+            padding: 18px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+            transition: transform 0.2s;
+            border: 1px solid #e9ecef;
+        }
+        .test-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 24px rgba(0,0,0,0.1);
+        }
+        .test-card h3 {
+            margin: 0 0 10px 0;
+            color: #34495e;
+            font-size: 1.2rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .test-card p {
+            color: #7f8c8d;
+            font-size: 0.9rem;
+            margin-bottom: 15px;
+            line-height: 1.5;
+        }
+        .btn {
+            background: #3498db;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 25px;
+            font-size: 0.95rem;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-weight: 500;
+            width: 100%;
+            border: 1px solid #2980b9;
+        }
+        .btn:hover {
+            background: #2980b9;
+            transform: scale(1.02);
+        }
+        .btn.success { background: #27ae60; border-color: #229954; }
+        .btn.success:hover { background: #229954; }
+        .btn.danger { background: #e74c3c; border-color: #c0392b; }
+        .btn.danger:hover { background: #c0392b; }
+        .btn.warning { background: #f39c12; border-color: #e67e22; }
+        .btn.warning:hover { background: #e67e22; }
+        
+        .log-container {
+            background: #2c3e50;
+            color: #ecf0f1;
+            border-radius: 12px;
+            padding: 20px;
+            margin-top: 30px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9rem;
+            max-height: 300px;
+            overflow-y: auto;
+            direction: ltr;
+            text-align: left;
+            box-shadow: inset 0 0 10px rgba(0,0,0,0.5);
+        }
+        .log-entry {
+            padding: 5px 0;
+            border-bottom: 1px solid #34495e;
+            color: #bdc3c7;
+        }
+        .log-entry.success { color: #2ecc71; }
+        .log-entry.error { color: #e74c3c; }
+        .log-entry.warning { color: #f39c12; }
+        
+        .summary {
+            background: #ecf0f1;
+            border-radius: 12px;
+            padding: 15px;
+            margin: 20px 0;
+            display: flex;
+            justify-content: space-around;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        .summary-item {
+            text-align: center;
+            min-width: 100px;
+        }
+        .summary-label {
+            font-size: 0.9rem;
+            color: #7f8c8d;
+        }
+        .summary-value {
+            font-size: 1.8rem;
+            font-weight: bold;
+            color: #2c3e50;
+        }
+        .footer {
+            margin-top: 30px;
+            color: #95a5a6;
+            font-size: 0.8rem;
+            text-align: center;
+        }
+        .control-bar {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin: 20px 0;
+            flex-wrap: wrap;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎵 تست رفتار Audio Service</h1>
+        <div class="subtitle">بررسی متدهای play, stop, pause, load و مدیریت خطا</div>
+
+        <div class="summary">
+            <div class="summary-item">
+                <div class="summary-label">تست‌های موفق</div>
+                <div class="summary-value" id="passedCount">0</div>
+            </div>
+            <div class="summary-item">
+                <div class="summary-label">تست‌های کل</div>
+                <div class="summary-value" id="totalCount">8</div>
+            </div>
+            <div class="summary-item">
+                <div class="summary-label">وضعیت</div>
+                <div class="summary-value" id="status">⚡</div>
+            </div>
+        </div>
+
+        <div class="control-bar">
+            <button class="btn success" onclick="runAllTests()">▶ اجرای همه تست‌ها</button>
+            <button class="btn warning" onclick="clearLog()">🗑 پاک کردن لاگ</button>
+            <button class="btn danger" onclick="resetService()">🔄 ریست سرویس</button>
+        </div>
+
+        <div class="test-grid">
+            <div class="test-card">
+                <h3>🎵 پخش صدا</h3>
+                <p>بررسی متد play با فایل معتبر</p>
+                <button class="btn" onclick="testPlay()">تست play</button>
+            </div>
+            <div class="test-card">
+                <h3>⏸ توقف صدا</h3>
+                <p>بررسی متد stop</p>
+                <button class="btn" onclick="testStop()">تست stop</button>
+            </div>
+            <div class="test-card">
+                <h3>⏸ مکث صدا</h3>
+                <p>بررسی متد pause</p>
+                <button class="btn" onclick="testPause()">تست pause</button>
+            </div>
+            <div class="test-card">
+                <h3>📥 بارگذاری</h3>
+                <p>بررسی متد load</p>
+                <button class="btn" onclick="testLoad()">تست load</button>
+            </div>
+            <div class="test-card">
+                <h3>🔄 وضعیت</h3>
+                <p>بررسی getState</p>
+                <button class="btn" onclick="testGetState()">تست state</button>
+            </div>
+            <div class="test-card">
+                <h3>❌ خطای فایل</h3>
+                <p>فایل نامعتبر</p>
+                <button class="btn danger" onclick="testFileError()">تست خطا</button>
+            </div>
+            <div class="test-card">
+                <h3>🔁 پخش همزمان</h3>
+                <p>دو صدا هم‌زمان</p>
+                <button class="btn" onclick="testConcurrent()">تست هم‌زمان</button>
+            </div>
+            <div class="test-card">
+                <h3>📊 ترتیب اجرا</h3>
+                <p>توالی متدها</p>
+                <button class="btn" onclick="testSequence()">تست توالی</button>
+            </div>
+        </div>
+
+        <div class="log-container" id="log">
+            <div class="log-entry">✨ آماده اجرای تست‌ها...</div>
+        </div>
+
+        <div class="footer">
+            Farsinglish - تست رفتار Audio Service | تمام تست‌ها دستی و قابل اجرا در مرورگر
+        </div>
+    </div>
+
+    <script>
+        // Audio Service شبیه‌سازی شده
+        class AudioService {
+            constructor() {
+                this.state = {
+                    currentAudio: null,
+                    isPlaying: false,
+                    isPaused: false,
+                    currentSrc: null,
+                    volume: 1,
+                    error: null
+                };
+                this.eventListeners = {};
+                this._simulateAudioElement();
+            }
+
+            _simulateAudioElement() {
+                // شبیه‌سازی المان صوتی
+                this.audio = {
+                    src: null,
+                    paused: true,
+                    volume: 1,
+                    play: () => {
+                        this.state.isPlaying = true;
+                        this.state.isPaused = false;
+                        this._log('🎵 پخش صدا شروع شد');
+                        return Promise.resolve();
+                    },
+                    pause: () => {
+                        this.state.isPlaying = false;
+                        this.state.isPaused = true;
+                        this._log('⏸ صدا مکث شد');
+                    },
+                    load: () => {
+                        this._log('📥 صدا بارگذاری شد');
+                    }
+                };
+            }
+
+            _log(message) {
+                console.log(`[AudioService] ${message}`);
+            }
+
+            async play(src) {
+                try {
+                    if (src) {
+                        this.audio.src = src;
+                        this.state.currentSrc = src;
+                    }
+                    
+                    if (!this.audio.src) {
+                        throw new Error('منبع صوتی مشخص نشده');
+                    }
+
+                    await this.audio.play();
+                    this.state.isPlaying = true;
+                    this.state.isPaused = false;
+                    this.state.error = null;
+                    
+                    return { success: true, state: this.getState() };
+                } catch (error) {
+                    this.state.error = error.message;
+                    this.state.isPlaying = false;
+                    return { success: false, error: error.message };
+                }
+            }
+
+            stop() {
+                if (this.audio) {
+                    this.audio.pause();
+                    this.audio.currentTime = 0;
+                    this.state.isPlaying = false;
+                    this.state.isPaused = false;
+                }
+                return { success: true, state: this.getState() };
+            }
+
+            pause() {
+                if (this.audio) {
+                    this.audio.pause();
+                    this.state.isPlaying = false;
+                    this.state.isPaused = true;
+                }
+                return { success: true, state: this.getState() };
+            }
+
+            load(src) {
+                if (src) {
+                    this.audio.src = src;
+                    this.state.currentSrc = src;
+                }
+                this.audio.load();
+                return { success: true, state: this.getState() };
+            }
+
+            getState() {
+                return { ...this.state };
+            }
+
+            reset() {
+                this.stop();
+                this.audio.src = null;
+                this.state = {
+                    currentAudio: null,
+                    isPlaying: false,
+                    isPaused: false,
+                    currentSrc: null,
+                    volume: 1,
+                    error: null
+                };
+                this._log('🔄 سرویس ریست شد');
+            }
+        }
+
+        // ایجاد نمونه سرویس
+        const audioService = new AudioService();
+        let testResults = {
+            passed: 0,
+            total: 8,
+            failed: []
+        };
+
+        // تابع لاگ
+        function addLog(message, type = 'info') {
+            const logDiv = document.getElementById('log');
+            const entry = document.createElement('div');
+            entry.className = `log-entry ${type}`;
+            entry.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
+            logDiv.appendChild(entry);
+            logDiv.scrollTop = logDiv.scrollHeight;
+        }
+
+        // تابع آپدیت آمار
+        function updateStats() {
+            document.getElementById('passedCount').textContent = testResults.passed;
+            document.getElementById('totalCount').textContent = testResults.total;
+            document.getElementById('status').textContent = 
+                testResults.passed === testResults.total ? '✅' : '⚠️';
+        }
+
+        // تست پخش صدا
+        async function testPlay() {
+            addLog('🎵 اجرای تست پخش صدا...', 'info');
+            try {
+                const result = await audioService.play('test-audio.mp3');
+                if (result.success && audioService.getState().isPlaying) {
+                    testResults.passed++;
+                    addLog('✅ پخش صدا موفقیت‌آمیز بود', 'success');
+                } else {
+                    throw new Error('پخش صدا انجام نشد');
+                }
+            } catch (error) {
+                addLog(`❌ خطا در پخش صدا: ${error.message}`, 'error');
+                testResults.failed.push('testPlay');
+            }
+            updateStats();
+        }
+
+        // تست توقف
+        function testStop() {
+            addLog('⏸ اجرای تست توقف صدا...', 'info');
+            try {
+                const result = audioService.stop();
+                const state = audioService.getState();
+                if (!state.isPlaying && !state.isPaused) {
+                    testResults.passed++;
+                    addLog('✅ توقف صدا موفقیت‌آمیز بود', 'success');
+                } else {
+                    throw new Error('توقف صدا انجام نشد');
+                }
+            } catch (error) {
+                addLog(`❌ خطا در توقف صدا: ${error.message}`, 'error');
+                testResults.failed.push('testStop');
+            }
+            updateStats();
+        }
+
+        // تست مکث
+        function testPause() {
+            addLog('⏸ اجرای تست مکث صدا...', 'info');
+            try {
+                const result = audioService.pause();
+                const state = audioService.getState();
+                if (!state.isPlaying && state.isPaused) {
+                    testResults.passed++;
+                    addLog('✅ مکث صدا موفقیت‌آمیز بود', 'success');
+                } else {
+                    throw new Error('مکث صدا انجام نشد');
+                }
+            } catch (error) {
+                addLog(`❌ خطا در مکث صدا: ${error.message}`, 'error');
+                testResults.failed.push('testPause');
+            }
+            updateStats();
+        }
+
+        // تست بارگذاری
+        function testLoad() {
+            addLog('📥 اجرای تست بارگذاری صدا...', 'info');
+            try {
+                const result = audioService.load('new-audio.mp3');
+                const state = audioService.getState();
+                if (state.currentSrc === 'new-audio.mp3') {
+                    testResults.passed++;
+                    addLog('✅ بارگذاری صدا موفقیت‌آمیز بود', 'success');
+                } else {
+                    throw new Error('بارگذاری صدا انجام نشد');
+                }
+            } catch (error) {
+                addLog(`❌ خطا در بارگذاری صدا: ${error.message}`, 'error');
+                testResults.failed.push('testLoad');
+            }
+            updateStats();
+        }
+
+        // تست وضعیت
+        function testGetState() {
+            addLog('📊 اجرای تست دریافت وضعیت...', 'info');
+            try {
+                const state = audioService.getState();
+                if (state && typeof state === 'object') {
+                    testResults.passed++;
+                    addLog(`✅ وضعیت سرویس: ${JSON.stringify(state)}`, 'success');
+                } else {
+                    throw new Error('وضعیت نامعتبر');
+                }
+            } catch (error) {
+                addLog(`❌ خطا در دریافت وضعیت: ${error.message}`, 'error');
+                testResults.failed.push('testGetState');
+            }
+            updateStats();
+        }
+
+        // تست خطای فایل
+        async function testFileError() {
+            addLog('❌ اجرای تست خطای فایل نامعتبر...', 'info');
+            try {
+                const result = await audioService.play('invalid-file.xyz');
+                if (!result.success && result.error) {
+                    testResults.passed++;
+                    addLog(`✅ خطای مورد انتظار دریافت شد: ${result.error}`, 'success');
+                } else {
+                    throw new Error('خطا رخ نداد');
+                }
+            } catch (error) {
+                addLog(`❌ تست خطا: ${error.message}`, 'error');
+                testResults.failed.push('testFileError');
+            }
+            updateStats();
+        }
+
+        // تست پخش همزمان
+        async function testConcurrent() {
+            addLog('🔁 اجرای تست پخش همزمان...', 'info');
+            try {
+                await audioService.play('audio1.mp3');
+                const result = await audioService.play('audio2.mp3');
+                if (result.success) {
+                    testResults.passed++;
+                    addLog('✅ پخش همزمان مدیریت شد', 'success');
+                } else {
+                    throw new Error('خطا در پخش همزمان');
+                }
+            } catch (error) {
+                addLog(`❌ خطا در پخش همزمان: ${error.message}`, 'error');
+                testResults.failed.push('testConcurrent');
+            }
+            updateStats();
+        }
+
+        // تست توالی
+        async function testSequence() {
+            addLog('📊 اجرای تست توالی متدها...', 'info');
+            try {
+                await audioService.play('seq.mp3');
+                audioService.pause();
+                audioService.stop();
+                const state = audioService.getState();
+                if (!state.isPlaying && !state.isPaused) {
+                    testResults.passed++;
+                    addLog('✅ توالی متدها صحیح است', 'success');
+                } else {
+                    throw new Error('توالی متدها نادرست');
+                }
+            } catch (error) {
+                addLog(`❌ خطا در توالی متدها: ${error.message}`, 'error');
+                testResults.failed.push('testSequence');
+            }
+            updateStats();
+        }
+
+        // اجرای همه تست‌ها
+        async function runAllTests() {
+            addLog('🚀 شروع اجرای همه تست‌ها...', 'info');
+            testResults.passed = 0;
+            testResults.failed = [];
+            
+            await testPlay();
+            testStop();
+            testPause();
+            testLoad();
+            testGetState();
+            await testFileError();
+            await testConcurrent();
+            await testSequence();
+            
+            addLog(`✨ همه تست‌ها اجرا شدند. ${testResults.passed}/${testResults.total} موفق`, 'success');
+        }
+
+        // پاک کردن لاگ
+        function clearLog() {
+            document.getElementById('log').innerHTML = '<div class="log-entry">✨ لاگ پاک شد...</div>';
+        }
+
+        // ریست سرویس
+        function resetService() {
+            audioService.reset();
+            testResults.passed = 0;
+            testResults.failed = [];
+            addLog('🔄 سرویس ریست شد', 'warning');
+            updateStats();
+        }
+
+        // مقداردهی اولیه
+        updateStats();
+    </script>
+</body>
+</html>
+```
