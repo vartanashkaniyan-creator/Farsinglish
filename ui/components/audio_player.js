@@ -1,5 +1,5 @@
 ```javascript
-// ui/components/audio-player.js
+// ui/components/audio_player.js
 /**
  * Audio Player Component - کامپوننت پخش‌کننده صوتی
  * مسئولیت: نمایش و کنترل پخش فایل‌های صوتی با رابط کاربری تعاملی
