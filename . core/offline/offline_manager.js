@@ -1,4 +1,4 @@
-// ==================== core/offline/offline-manager.js ====================
+// ==================== core/offline/offline_manager.js ====================
 // singleton, enterprise-grade, plugin-ready, conflict-resilient, event-sourced
 // =========================================================================
 
