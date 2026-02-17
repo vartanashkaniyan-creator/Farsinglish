@@ -1,4 +1,4 @@
-// ui/components/exercise-card.js
+// ui/components/exercise_card.js
 /**
  * Exercise Card Component - کارت نمایش تمرین
  * مسئولیت: نمایش و مدیریت تعامل کاربر با انواع تمرین‌ها
