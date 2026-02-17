@@ -1,4 +1,4 @@
-// ui/components/stats-card.js
+// ui/components/stats_card.js
 // کامپوننت کارت نمایش آمار کاربر - نسخه فوق پیشرفته
 // رعایت اصول SOLID، KISS، DRY، YAGNI، تست‌پذیری، امنیت و snake_case
 
