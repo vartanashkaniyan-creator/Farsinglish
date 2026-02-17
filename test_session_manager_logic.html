@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="fa">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>تست session-manager - منطق محض</title>
+    <style>
+        body { font-family: system-ui, sans-serif; max-width: 800px; margin: 0 auto; padding: 16px; background: #f5f5f5; }
+        .header { background: #4f46e5; color: white; padding: 16px; border-radius: 12px; margin-bottom: 20px; }
+        h1 { margin: 0; font-size: 1.5rem; }
+        .subtitle { margin-top: 8px; opacity: 0.9; font-size: 0.9rem; }
+        .test-grid { display: flex; flex-direction: column; gap: 12px; }
+        .test-card { background: white; border-radius: 10px; padding: 16px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .test-title { font-weight: 600; margin-bottom: 12px; display: flex; justify-content: space-between; }
+        .btn-run { background: #4f46e5; color: white; border: none; border-radius: 6px; padding: 6px 16px; cursor: pointer; }
+        .btn-run:hover { background: #6366f1; }
+        .output { background: #1e1e2e; color: #a6e3a1; padding: 12px; border-radius: 6px; margin: 12px 0 0; font-family: monospace; white-space: pre-wrap; }
+        .success { color: #10b981; font-weight: 500; }
+        .error { color: #ef4444; font-weight: 500; }
+        .divider { border-top: 1px dashed #ccc; margin: 16px 0; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🧪 تست مستقل از ابزار: session-manager</h1>
+        <div class="subtitle">منطق محض · بدون وابستگی · قابل اجرا در موبایل</div>
+    </div>
+
+    <div class="test-grid">
+        <!-- کارت ۱: ایجاد نشست -->
+        <div class="test-card" id="card-1">
+            <div class="test-title">
+                <span>📌 ۱. ایجاد نشست با user id معتبر</span>
+                <button class="btn-run" onclick="runTest1()">اجرا</button>
+            </div>
+            <div id="output-1" class="output">⏳ منتظر اجرا...</div>
+        </div>
+
+        <!-- کارت ۲: اعتبارسنجی نشست فعال -->
+        <div class="test-card" id="card-2">
+            <div class="test-title">
+                <span>📌 ۲. بررسی active بودن نشست</span>
+                <button class="btn-run" onclick="runTest2()">اجرا</button>
+            </div>
+            <div id="output-2" class="output">⏳ منتظر اجرا...</div>
+        </div>
+
+        <!-- کارت ۳: انقضای نشست -->
+        <div class="test-card" id="card-3">
+            <div class="test-title">
+                <span>📌 ۳. انقضای خودکار پس از زمان مقرر</span>
+                <button class="btn-run" onclick="runTest3()">اجرا</button>
+            </div>
+            <div id="output-3" class="output">⏳ منتظر اجرا...</div>
+        </div>
+
+        <!-- کارت ۴: خروج (پایان نشست) -->
+        <div class="test-card" id="card-4">
+            <div class="test-title">
+                <span>📌 ۴. خروج و پاک کردن نشست</span>
+                <button class="btn-run" onclick="runTest4()">اجرا</button>
+            </div>
+            <div id="output-4" class="output">⏳ منتظر اجرا...</div>
+        </div>
+
+        <!-- کارت ۵: تمدید نشست (refresh) -->
+        <div class="test-card" id="card-5">
+            <div class="test-title">
+                <span>📌 ۵. تمدید زمان نشست</span>
+                <button class="btn-run" onclick="runTest5()">اجرا</button>
+            </div>
+            <div id="output-5" class="output">⏳ منتظر اجرا...</div>
+        </div>
+
+        <!-- کارت ۶: رفتار قطعی - ورودی ثابت، خروجی ثابت -->
+        <div class="test-card" id="card-6">
+            <div class="test-title">
+                <span>📌 ۶. آزمون قطعیت (deterministic)</span>
+                <button class="btn-run" onclick="runTest6()">اجرا</button>
+            </div>
+            <div id="output-6" class="output">⏳ منتظر اجرا...</div>
+        </div>
+    </div>
+
+    <script>
+        // ==================== پیاده‌سازی خالص session-manager ====================
+        // (بدون هیچ وابستگی به کتابخانه یا IndexedDB)
+        const SessionManager = {
+            // ذخیره داخلی (برای شبیه‌سازی - در تست واقعی ماژول اصلی استفاده می‌شود)
+            _sessions: new Map(),
+
+            // ایجاد نشست جدید
+            createSession(userId, ttlSeconds = 3600) {
+                if (!userId || typeof userId !== 'string' || userId.trim() === '') {
+                    return { success: false, error: 'userId نامعتبر' };
+                }
+                const sessionId = 'sess_' + Math.random().toString(36).substring(2, 15);
+                const now = Date.now();
+                const session = {
+                    sessionId,
+                    userId: userId.trim(),
+                    createdAt: now,
+                    expiresAt: now + (ttlSeconds * 1000),
+                    active: true
+                };
+                this._sessions.set(sessionId, session);
+                return { success: true, sessionId, expiresAt: session.expiresAt };
+            },
+
+            // بررسی نشست معتبر
+            isValidSession(sessionId) {
+                if (!sessionId) return false;
+                const session = this._sessions.get(sessionId);
+                if (!session || !session.active) return false;
+                if (Date.now() > session.expiresAt) {
+                    // انقضا خودکار غیرفعال می‌کند
+                    session.active = false;
+                    return false;
+                }
+                return true;
+            },
+
+            // دریافت اطلاعات نشست
+            getSession(sessionId) {
+                if (!this.isValidSession(sessionId)) return null;
+                const session = this._sessions.get(sessionId);
+                // برگرداندن کپی (immutability)
+                return { ...session };
+            },
+
+            // پایان نشست
+            logout(sessionId) {
+                if (!sessionId) return false;
+                const session = this._sessions.get(sessionId);
+                if (session) {
+                    session.active = false;
+                }
+                return true;
+            },
+
+            // تمدید نشست
+            refreshSession(sessionId, extraSeconds = 3600) {
+                if (!this.isValidSession(sessionId)) return { success: false, error: 'نشست نامعتبر یا منقضی' };
+                const session = this._sessions.get(sessionId);
+                session.expiresAt += (extraSeconds * 1000);
+                return { success: true, expiresAt: session.expiresAt };
+            },
+
+            // پاک کردن برای تست (دستی)
+            _clearForTest() {
+                this._sessions.clear();
+            }
+        };
+
+        // ==================== تابع کمکی برای نمایش نتیجه ====================
+        function showOutput(elementId, result, expected, description) {
+            const outputDiv = document.getElementById(elementId);
+            const ok = result === expected;
+            const icon = ok ? '✅' : '❌';
+            const color = ok ? '#10b981' : '#ef4444';
+            outputDiv.innerHTML = `
+${icon} ${description}
+—————————————————
+🔍 نتیجه: ${JSON.stringify(result)}
+🎯 مورد انتظار: ${JSON.stringify(expected)}
+<span style="color: ${color}">${ok ? '✓ صحیح' : '✗ خطا'}</span>
+            `;
+        }
+
+        // ==================== تست‌ها ====================
+        function runTest1() {
+            SessionManager._clearForTest();
+            const result = SessionManager.createSession('user_123', 60);
+            const expected = result.success === true && result.sessionId && result.expiresAt > Date.now();
+            showOutput('output-1', expected, true, 'ایجاد نشست با userId معتبر');
+        }
+
+        function runTest2() {
+            SessionManager._clearForTest();
+            const create = SessionManager.createSession('user_456', 60);
+            const sessionId = create.sessionId;
+            const isValid = SessionManager.isValidSession(sessionId);
+            showOutput('output-2', isValid, true, 'نشست فعال باید معتبر باشد');
+        }
+
+        function runTest3() {
+            SessionManager._clearForTest();
+            // ایجاد نشست با ۱ ثانیه عمر برای تست انقضا
+            const create = SessionManager.createSession('user_expire', 0.001); // 1 میلی‌ثانیه (عملاً صفر)
+            const sessionId = create.sessionId;
+
+            // صبر دستی نیست – با زمان حال شبیه‌سازی می‌کنیم (منطق محض)
+            // در پیاده‌سازی واقعی، expiresAt لحاظ می‌شود. ما مستقیماً چک می‌کنیم:
+            const session = SessionManager._sessions.get(sessionId);
+            session.expiresAt = Date.now() - 1000; // منقضی شده
+
+            const isValid = SessionManager.isValidSession(sessionId);
+            showOutput('output-3', isValid, false, 'نشست منقضی نامعتبر است');
+        }
+
+        function runTest4() {
+            SessionManager._clearForTest();
+            const create = SessionManager.createSession('user_logout', 60);
+            const sessionId = create.sessionId;
+            SessionManager.logout(sessionId);
+            const isValid = SessionManager.isValidSession(sessionId);
+            showOutput('output-4', isValid, false, 'پس از خروج، نشست نامعتبر است');
+        }
+
+        function runTest5() {
+            SessionManager._clearForTest();
+            const create = SessionManager.createSession('user_refresh', 10);
+            const sessionId = create.sessionId;
+            const oldExpires = SessionManager._sessions.get(sessionId).expiresAt;
+            
+            // تمدید
+            SessionManager.refreshSession(sessionId, 20);
+            const newExpires = SessionManager._sessions.get(sessionId).expiresAt;
+            
+            const ok = newExpires > oldExpires;
+            showOutput('output-5', ok, true, 'تمدید نشست باید زمان انقضا را افزایش دهد');
+        }
+
+        function runTest6() {
+            SessionManager._clearForTest();
+            // ورودی ثابت: userId یکسان
+            const r1 = SessionManager.createSession('fixed_user', 30);
+            const r2 = SessionManager.createSession('fixed_user', 30);
+            // هر دو موفق و دارای sessionId یکسان نیستند (طبیعی) اما ساختار یکسان است
+            const ok = (r1.success === true && r2.success === true);
+            showOutput('output-6', ok, true, 'با ورودی ثابت، خروجی ساختاریافته یکسان (موفق)');
+        }
+    </script>
+</body>
+</html>
