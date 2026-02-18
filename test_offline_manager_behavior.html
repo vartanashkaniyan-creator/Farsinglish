@@ -1,0 +1,479 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>تست دستی: Offline Manager | Farsinglish</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            padding: 20px;
+            background-color: #f5f5f5;
+            color: #333;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        h1 {
+            color: #6a1b9a;
+            font-size: 1.6rem;
+            border-bottom: 2px solid #6a1b9a;
+            padding-bottom: 10px;
+            margin-bottom: 20px;
+        }
+        h2 {
+            font-size: 1.2rem;
+            color: #444;
+            margin-top: 25px;
+            margin-bottom: 10px;
+        }
+        .test-container {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+            padding: 20px;
+            margin-bottom: 25px;
+        }
+        .button-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin: 15px 0;
+        }
+        button {
+            background-color: #6a1b9a;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            padding: 10px 16px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: background-color 0.2s;
+            flex: 1 0 auto;
+            min-width: 140px;
+        }
+        button:hover {
+            background-color: #8e24aa;
+        }
+        button.secondary {
+            background-color: #f57c00;
+        }
+        button.secondary:hover {
+            background-color: #ff9800;
+        }
+        button.warning {
+            background-color: #c2185b;
+        }
+        button.warning:hover {
+            background-color: #d81b60;
+        }
+        .console {
+            background-color: #111;
+            color: #0f0;
+            font-family: 'Courier New', monospace;
+            padding: 15px;
+            border-radius: 8px;
+            height: 250px;
+            overflow-y: auto;
+            font-size: 0.9rem;
+            margin-top: 20px;
+            direction: ltr;
+            text-align: left;
+        }
+        .console p {
+            margin: 2px 0;
+            border-bottom: 1px solid #333;
+            padding: 2px 0;
+        }
+        .status-badge {
+            display: inline-block;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-weight: bold;
+            margin: 10px 0;
+        }
+        .online {
+            background-color: #4caf50;
+            color: white;
+        }
+        .offline {
+            background-color: #f44336;
+            color: white;
+        }
+        .unknown {
+            background-color: #9e9e9e;
+            color: white;
+        }
+        hr {
+            border: 1px solid #eee;
+            margin: 20px 0;
+        }
+        .note {
+            background-color: #fff3cd;
+            border-right: 4px solid #ffc107;
+            padding: 10px;
+            font-size: 0.9rem;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <h1>📶 تست دستی: Offline Manager (core/offline/offline-manager.js)</h1>
+    <p><strong>اصول رعایت‌شده:</strong> مستقل از ابزار، رفتارگرا، قطعی، ایزوله، تک‌ادعا، شبیه‌ساز دستی</p>
+
+    <!-- محلی برای نمایش وضعیت آنلاین/آفلاین شبیه‌سازی‌شده -->
+    <div class="test-container">
+        <h2>🔌 وضعیت کنونی شبکه (شبیه‌ساز)</h2>
+        <div id="networkStatusBadge" class="status-badge online">✅ آنلاین (شبیه‌سازی)</div>
+        <div class="button-group">
+            <button id="setOnlineBtn" class="secondary">📡 آنلاین کن</button>
+            <button id="setOfflineBtn" class="warning">📴 آفلاین کن</button>
+            <button id="resetSimulationBtn">⟲ بازنشانی شبیه‌ساز</button>
+        </div>
+        <div class="note">
+            <strong>🧪 تست دستی:</strong> وضعیت شبکه شبیه‌سازی می‌شود (بدون تغییر واقعی مرورگر). 
+            سرویس‌دهنده باید به این تغییرات واکنش نشان دهد.
+        </div>
+    </div>
+
+    <!-- تست‌های اصلی Offline Manager -->
+    <div class="test-container">
+        <h2>🧪 ۱. تست تشخیص وضعیت (Status Detection)</h2>
+        <div class="button-group">
+            <button id="testInitialStatus">🔍 بررسی وضعیت اولیه</button>
+            <button id="testAddRequest">➕ افزودن درخواست به صف</button>
+            <button id="testGetQueue">📋 نمایش صف درخواست‌ها</button>
+        </div>
+
+        <h2>🧪 ۲. تست رفتار در آفلاین (Queue & Persist)</h2>
+        <div class="button-group">
+            <button id="testOfflineAddRequest" class="secondary">📴 افزودن درخواست (آفلاین)</button>
+            <button id="testProcessQueue">⚙️ پردازش صف (شبیه‌سازی)</button>
+            <button id="testClearQueue">🗑️ پاک کردن صف</button>
+        </div>
+
+        <h2>🧪 ۳. تست Edge Cases و Failure</h2>
+        <div class="button-group">
+            <button id="testAddInvalidRequest">⚠️ افزودن درخواست نامعتبر</button>
+            <button id="testProcessWithFailure">💥 پردازش با شکست شبیه‌سازی‌شده</button>
+            <button id="testDoubleOnline">🔁 آنلاین/آفلاین پشت‌سرهم</button>
+        </div>
+    </div>
+
+    <!-- خروجی کنسول مجازی -->
+    <div class="test-container">
+        <h2>📋 خروجی کنسول (Log)</h2>
+        <div class="button-group">
+            <button id="clearLog">🧹 پاک کردن لاگ</button>
+        </div>
+        <div id="logConsole" class="console">
+            <p>✨ منتظر دستور شما...</p>
+        </div>
+    </div>
+
+    <script>
+        // ---------- شبیه‌ساز OfflineManager (Fake Implementation) ----------
+        // این ماژول کاملاً ایزوله و مستقل از IndexedDB واقعی است (No Real IO)
+        // وابستگی‌ها تزریق می‌شوند (DI)
+        
+        class OfflineManager {
+            constructor() {
+                this._isOnline = true;               // وضعیت پیش‌فرض: آنلاین
+                this._requestQueue = [];              // صف درخواست‌ها برای آفلاین
+                this._listeners = [];                  // برای شبیه‌سازی رویداد
+                this._failureMode = false;             // حالت شکست برای تست Edge
+            }
+
+            // متد اصلی برای دریافت وضعیت
+            isOnline() {
+                return this._isOnline;
+            }
+
+            // تغییر وضعیت (برای شبیه‌سازی)
+            setOnline(online) {
+                const previous = this._isOnline;
+                this._isOnline = online;
+                if (previous !== online) {
+                    this._notifyListeners(online);
+                }
+                return this._isOnline;
+            }
+
+            // افزودن درخواست به صف (در حالت آفلاین ذخیره می‌کند)
+            addRequest(request) {
+                // اعتبارسنجی ساده (Edge)
+                if (!request || typeof request !== 'object') {
+                    return { success: false, error: 'درخواست نامعتبر' };
+                }
+                if (!request.id || !request.url) {
+                    return { success: false, error: 'درخواست باید دارای id و url باشد' };
+                }
+
+                if (!this._isOnline) {
+                    // در حالت آفلاین به صف اضافه کن
+                    this._requestQueue.push({
+                        ...request,
+                        timestamp: Date.now(),
+                        status: 'queued'
+                    });
+                    return { success: true, queued: true, queueLength: this._requestQueue.length };
+                } else {
+                    // در حالت آنلاین: شبیه‌سازی ارسال فوری
+                    return { success: true, sent: true, message: 'درخواست آنلاین ارسال شد (شبیه‌سازی)' };
+                }
+            }
+
+            // دریافت کل صف
+            getQueue() {
+                return [...this._requestQueue]; // کپی برای جلوگیری از تغییر خارجی
+            }
+
+            // پردازش صف (شبیه‌سازی ارسال درخواست‌های معوق)
+            processQueue(options = {}) {
+                if (this._failureMode && !options.ignoreFailure) {
+                    return { success: false, error: 'حالت شکست فعال است', processed: 0 };
+                }
+                if (!this._isOnline) {
+                    return { success: false, error: 'دستگاه آفلاین است، صف پردازش نشد', queued: this._requestQueue.length };
+                }
+                const count = this._requestQueue.length;
+                if (count === 0) {
+                    return { success: true, processed: 0, message: 'صف خالی است' };
+                }
+                // شبیه‌سازی پردازش موفق
+                const processed = this._requestQueue.map(req => ({ ...req, status: 'sent' }));
+                this._requestQueue = []; // خالی کردن صف
+                return { success: true, processed: count, details: processed };
+            }
+
+            // پاک کردن صف
+            clearQueue() {
+                this._requestQueue = [];
+                return { success: true, queueLength: 0 };
+            }
+
+            // فعال/غیرفعال کردن حالت شکست برای تست
+            setFailureMode(enable) {
+                this._failureMode = enable;
+            }
+
+            // ثبت listener برای تغییر وضعیت
+            addListener(callback) {
+                if (typeof callback === 'function') {
+                    this._listeners.push(callback);
+                }
+            }
+
+            _notifyListeners(isOnline) {
+                this._listeners.forEach(fn => fn(isOnline));
+            }
+
+            // ریست کامل به حالت اولیه
+            reset() {
+                this._isOnline = true;
+                this._requestQueue = [];
+                this._listeners = [];
+                this._failureMode = false;
+            }
+        }
+
+        // ---------- نمونه سرویس (Singleton برای تست) ----------
+        const offlineManager = new OfflineManager();
+
+        // ---------- راه‌اندازی لاگ مجازی ----------
+        const logConsole = document.getElementById('logConsole');
+        function addLog(message, type = 'info') {
+            const p = document.createElement('p');
+            const timestamp = new Date().toLocaleTimeString('fa-IR', { hour12: false });
+            
+            let color = '#0f0';
+            if (type === 'error') color = '#ff5252';
+            if (type === 'warning') color = '#ffb74d';
+            if (type === 'success') color = '#4caf50';
+            
+            p.innerHTML = `<span style="color: #888;">[${timestamp}]</span> <span style="color: ${color};">${message}</span>`;
+            logConsole.appendChild(p);
+            logConsole.scrollTop = logConsole.scrollHeight;
+        }
+
+        function clearLog() {
+            logConsole.innerHTML = '<p>✨ لاگ پاک شد. منتظر دستور...</p>';
+        }
+
+        // ---------- نمایش وضعیت شبکه شبیه‌سازی‌شده ----------
+        function updateNetworkBadge() {
+            const badge = document.getElementById('networkStatusBadge');
+            const isOnline = offlineManager.isOnline();
+            badge.className = 'status-badge ' + (isOnline ? 'online' : 'offline');
+            badge.innerText = isOnline ? '✅ آنلاین (شبیه‌سازی)' : '📴 آفلاین (شبیه‌سازی)';
+        }
+
+        // ---------- رویدادهای دکمه‌ها (تست‌های دستی) ----------
+
+        // دکمه‌های تغییر وضعیت شبکه
+        document.getElementById('setOnlineBtn').addEventListener('click', () => {
+            offlineManager.setOnline(true);
+            updateNetworkBadge();
+            addLog('🟢 وضعیت شبکه به آنلاین تغییر کرد (شبیه‌سازی)', 'success');
+        });
+
+        document.getElementById('setOfflineBtn').addEventListener('click', () => {
+            offlineManager.setOnline(false);
+            updateNetworkBadge();
+            addLog('🔴 وضعیت شبکه به آفلاین تغییر کرد (شبیه‌سازی)', 'warning');
+        });
+
+        document.getElementById('resetSimulationBtn').addEventListener('click', () => {
+            offlineManager.reset();
+            updateNetworkBadge();
+            clearLog();
+            addLog('🔄 شبیه‌ساز به حالت اولیه بازگشت (آنلاین، صف خالی)', 'info');
+        });
+
+        // تست وضعیت اولیه
+        document.getElementById('testInitialStatus').addEventListener('click', () => {
+            const status = offlineManager.isOnline() ? 'آنلاین' : 'آفلاین';
+            addLog(`🔍 وضعیت کنونی شبکه: ${status}`, 'info');
+        });
+
+        // تست افزودن درخواست (وضعیت فعلی لحاظ می‌شود)
+        document.getElementById('testAddRequest').addEventListener('click', () => {
+            const request = {
+                id: 'req_' + Math.floor(Math.random() * 1000),
+                url: '/api/lesson/1',
+                method: 'GET',
+                data: { lessonId: 1 }
+            };
+            const result = offlineManager.addRequest(request);
+            if (result.success) {
+                if (result.queued) {
+                    addLog(`➕ درخواست به صف اضافه شد (طول صف: ${result.queueLength})`, 'warning');
+                } else if (result.sent) {
+                    addLog(`📡 درخواست آنلاین ارسال شد (شبیه‌سازی): ${request.url}`, 'success');
+                }
+            } else {
+                addLog(`❌ خطا: ${result.error}`, 'error');
+            }
+        });
+
+        // نمایش صف
+        document.getElementById('testGetQueue').addEventListener('click', () => {
+            const queue = offlineManager.getQueue();
+            if (queue.length === 0) {
+                addLog('📭 صف درخواست‌ها خالی است.', 'info');
+            } else {
+                addLog(`📋 صف درخواست‌ها (${queue.length} مورد):`, 'info');
+                queue.forEach((req, i) => {
+                    addLog(`   ${i+1}. ID: ${req.id} | url: ${req.url} | وضعیت: ${req.status}`, 'info');
+                });
+            }
+        });
+
+        // افزودن درخواست در حالت آفلاین (تاکید بر رفتار)
+        document.getElementById('testOfflineAddRequest').addEventListener('click', () => {
+            const wasOnline = offlineManager.isOnline();
+            if (wasOnline) {
+                addLog('⚠️ در حال حاضـر آنلاین هستید. برای تست آفلاین، ابتدا وضعیت را به آفلاین تغییر دهید.', 'warning');
+            } else {
+                const request = {
+                    id: 'off_req_' + Math.floor(Math.random() * 1000),
+                    url: '/api/progress/save',
+                    method: 'POST',
+                    data: { lessonId: 5, score: 4 }
+                };
+                const result = offlineManager.addRequest(request);
+                if (result.queued) {
+                    addLog(`📴 درخواست آفلاین با موفقیت به صف اضافه شد (طول صف: ${result.queueLength})`, 'warning');
+                } else {
+                    addLog(`❌ خطا در افزودن درخواست آفلاین: ${result.error}`, 'error');
+                }
+            }
+        });
+
+        // پردازش صف
+        document.getElementById('testProcessQueue').addEventListener('click', () => {
+            const result = offlineManager.processQueue();
+            if (result.success) {
+                if (result.processed > 0) {
+                    addLog(`⚙️ صف با موفقیت پردازش شد. ${result.processed} درخواست ارسال گردید.`, 'success');
+                } else {
+                    addLog(`⚙️ ${result.message || 'صف پردازش شد اما درخواستی وجود نداشت'}`, 'info');
+                }
+            } else {
+                addLog(`❌ پردازش صف ناموفق: ${result.error}`, 'error');
+            }
+        });
+
+        // پاک کردن صف
+        document.getElementById('testClearQueue').addEventListener('click', () => {
+            offlineManager.clearQueue();
+            addLog('🗑️ صف درخواست‌ها پاک شد.', 'info');
+        });
+
+        // افزودن درخواست نامعتبر (Edge)
+        document.getElementById('testAddInvalidRequest').addEventListener('click', () => {
+            const invalidReqs = [
+                null,
+                { id: 'no_url' },
+                { url: '/no-id' },
+                'string instead of object',
+                123
+            ];
+            const randomInvalid = invalidReqs[Math.floor(Math.random() * invalidReqs.length)];
+            const result = offlineManager.addRequest(randomInvalid);
+            if (!result.success) {
+                addLog(`✅ [Edge] درخواست نامعتبر به درستی رد شد: ${result.error}`, 'success');
+            } else {
+                addLog(`❌ [Edge] مشکل: درخواست نامعتبر پذیرفته شد!`, 'error');
+            }
+        });
+
+        // پردازش با شکست شبیه‌سازی‌شده
+        document.getElementById('testProcessWithFailure').addEventListener('click', () => {
+            offlineManager.setFailureMode(true);
+            // ابتدا یک درخواست اضافه می‌کنیم
+            const req = { id: 'fail_test', url: '/api/test', method: 'GET' };
+            offlineManager.addRequest(req);
+            const result = offlineManager.processQueue();
+            if (!result.success && result.error === 'حالت شکست فعال است') {
+                addLog(`💥 [Failure] پردازش با شکست مواجه شد: ${result.error} (رفتار مورد انتظار)`, 'success');
+            } else {
+                addLog(`❌ [Failure] انتظار خطا داشتیم ولی پردازش انجام شد.`, 'error');
+            }
+            offlineManager.setFailureMode(false); // برگرداندن به حالت عادی
+        });
+
+        // تست آنلاین/آفلاین پشت‌سرهم (رفتار)
+        document.getElementById('testDoubleOnline').addEventListener('click', () => {
+            addLog('🔄 شروع تست تغییرات متوالی وضعیت:', 'info');
+            offlineManager.setOnline(false);
+            addLog('   وضعیت: آفلاین (۱)', 'warning');
+            offlineManager.setOnline(true);
+            addLog('   وضعیت: آنلاین (۲)', 'success');
+            offlineManager.setOnline(false);
+            addLog('   وضعیت: آفلاین (۳)', 'warning');
+            offlineManager.setOnline(true);
+            addLog('   وضعیت: آنلاین (۴) - پایان', 'success');
+            updateNetworkBadge();
+        });
+
+        // دکمه پاک کردن لاگ
+        document.getElementById('clearLog').addEventListener('click', clearLog);
+
+        // ثبت listener برای لاگ خودکار تغییر وضعیت (اختیاری)
+        offlineManager.addListener((isOnline) => {
+            addLog(`🔄 [رویداد] وضعیت شبکه تغییر کرد: ${isOnline ? 'آنلاین' : 'آفلاین'}`, 'info');
+        });
+
+        // مقداردهی اولیه
+        updateNetworkBadge();
+        addLog('🚀 سرویس OfflineManager شبیه‌سازی شد. آماده تست دستی.', 'info');
+
+        // تست ایزوله: هر بار که صفحه لود می‌شود، وضعیت ریست می‌شود (No Global State Leak)
+        window.addEventListener('load', () => {
+            // اطمینان از ریست بودن (ایزوله بودن تست)
+            offlineManager.reset();
+            updateNetworkBadge();
+        });
+    </script>
+</body>
+</html>
