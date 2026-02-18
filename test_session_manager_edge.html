@@ -1,0 +1,486 @@
+<!DOCTYPE html>
+<html lang="fa">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>تست اج Session Manager | Farsinglish</title>
+    <style>
+        body {
+            font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+            max-width: 700px;
+            margin: 20px auto;
+            padding: 20px;
+            background: #f7f9fc;
+            color: #1e293b;
+            line-height: 1.6;
+            direction: rtl;
+        }
+        h1 {
+            font-size: 1.8rem;
+            color: #0f172a;
+            border-bottom: 2px solid #3b82f6;
+            padding-bottom: 10px;
+            margin-top: 0;
+        }
+        .subtitle {
+            color: #475569;
+            margin-bottom: 25px;
+            font-size: 0.95rem;
+        }
+        .test-panel {
+            background: white;
+            border-radius: 24px;
+            padding: 20px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+            margin-bottom: 25px;
+            border: 1px solid #e2e8f0;
+        }
+        .test-grid {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        .test-case {
+            background: #f8fafc;
+            border-radius: 16px;
+            padding: 15px 18px;
+            border: 1px solid #e2e8f0;
+            transition: all 0.1s;
+        }
+        .test-case.pass {
+            background: #f0fdf4;
+            border-color: #86efac;
+        }
+        .test-case.fail {
+            background: #fef2f2;
+            border-color: #fca5a5;
+        }
+        .test-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        .test-title {
+            font-weight: 600;
+            font-size: 1.1rem;
+            color: #0f172a;
+        }
+        .test-status {
+            font-size: 0.85rem;
+            padding: 5px 10px;
+            border-radius: 30px;
+            background: #e2e8f0;
+            color: #334155;
+            font-weight: 500;
+        }
+        .pass .test-status {
+            background: #bbf7d0;
+            color: #166534;
+        }
+        .fail .test-status {
+            background: #fecaca;
+            color: #991b1b;
+        }
+        .test-desc {
+            color: #475569;
+            font-size: 0.95rem;
+            margin-bottom: 10px;
+            padding-right: 5px;
+        }
+        .test-log {
+            background: #1e293b;
+            color: #e2e8f0;
+            padding: 12px 15px;
+            border-radius: 12px;
+            font-family: 'JetBrains Mono', 'Fira Code', monospace;
+            font-size: 0.85rem;
+            direction: ltr;
+            text-align: left;
+            max-height: 150px;
+            overflow-y: auto;
+            margin: 10px 0 5px;
+            white-space: pre-wrap;
+            word-break: break-word;
+        }
+        .btn {
+            background: white;
+            border: 1px solid #cbd5e1;
+            padding: 10px 18px;
+            border-radius: 40px;
+            font-size: 0.95rem;
+            font-weight: 500;
+            cursor: pointer;
+            color: #1e293b;
+            transition: 0.1s;
+            margin-left: 8px;
+            margin-bottom: 8px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.02);
+        }
+        .btn-primary {
+            background: #3b82f6;
+            border-color: #2563eb;
+            color: white;
+            box-shadow: 0 4px 8px rgba(59,130,246,0.2);
+        }
+        .btn-success {
+            background: #22c55e;
+            border-color: #16a34a;
+            color: white;
+        }
+        .btn-sm {
+            padding: 5px 12px;
+            font-size: 0.85rem;
+        }
+        .button-group {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            margin: 15px 0 5px;
+        }
+        .summary {
+            background: #ffffff;
+            border-radius: 40px;
+            padding: 15px 22px;
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            align-items: center;
+            border: 1px solid #d9e2ef;
+            margin-bottom: 25px;
+        }
+        .summary-item {
+            display: flex;
+            align-items: baseline;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+        .summary-label {
+            color: #64748b;
+            font-size: 0.9rem;
+        }
+        .summary-value {
+            font-weight: 700;
+            font-size: 1.5rem;
+            color: #0f172a;
+        }
+        .note {
+            background: #fffbeb;
+            border-right: 5px solid #f59e0b;
+            padding: 12px 20px;
+            border-radius: 18px;
+            margin: 20px 0;
+            color: #422800;
+            font-size: 0.95rem;
+        }
+        hr {
+            border: none;
+            border-top: 1px solid #e2e8f0;
+            margin: 20px 0;
+        }
+    </style>
+</head>
+<body>
+    <h1>🧪 تست اج (Edge) Session Manager</h1>
+    <div class="subtitle">📱 Farsinglish — تست دستی با دکمه، بدون ابزار — رعایت اصول: ایزوله، رفتارگرا، خوانا</div>
+
+    <div class="summary">
+        <div class="summary-item">
+            <span class="summary-label">✅ قبول</span>
+            <span class="summary-value" id="pass-count">0</span>
+        </div>
+        <div class="summary-item">
+            <span class="summary-label">❌ شکست</span>
+            <span class="summary-value" id="fail-count">0</span>
+        </div>
+        <div class="summary-item">
+            <span class="summary-label">⏱️ کل</span>
+            <span class="summary-value" id="total-count">8</span>
+        </div>
+    </div>
+
+    <div class="note">
+        <strong>🔍 اصول رعایت شده:</strong> مستقل از ابزار، رفتارگرا، قطعی، ایزوله، خوانا، تک‌ادعا، بدون تست UI جزئی، شبیه‌سازی وابستگی (Fake) — همه سناریوهای edge و نامعتبر.
+    </div>
+
+    <div class="test-panel">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+            <h2 style="margin: 0; font-size: 1.4rem;">🟡 سناریوهای مرزی (Edge Cases)</h2>
+            <div>
+                <button class="btn btn-sm" id="run-all-btn">▶ اجرای همه</button>
+                <button class="btn btn-sm" id="reset-all-btn">🔄 بازنشانی</button>
+            </div>
+        </div>
+        <div class="test-grid" id="test-container">
+            <!-- تست‌ها توسط JS ساخته می‌شوند -->
+        </div>
+    </div>
+
+    <hr>
+    <div style="text-align: center; color: #6b7280; font-size: 0.9rem;">
+        ✅ Session Manager v1 — تست‌های edge با رویکرد tool-agnostic — هر تست یک دکمه مجزا
+    </div>
+
+    <script>
+        (function() {
+            // ----- Fake Session Manager (ماژول تحت تست) -----
+            // پیاده‌سازی ساده شده sessionManager برای تست رفتار در شرایط edge
+            const fakeSessionManager = {
+                _session: null,   // { user, token, expiresAt }
+
+                // ایجاد نشست جدید
+                createSession(user, token, expiresInSeconds = 3600) {
+                    // edge: ورودی نامعتبر
+                    if (!user || typeof user !== 'object') {
+                        return { success: false, error: 'invalid_user' };
+                    }
+                    if (!token || typeof token !== 'string' || token.length < 8) {
+                        return { success: false, error: 'invalid_token' };
+                    }
+                    if (typeof expiresInSeconds !== 'number' || expiresInSeconds <= 0) {
+                        return { success: false, error: 'invalid_expiry' };
+                    }
+
+                    const expiresAt = Date.now() + expiresInSeconds * 1000;
+                    this._session = { user, token, expiresAt };
+                    return { success: true, session: this._session };
+                },
+
+                // دریافت نشست فعلی
+                getSession() {
+                    // edge: نشست منقضی شده
+                    if (!this._session) return null;
+                    if (Date.now() > this._session.expiresAt) {
+                        // انقضا خودکار؛ برگرداندن null (شبیه رفتار واقعی)
+                        return null;  // نشست منقضی محسوب می‌شود
+                    }
+                    return { ...this._session }; // کپی سطحی
+                },
+
+                // نابود کردن نشست
+                destroySession() {
+                    this._session = null;
+                    return { success: true };
+                },
+
+                // تمدید نشست (با زمان جدید)
+                renewSession(extraSeconds = 3600) {
+                    if (!this._session) return { success: false, error: 'no_session' };
+                    if (extraSeconds <= 0) return { success: false, error: 'invalid_extra' };
+                    this._session.expiresAt = Date.now() + extraSeconds * 1000;
+                    return { success: true, session: this._session };
+                },
+
+                // متدهای کمکی برای تست (دستکاری مستقیم)
+                _forceExpire() {
+                    if (this._session) {
+                        this._session.expiresAt = Date.now() - 1000;
+                    }
+                },
+                _setSessionDirectly(sess) {
+                    this._session = sess;
+                },
+                _clear() {
+                    this._session = null;
+                }
+            };
+
+            // ----- لیست تست‌های Edge (8 تست) -----
+            const testCases = [
+                {
+                    id: 'edge1',
+                    title: 'ایجاد نشست با user نامعتبر (null)',
+                    desc: 'فراخوانی createSession با user=null باید خطای invalid_user برگرداند.',
+                    run: () => {
+                        const res = fakeSessionManager.createSession(null, 'validtoken123', 3600);
+                        return { pass: res?.success === false && res?.error === 'invalid_user', result: res };
+                    }
+                },
+                {
+                    id: 'edge2',
+                    title: 'ایجاد نشست با user غیر-object (string)',
+                    desc: 'ارسال رشته به جای آبجکت کاربر → خطای invalid_user',
+                    run: () => {
+                        const res = fakeSessionManager.createSession('not_an_object', 'token12345', 3600);
+                        return { pass: res?.success === false && res?.error === 'invalid_user', result: res };
+                    }
+                },
+                {
+                    id: 'edge3',
+                    title: 'ایجاد نشست با token کوتاه (کمتر از ۸ کاراکتر)',
+                    desc: 'token="short" باید invalid_token برگرداند.',
+                    run: () => {
+                        const res = fakeSessionManager.createSession({ id: 1 }, 'short', 3600);
+                        return { pass: res?.success === false && res?.error === 'invalid_token', result: res };
+                    }
+                },
+                {
+                    id: 'edge4',
+                    title: 'ایجاد نشست با expiresInSeconds غیرمثبت (صفر)',
+                    desc: 'expiresInSeconds=0 باید invalid_expiry برگرداند.',
+                    run: () => {
+                        const res = fakeSessionManager.createSession({ id: 1 }, 'validtoken123', 0);
+                        return { pass: res?.success === false && res?.error === 'invalid_expiry', result: res };
+                    }
+                },
+                {
+                    id: 'edge5',
+                    title: 'دریافت نشست منقضی شده (getSession بعد از انقضا)',
+                    desc: 'بعد از expire باید null برگردد.',
+                    run: () => {
+                        fakeSessionManager._clear();
+                        // ساخت نشست با انقضای ۱ ثانیه
+                        fakeSessionManager.createSession({ id: 1 }, 'longenoughtoken', 1); // 1 ثانیه
+                        return new Promise((resolve) => {
+                            setTimeout(() => {
+                                const sess = fakeSessionManager.getSession();
+                                // پاک کردن بعد از تست
+                                fakeSessionManager._clear();
+                                resolve({ pass: sess === null, result: sess });
+                            }, 1100);
+                        });
+                    },
+                    async: true
+                },
+                {
+                    id: 'edge6',
+                    title: 'تمدید نشست با extraSeconds نامعتبر (منفی)',
+                    desc: 'renewSession با -۱۰۰ باید خطای invalid_extra بدهد.',
+                    run: () => {
+                        fakeSessionManager._clear();
+                        fakeSessionManager.createSession({ id: 1 }, 'tokenvalid123', 3600);
+                        const res = fakeSessionManager.renewSession(-100);
+                        fakeSessionManager._clear();
+                        return { pass: res?.success === false && res?.error === 'invalid_extra', result: res };
+                    }
+                },
+                {
+                    id: 'edge7',
+                    title: 'تمدید نشست وقتی نشست فعال وجود ندارد',
+                    desc: 'renewSession بدون نشست → خطای no_session',
+                    run: () => {
+                        fakeSessionManager._clear();
+                        const res = fakeSessionManager.renewSession(3600);
+                        return { pass: res?.success === false && res?.error === 'no_session', result: res };
+                    }
+                },
+                {
+                    id: 'edge8',
+                    title: 'نشست با token معتبر اما expiresAt در گذشته (دستی)',
+                    desc: 'getSession باید null برگرداند حتی اگر session وجود داشته باشد ولی expire شده.',
+                    run: () => {
+                        fakeSessionManager._clear();
+                        // ایجاد نشست معتبر، سپس强制 انقضا
+                        fakeSessionManager.createSession({ id: 1 }, 'tokenvalid123', 3600);
+                        fakeSessionManager._forceExpire(); // می‌شود -1 ثانیه
+                        const sess = fakeSessionManager.getSession();
+                        fakeSessionManager._clear();
+                        return { pass: sess === null, result: sess };
+                    }
+                }
+            ];
+
+            // --- متغیرهای وضعیت ---
+            let results = {};
+
+            // --- DOM elements ---
+            const container = document.getElementById('test-container');
+            const passSpan = document.getElementById('pass-count');
+            const failSpan = document.getElementById('fail-count');
+
+            function renderTests() {
+                let html = '';
+                for (let tc of testCases) {
+                    const res = results[tc.id] || { status: 'pending' };
+                    const statusText = res.status === 'pass' ? '✅ قبول' : (res.status === 'fail' ? '❌ شکست' : '⚪ اجرا نشده');
+                    const logText = res.log ? res.log : (res.status === 'pending' ? 'منتظر اجرا...' : '');
+                    const passClass = res.status === 'pass' ? 'pass' : (res.status === 'fail' ? 'fail' : '');
+
+                    html += `
+                        <div class="test-case ${passClass}" id="test-${tc.id}">
+                            <div class="test-header">
+                                <span class="test-title">${tc.id} - ${tc.title}</span>
+                                <span class="test-status">${statusText}</span>
+                            </div>
+                            <div class="test-desc">${tc.desc}</div>
+                            <div class="button-group">
+                                <button class="btn btn-sm" onclick="runSingleTest('${tc.id}')">▶ اجرای تست</button>
+                            </div>
+                            <div class="test-log" id="log-${tc.id}">${logText}</div>
+                        </div>
+                    `;
+                }
+                container.innerHTML = html;
+                updateSummary();
+            }
+
+            // --- اجرای یک تست ---
+            window.runSingleTest = async function(testId) {
+                const tc = testCases.find(t => t.id === testId);
+                if (!tc) return;
+
+                const logDiv = document.getElementById(`log-${testId}`);
+                logDiv.innerText = '⏳ در حال اجرا...';
+
+                try {
+                    let rawResult;
+                    if (tc.async) {
+                        rawResult = await tc.run();
+                    } else {
+                        rawResult = tc.run();
+                    }
+
+                    const pass = rawResult?.pass === true;
+                    const resultStr = typeof rawResult?.result === 'object' ? JSON.stringify(rawResult.result) : String(rawResult?.result);
+
+                    results[testId] = {
+                        status: pass ? 'pass' : 'fail',
+                        log: `▶ نتیجه: ${pass ? '✅ PASS' : '❌ FAIL'}\n${resultStr ? 'خروجی: ' + resultStr : ''}`
+                    };
+                } catch (e) {
+                    results[testId] = {
+                        status: 'fail',
+                        log: `❗ خطا در اجرا: ${e.message || e}`
+                    };
+                }
+
+                renderTests();
+            };
+
+            // --- اجرای همه تست‌ها ---
+            window.runAllTests = async function() {
+                for (let tc of testCases) {
+                    await runSingleTest(tc.id);
+                }
+            };
+
+            // --- بازنشانی ---
+            window.resetAll = function() {
+                results = {};
+                fakeSessionManager._clear();
+                renderTests();
+            };
+
+            function updateSummary() {
+                let pass = 0, fail = 0;
+                for (let id in results) {
+                    if (results[id].status === 'pass') pass++;
+                    else if (results[id].status === 'fail') fail++;
+                }
+                passSpan.innerText = pass;
+                failSpan.innerText = fail;
+                // total از قبل ۸ است
+            }
+
+            // --- اتصال دکمه‌ها ---
+            document.getElementById('run-all-btn').addEventListener('click', runAllTests);
+            document.getElementById('reset-all-btn').addEventListener('click', resetAll);
+
+            // --- رندر اولیه ---
+            renderTests();
+        })();
+    </script>
+</body>
+</html>
