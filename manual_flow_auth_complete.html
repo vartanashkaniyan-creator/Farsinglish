@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>تست دستی جریان احراز هویت - Farsinglish</title>
+    <style>
+        body {
+            font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+            max-width: 600px;
+            margin: 20px auto;
+            padding: 20px;
+            background: #f5f7fb;
+            color: #1e293b;
+            line-height: 1.6;
+        }
+        h1 {
+            font-size: 1.8rem;
+            color: #0f172a;
+            border-bottom: 2px solid #3b82f6;
+            padding-bottom: 10px;
+            margin-bottom: 24px;
+        }
+        h2 {
+            font-size: 1.3rem;
+            margin-top: 28px;
+            color: #334155;
+        }
+        .card {
+            background: white;
+            border-radius: 20px;
+            padding: 20px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+            margin-bottom: 24px;
+            border: 1px solid #e2e8f0;
+        }
+        button {
+            background: #3b82f6;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 40px;
+            font-size: 1rem;
+            font-weight: 600;
+            margin: 8px 8px 8px 0;
+            cursor: pointer;
+            transition: all 0.15s;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            border: 1px solid #2563eb;
+        }
+        button:hover {
+            background: #2563eb;
+            transform: translateY(-1px);
+            box-shadow: 0 6px 12px rgba(0,0,0,0.1);
+        }
+        button.secondary {
+            background: white;
+            color: #1e293b;
+            border: 1px solid #cbd5e1;
+        }
+        button.secondary:hover {
+            background: #f8fafc;
+        }
+        .console {
+            background: #0f172a;
+            color: #e2e8f0;
+            padding: 16px;
+            border-radius: 16px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9rem;
+            direction: ltr;
+            text-align: left;
+            max-height: 400px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+            word-break: break-word;
+            border: 2px solid #334155;
+            margin-top: 16px;
+        }
+        .console .info { color: #7dd3fc; }
+        .console .success { color: #86efac; }
+        .console .error { color: #fca5a5; }
+        .console .warn { color: #fde047; }
+        .badge {
+            display: inline-block;
+            background: #e2e8f0;
+            padding: 4px 12px;
+            border-radius: 40px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            margin-right: 8px;
+            color: #334155;
+        }
+        hr {
+            border: none;
+            border-top: 2px dashed #cbd5e1;
+            margin: 24px 0;
+        }
+        .step {
+            background: #f8fafc;
+            padding: 12px 16px;
+            border-radius: 16px;
+            margin-bottom: 12px;
+            border-right: 4px solid #3b82f6;
+        }
+        .step.completed {
+            border-right-color: #22c55e;
+            opacity: 0.8;
+        }
+    </style>
+</head>
+<body>
+    <h1>📱 Farsinglish · تست دستی جریان احراز هویت</h1>
+    <div class="card">
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+            <span><span class="badge">گام ۱ از ۵</span> شبیه‌سازی کامل کاربر</span>
+            <span style="color: #64748b;">🧪 ۶ سناریوی دستی</span>
+        </div>
+    </div>
+
+    <!-- وضعیت کنسول مجازی -->
+    <div class="card">
+        <div style="display: flex; justify-content: space-between; margin-bottom: 12px;">
+            <h2 style="margin:0">📋 کنسول شبیه‌سازی شده</h2>
+            <button class="secondary" onclick="clearLog()" style="padding:6px 16px">🧹 پاک کردن</button>
+        </div>
+        <div id="logConsole" class="console">
+            [info] آماده اجرای تست دستی احراز هویت...
+        </div>
+    </div>
+
+    <!-- شبیه‌سازی ماژول‌های جعلی (Fake) برای تست -->
+    <div class="card">
+        <h2>🔐 شبیه‌سازی سرویس‌های احراز هویت</h2>
+        <p style="color: #475569;">این ماژول‌های جعلی (Fake) جایگزین وابستگی‌های واقعی می‌شوند و رفتاری کاملاً قابل پیش‌بینی دارند.</p>
+        <button onclick="runStep('init')">🔁 مقداردهی اولیه</button>
+        <button onclick="runStep('register')" class="secondary">📝 ثبت‌نام کاربر جدید</button>
+        <button onclick="runStep('login')">🔓 ورود با کاربر test</button>
+        <button onclick="runStep('logout')">🚪 خروج از حساب</button>
+        <button onclick="runStep('session')">👤 بررسی نشست جاری</button>
+        <button onclick="runStep('protected')">🛡️ دسترسی به صفحه محافظت‌شده</button>
+        <button onclick="runStep('reload')">🔄 شبیه‌سازی بارگذاری مجدد</button>
+        <hr>
+        <button onclick="runCompleteFlow()" style="background:#10b981; border-color:#059669;">⚡ اجرای جریان کامل (۵ گام)</button>
+        <button onclick="resetAll()" class="secondary" style="background:#fee2e2; color:#991b1b;">🔄 ریست کامل حافظه</button>
+    </div>
+
+    <!-- راهنمای تست -->
+    <div class="card">
+        <h2>🧭 راهنمای تست دستی</h2>
+        <div id="step1" class="step">۱. مقداردهی اولیه: سرویس‌ها آماده می‌شوند، کاربر مهمان ایجاد می‌شود.</div>
+        <div id="step2" class="step">۲. ثبت‌نام: کاربر جدید با نام کاربری و رمز ساخته می‌شود.</div>
+        <div id="step3" class="step">۳. ورود: توکن JWT دریافت و نشست فعال می‌شود.</div>
+        <div id="step4" class="step">۴. بررسی نشست: اطلاعات کاربر و اعتبار توکن نمایش داده شود.</div>
+        <div id="step5" class="step">۵. خروج: نشست پاک می‌شود و دسترسی به صفحات محدود غیرممکن می‌گردد.</div>
+        <div id="step6" class="step">۶. بارگذاری مجدد: شبیه‌سازی بازگشت به برنامه و بازیابی خودکار نشست.</div>
+    </div>
+
+    <script>
+        // ---------- شبیه‌سازی Fake ماژول‌ها (کاملاً مستقل، بدون IO واقعی) ----------
+        const fakeDB = {
+            users: new Map(),
+            sessions: new Map(),
+            async get(key) { return this.users.get(key) || null; },
+            async set(key, val) { this.users.set(key, val); return true; },
+            async delete(key) { return this.users.delete(key); }
+        };
+
+        // شبیه‌سازی سرویس احراز هویت (pure logic)
+        class FakeAuthService {
+            constructor() {
+                this.currentUser = null;
+                this.token = null;
+                this.refreshToken = null;
+                this.listeners = [];
+            }
+
+            // مقداردهی اولیه: اگر نشست قبلی مانده بود بازیابی کن (اینجا جعلی)
+            async init() {
+                log('info', '🔄 سرویس احراز هویت مقداردهی اولیه شد');
+                // شبیه‌سازی بازیابی نشست از localStorage (در تست جعلی)
+                const saved = localStorage.getItem('fake_session');
+                if (saved) {
+                    try {
+                        const sess = JSON.parse(saved);
+                        if (sess.token && sess.user) {
+                            this.currentUser = sess.user;
+                            this.token = sess.token;
+                            log('success', '✅ نشست قبلی بازیابی شد: ' + sess.user.username);
+                        } else localStorage.removeItem('fake_session');
+                    } catch { localStorage.removeItem('fake_session'); }
+                } else {
+                    log('info', '👤 کاربر مهمان (بدون نشست)');
+                }
+                return { user: this.currentUser, token: this.token };
+            }
+
+            // ثبت‌نام (با اعتبارسنجی)
+            async register(username, password, email) {
+                log('info', `📝 تلاش ثبت‌نام: ${username} / ${email}`);
+                // validation ساده
+                if (!username || username.length < 3) return { success: false, error: 'نام کاربری حداقل ۳ حرف' };
+                if (!password || password.length < 6) return { success: false, error: 'رمز حداقل ۶ کاراکتر' };
+                if (!email || !email.includes('@')) return { success: false, error: 'ایمیل نامعتبر' };
+                const exists = await fakeDB.get(username);
+                if (exists) return { success: false, error: 'کاربر وجود دارد' };
+
+                const newUser = {
+                    username,
+                    passwordHash: 'fake_' + password + '_hash',  // شبیه‌سازی هش
+                    email,
+                    createdAt: new Date().toISOString()
+                };
+                await fakeDB.set(username, newUser);
+                log('success', '✅ ثبت‌نام موفق: ' + username);
+                return { success: true, user: { username, email } };
+            }
+
+            // ورود (بررسی هش جعلی)
+            async login(username, password) {
+                log('info', `🔓 تلاش ورود: ${username}`);
+                const user = await fakeDB.get(username);
+                if (!user) return { success: false, error: 'کاربر یافت نشد' };
+                if (user.passwordHash !== ('fake_' + password + '_hash')) return { success: false, error: 'رمز نادرست' };
+                // تولید توکن جعلی (با کلیم‌های ساده)
+                this.token = 'jwt_fake_' + Math.random().toString(36).substring(2);
+                this.refreshToken = 'refresh_' + Math.random().toString(36).substring(2);
+                this.currentUser = { username: user.username, email: user.email };
+                // ذخیره در localStorage برای شبیه‌سازی persistence
+                localStorage.setItem('fake_session', JSON.stringify({ user: this.currentUser, token: this.token }));
+                log('success', '✅ ورود موفق. توکن: ' + this.token.substring(0,10)+'...');
+                return { success: true, token: this.token, user: this.currentUser };
+            }
+
+            logout() {
+                log('info', '🚪 خروج از حساب');
+                this.currentUser = null;
+                this.token = null;
+                this.refreshToken = null;
+                localStorage.removeItem('fake_session');
+                log('success', '✅ نشست پاک شد');
+                return true;
+            }
+
+            getSession() {
+                if (this.currentUser && this.token) {
+                    log('info', `👤 کاربر فعلی: ${this.currentUser.username} | توکن معتبر: ${this.token.substring(0,10)}...`);
+                    return { user: this.currentUser, token: this.token };
+                } else {
+                    log('warn', '⚠️ هیچ کاربر وارد نشده');
+                    return null;
+                }
+            }
+
+            // شبیه‌سازی دسترسی به صفحه محافظت‌شده
+            accessProtected() {
+                if (this.currentUser && this.token) {
+                    log('success', '🛡️ دسترسی مجاز به صفحه محافظت‌شده ✅');
+                    return true;
+                } else {
+                    log('error', '🚫 دسترسی غیرمجاز! لطفاً ابتدا وارد شوید.');
+                    return false;
+                }
+            }
+        }
+
+        // ---------- نمونه سراسری (جهت تست دستی) ----------
+        const auth = new FakeAuthService();
+
+        // لاگ به کنسول مجازی
+        function log(level, message) {
+            const consoleDiv = document.getElementById('logConsole');
+            const entry = document.createElement('div');
+            entry.className = level;
+            const time = new Date().toLocaleTimeString('fa-IR', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+            entry.textContent = `[${time}] [${level}] ${message}`;
+            consoleDiv.appendChild(entry);
+            consoleDiv.scrollTop = consoleDiv.scrollHeight;
+        }
+
+        function clearLog() {
+            document.getElementById('logConsole').innerHTML = '[info] کنسول پاک شد.';
+            log('info', 'آماده اجرای تست دستی احراز هویت...');
+        }
+
+        // به‌روزرسانی گام‌ها
+        function markStep(stepId) {
+            const el = document.getElementById(stepId);
+            if (el) el.classList.add('completed');
+        }
+
+        // ریست گام‌ها
+        function resetSteps() {
+            for (let i=1; i<=6; i++) {
+                const el = document.getElementById('step'+i);
+                if (el) el.classList.remove('completed');
+            }
+        }
+
+        // اجرای مرحله به مرحله با دکمه
+        async function runStep(step) {
+            try {
+                if (step === 'init') {
+                    resetSteps();
+                    await auth.init();
+                    markStep('step1');
+                } else if (step === 'register') {
+                    const res = await auth.register('testuser', '1234567', 'test@example.com');
+                    if (res.success) markStep('step2');
+                    else log('error', '❌ ثبت‌نام شکست: ' + res.error);
+                } else if (step === 'login') {
+                    const res = await auth.login('testuser', '1234567');
+                    if (res.success) { markStep('step3'); markStep('step4'); }
+                    else log('error', '❌ ورود شکست: ' + res.error);
+                } else if (step === 'logout') {
+                    auth.logout();
+                    markStep('step5');
+                } else if (step === 'session') {
+                    auth.getSession();
+                } else if (step === 'protected') {
+                    auth.accessProtected();
+                } else if (step === 'reload') {
+                    // شبیه‌سازی بارگذاری مجدد صفحه
+                    log('warn', '🔄 شبیه‌سازی بارگذاری مجدد... (localStorage خوانده می‌شود)');
+                    await auth.init();
+                    markStep('step6');
+                }
+            } catch (e) {
+                log('error', 'خطای غیرمنتظره: ' + e.message);
+            }
+        }
+
+        // جریان کامل خودکار (۵ گام پشت‌سرهم)
+        async function runCompleteFlow() {
+            log('info', '🚀 شروع جریان کامل تست (ثبت‌نام → ورود → نشست → خروج → بارگذاری مجدد)');
+            resetSteps();
+            // 1. init
+            await auth.init();
+            markStep('step1');
+            // 2. ثبت‌نام
+            const reg = await auth.register('flowuser', 'pass1234', 'flow@example.com');
+            if (!reg.success) { log('error', 'ثبت‌نام ناموفق'); return; }
+            markStep('step2');
+            // 3. ورود
+            const loginRes = await auth.login('flowuser', 'pass1234');
+            if (!loginRes.success) { log('error', 'ورود ناموفق'); return; }
+            markStep('step3');
+            markStep('step4');
+            // 4. بررسی نشست
+            auth.getSession();
+            // 5. خروج
+            auth.logout();
+            markStep('step5');
+            // 6. شبیه‌سازی reload
+            log('warn', '🔄 شبیه‌سازی بارگذاری مجدد صفحه...');
+            await auth.init();
+            markStep('step6');
+            log('success', '✨ جریان کامل با موفقیت به پایان رسید (۶ گام)');
+        }
+
+        // ریست کامل (حذف همه داده‌های جعلی)
+        function resetAll() {
+            fakeDB.users.clear();
+            fakeDB.sessions.clear();
+            auth.currentUser = null;
+            auth.token = null;
+            auth.refreshToken = null;
+            localStorage.removeItem('fake_session');
+            resetSteps();
+            clearLog();
+            log('info', '🧹 تمام داده‌های جعلی پاک شد. وضعیت مانند نو شد.');
+        }
+
+        // مقداردهی اولیه خودکار هنگام بارگذاری صفحه (برای آمادگی)
+        (async () => {
+            // افزودن یک کاربر پیش‌فرض برای تست راحت‌تر
+            await fakeDB.set('testuser', { username: 'testuser', passwordHash: 'fake_1234567_hash', email: 'test@example.com' });
+            log('info', '📦 کاربر پیش‌فرض testuser با رمز 1234567 ایجاد شد.');
+            await auth.init();
+        })();
+
+    </script>
+</body>
+</html>
