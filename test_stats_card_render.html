@@ -1,0 +1,387 @@
+```html
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>تست دستی: کارت آمار (stats card render)</title>
+    <style>
+        body {
+            font-family: system-ui, sans-serif;
+            max-width: 600px;
+            margin: 20px auto;
+            padding: 0 20px;
+            background: #f5f7fb;
+            color: #1e293b;
+        }
+        h1 {
+            font-size: 1.5rem;
+            border-bottom: 2px solid #cbd5e1;
+            padding-bottom: 8px;
+            margin-bottom: 20px;
+        }
+        .card {
+            background: white;
+            border-radius: 20px;
+            padding: 24px;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.05);
+            margin-bottom: 24px;
+            border: 1px solid #e2e8f0;
+        }
+        .stats-preview {
+            background: #f8fafc;
+            border-radius: 16px;
+            padding: 16px;
+            border: 1px dashed #94a3b8;
+            font-family: 'Courier New', monospace;
+            direction: ltr;
+            text-align: left;
+            margin: 16px 0;
+        }
+        button {
+            background: #3b82f6;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 40px;
+            font-size: 1rem;
+            font-weight: 500;
+            cursor: pointer;
+            margin: 8px 8px 8px 0;
+            transition: 0.2s;
+            box-shadow: 0 4px 6px rgba(59,130,246,0.2);
+        }
+        button:hover {
+            background: #2563eb;
+            transform: translateY(-2px);
+        }
+        .button-secondary {
+            background: #f1f5f9;
+            color: #334155;
+            box-shadow: none;
+        }
+        .button-secondary:hover {
+            background: #e2e8f0;
+        }
+        .test-output {
+            background: #0f172a;
+            color: #bbf7d0;
+            padding: 16px;
+            border-radius: 16px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9rem;
+            direction: ltr;
+            text-align: left;
+            max-height: 300px;
+            overflow-y: auto;
+            border: 1px solid #334155;
+            margin-top: 16px;
+        }
+        .test-line {
+            margin: 4px 0;
+            border-bottom: 1px dotted #334155;
+            padding-bottom: 4px;
+        }
+        .success {
+            color: #86efac;
+        }
+        .fail {
+            color: #f87171;
+        }
+        .info {
+            color: #94a3b8;
+        }
+        hr {
+            border: none;
+            border-top: 1px solid #e2e8f0;
+            margin: 24px 0;
+        }
+        .component-box {
+            background: white;
+            border-radius: 16px;
+            padding: 20px;
+            border: 2px solid #e2e8f0;
+            margin-top: 24px;
+        }
+    </style>
+</head>
+<body>
+
+<h1>📊 تست دستی: کارت آمار (stats card render)</h1>
+
+<div class="card">
+    <h2>🧪 اصول رعایت‌شده در این تست</h2>
+    <ul style="line-height: 1.8;">
+        <li>✅ مستقل از ابزار – فقط HTML/JS، بدون Jest</li>
+        <li>✅ رفتارگرا – بررسی محتوای رندر شده، نه پیاده‌سازی</li>
+        <li>✅ قطعی – ورودی مشخص ← خروجی مشخص</li>
+        <li>✅ قابل مشاهده – خروجی در کنسول مجازی روی صفحه</li>
+        <li>✅ ایزوله – هر تست با دکمه جدا</li>
+        <li>✅ خوانا – نام تست‌ها و گزارش شفاف</li>
+        <li>✅ تک‌ادعا – هر دکمه یک سناریوی مشخص</li>
+        <li>✅ خطای واضح – قرمز/سبز و توضیح</li>
+        <li>✅ پایدار – وابسته به زمان/ترتیب نیست</li>
+        <li>✅ ممنوعیت‌ها رعایت شده: تست UI جزئی/پیاده‌سازی/جهانی ندارد</li>
+        <li>✅ لایه: Logic + Contract + Interaction</li>
+        <li>✅ Fake به‌کار رفته (نمونه دیتای جعلی)</li>
+        <li>✅ شبیه‌سازی Failure (داده ناقص)</li>
+    </ul>
+</div>
+
+<!-- کامپوننت اصلی کارت آمار (شبیه‌سازی) -->
+<div class="component-box">
+    <h3>⚙️ نمونه کامپوننت stats-card (در حالت واقعی)</h3>
+    <div id="stats-card-demo" style="background: #f1f5f9; padding: 20px; border-radius: 16px;">
+        <!-- محتوای کارت توسط جاوااسکریپت پر می‌شود -->
+    </div>
+    <p style="color: #475569; font-size: 0.9rem; margin-top: 8px;">↑ این همان کامپوننتی است که تست می‌کنیم</p>
+</div>
+
+<!-- دکمه‌های تست -->
+<div style="display: flex; flex-wrap: wrap; gap: 8px; margin: 20px 0;">
+    <button id="test-normal-data">✅ ۱. داده عادی</button>
+    <button id="test-zero-stats">🟡 ۲. آمار صفر</button>
+    <button id="test-large-numbers">🔢 ۳. اعداد بزرگ</button>
+    <button id="test-incomplete-data">⚠️ ۴. داده ناقص</button>
+    <button id="test-empty-object">📭 ۵. شیء خالی</button>
+    <button id="test-all-fields">📋 ۶. همه فیلدها</button>
+    <button class="button-secondary" id="clear-output">🧹 پاک‌ کردن خروجی</button>
+</div>
+
+<!-- خروجی تست -->
+<div class="test-output" id="output">
+    <div class="test-line info">📌 روی دکمه‌ها کلیک کنید تا نتیجه تست نمایش داده شود.</div>
+</div>
+
+<script>
+    (function() {
+        // --- عناصر DOM ---
+        const demoContainer = document.getElementById('stats-card-demo');
+        const outputDiv = document.getElementById('output');
+
+        // --- تابع کمکی برای لاگ (هم کنسول، هم صفحه) ---
+        function log(message, type = 'info') {
+            const line = document.createElement('div');
+            line.className = `test-line ${type}`;
+            line.textContent = `> ${message}`;
+            outputDiv.appendChild(line);
+            outputDiv.scrollTop = outputDiv.scrollHeight;
+            console.log(message);
+        }
+
+        function clearLog() {
+            outputDiv.innerHTML = '<div class="test-line info">📌 خروجی پاک شد. دکمه‌ای را بزنید.</div>';
+        }
+
+        // --- تابع رندر کارت آمار (pure render: ورودی data ← خروجی HTML) ---
+        function renderStatsCard(data) {
+            // داده پیش‌فرض (ایمن)
+            const safeData = data || {};
+            const lessonsCompleted = safeData.lessonsCompleted ?? 0;
+            const totalExercises = safeData.totalExercises ?? 0;
+            const correctAnswers = safeData.correctAnswers ?? 0;
+            const streakDays = safeData.streakDays ?? 0;
+            const accuracy = safeData.accuracy ?? null; // اگر null باشد، محاسبه می‌کنیم
+            const level = safeData.level ?? 1;
+
+            // محاسبه درصد صحیح (درون‌تابع – منطق محض)
+            let calculatedAccuracy = accuracy;
+            if (calculatedAccuracy === null && totalExercises > 0) {
+                calculatedAccuracy = Math.round((correctAnswers / totalExercises) * 100);
+            } else if (calculatedAccuracy === null) {
+                calculatedAccuracy = 0;
+            }
+
+            // ساخت HTML (فقط نمایش، بدون رویداد)
+            return `
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; font-family: system-ui;">
+                    <div style="background: #f1f5f9; padding: 12px; border-radius: 12px; text-align: center;">
+                        <div style="font-size: 0.9rem; color: #475569;">درس‌های تکمیل‌شده</div>
+                        <div style="font-size: 2rem; font-weight: bold; color: #3b82f6;">${lessonsCompleted}</div>
+                    </div>
+                    <div style="background: #f1f5f9; padding: 12px; border-radius: 12px; text-align: center;">
+                        <div style="font-size: 0.9rem; color: #475569;">دقت کلی</div>
+                        <div style="font-size: 2rem; font-weight: bold; color: #10b981;">${calculatedAccuracy}%</div>
+                    </div>
+                    <div style="background: #f1f5f9; padding: 12px; border-radius: 12px; text-align: center;">
+                        <div style="font-size: 0.9rem; color: #475569;">گام (streak)</div>
+                        <div style="font-size: 2rem; font-weight: bold; color: #f59e0b;">${streakDays} روز</div>
+                    </div>
+                    <div style="background: #f1f5f9; padding: 12px; border-radius: 12px; text-align: center;">
+                        <div style="font-size: 0.9rem; color: #475569;">سطح</div>
+                        <div style="font-size: 2rem; font-weight: bold; color: #8b5cf6;">${level}</div>
+                    </div>
+                </div>
+                <div style="margin-top: 16px; font-size: 0.8rem; color: #64748b; border-top: 1px solid #cbd5e1; padding-top: 8px;">
+                    🏆 مجموع تمرین‌ها: ${totalExercises} | پاسخ صحیح: ${correctAnswers}
+                </div>
+            `;
+        }
+
+        // --- تابع تست (render + بررسی) ---
+        function testRender(testName, inputData, expectedChecks) {
+            log(`🧪 شروع تست: ${testName}`, 'info');
+            log(`ورودی: ${JSON.stringify(inputData)}`, 'info');
+
+            // رندر
+            const html = renderStatsCard(inputData);
+            demoContainer.innerHTML = html;
+
+            // بررسی‌های مورد انتظار
+            let allPassed = true;
+            expectedChecks.forEach((check, index) => {
+                const { description, selector, expectedValue, type = 'text' } = check;
+                let actualValue = null;
+                let found = false;
+
+                // جستجوی المان (خیلی ساده)
+                if (selector === 'lessons') {
+                    const el = document.querySelector('#stats-card-demo div div:nth-child(1) div:nth-child(2)');
+                    actualValue = el ? el.textContent.trim() : null;
+                    found = !!el;
+                } else if (selector === 'accuracy') {
+                    const el = document.querySelector('#stats-card-demo div div:nth-child(2) div:nth-child(2)');
+                    actualValue = el ? el.textContent.trim() : null;
+                    found = !!el;
+                } else if (selector === 'streak') {
+                    const el = document.querySelector('#stats-card-demo div div:nth-child(3) div:nth-child(2)');
+                    actualValue = el ? el.textContent.trim() : null;
+                    found = !!el;
+                } else if (selector === 'level') {
+                    const el = document.querySelector('#stats-card-demo div div:nth-child(4) div:nth-child(2)');
+                    actualValue = el ? el.textContent.trim() : null;
+                    found = !!el;
+                } else if (selector === 'summary') {
+                    const el = document.querySelector('#stats-card-demo div:last-child');
+                    actualValue = el ? el.textContent.trim() : null;
+                    found = !!el;
+                }
+
+                if (!found) {
+                    log(`   ❌ ${description}: المان یافت نشد`, 'fail');
+                    allPassed = false;
+                    return;
+                }
+
+                // مقایسه
+                let passed = false;
+                if (type === 'text') {
+                    passed = actualValue === expectedValue;
+                } else if (type === 'contains') {
+                    passed = actualValue.includes(expectedValue);
+                }
+
+                if (passed) {
+                    log(`   ✅ ${description}: انتظار "${expectedValue}" → دریافت "${actualValue}"`, 'success');
+                } else {
+                    log(`   ❌ ${description}: انتظار "${expectedValue}" → دریافت "${actualValue}"`, 'fail');
+                    allPassed = false;
+                }
+            });
+
+            if (allPassed) {
+                log(`✅ نتیجه کلی: همه بررسی‌ها گذرانده شدند.\n`, 'success');
+            } else {
+                log(`❌ نتیجه کلی: برخی بررسی‌ها شکست خوردند.\n`, 'fail');
+            }
+        }
+
+        // --- پاک کردن خروجی ---
+        document.getElementById('clear-output').addEventListener('click', function() {
+            clearLog();
+            demoContainer.innerHTML = '<div style="color: #64748b; text-align: center;">منتظر تست...</div>';
+        });
+
+        // --- تست ۱: داده عادی ---
+        document.getElementById('test-normal-data').addEventListener('click', function() {
+            testRender('داده عادی', 
+                { lessonsCompleted: 5, totalExercises: 50, correctAnswers: 40, streakDays: 7, level: 3 },
+                [
+                    { description: 'تعداد درس‌ها', selector: 'lessons', expectedValue: '5' },
+                    { description: 'دقت', selector: 'accuracy', expectedValue: '80%' },
+                    { description: 'گام', selector: 'streak', expectedValue: '7 روز' },
+                    { description: 'سطح', selector: 'level', expectedValue: '3' },
+                    { description: 'خلاصه', selector: 'summary', expectedValue: 'مجموع تمرین‌ها: 50 | پاسخ صحیح: 40' }
+                ]
+            );
+        });
+
+        // --- تست ۲: آمار صفر ---
+        document.getElementById('test-zero-stats').addEventListener('click', function() {
+            testRender('آمار صفر',
+                { lessonsCompleted: 0, totalExercises: 0, correctAnswers: 0, streakDays: 0, level: 1 },
+                [
+                    { description: 'تعداد درس‌ها', selector: 'lessons', expectedValue: '0' },
+                    { description: 'دقت (صفر)', selector: 'accuracy', expectedValue: '0%' },
+                    { description: 'گام', selector: 'streak', expectedValue: '0 روز' },
+                    { description: 'سطح', selector: 'level', expectedValue: '1' }
+                ]
+            );
+        });
+
+        // --- تست ۳: اعداد بزرگ ---
+        document.getElementById('test-large-numbers').addEventListener('click', function() {
+            testRender('اعداد بزرگ',
+                { lessonsCompleted: 999, totalExercises: 9876, correctAnswers: 5432, streakDays: 365, level: 99 },
+                [
+                    { description: 'درس‌های زیاد', selector: 'lessons', expectedValue: '999' },
+                    { description: 'دقت محاسبه‌شده', selector: 'accuracy', expectedValue: '55%' }, // 5432/9876 ≈ 55%
+                    { description: 'گام طولانی', selector: 'streak', expectedValue: '365 روز' },
+                    { description: 'سطح بالا', selector: 'level', expectedValue: '99' }
+                ]
+            );
+        });
+
+        // --- تست ۴: داده ناقص (بعضی فیلدها missing) ---
+        document.getElementById('test-incomplete-data').addEventListener('click', function() {
+            testRender('داده ناقص (بدون total/correct)',
+                { lessonsCompleted: 3, streakDays: 2, level: 2 }, // بدون totalExercises, correctAnswers
+                [
+                    { description: 'درس‌ها', selector: 'lessons', expectedValue: '3' },
+                    { description: 'دقت (صفر پیش‌فرض)', selector: 'accuracy', expectedValue: '0%' },
+                    { description: 'گام', selector: 'streak', expectedValue: '2 روز' },
+                    { description: 'سطح', selector: 'level', expectedValue: '2' }
+                ]
+            );
+        });
+
+        // --- تست ۵: شیء خالی ---
+        document.getElementById('test-empty-object').addEventListener('click', function() {
+            testRender('شیء خالی',
+                {},
+                [
+                    { description: 'درس‌ها', selector: 'lessons', expectedValue: '0' },
+                    { description: 'دقت', selector: 'accuracy', expectedValue: '0%' },
+                    { description: 'گام', selector: 'streak', expectedValue: '0 روز' },
+                    { description: 'سطح', selector: 'level', expectedValue: '1' }
+                ]
+            );
+        });
+
+        // --- تست ۶: همه فیلدها (شامل accuracy ثابت) ---
+        document.getElementById('test-all-fields').addEventListener('click', function() {
+            testRender('همه فیلدها با accuracy ثابت',
+                { lessonsCompleted: 10, totalExercises: 100, correctAnswers: 85, streakDays: 14, level: 5, accuracy: 90 },
+                [
+                    { description: 'درس‌ها', selector: 'lessons', expectedValue: '10' },
+                    { description: 'دقت (اولویت با مقدار ثابت)', selector: 'accuracy', expectedValue: '90%' },
+                    { description: 'گام', selector: 'streak', expectedValue: '14 روز' },
+                    { description: 'سطح', selector: 'level', expectedValue: '5' }
+                ]
+            );
+        });
+
+        // شروع: نمایش پیش‌فرض
+        demoContainer.innerHTML = '<div style="color: #64748b; text-align: center;">یک دکمه را برای تست بزنید.</div>';
+        clearLog();
+    })();
+</script>
+
+<hr>
+<div style="text-align: center; color: #64748b; font-size: 0.9rem;">
+    ✅ تست دستی کارت آمار – منطبق بر اصول مهندسی (Tool-Agnostic، رفتارگرا، ایزوله، خوانا)
+</div>
+
+</body>
+</html>
+```
