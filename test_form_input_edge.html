@@ -1,1 +1,454 @@
 
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>تست لبه فرم ورودی - form_input_edge.html</title>
+    <style>
+        body {
+            font-family: 'Vazir', 'Tahoma', sans-serif;
+            background-color: #f5f7fa;
+            margin: 0;
+            padding: 20px;
+            color: #2c3e50;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.1);
+            padding: 24px;
+        }
+        h1 {
+            font-size: 1.5rem;
+            margin-top: 0;
+            color: #1e293b;
+            border-bottom: 2px solid #e2e8f0;
+            padding-bottom: 12px;
+        }
+        .test-section {
+            background: #f8fafc;
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 20px;
+            border: 1px solid #e2e8f0;
+        }
+        .test-title {
+            font-weight: bold;
+            font-size: 1.1rem;
+            margin-bottom: 12px;
+            color: #0f172a;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .test-title::before {
+            content: "🧪";
+            font-size: 1.2rem;
+        }
+        .button-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin: 15px 0;
+        }
+        button {
+            background: #e2e8f0;
+            color: #1e293b;
+            border: none;
+            padding: 10px 18px;
+            border-radius: 30px;
+            font-size: 0.9rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: 1px solid #cbd5e1;
+            font-family: inherit;
+        }
+        button:hover {
+            background: #cbd5e1;
+            transform: translateY(-1px);
+        }
+        .console {
+            background: #0f172a;
+            color: #e2e8f0;
+            padding: 16px;
+            border-radius: 12px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.85rem;
+            direction: ltr;
+            text-align: left;
+            white-space: pre-wrap;
+            max-height: 300px;
+            overflow-y: auto;
+            margin-top: 20px;
+            border: 2px solid #334155;
+        }
+        .badge {
+            background: #3b82f6;
+            color: white;
+            padding: 4px 8px;
+            border-radius: 20px;
+            font-size: 0.7rem;
+            font-weight: bold;
+            display: inline-block;
+            margin-left: 8px;
+        }
+        .note {
+            background: #fff3cd;
+            border-right: 4px solid #ffc107;
+            padding: 12px;
+            font-size: 0.9rem;
+            margin: 16px 0;
+            border-radius: 8px;
+        }
+        hr {
+            border: none;
+            border-top: 1px dashed #cbd5e1;
+            margin: 16px 0;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>📝 تست لبه فرم ورودی (Edge Cases)</h1>
+    <div class="note">
+        <strong>🎯 اصول رعایت شده:</strong> مستقل از ابزار • رفتارگرا • قطعی • تک‌ادعا • ایزوله • شبیه‌سازی وابستگی‌ها • خطای واضح
+    </div>
+
+    <!-- ماژول شبیه‌سازی شده فرم ورودی (Fake) -->
+    <div class="test-section">
+        <div class="test-title">🔧 ماژول فرم ورودی (Fake Implementation)</div>
+        <div style="background: #e6f7ff; padding: 10px; border-radius: 8px; font-size: 0.9rem;">
+            <strong>📌 قرارداد (Contract):</strong> تابع <code>validateInput(value, type, options)</code><br>
+            - ورودی: مقدار، نوع (text/email/password/number)، options (minLength, maxLength, pattern)<br>
+            - خروجی: شیء { isValid: boolean, error: string | null, sanitized: any }
+        </div>
+        <div class="button-group" style="margin-top: 15px;">
+            <button onclick="runAllEdgeTests()">▶ اجرای همه تست‌های لبه</button>
+            <button onclick="clearConsole()">🗑 پاک کردن کنسول</button>
+        </div>
+    </div>
+
+    <!-- دکمه‌های تست انفرادی (تک‌ادعا) -->
+    <div class="test-section">
+        <div class="test-title">🧪 ۱. تست‌های ورودی خالی/نامعتبر</div>
+        <div class="button-group">
+            <button onclick="testEmptyString()">تهی (Empty)</button>
+            <button onclick="testNullUndefined()">Null/Undefined</button>
+            <button onclick="testWhitespaceOnly()">فاصله خالی</button>
+        </div>
+
+        <div class="test-title">🧪 ۲. تست‌های حد مرز (Boundary)</div>
+        <div class="button-group">
+            <button onclick="testMinLengthEdge()">حداقل طول (min)</button>
+            <button onclick="testMaxLengthEdge()">حداکثر طول (max)</button>
+            <button onclick="testExactLength()">طول دقیق</button>
+        </div>
+
+        <div class="test-title">🧪 ۳. تست‌های نوع و قالب (Type & Pattern)</div>
+        <div class="button-group">
+            <button onclick="testEmailInvalid()">ایمیل نامعتبر</button>
+            <button onclick="testPasswordWeak()">رمز ضعیف</button>
+            <button onclick="testNumberOutOfRange()">عدد خارج محدوده</button>
+        </div>
+
+        <div class="test-title">🧪 ۴. تست‌های کاراکترهای ویژه</div>
+        <div class="button-group">
+            <button onclick="testSpecialChars()">کاراکترهای خاص</button>
+            <button onclick="testUnicodeRTL()">یونیکد و RTL</button>
+            <button onclick="testInjectionAttempt()">تلاش تزریق</button>
+        </div>
+
+        <div class="test-title">🧪 ۵. تست‌های ترکیبی (Interaction)</div>
+        <div class="button-group">
+            <button onclick="testMultipleErrors()">چند خطا همزمان</button>
+            <button onclick="testValidAfterFix()">اصلاح پس از خطا</button>
+        </div>
+    </div>
+
+    <!-- کنسول مجازی -->
+    <div class="test-section">
+        <div class="test-title">📟 کنسول خروجی</div>
+        <div id="virtualConsole" class="console">
+✅ آماده اجرای تست‌های لبه...
+برای شروع روی دکمه‌ها کلیک کنید.
+        </div>
+    </div>
+</div>
+
+<script>
+    // ---------- Fake Implementation (ماژول شبیه‌سازی شده) ----------
+    const FormInput = {
+        // تابع اصلی اعتبارسنجی (شبیه‌سازی شده)
+        validateInput: (value, type = 'text', options = {}) => {
+            // شبیه‌سازی خطاهای لبه
+            const errors = [];
+            let sanitized = value;
+
+            // 1. بررسی Null/Undefined
+            if (value === null || value === undefined) {
+                return { isValid: false, error: 'ورودی نمی‌تواند خالی باشد', sanitized: null };
+            }
+
+            // 2. تبدیل به رشته برای یکپارچگی
+            const stringValue = String(value);
+
+            // 3. بررسی خالی بودن
+            if (stringValue.trim() === '') {
+                return { isValid: false, error: 'ورودی نمی‌تواند فقط فاصله باشد', sanitized: '' };
+            }
+
+            // 4. اعتبارسنجی بر اساس نوع
+            switch(type) {
+                case 'email':
+                    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+                    if (!emailRegex.test(stringValue)) {
+                        return { isValid: false, error: 'ایمیل نامعتبر است', sanitized: stringValue };
+                    }
+                    sanitized = stringValue.toLowerCase();
+                    break;
+
+                case 'password':
+                    if (options.minLength && stringValue.length < options.minLength) {
+                        return { isValid: false, error: `رمز حداقل ${options.minLength} کاراکتر باید باشد`, sanitized: stringValue };
+                    }
+                    if (!/[A-Z]/.test(stringValue) && options.requireUppercase) {
+                        return { isValid: false, error: 'رمز باید حداقل یک حرف بزرگ داشته باشد', sanitized: stringValue };
+                    }
+                    break;
+
+                case 'number':
+                    const num = Number(stringValue);
+                    if (isNaN(num)) {
+                        return { isValid: false, error: 'عدد معتبر وارد کنید', sanitized: stringValue };
+                    }
+                    if (options.min !== undefined && num < options.min) {
+                        return { isValid: false, error: `عدد باید حداقل ${options.min} باشد`, sanitized: stringValue };
+                    }
+                    if (options.max !== undefined && num > options.max) {
+                        return { isValid: false, error: `عدد باید حداکثر ${options.max} باشد`, sanitized: stringValue };
+                    }
+                    sanitized = num;
+                    break;
+
+                default: // text
+                    if (options.minLength && stringValue.length < options.minLength) {
+                        return { isValid: false, error: `حداقل ${options.minLength} کاراکتر نیاز است`, sanitized: stringValue };
+                    }
+                    if (options.maxLength && stringValue.length > options.maxLength) {
+                        return { isValid: false, error: `حداکثر ${options.maxLength} کاراکتر مجاز است`, sanitized: stringValue };
+                    }
+                    if (options.pattern && !new RegExp(options.pattern).test(stringValue)) {
+                        return { isValid: false, error: 'فرمت ورودی نامعتبر است', sanitized: stringValue };
+                    }
+                    sanitized = stringValue;
+            }
+
+            return { isValid: true, error: null, sanitized };
+        }
+    };
+
+    // ---------- تابع کمکی لاگ ----------
+    function log(message, type = 'info') {
+        const consoleDiv = document.getElementById('virtualConsole');
+        const timestamp = new Date().toLocaleTimeString('fa-IR', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+        let coloredMessage = '';
+        
+        switch(type) {
+            case 'success': coloredMessage = `✅ [${timestamp}] ${message}`; break;
+            case 'error': coloredMessage = `❌ [${timestamp}] ${message}`; break;
+            case 'warning': coloredMessage = `⚠️ [${timestamp}] ${message}`; break;
+            default: coloredMessage = `📌 [${timestamp}] ${message}`;
+        }
+        
+        consoleDiv.innerHTML += `\n${coloredMessage}`;
+        consoleDiv.scrollTop = consoleDiv.scrollHeight;
+        console.log(message); // همچنین در کنسول واقعی
+    }
+
+    function clearConsole() {
+        document.getElementById('virtualConsole').innerHTML = '✅ کنسول پاک شد. آماده اجرای تست‌ها...';
+        log('کنسول مجازی پاک شد');
+    }
+
+    // ---------- تست‌های لبه (هر تابع یک ادعا) ----------
+    function testEmptyString() {
+        log('🧪 تست: رشته خالی', 'info');
+        const result = FormInput.validateInput('', 'text', { minLength: 3 });
+        if (!result.isValid && result.error === 'ورودی نمی‌تواند فقط فاصله باشد') {
+            log('✓ رشته خالی رد شد (صحیح)', 'success');
+        } else {
+            log('✗ خطا: رشته خالی باید رد می‌شد', 'error');
+        }
+    }
+
+    function testNullUndefined() {
+        log('🧪 تست: Null و Undefined', 'info');
+        const result1 = FormInput.validateInput(null);
+        const result2 = FormInput.validateInput(undefined);
+        
+        if (!result1.isValid && !result2.isValid) {
+            log('✓ Null و Undefined هر دو رد شدند', 'success');
+        } else {
+            log('✗ خطا: Null/Undefined باید رد شوند', 'error');
+        }
+    }
+
+    function testWhitespaceOnly() {
+        log('🧪 تست: فقط فاصله', 'info');
+        const result = FormInput.validateInput('   ', 'text');
+        if (!result.isValid && result.error.includes('فاصله')) {
+            log('✓ ورودی فقط فاصله رد شد', 'success');
+        } else {
+            log('✗ خطا: ورودی فقط فاصله باید رد شود', 'error');
+        }
+    }
+
+    function testMinLengthEdge() {
+        log('🧪 تست: حداقل طول', 'info');
+        const result = FormInput.validateInput('ab', 'text', { minLength: 3 });
+        if (!result.isValid && result.error.includes('حداقل 3')) {
+            log('✓ رشته کوتاه‌تر از حداقل رد شد', 'success');
+        } else {
+            log('✗ خطا: باید خطای حداقل طول می‌داد', 'error');
+        }
+    }
+
+    function testMaxLengthEdge() {
+        log('🧪 تست: حداکثر طول', 'info');
+        const result = FormInput.validateInput('12345678901', 'text', { maxLength: 10 });
+        if (!result.isValid && result.error.includes('حداکثر 10')) {
+            log('✓ رشته بلندتر از حداکثر رد شد', 'success');
+        } else {
+            log('✗ خطا: باید خطای حداکثر طول می‌داد', 'error');
+        }
+    }
+
+    function testExactLength() {
+        log('🧪 تست: طول دقیق', 'info');
+        const result = FormInput.validateInput('12345', 'text', { minLength: 5, maxLength: 5 });
+        if (result.isValid && result.sanitized === '12345') {
+            log('✓ رشته با طول دقیق قبول شد', 'success');
+        } else {
+            log('✗ خطا: رشته معتبر باید قبول می‌شد', 'error');
+        }
+    }
+
+    function testEmailInvalid() {
+        log('🧪 تست: ایمیل نامعتبر', 'info');
+        const results = [
+            FormInput.validateInput('user@', 'email'),
+            FormInput.validateInput('@domain.com', 'email'),
+            FormInput.validateInput('user.domain.com', 'email')
+        ];
+        if (results.every(r => !r.isValid)) {
+            log('✓ همه ایمیل‌های نامعتبر رد شدند', 'success');
+        } else {
+            log('✗ خطا: برخی ایمیل‌های نامعتبر قبول شدند', 'error');
+        }
+    }
+
+    function testPasswordWeak() {
+        log('🧪 تست: رمز ضعیف', 'info');
+        const result = FormInput.validateInput('pass', 'password', { minLength: 8 });
+        if (!result.isValid && result.error.includes('حداقل 8')) {
+            log('✓ رمز ضعیف رد شد', 'success');
+        } else {
+            log('✗ خطا: رمز ضعیف باید رد شود', 'error');
+        }
+    }
+
+    function testNumberOutOfRange() {
+        log('🧪 تست: عدد خارج محدوده', 'info');
+        const resultLow = FormInput.validateInput('5', 'number', { min: 10 });
+        const resultHigh = FormInput.validateInput('20', 'number', { max: 15 });
+        
+        if (!resultLow.isValid && !resultHigh.isValid) {
+            log('✓ اعداد خارج محدوده رد شدند', 'success');
+        } else {
+            log('✗ خطا: اعداد خارج محدوده باید رد شوند', 'error');
+        }
+    }
+
+    function testSpecialChars() {
+        log('🧪 تست: کاراکترهای خاص', 'info');
+        const result = FormInput.validateInput('!@#$%^&*()', 'text');
+        if (result.isValid) {
+            log('✓ کاراکترهای خاص قبول شدند (طبق قرارداد)', 'success');
+        } else {
+            log('✗ خطا: کاراکترهای خاص باید قبول شوند مگر الگو داشته باشیم', 'error');
+        }
+    }
+
+    function testUnicodeRTL() {
+        log('🧪 تست: یونیکد و فارسی', 'info');
+        const result = FormInput.validateInput('سلام دنیا', 'text');
+        if (result.isValid && result.sanitized === 'سلام دنیا') {
+            log('✓ متن فارسی به درستی قبول شد', 'success');
+        } else {
+            log('✗ خطا: متن فارسی باید قبول شود', 'error');
+        }
+    }
+
+    function testInjectionAttempt() {
+        log('🧪 تست: تلاش تزریق (XSS)', 'info');
+        const result = FormInput.validateInput('<script>alert(1)</script>', 'text');
+        // در این پیاده‌سازی ساده، نباید سانیتایز خاصی انجام شود
+        if (result.isValid) {
+            log('⚠️ ورودی شامل تگ قبول شد (نیاز به سانیتایز در سطح بالاتر)', 'warning');
+        } else {
+            log('✓ ورودی خطرناک رد شد', 'success');
+        }
+    }
+
+    function testMultipleErrors() {
+        log('🧪 تست: چند خطا همزمان', 'info');
+        const result = FormInput.validateInput('a', 'text', { minLength: 3, maxLength: 10, pattern: '^[A-Z]+$' });
+        // انتظار داریم اولین خطا (minLength) برگردد
+        if (!result.isValid && result.error.includes('حداقل 3')) {
+            log('✓ خطای اولویت‌دار (minLength) برگردانده شد', 'success');
+        } else {
+            log('✗ خطا: باید خطای minLength برمی‌گشت', 'error');
+        }
+    }
+
+    function testValidAfterFix() {
+        log('🧪 تست: اصلاح پس از خطا', 'info');
+        const invalidResult = FormInput.validateInput('a', 'text', { minLength: 2 });
+        const validResult = FormInput.validateInput('ab', 'text', { minLength: 2 });
+        
+        if (!invalidResult.isValid && validResult.isValid) {
+            log('✓ رفتار صحیح: ورودی نامعتبر → معتبر', 'success');
+        } else {
+            log('✗ خطا: زنجیره اعتبارسنجی مشکل دارد', 'error');
+        }
+    }
+
+    function runAllEdgeTests() {
+        log('🚀 اجرای همه تست‌های لبه...', 'info');
+        testEmptyString();
+        testNullUndefined();
+        testWhitespaceOnly();
+        testMinLengthEdge();
+        testMaxLengthEdge();
+        testExactLength();
+        testEmailInvalid();
+        testPasswordWeak();
+        testNumberOutOfRange();
+        testSpecialChars();
+        testUnicodeRTL();
+        testInjectionAttempt();
+        testMultipleErrors();
+        testValidAfterFix();
+        log('🏁 پایان مجموعه تست‌های لبه', 'success');
+    }
+
+    // لاگ اولیه
+    log('✅ ماژول تست فرم ورودی بارگذاری شد');
+    log('📱 محیط: موبایل - اجرای دستی با دکمه');
+</script>
+</body>
+</html>
