@@ -157,10 +157,19 @@
             color: #e74c3c;
             font-weight: bold;
         }
+        .fixed-badge {
+            background: #f1c40f;
+            color: #000;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 0.7rem;
+            font-weight: bold;
+            margin-right: 5px;
+        }
     </style>
 </head>
 <body>
-    <h1>🧪 تست یکپارچگی Offline Manager</h1>
+    <h1>🧪 تست یکپارچگی Offline Manager <span class="fixed-badge">رفع خطا شده</span></h1>
     <div class="test-container">
         <div style="display: flex; justify-content: space-between; align-items: center;">
             <h2>مدیریت وضعیت آفلاین/آنلاین</h2>
@@ -170,6 +179,7 @@
         <div class="button-group">
             <button class="btn-primary" onclick="runAllTests()">▶ اجرای همه تست‌ها</button>
             <button class="btn-warning" onclick="clearLogs()">🗑 پاک کردن لاگ</button>
+            <button class="btn-success" onclick="resetEnvironment()">🔄 ریست محیط تست</button>
         </div>
 
         <hr>
@@ -186,10 +196,15 @@
             <button class="btn-danger" onclick="simulateOffline()">📴 آفلاین</button>
         </div>
 
-        <h3>💾 ۲. ذخیره و بازیابی عملیات آفلاین</h3>
+        <h3>💾 ۲. ذخیره و بازیابی عملیات آفلاین (رفع شده)</h3>
         <div class="test-row">
             <span class="test-label">عملیات:</span>
-            <button class="btn-primary" onclick="testAddOfflineOperation('save_lesson', {id: 1, name: 'درس ۱'})">➕ افزودن عملیات</button>
+            <button class="btn-primary" onclick="testAddOfflineOperationFixed('save_lesson', {id: 1, name: 'درس ۱'})">➕ افزودن درس</button>
+            <button class="btn-primary" onclick="testAddOfflineOperationFixed('save_progress', {lessonId: 1, score: 80})">📊 افزودن پیشرفت</button>
+            <button class="btn-primary" onclick="testAddOfflineOperationFixed('save_achievement', {type: 'gold'})">🏆 افزودن دستاورد</button>
+        </div>
+        <div class="test-row">
+            <span class="test-label">مدیریت:</span>
             <button class="btn-primary" onclick="testGetPendingOperations()">📋 نمایش عملیات در انتظار</button>
             <button class="btn-success" onclick="testProcessPendingOperations()">⚙ پردازش عملیات</button>
         </div>
@@ -240,7 +255,7 @@
         </div>
 
         <div id="logContainer" class="log-container">
-            <div class="log-entry log-info">🤖 آماده اجرای تست‌ها...</div>
+            <div class="log-entry log-info">🤖 آماده اجرای تست‌ها (نسخه رفع خطا شده)...</div>
         </div>
     </div>
 
@@ -332,15 +347,16 @@
                 };
             }
 
-            async addOfflineOperation(type, data) {
+            // ✅ متد اصلاح شده - حالا operation را برمی‌گرداند
+            addOfflineOperation(type, data) {
                 const operation = this.db.saveOfflineOperation(type, data);
                 this.log(`💾 عملیات آفلاین ذخیره شد: ${type} (${operation.id})`);
                 
                 if (this.isOnline && this.autoSyncEnabled && !this.syncInProgress) {
-                    await this.processPendingOperations();
+                    this.processPendingOperations();
                 }
                 
-                return operation;
+                return operation; // این خط برای برگرداندن عملیات ضروری است
             }
 
             async processPendingOperations() {
@@ -573,6 +589,12 @@
             updateNetworkBadge();
         }
 
+        function resetEnvironment() {
+            initTest();
+            TestFramework.reset();
+            TestFramework.log('🔄 محیط تست ریست شد', 'info');
+        }
+
         function updateNetworkBadge() {
             const badge = document.getElementById('networkStatusBadge');
             if (offlineManager && offlineManager.isOnline) {
@@ -624,19 +646,24 @@
             }
         }
 
-        // ---------- تست‌های عملیات آفلاین ----------
-        function testAddOfflineOperation(type, data) {
+        // ---------- تست‌های عملیات آفلاین (رفع شده) ----------
+        function testAddOfflineOperationFixed(type, data) {
             TestFramework.log(`➕ افزودن عملیات آفلاین: ${type}`, 'info');
             
             const beforeCount = offlineManager.getQueueLength();
+            
+            // ✅ اینبار operation را دریافت می‌کنیم
             const operation = offlineManager.addOfflineOperation(type, data);
             
+            // ✅ تست‌های اصلاح شده - operation تعریف شده است
             TestFramework.assertDefined(operation, 'عملیات ساخته شد');
-            TestFramework.assertEqual(operation.type, type, 'نوع عملیات صحیح است');
+            TestFramework.assertEqual(operation.type, type, `نوع عملیات صحیح است (${operation.type} === ${type})`);
             TestFramework.assertEqual(operation.status, 'pending', 'وضعیت عملیات pending است');
             
             const afterCount = offlineManager.getQueueLength();
-            TestFramework.assertEqual(afterCount, beforeCount + 1, 'تعداد عملیات افزایش یافت');
+            TestFramework.assertEqual(afterCount, beforeCount + 1, `تعداد عملیات افزایش یافت (${afterCount} === ${beforeCount + 1})`);
+            
+            return operation;
         }
 
         function testGetPendingOperations() {
@@ -718,7 +745,7 @@
             const op = offlineManager.addOfflineOperation('error_test', { shouldFail: true });
             
             // شبیه‌سازی خطا
-            op.retryCount = 3; // forcing failure
+            op.retryCount = 3;
             offlineManager.db.updateOperationStatus(op.id, 'failed');
             
             TestFramework.assertEqual(op.status, 'failed', 'وضعیت عملیات به failed تغییر کرد');
@@ -790,10 +817,10 @@
             // 1. شبیه‌سازی آفلاین
             simulateOffline();
             
-            // 2. افزودن چند عملیات
-            testAddOfflineOperation('save_lesson', { id: 1, name: 'درس ۱' });
-            testAddOfflineOperation('save_progress', { lessonId: 1, score: 80 });
-            testAddOfflineOperation('save_achievement', { type: 'gold', name: 'دستاورد طلایی' });
+            // 2. افزودن چند عملیات (با متد اصلاح شده)
+            testAddOfflineOperationFixed('save_lesson', { id: 1, name: 'درس ۱' });
+            testAddOfflineOperationFixed('save_progress', { lessonId: 1, score: 80 });
+            testAddOfflineOperationFixed('save_achievement', { type: 'gold', name: 'دستاورد طلایی' });
             
             // 3. بررسی وضعیت
             testGetPendingOperations();
@@ -806,7 +833,7 @@
                 testGetStats();
                 testGetPendingOperations();
                 TestFramework.log('✅ سناریوی آفلاین کامل شد', 'success');
-            }, 1000);
+            }, 1500);
         }
 
         // ---------- اجرای همه تست‌ها ----------
@@ -820,9 +847,9 @@
             // تست‌های مدیریت وضعیت
             testGetCurrentStatus();
             
-            // تست‌های عملیات آفلاین
-            testAddOfflineOperation('test_type', { sample: 'data' });
-            testAddOfflineOperation('another_type', { value: 123 });
+            // تست‌های عملیات آفلاین (رفع شده)
+            testAddOfflineOperationFixed('test_type', { sample: 'data' });
+            testAddOfflineOperationFixed('another_type', { value: 123 });
             testGetPendingOperations();
             
             // تست‌های همگام‌سازی
@@ -835,7 +862,7 @@
             
             // تست‌های مدیریت خطا
             simulateOffline();
-            testAddOfflineOperation('offline_op', { id: 999 });
+            testAddOfflineOperationFixed('offline_op', { id: 999 });
             simulateOnline();
             
             // سناریوی کامل
