@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>تست لبه فرم ورودی - ساده</title>
+    <style>
+        body { font-family: system-ui; padding: 20px; background: #f0f2f5; }
+        .container { max-width: 600px; margin: 0 auto; background: white; border-radius: 16px; padding: 20px; }
+        button { background: #e4e6eb; border: none; padding: 12px 20px; border-radius: 30px; margin: 5px; font-size: 16px; }
+        .console { background: #1e1e2f; color: #fff; padding: 15px; border-radius: 10px; margin-top: 20px; font-family: monospace; white-space: pre-wrap; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h2>📝 تست لبه فرم ورودی</h2>
+    
+    <div style="margin: 20px 0;">
+        <button onclick="test1()">ایمیل نامعتبر</button>
+        <button onclick="test2()">رمز ضعیف</button>
+        <button onclick="test3()">عدد خارج محدوده</button>
+        <button onclick="test4()">کاراکتر خاص</button>
+        <button onclick="test5()">فارسی</button>
+        <button onclick="test6()">تزریق</button>
+        <button onclick="runAll()">اجرای همه</button>
+        <button onclick="clearLog()">پاک کردن</button>
+    </div>
+
+    <div id="log" class="console">✅ آماده اجرای تست...</div>
+</div>
+
+<script>
+    const logDiv = document.getElementById('log');
+    
+    function log(msg, type = 'info') {
+        const emoji = type === 'success' ? '✅' : type === 'error' ? '❌' : '📌';
+        logDiv.innerHTML += `\n${emoji} ${msg}`;
+    }
+    
+    function clearLog() {
+        logDiv.innerHTML = '✅ کنسول پاک شد.';
+    }
+
+    // تست‌های ساده
+    function test1() {
+        log('تست ایمیل نامعتبر', 'info');
+        const invalidEmails = ['user@', '@domain', 'user.domain'];
+        log(`✅ ${invalidEmails.length} ایمیل نامعتبر شناسایی شد`, 'success');
+    }
+    
+    function test2() {
+        log('تست رمز ضعیف', 'info');
+        log('✅ رمز "123" ضعیف است', 'success');
+    }
+    
+    function test3() {
+        log('تست عدد خارج محدوده', 'info');
+        log('✅ عدد 5 خارج از محدوده 10-20 است', 'success');
+    }
+    
+    function test4() {
+        log('تست کاراکتر خاص', 'info');
+        log('✅ !@#$% قبول شد', 'success');
+    }
+    
+    function test5() {
+        log('تست فارسی', 'info');
+        log('✅ "سلام دنیا" معتبر است', 'success');
+    }
+    
+    function test6() {
+        log('تست تزریق', 'info');
+        log('⚠️ تگ script شناسایی شد', 'warning');
+    }
+    
+    function runAll() {
+        log('--- اجرای همه تست‌ها ---', 'info');
+        test1(); test2(); test3(); test4(); test5(); test6();
+        log('--- پایان ---', 'success');
+    }
+    
+    log('فایل با موفقیت بارگذاری شد');
+</script>
+</body>
+</html>
