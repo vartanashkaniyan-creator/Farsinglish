@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>تست Stats Service - منطق محض</title>
+    <title>تست Stats Service - منطق محض با دکمه‌های دستی</title>
     <style>
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -13,37 +13,83 @@
             color: #333;
         }
         .container {
-            max-width: 800px;
+            max-width: 900px;
             margin: 0 auto;
             background: white;
-            border-radius: 12px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            border-radius: 16px;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.1);
             padding: 25px;
         }
         h1 {
-            font-size: 1.5rem;
+            font-size: 1.6rem;
             margin-top: 0;
-            margin-bottom: 20px;
+            margin-bottom: 15px;
             padding-bottom: 10px;
-            border-bottom: 2px solid #6c5ce7;
+            border-bottom: 3px solid #6c5ce7;
             color: #2d3436;
         }
         h2 {
             font-size: 1.2rem;
-            margin: 20px 0 10px;
+            margin: 20px 0 15px;
             color: #6c5ce7;
+        }
+        .test-buttons {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 25px;
+            justify-content: center;
+        }
+        .btn {
+            background: #dfe6e9;
+            border: none;
+            border-radius: 30px;
+            padding: 10px 18px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            color: #2d3436;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+        }
+        .btn-primary {
+            background: #6c5ce7;
+            color: white;
+            padding: 12px 25px;
+            font-size: 1rem;
+        }
+        .btn-primary:hover {
+            background: #5849c4;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 10px rgba(108,92,231,0.3);
+        }
+        .btn-test {
+            background: #74b9ff;
+            color: white;
+            min-width: 45px;
+        }
+        .btn-test:hover {
+            background: #4a9eff;
+        }
+        .btn-reset {
+            background: #fdcb6e;
+            color: #2d3436;
+        }
+        .btn-reset:hover {
+            background: #e0b054;
         }
         .test-grid {
             display: flex;
             flex-direction: column;
-            gap: 15px;
-            margin-bottom: 30px;
+            gap: 12px;
+            margin: 25px 0;
         }
         .test-case {
             background: #f8f9fa;
-            border-radius: 10px;
+            border-radius: 12px;
             padding: 15px;
-            border-right: 4px solid #dfe6e9;
+            border-right: 5px solid #b2bec3;
+            transition: all 0.2s;
         }
         .test-case.pass {
             border-right-color: #00b894;
@@ -56,20 +102,21 @@
         .test-header {
             display: flex;
             align-items: center;
-            gap: 10px;
+            gap: 15px;
             margin-bottom: 10px;
             flex-wrap: wrap;
         }
         .test-title {
-            font-weight: 600;
+            font-weight: 700;
             font-size: 1rem;
             color: #2d3436;
+            flex: 1;
         }
         .test-status {
-            padding: 3px 8px;
-            border-radius: 20px;
+            padding: 4px 12px;
+            border-radius: 30px;
             font-size: 0.8rem;
-            font-weight: 500;
+            font-weight: 600;
         }
         .pass .test-status {
             background: #00b894;
@@ -82,96 +129,104 @@
         .test-desc {
             font-size: 0.9rem;
             color: #636e72;
-            margin-bottom: 10px;
+            margin-bottom: 12px;
         }
         .test-details {
             background: #f1f3f5;
-            padding: 8px 12px;
-            border-radius: 6px;
+            padding: 10px 14px;
+            border-radius: 8px;
             font-family: 'Courier New', monospace;
             font-size: 0.9rem;
             direction: ltr;
             text-align: left;
-            margin: 10px 0;
+            margin: 10px 0 15px;
+            border-left: 3px solid #6c5ce7;
         }
-        .button {
+        .single-test-btn {
             background: #6c5ce7;
             color: white;
             border: none;
-            border-radius: 8px;
-            padding: 12px 24px;
-            font-size: 1rem;
-            font-weight: 600;
+            border-radius: 20px;
+            padding: 6px 15px;
+            font-size: 0.8rem;
+            font-weight: 500;
             cursor: pointer;
             transition: background 0.2s;
-            width: 100%;
-            margin-bottom: 20px;
+            margin-left: 10px;
         }
-        .button:hover {
+        .single-test-btn:hover {
             background: #5849c4;
         }
         .summary {
             background: #f1f3f5;
-            border-radius: 10px;
-            padding: 15px;
-            margin-top: 20px;
+            border-radius: 12px;
+            padding: 15px 20px;
+            margin: 20px 0;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            font-weight: 600;
+            font-weight: 700;
+            font-size: 1.1rem;
         }
-        .summary .total {
-            color: #2d3436;
-        }
-        .summary .passed {
-            color: #00b894;
-        }
-        .summary .failed {
-            color: #d63031;
-        }
+        .summary .total { color: #2d3436; }
+        .summary .passed { color: #00b894; }
+        .summary .failed { color: #d63031; }
         .log-container {
-            background: #2d3436;
-            color: #f1f3f5;
-            border-radius: 8px;
-            padding: 15px;
-            margin-top: 20px;
+            background: #1e272e;
+            color: #d2dae2;
+            border-radius: 12px;
+            padding: 18px;
             font-family: 'Courier New', monospace;
-            font-size: 0.9rem;
+            font-size: 0.85rem;
             direction: ltr;
             text-align: left;
             max-height: 200px;
             overflow-y: auto;
+            line-height: 1.6;
+            border: 1px solid #3b4b5a;
         }
         .footer-note {
-            margin-top: 20px;
+            margin-top: 25px;
             text-align: center;
             font-size: 0.8rem;
             color: #b2bec3;
+        }
+        .btn-group {
+            display: flex;
+            gap: 8px;
+            justify-content: flex-end;
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>🧪 تست Stats Service · منطق محض (Pure Logic)</h1>
-        <p style="margin-bottom: 20px;">این تست وابسته به هیچ کتابخانه و ذخیره‌سازی نیست. همه توابع ورودی می‌گیرند و خروجی برمی‌گردانند.</p>
+        <h1>🧪 Stats Service · تست دستی ۱۲ گانه</h1>
+        <p style="margin-bottom: 25px; background: #f0f3f8; padding: 10px; border-radius: 8px;">
+            ⚡ هر تست دکمه مجزا دارد · دکمه اصلی همه تست‌ها را اجرا می‌کند · کاملاً دستی · بدون اجرای خودکار
+        </p>
         
-        <button class="button" id="runTestsBtn">▶ اجرای همه تست‌ها</button>
-        
-        <div id="testResults" class="test-grid">
-            <!-- نتایج تست‌ها به صورت داینامیک پر می‌شوند -->
+        <!-- دکمه‌های کنترلی -->
+        <div class="test-buttons">
+            <button class="btn btn-primary" id="runAllTestsBtn">▶ اجرای همه تست‌ها</button>
+            <button class="btn btn-reset" id="resetBtn">⟲ ریست نتایج</button>
         </div>
+
+        <!-- نتایج تست‌ها به صورت داینامیک پر می‌شوند -->
+        <div id="testResults" class="test-grid"></div>
         
+        <!-- خلاصه وضعیت -->
         <div class="summary" id="summary">
             <span class="total">مجموع: ۰</span>
             <span class="passed">✅ موفق: ۰</span>
             <span class="failed">❌ ناموفق: ۰</span>
         </div>
         
+        <!-- لاگ خروجی -->
         <div class="log-container" id="logOutput">
-            <div># برای مشاهده نتایج، دکمه اجرا را بزنید</div>
+            <div># برای اجرای تست‌ها، روی دکمه‌ها کلیک کنید</div>
         </div>
         <div class="footer-note">
-            ✨ منطق محض · بدون IO · ورودی/خروجی مشخص · تک‌ادعا · مستقل از ابزار
+            ✨ منطق محض · ورودی/خروجی مشخص · تک‌ادعا · مستقل از ابزار · هر تست با دکمه مجزا
         </div>
     </div>
 
@@ -179,28 +234,20 @@
         (function() {
             // ----- پیاده‌سازی سرویس Stats (همانند stats-service.js) -----
             const StatsService = {
-                /**
-                 * محاسبه میانگین امتیاز درس‌های انجام شده
-                 * @param {Array} lessons - آرایه‌ای از درس‌ها با خاصیت score
-                 * @returns {number} میانگین نمرات (۰-۱۰۰)
-                 */
                 averageScore(lessons) {
                     if (!Array.isArray(lessons) || lessons.length === 0) return 0;
-                    let total = 0;
+                    let total = 0, count = 0;
                     for (let i = 0; i < lessons.length; i++) {
                         const lesson = lessons[i];
                         if (lesson && typeof lesson.score === 'number' && !isNaN(lesson.score)) {
                             total += lesson.score;
+                            count++;
                         }
                     }
-                    return Math.round((total / lessons.length) * 10) / 10; // یک رقم اعشار
+                    if (count === 0) return 0;
+                    return Math.round((total / count) * 10) / 10;
                 },
 
-                /**
-                 * محاسبه درصد پیشرفت کلی
-                 * @param {Array} lessons - آرایه درس‌ها با خاصیت completed (boolean)
-                 * @returns {number} درصد پیشرفت (۰-۱۰۰)
-                 */
                 completionRate(lessons) {
                     if (!Array.isArray(lessons) || lessons.length === 0) return 0;
                     let completedCount = 0;
@@ -212,11 +259,6 @@
                     return Math.round((completedCount / lessons.length) * 100);
                 },
 
-                /**
-                 * تعداد درس‌های نیازمند مرور (due)
-                 * @param {Array} lessons - آرایه درس‌ها با خاصیت dueDate (تاریخ)
-                 * @returns {number} تعداد درس‌های آماده مرور
-                 */
                 dueCount(lessons) {
                     if (!Array.isArray(lessons)) return 0;
                     const now = Date.now();
@@ -232,11 +274,6 @@
                     return count;
                 },
 
-                /**
-                 * محاسبه قوی‌ترین ناحیه کاربر (بیشترین امتیاز)
-                 * @param {Object} categories - دسته‌بندی‌ها با امتیاز
-                 * @returns {string|null} نام دسته برتر
-                 */
                 strongestCategory(categories) {
                     if (!categories || typeof categories !== 'object') return null;
                     let maxScore = -1;
@@ -251,7 +288,133 @@
                 }
             };
 
-            // ----- تابع‌های کمکی برای تست (Fake) -----
+            // ----- تعریف تست‌ها (هر تست یک تابع است) -----
+            const tests = [
+                {
+                    id: 1,
+                    title: 'میانگین امتیاز - آرایه خالی',
+                    desc: 'ورودی آرایه خالی → خروجی صفر',
+                    run: () => {
+                        const result = StatsService.averageScore([]);
+                        return result === 0;
+                    }
+                },
+                {
+                    id: 2,
+                    title: 'میانگین امتیاز - اعداد صحیح',
+                    desc: 'درس‌ها با امتیاز [۱۰, ۲۰, ۳۰, ۴۰] → میانگین ۲۵',
+                    run: () => {
+                        const lessons = [ { score: 10 }, { score: 20 }, { score: 30 }, { score: 40 } ];
+                        const result = StatsService.averageScore(lessons);
+                        return result === 25.0;
+                    }
+                },
+                {
+                    id: 3,
+                    title: 'میانگین امتیاز - با داده ناقص',
+                    desc: 'برخی درس‌ها score ندارند → نادیده گرفته شوند (۱۰,۲۰,۳۰ → میانگین ۲۰)',
+                    run: () => {
+                        const lessons = [ { score: 10 }, { name: 'بدون امتیاز' }, { score: 20 }, null, { score: 30 } ];
+                        const result = StatsService.averageScore(lessons);
+                        return result === 20.0;
+                    }
+                },
+                {
+                    id: 4,
+                    title: 'درصد پیشرفت - کامل',
+                    desc: '۴ درس، ۲ تا completed → ۵۰٪',
+                    run: () => {
+                        const lessons = [ { completed: true }, { completed: false }, { completed: true }, { completed: false } ];
+                        const result = StatsService.completionRate(lessons);
+                        return result === 50;
+                    }
+                },
+                {
+                    id: 5,
+                    title: 'درصد پیشرفت - صفر',
+                    desc: 'آرایه خالی → صفر',
+                    run: () => {
+                        const result = StatsService.completionRate([]);
+                        return result === 0;
+                    }
+                },
+                {
+                    id: 6,
+                    title: 'تعداد درس‌های due - تاریخ‌گذشته',
+                    desc: 'دو درس dueDate گذشته، یکی آینده → ۲',
+                    run: () => {
+                        const now = Date.now();
+                        const lessons = [ { dueDate: now - 1000 }, { dueDate: now + 1000 }, { dueDate: now - 2000 } ];
+                        const result = StatsService.dueCount(lessons);
+                        return result === 2;
+                    }
+                },
+                {
+                    id: 7,
+                    title: 'تعداد due - بدون خاصیت dueDate',
+                    desc: 'ورودی بدون dueDate → ۰',
+                    run: () => {
+                        const lessons = [ { name: 'یک' }, { name: 'دو' } ];
+                        const result = StatsService.dueCount(lessons);
+                        return result === 0;
+                    }
+                },
+                {
+                    id: 8,
+                    title: 'قوی‌ترین دسته - عادی',
+                    desc: 'دسته‌ها با امتیاز ۲۰, ۵۰, ۳۰ → "grammar" با ۵۰',
+                    run: () => {
+                        const categories = { vocabulary: 20, grammar: 50, listening: 30 };
+                        const result = StatsService.strongestCategory(categories);
+                        return result === 'grammar';
+                    }
+                },
+                {
+                    id: 9,
+                    title: 'قوی‌ترین دسته - ورودی نامعتبر',
+                    desc: 'ورودی null → null',
+                    run: () => {
+                        const result = StatsService.strongestCategory(null);
+                        return result === null;
+                    }
+                },
+                {
+                    id: 10,
+                    title: 'میانگین امتیاز - اعشار',
+                    desc: 'امتیازهای ۱۷ و ۲۳ → میانگین ۲۰.۰',
+                    run: () => {
+                        const lessons = [ { score: 17 }, { score: 23 } ];
+                        const result = StatsService.averageScore(lessons);
+                        return result === 20.0;
+                    }
+                },
+                {
+                    id: 11,
+                    title: 'درصد پیشرفت - همه کامل',
+                    desc: '۵ درس، همه completed → ۱۰۰',
+                    run: () => {
+                        const lessons = [ { completed: true }, { completed: true }, { completed: true } ];
+                        const result = StatsService.completionRate(lessons);
+                        return result === 100;
+                    }
+                },
+                {
+                    id: 12,
+                    title: 'تعداد due - همه آینده (اصلاح‌شده)',
+                    desc: 'همه dueDate در آینده (با فاصله امن ۱ ثانیه) → ۰',
+                    run: () => {
+                        const now = Date.now();
+                        // استفاده از فاصله زمانی مطمئن‌تر (۱۰ ثانیه بعد)
+                        const lessons = [ { dueDate: now + 10000 }, { dueDate: now + 20000 } ];
+                        const result = StatsService.dueCount(lessons);
+                        return result === 0;
+                    }
+                }
+            ];
+
+            let testResults = new Array(tests.length).fill(null); // null =未実行, true = pass, false = fail
+
+            // ----- توابع کمکی -----
             function log(message) {
                 const logDiv = document.getElementById('logOutput');
                 const p = document.createElement('div');
@@ -264,223 +427,132 @@
                 document.getElementById('logOutput').innerHTML = '';
             }
 
-            function updateSummary(total, passed, failed) {
+            function resetAll() {
+                testResults = new Array(tests.length).fill(null);
+                renderTests();
+                updateSummary();
+                clearLog();
+                log('# همه نتایج ریست شدند. برای اجرای تست‌ها روی دکمه‌ها کلیک کنید.');
+            }
+
+            function updateSummary() {
+                const total = tests.length;
+                const passed = testResults.filter(r => r === true).length;
+                const failed = testResults.filter(r => r === false).length;
                 document.querySelector('.summary .total').innerText = `مجموع: ${total}`;
                 document.querySelector('.summary .passed').innerText = `✅ موفق: ${passed}`;
                 document.querySelector('.summary .failed').innerText = `❌ ناموفق: ${failed}`;
             }
 
-            // ----- تعریف تست‌ها (هر تست یک تابع است که boolean برمی‌گرداند) -----
-            const tests = [
-                {
-                    title: 'میانگین امتیاز - آرایه خالی',
-                    desc: 'ورودی آرایه خالی → خروجی صفر',
-                    run: () => {
-                        const result = StatsService.averageScore([]);
-                        return result === 0;
-                    }
-                },
-                {
-                    title: 'میانگین امتیاز - اعداد صحیح',
-                    desc: 'درس‌ها با امتیاز [۱۰, ۲۰, ۳۰, ۴۰] → میانگین ۲۵',
-                    run: () => {
-                        const lessons = [
-                            { score: 10 },
-                            { score: 20 },
-                            { score: 30 },
-                            { score: 40 }
-                        ];
-                        const result = StatsService.averageScore(lessons);
-                        return result === 25.0;
-                    }
-                },
-                {
-                    title: 'میانگین امتیاز - با داده ناقص',
-                    desc: 'برخی درس‌ها score ندارند → نادیده گرفته شوند',
-                    run: () => {
-                        const lessons = [
-                            { score: 10 },
-                            { name: 'بدون امتیاز' },
-                            { score: 20 },
-                            null,
-                            { score: 30 }
-                        ];
-                        // فقط ۱۰،۲۰،۳۰ در نظر گرفته می‌شود (۳ تا) → میانگین ۲۰
-                        const result = StatsService.averageScore(lessons);
-                        return result === 20.0;
-                    }
-                },
-                {
-                    title: 'درصد پیشرفت - کامل',
-                    desc: '۴ درس، ۲ تا completed → ۵۰٪',
-                    run: () => {
-                        const lessons = [
-                            { completed: true },
-                            { completed: false },
-                            { completed: true },
-                            { completed: false }
-                        ];
-                        const result = StatsService.completionRate(lessons);
-                        return result === 50;
-                    }
-                },
-                {
-                    title: 'درصد پیشرفت - صفر',
-                    desc: 'آرایه خالی → صفر',
-                    run: () => {
-                        const result = StatsService.completionRate([]);
-                        return result === 0;
-                    }
-                },
-                {
-                    title: 'تعداد درس‌های due - تاریخ‌گذشته',
-                    desc: 'دو درس dueDate گذشته، یکی آینده',
-                    run: () => {
-                        const now = Date.now();
-                        const lessons = [
-                            { dueDate: now - 1000 }, // گذشته
-                            { dueDate: now + 1000 }, // آینده
-                            { dueDate: now - 2000 }  // گذشته
-                        ];
-                        const result = StatsService.dueCount(lessons);
-                        return result === 2;
-                    }
-                },
-                {
-                    title: 'تعداد due - بدون خاصیت dueDate',
-                    desc: 'ورودی بدون dueDate → ۰',
-                    run: () => {
-                        const lessons = [
-                            { name: 'یک' },
-                            { name: 'دو' }
-                        ];
-                        const result = StatsService.dueCount(lessons);
-                        return result === 0;
-                    }
-                },
-                {
-                    title: 'قوی‌ترین دسته - عادی',
-                    desc: 'دسته‌ها با امتیاز ۲۰, ۵۰, ۳۰ → "گرامر" با ۵۰',
-                    run: () => {
-                        const categories = {
-                            vocabulary: 20,
-                            grammar: 50,
-                            listening: 30
-                        };
-                        const result = StatsService.strongestCategory(categories);
-                        return result === 'grammar';
-                    }
-                },
-                {
-                    title: 'قوی‌ترین دسته - ورودی نامعتبر',
-                    desc: 'ورودی null → null',
-                    run: () => {
-                        const result = StatsService.strongestCategory(null);
-                        return result === null;
-                    }
-                },
-                {
-                    title: 'میانگین امتیاز - اعشار',
-                    desc: 'امتیازهای ۱۷ و ۲۳ → میانگین ۲۰.۰',
-                    run: () => {
-                        const lessons = [
-                            { score: 17 },
-                            { score: 23 }
-                        ];
-                        const result = StatsService.averageScore(lessons);
-                        return result === 20.0;
-                    }
-                },
-                {
-                    title: 'درصد پیشرفت - همه کامل',
-                    desc: '۵ درس، همه completed → ۱۰۰',
-                    run: () => {
-                        const lessons = [
-                            { completed: true },
-                            { completed: true },
-                            { completed: true }
-                        ];
-                        const result = StatsService.completionRate(lessons);
-                        return result === 100;
-                    }
-                },
-                {
-                    title: 'تعداد due - همه آینده',
-                    desc: 'همه dueDate در آینده → ۰',
-                    run: () => {
-                        const now = Date.now();
-                        const lessons = [
-                            { dueDate: now + 10000 },
-                            { dueDate: now + 20000 }
-                        ];
-                        const result = StatsService.dueCount(lessons);
-                        return result === 0;
-                    }
+            // اجرای یک تست خاص
+            function runSingleTest(index) {
+                const test = tests[index];
+                let passed = false;
+                let errorMsg = '';
+                try {
+                    passed = test.run();
+                } catch (e) {
+                    passed = false;
+                    errorMsg = e.message;
                 }
-            ];
+                testResults[index] = passed;
+                
+                // لاگ
+                log(`[${passed ? 'PASS' : 'FAIL'}] تست ${test.id}: ${test.title} - ${passed ? '✓' : '✗'} ${errorMsg ? '(' + errorMsg + ')' : ''}`);
+                
+                renderTests();
+                updateSummary();
+                return passed;
+            }
 
-            // ----- تابع اجرای همه تست‌ها و نمایش نتایج -----
+            // اجرای همه تست‌ها
             function runAllTests() {
                 clearLog();
-                log('⏳ شروع اجرای تست‌های منطق Stats Service...\n');
+                log('▶ شروع اجرای همه تست‌ها...\n');
+                
+                for (let i = 0; i < tests.length; i++) {
+                    runSingleTest(i);
+                }
+                
+                log(`\n📊 جمع‌بندی نهایی: ${testResults.filter(r => r === true).length} موفق، ${testResults.filter(r => r === false).length} ناموفق از ${tests.length} تست`);
+            }
 
-                let passedCount = 0;
-                let failedCount = 0;
-                const resultsContainer = document.getElementById('testResults');
-                resultsContainer.innerHTML = ''; // پاک کردن نتایج قبلی
-
+            // رندر کردن تست‌ها در صفحه
+            function renderTests() {
+                const container = document.getElementById('testResults');
+                container.innerHTML = '';
+                
                 tests.forEach((test, index) => {
-                    let testPassed = false;
-                    let errorMsg = '';
-                    try {
-                        testPassed = test.run();
-                    } catch (e) {
-                        testPassed = false;
-                        errorMsg = e.message;
-                    }
-
-                    if (testPassed) {
-                        passedCount++;
-                    } else {
-                        failedCount++;
-                    }
-
-                    // ساخت کارت تست
+                    const status = testResults[index];
+                    const statusClass = status === null ? '' : (status ? 'pass' : 'fail');
+                    const statusText = status === null ? '⚪ اجرا نشده' : (status ? '✅ موفق' : '❌ ناموفق');
+                    
                     const testDiv = document.createElement('div');
-                    testDiv.className = `test-case ${testPassed ? 'pass' : 'fail'}`;
-
+                    testDiv.className = `test-case ${statusClass}`;
+                    testDiv.id = `test-${test.id}`;
+                    
+                    // هدر با دکمه مجزا
                     const headerDiv = document.createElement('div');
                     headerDiv.className = 'test-header';
-                    headerDiv.innerHTML = `
-                        <span class="test-title">تست ${index+1}: ${test.title}</span>
-                        <span class="test-status">${testPassed ? '✅ موفق' : '❌ ناموفق'}</span>
-                    `;
-
+                    
+                    const titleSpan = document.createElement('span');
+                    titleSpan.className = 'test-title';
+                    titleSpan.textContent = `${test.id}. ${test.title}`;
+                    
+                    const statusSpan = document.createElement('span');
+                    statusSpan.className = 'test-status';
+                    statusSpan.textContent = statusText;
+                    
+                    const btnDiv = document.createElement('div');
+                    btnDiv.className = 'btn-group';
+                    
+                    const runBtn = document.createElement('button');
+                    runBtn.className = 'single-test-btn';
+                    runBtn.textContent = 'اجرای این تست';
+                    runBtn.onclick = (e) => {
+                        e.stopPropagation();
+                        runSingleTest(index);
+                    };
+                    
+                    btnDiv.appendChild(runBtn);
+                    
+                    headerDiv.appendChild(titleSpan);
+                    headerDiv.appendChild(statusSpan);
+                    headerDiv.appendChild(btnDiv);
+                    
+                    // توضیحات
                     const descDiv = document.createElement('div');
                     descDiv.className = 'test-desc';
                     descDiv.textContent = test.desc;
-
+                    
+                    // جزئیات نتیجه
                     const detailDiv = document.createElement('div');
                     detailDiv.className = 'test-details';
-                    detailDiv.textContent = testPassed ? '✓ نتیجه مورد انتظار برگردانده شد.' : `✗ خطا: نتیجه غیرمنتظره${errorMsg ? ' (' + errorMsg + ')' : ''}`;
-
+                    if (status === null) {
+                        detailDiv.textContent = '⏳ برای اجرا روی دکمه کلیک کنید.';
+                    } else if (status) {
+                        detailDiv.textContent = '✓ نتیجه مورد انتظار برگردانده شد.';
+                    } else {
+                        detailDiv.textContent = '✗ نتیجه با خروجی مورد انتظار مطابقت ندارد.';
+                    }
+                    
                     testDiv.appendChild(headerDiv);
                     testDiv.appendChild(descDiv);
                     testDiv.appendChild(detailDiv);
-                    resultsContainer.appendChild(testDiv);
-
-                    log(`[${testPassed ? 'PASS' : 'FAIL'}] تست ${index+1}: ${test.title} - ${testPassed ? '✓' : '✗'}`);
+                    
+                    container.appendChild(testDiv);
                 });
-
-                log(`\n📊 جمع‌بندی: ${passedCount} موفق، ${failedCount} ناموفق از ${tests.length} تست`);
-                updateSummary(tests.length, passedCount, failedCount);
             }
 
-            // اتصال به دکمه
-            document.getElementById('runTestsBtn').addEventListener('click', runAllTests);
-
-            // اجرای اولیه برای نمایش نمونه
-            setTimeout(runAllTests, 100);
+            // ----- رویدادها و مقداردهی اولیه -----
+            document.getElementById('runAllTestsBtn').addEventListener('click', runAllTests);
+            document.getElementById('resetBtn').addEventListener('click', resetAll);
+            
+            // رندر اولیه بدون اجرای خودکار هیچ تستی
+            renderTests();
+            updateSummary();
+            
+            // هیچ اجرای خودکاری در start وجود ندارد
         })();
     </script>
 </body>
