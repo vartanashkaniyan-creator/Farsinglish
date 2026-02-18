@@ -1,0 +1,512 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>تست لبه - سرویس آمار (stats-service.edge)</title>
+    <style>
+        body {
+            font-family: 'Vazir', 'Tahoma', sans-serif;
+            background: #f5f7fa;
+            margin: 0;
+            padding: 20px;
+            color: #2c3e50;
+        }
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+        h1 {
+            font-size: 1.5rem;
+            color: #2c3e50;
+            margin-bottom: 10px;
+        }
+        .subtitle {
+            color: #7f8c8d;
+            font-size: 0.9rem;
+            margin-bottom: 25px;
+            border-bottom: 2px solid #3498db;
+            padding-bottom: 10px;
+        }
+        .test-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+        .test-card {
+            background: white;
+            border-radius: 12px;
+            padding: 15px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            border: 1px solid #e1e8ed;
+        }
+        .test-card h3 {
+            margin: 0 0 10px 0;
+            font-size: 1rem;
+            color: #34495e;
+        }
+        .test-description {
+            font-size: 0.85rem;
+            color: #7f8c8d;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px dashed #ddd;
+        }
+        .button-group {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin-bottom: 15px;
+        }
+        .btn {
+            padding: 8px 12px;
+            border: none;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-weight: 500;
+        }
+        .btn-run {
+            background: #3498db;
+            color: white;
+        }
+        .btn-run:hover {
+            background: #2980b9;
+        }
+        .btn-reset {
+            background: #95a5a6;
+            color: white;
+        }
+        .btn-reset:hover {
+            background: #7f8c8d;
+        }
+        .btn-clear {
+            background: #e74c3c;
+            color: white;
+        }
+        .btn-clear:hover {
+            background: #c0392b;
+        }
+        .result-box {
+            background: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-radius: 6px;
+            padding: 12px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.85rem;
+            white-space: pre-wrap;
+            direction: ltr;
+            text-align: left;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+        .console-container {
+            background: #1e272e;
+            color: #d1d8e0;
+            padding: 15px;
+            border-radius: 10px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.85rem;
+            margin-top: 25px;
+            border: 1px solid #485460;
+            direction: ltr;
+            text-align: left;
+        }
+        .console-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+            color: #a5b1c2;
+            border-bottom: 1px solid #3b4b5a;
+            padding-bottom: 5px;
+        }
+        .console-log {
+            max-height: 300px;
+            overflow-y: auto;
+            line-height: 1.5;
+        }
+        .log-entry {
+            padding: 3px 0;
+            border-bottom: 1px dotted #3b4b5a;
+        }
+        .log-success {
+            color: #55efc4;
+        }
+        .log-error {
+            color: #ff7675;
+        }
+        .log-warning {
+            color: #fdcb6e;
+        }
+        .summary-box {
+            background: #fff9e6;
+            border: 1px solid #ffe58c;
+            border-radius: 8px;
+            padding: 15px;
+            margin-top: 20px;
+        }
+        .summary-title {
+            font-weight: bold;
+            color: #b85c00;
+            margin-bottom: 10px;
+        }
+        .summary-stats {
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+        .stat-item {
+            background: white;
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            border: 1px solid #ffe58c;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧪 تست لبه - سرویس آمار (stats-service.edge)</h1>
+        <div class="subtitle">شبیه‌سازی موارد مرزی، ورودی نامعتبر و خطاها - قابل اجرا در مرورگر موبایل</div>
+
+        <div class="test-grid" id="testGrid">
+            <!-- تست‌ها توسط JavaScript ساخته می‌شوند -->
+        </div>
+
+        <div class="summary-box" id="summaryBox">
+            <div class="summary-title">📊 خلاصه تست‌ها</div>
+            <div class="summary-stats" id="summaryStats">
+                <span class="stat-item">کل: 0</span>
+                <span class="stat-item">موفق: 0</span>
+                <span class="stat-item">ناموفق: 0</span>
+            </div>
+        </div>
+
+        <div class="console-container">
+            <div class="console-header">
+                <span>📟 کنسول خروجی</span>
+                <button class="btn btn-clear" onclick="clearConsole()">پاک کردن کنسول</button>
+            </div>
+            <div class="console-log" id="consoleLog"></div>
+        </div>
+    </div>
+
+    <script>
+        // ---------- پیاده‌سازی ساده سرویس آمار (مشابه stats-service.js) ----------
+        class StatsService {
+            constructor() {
+                // در حالت واقعی از progress-manager استفاده می‌کند
+            }
+
+            // محاسبه درصد پیشرفت
+            calculateProgress(completed, total) {
+                if (total === 0) return 0;
+                if (completed < 0 || total < 0) return 0;
+                if (completed > total) return 100;
+                return Math.min(100, Math.round((completed / total) * 100));
+            }
+
+            // محاسبه streak (روزهای پیاپی)
+            calculateStreak(dates) {
+                if (!Array.isArray(dates) || dates.length === 0) return 0;
+                
+                let streak = 1;
+                let maxStreak = 1;
+                const sorted = [...dates].sort((a, b) => new Date(a) - new Date(b));
+                
+                for (let i = 1; i < sorted.length; i++) {
+                    const prev = new Date(sorted[i-1]);
+                    const curr = new Date(sorted[i]);
+                    const diffDays = Math.round((curr - prev) / (1000 * 60 * 60 * 24));
+                    
+                    if (diffDays === 1) {
+                        streak++;
+                        maxStreak = Math.max(maxStreak, streak);
+                    } else if (diffDays > 1) {
+                        streak = 1;
+                    }
+                }
+                return maxStreak;
+            }
+
+            // محاسبه سطح کاربر بر اساس XP
+            calculateLevel(xp) {
+                if (typeof xp !== 'number' || xp < 0) return 1;
+                return Math.floor(xp / 100) + 1;
+            }
+
+            // محاسبه میانگین امتیازات
+            calculateAverageScore(scores) {
+                if (!Array.isArray(scores) || scores.length === 0) return 0;
+                const validScores = scores.filter(s => typeof s === 'number' && !isNaN(s));
+                if (validScores.length === 0) return 0;
+                const sum = validScores.reduce((a, b) => a + b, 0);
+                return Math.round((sum / validScores.length) * 10) / 10;
+            }
+
+            // محاسبه آمار کلی (ترکیبی)
+            getOverallStats(userData) {
+                // شبیه‌سازی بازگشت آمار کلی
+                if (!userData || typeof userData !== 'object') {
+                    throw new Error('داده کاربر نامعتبر است');
+                }
+                return {
+                    progress: this.calculateProgress(userData.completed || 0, userData.total || 1),
+                    streak: this.calculateStreak(userData.dates || []),
+                    level: this.calculateLevel(userData.xp || 0),
+                    avgScore: this.calculateAverageScore(userData.scores || [])
+                };
+            }
+        }
+
+        // ---------- راه‌اندازی ----------
+        const statsService = new StatsService();
+        const consoleLog = document.getElementById('consoleLog');
+        const testGrid = document.getElementById('testGrid');
+        const summaryStats = document.getElementById('summaryStats');
+
+        let totalTests = 0;
+        let passedTests = 0;
+        let failedTests = 0;
+
+        // ---------- توابع کمکی ----------
+        function logToConsole(message, type = 'info') {
+            const entry = document.createElement('div');
+            entry.className = `log-entry log-${type}`;
+            entry.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
+            consoleLog.appendChild(entry);
+            consoleLog.scrollTop = consoleLog.scrollHeight;
+        }
+
+        function clearConsole() {
+            consoleLog.innerHTML = '';
+            logToConsole('کنسول پاک شد');
+        }
+
+        function updateSummary() {
+            summaryStats.innerHTML = `
+                <span class="stat-item">کل: ${totalTests}</span>
+                <span class="stat-item">موفق: ${passedTests}</span>
+                <span class="stat-item">ناموفق: ${failedTests}</span>
+            `;
+        }
+
+        function assertEqual(actual, expected, description) {
+            totalTests++;
+            const passed = actual === expected;
+            if (passed) {
+                passedTests++;
+                logToConsole(`✅ ${description} - دریافت: ${actual}`, 'success');
+            } else {
+                failedTests++;
+                logToConsole(`❌ ${description} - expected: ${expected}, actual: ${actual}`, 'error');
+            }
+            updateSummary();
+            return passed;
+        }
+
+        function assertThrow(fn, description) {
+            totalTests++;
+            try {
+                fn();
+                failedTests++;
+                logToConsole(`❌ ${description} - خطا رخ نداد`, 'error');
+            } catch (e) {
+                passedTests++;
+                logToConsole(`✅ ${description} - خطا با موفقیت رخ داد: ${e.message}`, 'success');
+            }
+            updateSummary();
+        }
+
+        // ---------- ساخت تست‌ها ----------
+        function createTestCard(title, description, testFn, resetFn = null) {
+            const card = document.createElement('div');
+            card.className = 'test-card';
+            
+            const titleEl = document.createElement('h3');
+            titleEl.textContent = title;
+            
+            const descEl = document.createElement('div');
+            descEl.className = 'test-description';
+            descEl.textContent = description;
+            
+            const btnGroup = document.createElement('div');
+            btnGroup.className = 'button-group';
+            
+            const runBtn = document.createElement('button');
+            runBtn.className = 'btn btn-run';
+            runBtn.textContent = '▶ اجرای تست';
+            runBtn.onclick = () => {
+                logToConsole(`--- اجرای تست: ${title} ---`);
+                testFn();
+            };
+            
+            const resetBtn = document.createElement('button');
+            resetBtn.className = 'btn btn-reset';
+            resetBtn.textContent = '↺ بازنشانی';
+            if (resetFn) {
+                resetBtn.onclick = resetFn;
+            } else {
+                resetBtn.onclick = () => logToConsole(`تست ${title} بازنشانی شد (دستی)`);
+            }
+            
+            btnGroup.appendChild(runBtn);
+            btnGroup.appendChild(resetBtn);
+            
+            card.appendChild(titleEl);
+            card.appendChild(descEl);
+            card.appendChild(btnGroup);
+            
+            return card;
+        }
+
+        // ---------- تعریف تست‌های لبه ----------
+        const tests = [
+            {
+                title: 'تست ۱: محاسبه پیشرفت با total=0',
+                description: 'تقسیم بر صفر نباید خطا بدهد و باید ۰ برگرداند',
+                test: () => {
+                    const result = statsService.calculateProgress(5, 0);
+                    assertEqual(result, 0, 'پیشرفت با total=0');
+                }
+            },
+            {
+                title: 'تست ۲: محاسبه پیشرفت با مقادیر منفی',
+                description: 'completed منفی و total منفی',
+                test: () => {
+                    const r1 = statsService.calculateProgress(-3, 10);
+                    const r2 = statsService.calculateProgress(5, -2);
+                    const r3 = statsService.calculateProgress(-1, -1);
+                    assertEqual(r1, 0, 'completed منفی');
+                    assertEqual(r2, 0, 'total منفی');
+                    assertEqual(r3, 0, 'هر دو منفی');
+                }
+            },
+            {
+                title: 'تست ۳: محاسبه streak با آرایه خالی',
+                description: 'ورودی [] یا null',
+                test: () => {
+                    const r1 = statsService.calculateStreak([]);
+                    const r2 = statsService.calculateStreak(null);
+                    const r3 = statsService.calculateStreak(undefined);
+                    assertEqual(r1, 0, 'آرایه خالی');
+                    assertEqual(r2, 0, 'ورودی null');
+                    assertEqual(r3, 0, 'ورودی undefined');
+                }
+            },
+            {
+                title: 'تست ۴: محاسبه streak با تاریخ‌های نامرتب',
+                description: 'تاریخ‌های تکراری و نامعتبر',
+                test: () => {
+                    const dates = ['2026-02-01', 'invalid-date', '2026-02-01', '2026-02-02'];
+                    const result = statsService.calculateStreak(dates);
+                    assertEqual(result, 2, 'با تاریخ نامعتبر');
+                }
+            },
+            {
+                title: 'تست ۵: محاسبه سطح با XP منفی',
+                description: 'XP منفی و NaN',
+                test: () => {
+                    const r1 = statsService.calculateLevel(-50);
+                    const r2 = statsService.calculateLevel(NaN);
+                    const r3 = statsService.calculateLevel('100');
+                    assertEqual(r1, 1, 'XP منفی');
+                    assertEqual(r2, 1, 'XP = NaN');
+                    assertEqual(r3, 1, 'XP = string');
+                }
+            },
+            {
+                title: 'تست ۶: محاسبه میانگین امتیازات با آرایه خالی',
+                description: 'آرایه خالی و آرایه با مقادیر نامعتبر',
+                test: () => {
+                    const r1 = statsService.calculateAverageScore([]);
+                    const r2 = statsService.calculateAverageScore([null, undefined, 'bad']);
+                    const r3 = statsService.calculateAverageScore([10, 20, NaN, 30]);
+                    assertEqual(r1, 0, 'آرایه خالی');
+                    assertEqual(r2, 0, 'همه نامعتبر');
+                    assertEqual(r3, 20, 'حاوی NaN (میانگین ۱۰+۲۰+۳۰)/۳');
+                }
+            },
+            {
+                title: 'تست ۷: getOverallStats با ورودی نامعتبر',
+                description: 'پرتاب خطا در صورت ورودی نامعتبر',
+                test: () => {
+                    assertThrow(() => statsService.getOverallStats(null), 'ورودی null');
+                    assertThrow(() => statsService.getOverallStats('string'), 'ورودی string');
+                    assertThrow(() => statsService.getOverallStats(123), 'ورودی عدد');
+                }
+            },
+            {
+                title: 'تست ۸: getOverallStats با داده ناقص',
+                description: 'ورودی بدون فیلدهای مورد نیاز',
+                test: () => {
+                    const result = statsService.getOverallStats({});
+                    assertEqual(result.progress, 0, 'پیشرفت پیش‌فرض');
+                    assertEqual(result.streak, 0, 'streak پیش‌فرض');
+                    assertEqual(result.level, 1, 'سطح پیش‌فرض');
+                    assertEqual(result.avgScore, 0, 'میانگین پیش‌فرض');
+                }
+            },
+            {
+                title: 'تست ۹: completed > total',
+                description: 'تکمیل شده بیشتر از کل',
+                test: () => {
+                    const result = statsService.calculateProgress(15, 10);
+                    assertEqual(result, 100, 'باید ۱۰۰ برگرداند');
+                }
+            },
+            {
+                title: 'تست ۱۰: scores با مقادیر غیرعددی',
+                description: 'فیلتر کردن مقادیر نامعتبر',
+                test: () => {
+                    const result = statsService.calculateAverageScore([5, 'bad', 10, null, 15]);
+                    assertEqual(result, 10, 'میانگین (۵+۱۰+۱۵)/۳');
+                }
+            }
+        ];
+
+        // ---------- بارگذاری تست‌ها در صفحه ----------
+        tests.forEach((test, index) => {
+            const card = createTestCard(
+                `تست ${index+1}: ${test.title}`,
+                test.description,
+                test.test
+            );
+            testGrid.appendChild(card);
+        });
+
+        // ---------- دکمه اجرای همه تست‌ها ----------
+        const runAllBtn = document.createElement('button');
+        runAllBtn.className = 'btn btn-run';
+        runAllBtn.textContent = '▶ اجرای همه تست‌ها';
+        runAllBtn.style.marginBottom = '20px';
+        runAllBtn.onclick = () => {
+            logToConsole('========== اجرای همه تست‌های لبه ==========');
+            tests.forEach(test => test.test());
+        };
+
+        const resetAllBtn = document.createElement('button');
+        resetAllBtn.className = 'btn btn-reset';
+        resetAllBtn.textContent = '↺ بازنشانی همه';
+        resetAllBtn.style.marginBottom = '20px';
+        resetAllBtn.style.marginRight = '10px';
+        resetAllBtn.onclick = () => {
+            totalTests = 0;
+            passedTests = 0;
+            failedTests = 0;
+            updateSummary();
+            logToConsole('همه آمار تست‌ها بازنشانی شد');
+        };
+
+        document.querySelector('.subtitle').after(runAllBtn);
+        runAllBtn.after(resetAllBtn);
+
+        // ---------- مقداردهی اولیه ----------
+        logToConsole('✅ تست‌های لبه سرویس آمار بارگذاری شدند');
+        updateSummary();
+    </script>
+</body>
+</html>
