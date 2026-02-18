@@ -1,0 +1,853 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>تست یکپارچگی Offline Manager - Farsinglish</title>
+    <style>
+        body {
+            font-family: Vazir, Tahoma, Arial, sans-serif;
+            max-width: 800px;
+            margin: 20px auto;
+            padding: 20px;
+            background: #f5f5f5;
+            direction: rtl;
+        }
+        h1 {
+            color: #2c3e50;
+            font-size: 1.5rem;
+            border-bottom: 2px solid #3498db;
+            padding-bottom: 10px;
+        }
+        .test-container {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        .button-group {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin: 15px 0;
+        }
+        button {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-family: Vazir, Tahoma, Arial, sans-serif;
+            font-size: 0.9rem;
+            transition: all 0.2s;
+            flex: 1 1 auto;
+            min-width: 120px;
+        }
+        .btn-primary {
+            background: #3498db;
+            color: white;
+        }
+        .btn-primary:hover {
+            background: #2980b9;
+        }
+        .btn-success {
+            background: #27ae60;
+            color: white;
+        }
+        .btn-success:hover {
+            background: #229954;
+        }
+        .btn-warning {
+            background: #f39c12;
+            color: white;
+        }
+        .btn-warning:hover {
+            background: #e67e22;
+        }
+        .btn-danger {
+            background: #e74c3c;
+            color: white;
+        }
+        .btn-danger:hover {
+            background: #c0392b;
+        }
+        .log-container {
+            background: #1e1e1e;
+            color: #00ff00;
+            padding: 15px;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.85rem;
+            direction: ltr;
+            height: 300px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+            margin-top: 15px;
+        }
+        .log-entry {
+            margin: 2px 0;
+            border-bottom: 1px solid #333;
+            padding: 2px 0;
+        }
+        .log-info {
+            color: #00ff00;
+        }
+        .log-error {
+            color: #ff6b6b;
+        }
+        .log-warning {
+            color: #f39c12;
+        }
+        .log-success {
+            color: #2ecc71;
+            font-weight: bold;
+        }
+        .status-badge {
+            display: inline-block;
+            padding: 3px 8px;
+            border-radius: 12px;
+            font-size: 0.8rem;
+            font-weight: bold;
+            margin-right: 10px;
+        }
+        .badge-online {
+            background: #27ae60;
+            color: white;
+        }
+        .badge-offline {
+            background: #e74c3c;
+            color: white;
+        }
+        .test-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin: 10px 0;
+            flex-wrap: wrap;
+        }
+        .test-label {
+            font-weight: bold;
+            min-width: 120px;
+            color: #34495e;
+        }
+        hr {
+            border: none;
+            border-top: 1px solid #ddd;
+            margin: 20px 0;
+        }
+        .summary {
+            background: #ecf0f1;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 20px;
+        }
+        .summary-item {
+            display: flex;
+            justify-content: space-between;
+            margin: 5px 0;
+            padding: 5px;
+            background: white;
+            border-radius: 4px;
+        }
+        .pass {
+            color: #27ae60;
+            font-weight: bold;
+        }
+        .fail {
+            color: #e74c3c;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <h1>🧪 تست یکپارچگی Offline Manager</h1>
+    <div class="test-container">
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+            <h2>مدیریت وضعیت آفلاین/آنلاین</h2>
+            <span id="networkStatusBadge" class="status-badge badge-online">آنلاین</span>
+        </div>
+
+        <div class="button-group">
+            <button class="btn-primary" onclick="runAllTests()">▶ اجرای همه تست‌ها</button>
+            <button class="btn-warning" onclick="clearLogs()">🗑 پاک کردن لاگ</button>
+        </div>
+
+        <hr>
+
+        <!-- تست‌های مدیریت وضعیت -->
+        <h3>📡 ۱. تشخیص وضعیت شبکه</h3>
+        <div class="test-row">
+            <span class="test-label">وضعیت فعلی:</span>
+            <button class="btn-primary" onclick="testGetCurrentStatus()">🔍 بررسی وضعیت فعلی</button>
+        </div>
+        <div class="test-row">
+            <span class="test-label">شبیه‌سازی:</span>
+            <button class="btn-success" onclick="simulateOnline()">📶 آنلاین</button>
+            <button class="btn-danger" onclick="simulateOffline()">📴 آفلاین</button>
+        </div>
+
+        <h3>💾 ۲. ذخیره و بازیابی عملیات آفلاین</h3>
+        <div class="test-row">
+            <span class="test-label">عملیات:</span>
+            <button class="btn-primary" onclick="testAddOfflineOperation('save_lesson', {id: 1, name: 'درس ۱'})">➕ افزودن عملیات</button>
+            <button class="btn-primary" onclick="testGetPendingOperations()">📋 نمایش عملیات در انتظار</button>
+            <button class="btn-success" onclick="testProcessPendingOperations()">⚙ پردازش عملیات</button>
+        </div>
+
+        <h3>🔄 ۳. همگام‌سازی خودکار</h3>
+        <div class="test-row">
+            <span class="test-label">همگام‌سازی:</span>
+            <button class="btn-primary" onclick="testEnableAutoSync()">✅ فعال</button>
+            <button class="btn-danger" onclick="testDisableAutoSync()">❌ غیرفعال</button>
+            <button class="btn-warning" onclick="testTriggerSync()">🔄 همگام‌سازی دستی</button>
+        </div>
+
+        <h3>⚠ ۴. مدیریت خطا</h3>
+        <div class="test-row">
+            <span class="test-label">خطا:</span>
+            <button class="btn-warning" onclick="testSyncFailure()">💥 شبیه‌سازی خطا</button>
+            <button class="btn-primary" onclick="testRetryFailedOperations()">🔄 تلاش مجدد</button>
+            <button class="btn-danger" onclick="testClearFailedOperations()">🗑 پاک کردن خطاها</button>
+        </div>
+
+        <h3>📊 ۵. آمار و وضعیت</h3>
+        <div class="test-row">
+            <span class="test-label">آمار:</span>
+            <button class="btn-primary" onclick="testGetStats()">📈 نمایش آمار</button>
+            <button class="btn-primary" onclick="testGetQueueLength()">🧮 تعداد در صف</button>
+        </div>
+
+        <h3>🧪 ۶. سناریوی کامل</h3>
+        <div class="test-row">
+            <span class="test-label">سناریو:</span>
+            <button class="btn-success" onclick="testCompleteOfflineScenario()">🔄 اجرای سناریوی آفلاین کامل</button>
+        </div>
+
+        <h3>✅ نتایج تست‌ها</h3>
+        <div id="summary" class="summary">
+            <div class="summary-item">
+                <span>تعداد تست‌های موفق:</span>
+                <span id="passCount" class="pass">0</span>
+            </div>
+            <div class="summary-item">
+                <span>تعداد تست‌های ناموفق:</span>
+                <span id="failCount" class="fail">0</span>
+            </div>
+            <div class="summary-item">
+                <span>مجموع تست‌ها:</span>
+                <span id="totalCount">0</span>
+            </div>
+        </div>
+
+        <div id="logContainer" class="log-container">
+            <div class="log-entry log-info">🤖 آماده اجرای تست‌ها...</div>
+        </div>
+    </div>
+
+    <script>
+        // ---------- Mock Objects ----------
+        const mockDB = {
+            operations: [],
+            syncHistory: [],
+            
+            saveOfflineOperation(type, data) {
+                const op = {
+                    id: Date.now() + Math.random(),
+                    type,
+                    data,
+                    timestamp: new Date().toISOString(),
+                    status: 'pending',
+                    retryCount: 0
+                };
+                this.operations.push(op);
+                return op;
+            },
+
+            getPendingOperations() {
+                return this.operations.filter(op => op.status === 'pending');
+            },
+
+            updateOperationStatus(id, status) {
+                const op = this.operations.find(o => o.id === id);
+                if (op) {
+                    op.status = status;
+                    if (status === 'completed') {
+                        op.completedAt = new Date().toISOString();
+                    }
+                    return true;
+                }
+                return false;
+            },
+
+            clearOperations() {
+                this.operations = [];
+            },
+
+            getStats() {
+                return {
+                    total: this.operations.length,
+                    pending: this.operations.filter(o => o.status === 'pending').length,
+                    completed: this.operations.filter(o => o.status === 'completed').length,
+                    failed: this.operations.filter(o => o.status === 'failed').length
+                };
+            }
+        };
+
+        // ---------- Offline Manager Class ----------
+        class OfflineManager {
+            constructor(db) {
+                this.db = db;
+                this.isOnline = navigator.onLine;
+                this.autoSyncEnabled = true;
+                this.syncInProgress = false;
+                this.eventListeners = [];
+                
+                // شبیه‌سازی event listener
+                window.addEventListener('online', () => this.handleOnline());
+                window.addEventListener('offline', () => this.handleOffline());
+            }
+
+            handleOnline() {
+                this.isOnline = true;
+                this.log('📶 شبکه متصل شد');
+                this.notifyListeners('online');
+                if (this.autoSyncEnabled && !this.syncInProgress) {
+                    this.processPendingOperations();
+                }
+            }
+
+            handleOffline() {
+                this.isOnline = false;
+                this.log('📴 شبکه قطع شد');
+                this.notifyListeners('offline');
+            }
+
+            getCurrentStatus() {
+                return {
+                    isOnline: this.isOnline,
+                    autoSyncEnabled: this.autoSyncEnabled,
+                    syncInProgress: this.syncInProgress,
+                    pendingCount: this.db.getPendingOperations().length,
+                    timestamp: new Date().toISOString()
+                };
+            }
+
+            async addOfflineOperation(type, data) {
+                const operation = this.db.saveOfflineOperation(type, data);
+                this.log(`💾 عملیات آفلاین ذخیره شد: ${type} (${operation.id})`);
+                
+                if (this.isOnline && this.autoSyncEnabled && !this.syncInProgress) {
+                    await this.processPendingOperations();
+                }
+                
+                return operation;
+            }
+
+            async processPendingOperations() {
+                if (this.syncInProgress) {
+                    this.log('⚠ همگام‌سازی در حال انجام است');
+                    return;
+                }
+
+                if (!this.isOnline) {
+                    this.log('⚠ آفلاین - همگام‌سازی ممکن نیست');
+                    return;
+                }
+
+                this.syncInProgress = true;
+                this.log('🔄 شروع همگام‌سازی عملیات...');
+
+                const pending = this.db.getPendingOperations();
+                let successCount = 0;
+                let failCount = 0;
+
+                for (const op of pending) {
+                    try {
+                        // شبیه‌سازی ارسال به سرور
+                        await this.simulateServerSync(op);
+                        this.db.updateOperationStatus(op.id, 'completed');
+                        successCount++;
+                        this.log(`✅ عملیات ${op.id} با موفقیت همگام شد`);
+                    } catch (error) {
+                        op.retryCount++;
+                        if (op.retryCount >= 3) {
+                            this.db.updateOperationStatus(op.id, 'failed');
+                            failCount++;
+                            this.log(`❌ عملیات ${op.id} پس از ۳ بار تلاش ناموفق`, 'error');
+                        } else {
+                            this.log(`⚠ خطا در عملیات ${op.id} (تلاش ${op.retryCount}/3)`, 'warning');
+                        }
+                    }
+                }
+
+                this.syncInProgress = false;
+                this.log(`📊 همگام‌سازی کامل: ${successCount} موفق، ${failCount} ناموفق`);
+
+                return { success: successCount, fail: failCount };
+            }
+
+            simulateServerSync(operation) {
+                return new Promise((resolve, reject) => {
+                    setTimeout(() => {
+                        // شبیه‌سازی خطای تصادفی (۱۰٪ احتمال)
+                        if (Math.random() < 0.1 && operation.retryCount < 2) {
+                            reject(new Error('خطای سرور'));
+                        } else {
+                            resolve({ success: true, operation });
+                        }
+                    }, 100);
+                });
+            }
+
+            getPendingOperations() {
+                return this.db.getPendingOperations();
+            }
+
+            enableAutoSync() {
+                this.autoSyncEnabled = true;
+                this.log('✅ همگام‌سازی خودکار فعال شد');
+                if (this.isOnline && !this.syncInProgress) {
+                    this.processPendingOperations();
+                }
+            }
+
+            disableAutoSync() {
+                this.autoSyncEnabled = false;
+                this.log('❌ همگام‌سازی خودکار غیرفعال شد');
+            }
+
+            addEventListener(callback) {
+                this.eventListeners.push(callback);
+            }
+
+            notifyListeners(event, data) {
+                this.eventListeners.forEach(cb => cb(event, data));
+            }
+
+            getStats() {
+                return this.db.getStats();
+            }
+
+            getQueueLength() {
+                return this.db.getPendingOperations().length;
+            }
+
+            clearFailedOperations() {
+                const failed = this.db.operations.filter(o => o.status === 'failed');
+                failed.forEach(op => {
+                    const index = this.db.operations.findIndex(o => o.id === op.id);
+                    if (index !== -1) this.db.operations.splice(index, 1);
+                });
+                this.log(`🗑 ${failed.length} عملیات ناموفق پاک شد`);
+            }
+
+            log(message, type = 'info') {
+                console.log(`[OfflineManager] ${message}`);
+                // این متد توسط UI صدا زده می‌شود
+            }
+        }
+
+        // ---------- Test Framework ----------
+        const TestFramework = {
+            passCount: 0,
+            failCount: 0,
+            totalCount: 0,
+
+            log(message, type = 'info') {
+                const container = document.getElementById('logContainer');
+                const entry = document.createElement('div');
+                entry.className = `log-entry log-${type}`;
+                
+                let prefix = '';
+                switch(type) {
+                    case 'info': prefix = 'ℹ️'; break;
+                    case 'success': prefix = '✅'; break;
+                    case 'error': prefix = '❌'; break;
+                    case 'warning': prefix = '⚠️'; break;
+                }
+                
+                entry.textContent = `${prefix} ${message}`;
+                container.appendChild(entry);
+                container.scrollTop = container.scrollHeight;
+            },
+
+            assert(condition, message, type = 'success') {
+                this.totalCount++;
+                if (condition) {
+                    this.passCount++;
+                    this.log(`✅ ${message}`, 'success');
+                } else {
+                    this.failCount++;
+                    this.log(`❌ ${message}`, 'error');
+                }
+                this.updateSummary();
+            },
+
+            assertEqual(actual, expected, message) {
+                this.assert(actual === expected, `${message} (${actual} === ${expected})`);
+            },
+
+            assertNotEqual(actual, expected, message) {
+                this.assert(actual !== expected, `${message} (${actual} !== ${expected})`);
+            },
+
+            assertTrue(value, message) {
+                this.assert(value === true, `${message} (true مورد انتظار بود، ${value} دریافت شد)`);
+            },
+
+            assertFalse(value, message) {
+                this.assert(value === false, `${message} (false مورد انتظار بود، ${value} دریافت شد)`);
+            },
+
+            assertDefined(value, message) {
+                this.assert(value !== undefined && value !== null, `${message} (مقدار تعریف شده نیست)`);
+            },
+
+            reset() {
+                this.passCount = 0;
+                this.failCount = 0;
+                this.totalCount = 0;
+                this.updateSummary();
+                this.log('🔄 تست‌ها ریست شدند', 'info');
+            },
+
+            updateSummary() {
+                document.getElementById('passCount').textContent = this.passCount;
+                document.getElementById('failCount').textContent = this.failCount;
+                document.getElementById('totalCount').textContent = this.totalCount;
+            }
+        };
+
+        // ---------- Test Variables ----------
+        let offlineManager;
+        let testMockDB;
+
+        // ---------- Test Functions ----------
+        function initTest() {
+            testMockDB = {
+                operations: [],
+                saveOfflineOperation(type, data) {
+                    const op = {
+                        id: Date.now() + Math.random(),
+                        type,
+                        data,
+                        timestamp: new Date().toISOString(),
+                        status: 'pending',
+                        retryCount: 0
+                    };
+                    this.operations.push(op);
+                    return op;
+                },
+                getPendingOperations() {
+                    return this.operations.filter(op => op.status === 'pending');
+                },
+                updateOperationStatus(id, status) {
+                    const op = this.operations.find(o => o.id === id);
+                    if (op) {
+                        op.status = status;
+                        return true;
+                    }
+                    return false;
+                },
+                getStats() {
+                    return {
+                        total: this.operations.length,
+                        pending: this.operations.filter(o => o.status === 'pending').length,
+                        completed: this.operations.filter(o => o.status === 'completed').length,
+                        failed: this.operations.filter(o => o.status === 'failed').length
+                    };
+                },
+                clearOperations() {
+                    this.operations = [];
+                }
+            };
+            
+            offlineManager = new OfflineManager(testMockDB);
+            
+            // Override log method to show in UI
+            offlineManager.log = function(message, type = 'info') {
+                TestFramework.log(message, type);
+            };
+
+            TestFramework.log('🧪 محیط تست آماده شد', 'info');
+            updateNetworkBadge();
+        }
+
+        function updateNetworkBadge() {
+            const badge = document.getElementById('networkStatusBadge');
+            if (offlineManager && offlineManager.isOnline) {
+                badge.textContent = 'آنلاین';
+                badge.className = 'status-badge badge-online';
+            } else {
+                badge.textContent = 'آفلاین';
+                badge.className = 'status-badge badge-offline';
+            }
+        }
+
+        function clearLogs() {
+            const container = document.getElementById('logContainer');
+            container.innerHTML = '<div class="log-entry log-info">🧹 لاگ پاک شد</div>';
+            TestFramework.reset();
+        }
+
+        // ---------- تست‌های مدیریت وضعیت ----------
+        function testGetCurrentStatus() {
+            TestFramework.log('📋 بررسی وضعیت فعلی...', 'info');
+            
+            const status = offlineManager.getCurrentStatus();
+            
+            TestFramework.assertDefined(status, 'وضعیت تعریف شده است');
+            TestFramework.assertDefined(status.isOnline, 'وضعیت آنلاین تعریف شده است');
+            TestFramework.assertDefined(status.autoSyncEnabled, 'وضعیت همگام‌سازی خودکار تعریف شده است');
+            TestFramework.assertDefined(status.pendingCount, 'تعداد عملیات در انتظار تعریف شده است');
+            
+            TestFramework.log(`ℹ️ وضعیت: آنلاین=${status.isOnline}, خودکار=${status.autoSyncEnabled}, در انتظار=${status.pendingCount}`, 'info');
+            
+            updateNetworkBadge();
+        }
+
+        function simulateOnline() {
+            if (offlineManager) {
+                offlineManager.isOnline = true;
+                offlineManager.notifyListeners('online');
+                TestFramework.log('📶 شبیه‌سازی: آنلاین شد', 'success');
+                updateNetworkBadge();
+            }
+        }
+
+        function simulateOffline() {
+            if (offlineManager) {
+                offlineManager.isOnline = false;
+                offlineManager.notifyListeners('offline');
+                TestFramework.log('📴 شبیه‌سازی: آفلاین شد', 'warning');
+                updateNetworkBadge();
+            }
+        }
+
+        // ---------- تست‌های عملیات آفلاین ----------
+        function testAddOfflineOperation(type, data) {
+            TestFramework.log(`➕ افزودن عملیات آفلاین: ${type}`, 'info');
+            
+            const beforeCount = offlineManager.getQueueLength();
+            const operation = offlineManager.addOfflineOperation(type, data);
+            
+            TestFramework.assertDefined(operation, 'عملیات ساخته شد');
+            TestFramework.assertEqual(operation.type, type, 'نوع عملیات صحیح است');
+            TestFramework.assertEqual(operation.status, 'pending', 'وضعیت عملیات pending است');
+            
+            const afterCount = offlineManager.getQueueLength();
+            TestFramework.assertEqual(afterCount, beforeCount + 1, 'تعداد عملیات افزایش یافت');
+        }
+
+        function testGetPendingOperations() {
+            TestFramework.log('📋 دریافت عملیات در انتظار...', 'info');
+            
+            const pending = offlineManager.getPendingOperations();
+            
+            TestFramework.assertDefined(pending, 'لیست عملیات تعریف شده است');
+            TestFramework.assert(Array.isArray(pending), 'لیست عملیات آرایه است');
+            
+            TestFramework.log(`ℹ️ تعداد عملیات در انتظار: ${pending.length}`, 'info');
+            pending.forEach((op, index) => {
+                TestFramework.log(`  ${index + 1}. ${op.type} (${op.status}) - تلاش: ${op.retryCount}`, 'info');
+            });
+        }
+
+        function testProcessPendingOperations() {
+            TestFramework.log('⚙ پردازش عملیات در انتظار...', 'info');
+            
+            const beforePending = offlineManager.getPendingOperations().length;
+            
+            if (beforePending === 0) {
+                TestFramework.log('⚠ هیچ عملیاتی در انتظار نیست', 'warning');
+                return;
+            }
+            
+            if (!offlineManager.isOnline) {
+                TestFramework.log('⚠ آفلاین - همگام‌سازی ممکن نیست', 'warning');
+                return;
+            }
+            
+            offlineManager.processPendingOperations().then(result => {
+                if (result) {
+                    TestFramework.log(`📊 نتیجه: ${result.success} موفق، ${result.fail} ناموفق`, 'info');
+                    
+                    const afterPending = offlineManager.getPendingOperations().length;
+                    TestFramework.assert(afterPending <= beforePending, 'تعداد عملیات در انتظار کاهش یافت');
+                }
+            });
+        }
+
+        // ---------- تست‌های همگام‌سازی خودکار ----------
+        function testEnableAutoSync() {
+            TestFramework.log('✅ فعال‌سازی همگام‌سازی خودکار...', 'info');
+            
+            offlineManager.enableAutoSync();
+            
+            TestFramework.assertTrue(offlineManager.autoSyncEnabled, 'همگام‌سازی خودکار فعال شد');
+        }
+
+        function testDisableAutoSync() {
+            TestFramework.log('❌ غیرفعال‌سازی همگام‌سازی خودکار...', 'info');
+            
+            offlineManager.disableAutoSync();
+            
+            TestFramework.assertFalse(offlineManager.autoSyncEnabled, 'همگام‌سازی خودکار غیرفعال شد');
+        }
+
+        function testTriggerSync() {
+            TestFramework.log('🔄 اجرای همگام‌سازی دستی...', 'info');
+            
+            if (!offlineManager.isOnline) {
+                TestFramework.log('⚠ آفلاین - همگام‌سازی ممکن نیست', 'warning');
+                return;
+            }
+            
+            offlineManager.processPendingOperations().then(result => {
+                if (result) {
+                    TestFramework.log(`✅ همگام‌سازی دستی کامل شد: ${result.success} موفق`, 'success');
+                }
+            });
+        }
+
+        // ---------- تست‌های مدیریت خطا ----------
+        function testSyncFailure() {
+            TestFramework.log('💥 شبیه‌سازی خطای همگام‌سازی...', 'info');
+            
+            // اضافه کردن یک عملیات
+            const op = offlineManager.addOfflineOperation('error_test', { shouldFail: true });
+            
+            // شبیه‌سازی خطا
+            op.retryCount = 3; // forcing failure
+            offlineManager.db.updateOperationStatus(op.id, 'failed');
+            
+            TestFramework.assertEqual(op.status, 'failed', 'وضعیت عملیات به failed تغییر کرد');
+            
+            const stats = offlineManager.getStats();
+            TestFramework.assert(stats.failed > 0, 'آمار خطا به‌روز شد');
+        }
+
+        function testRetryFailedOperations() {
+            TestFramework.log('🔄 تلاش مجدد برای عملیات ناموفق...', 'info');
+            
+            const failed = offlineManager.db.operations.filter(o => o.status === 'failed');
+            
+            if (failed.length === 0) {
+                TestFramework.log('⚠ هیچ عملیات ناموفقی وجود ندارد', 'warning');
+                return;
+            }
+            
+            failed.forEach(op => {
+                op.status = 'pending';
+                op.retryCount = 0;
+            });
+            
+            TestFramework.log(`✅ ${failed.length} عملیات برای تلاش مجدد آماده شد`, 'success');
+            
+            if (offlineManager.isOnline && offlineManager.autoSyncEnabled) {
+                offlineManager.processPendingOperations();
+            }
+        }
+
+        function testClearFailedOperations() {
+            TestFramework.log('🗑 پاک کردن عملیات ناموفق...', 'info');
+            
+            const beforeCount = offlineManager.db.operations.length;
+            const failedCount = offlineManager.db.operations.filter(o => o.status === 'failed').length;
+            
+            offlineManager.clearFailedOperations();
+            
+            const afterCount = offlineManager.db.operations.length;
+            TestFramework.assertEqual(afterCount, beforeCount - failedCount, 'عملیات ناموفق پاک شدند');
+        }
+
+        // ---------- تست‌های آمار ----------
+        function testGetStats() {
+            TestFramework.log('📈 دریافت آمار...', 'info');
+            
+            const stats = offlineManager.getStats();
+            
+            TestFramework.assertDefined(stats, 'آمار تعریف شده است');
+            TestFramework.assertDefined(stats.total, 'تعداد کل تعریف شده است');
+            TestFramework.assertDefined(stats.pending, 'تعداد در انتظار تعریف شده است');
+            TestFramework.assertDefined(stats.completed, 'تعداد کامل شده تعریف شده است');
+            TestFramework.assertDefined(stats.failed, 'تعداد ناموفق تعریف شده است');
+            
+            TestFramework.log(`📊 کل: ${stats.total} | در انتظار: ${stats.pending} | کامل: ${stats.completed} | ناموفق: ${stats.failed}`, 'info');
+        }
+
+        function testGetQueueLength() {
+            const length = offlineManager.getQueueLength();
+            
+            TestFramework.assert(length >= 0, 'طول صف معتبر است');
+            TestFramework.log(`🧮 طول صف عملیات: ${length}`, 'info');
+        }
+
+        // ---------- سناریوی کامل ----------
+        function testCompleteOfflineScenario() {
+            TestFramework.log('🔄 اجرای سناریوی کامل آفلاین...', 'info');
+            
+            // 1. شبیه‌سازی آفلاین
+            simulateOffline();
+            
+            // 2. افزودن چند عملیات
+            testAddOfflineOperation('save_lesson', { id: 1, name: 'درس ۱' });
+            testAddOfflineOperation('save_progress', { lessonId: 1, score: 80 });
+            testAddOfflineOperation('save_achievement', { type: 'gold', name: 'دستاورد طلایی' });
+            
+            // 3. بررسی وضعیت
+            testGetPendingOperations();
+            
+            // 4. شبیه‌سازی آنلاین
+            simulateOnline();
+            
+            // 5. پردازش خودکار
+            setTimeout(() => {
+                testGetStats();
+                testGetPendingOperations();
+                TestFramework.log('✅ سناریوی آفلاین کامل شد', 'success');
+            }, 1000);
+        }
+
+        // ---------- اجرای همه تست‌ها ----------
+        function runAllTests() {
+            TestFramework.reset();
+            TestFramework.log('🚀 شروع اجرای همه تست‌ها...', 'info');
+            
+            // ریست کردن محیط
+            initTest();
+            
+            // تست‌های مدیریت وضعیت
+            testGetCurrentStatus();
+            
+            // تست‌های عملیات آفلاین
+            testAddOfflineOperation('test_type', { sample: 'data' });
+            testAddOfflineOperation('another_type', { value: 123 });
+            testGetPendingOperations();
+            
+            // تست‌های همگام‌سازی
+            testEnableAutoSync();
+            testDisableAutoSync();
+            
+            // تست‌های آمار
+            testGetStats();
+            testGetQueueLength();
+            
+            // تست‌های مدیریت خطا
+            simulateOffline();
+            testAddOfflineOperation('offline_op', { id: 999 });
+            simulateOnline();
+            
+            // سناریوی کامل
+            setTimeout(() => {
+                testCompleteOfflineScenario();
+            }, 500);
+            
+            TestFramework.log('✅ همه تست‌ها اجرا شدند', 'success');
+        }
+
+        // Initialize
+        initTest();
+    </script>
+</body>
+</html>
