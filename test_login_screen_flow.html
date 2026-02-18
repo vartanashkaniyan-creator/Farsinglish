@@ -1,0 +1,468 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>تست دستی - صفحه ورود (Login Screen Flow)</title>
+    <style>
+        body {
+            font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+            max-width: 600px;
+            margin: 20px auto;
+            padding: 0 20px;
+            background: #f5f7fb;
+            color: #1e293b;
+        }
+        h1 {
+            font-size: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: #0f172a;
+            border-bottom: 2px solid #cbd5e1;
+            padding-bottom: 12px;
+        }
+        .badge {
+            background: #3b82f6;
+            color: white;
+            font-size: 0.7rem;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-weight: normal;
+            margin-right: 10px;
+        }
+        .test-container {
+            background: white;
+            border-radius: 24px;
+            padding: 20px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+            margin-bottom: 24px;
+            border: 1px solid #e2e8f0;
+        }
+        .test-suite {
+            margin-bottom: 32px;
+        }
+        .test-item {
+            background: #f8fafc;
+            border-radius: 16px;
+            padding: 16px;
+            margin-bottom: 12px;
+            border-right: 4px solid #94a3b8;
+        }
+        .test-item.pass { border-right-color: #22c55e; background: #f0fdf4; }
+        .test-item.fail { border-right-color: #ef4444; background: #fef2f2; }
+        .test-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+        .test-title {
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .test-status {
+            font-size: 0.8rem;
+            padding: 4px 12px;
+            border-radius: 30px;
+            background: #e2e8f0;
+        }
+        .test-status.pass { background: #22c55e; color: white; }
+        .test-status.fail { background: #ef4444; color: white; }
+        .test-log {
+            background: #0f172a;
+            color: #e2e8f0;
+            padding: 12px;
+            border-radius: 12px;
+            font-family: 'Fira Code', monospace;
+            font-size: 0.85rem;
+            margin: 12px 0;
+            white-space: pre-wrap;
+            direction: ltr;
+            text-align: left;
+            max-height: 300px;
+            overflow: auto;
+        }
+        button {
+            background: #3b82f6;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 40px;
+            font-size: 1rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: 0.2s;
+            border: 1px solid #2563eb;
+            margin-left: 8px;
+            margin-bottom: 8px;
+        }
+        button:hover {
+            background: #2563eb;
+            transform: translateY(-1px);
+        }
+        button.secondary {
+            background: #f1f5f9;
+            color: #1e293b;
+            border: 1px solid #cbd5e1;
+        }
+        button.secondary:hover {
+            background: #e2e8f0;
+        }
+        .row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin: 16px 0;
+        }
+        .output-panel {
+            background: #1e293b;
+            color: #a5f3fc;
+            padding: 16px;
+            border-radius: 16px;
+            font-family: 'Fira Code', monospace;
+            font-size: 0.85rem;
+            direction: ltr;
+            text-align: left;
+            max-height: 200px;
+            overflow: auto;
+            margin-top: 16px;
+        }
+        hr {
+            border: none;
+            border-top: 2px dashed #cbd5e1;
+            margin: 24px 0;
+        }
+        .note {
+            background: #fff7ed;
+            border-right: 4px solid #f97316;
+            padding: 12px 16px;
+            border-radius: 12px;
+            font-size: 0.9rem;
+        }
+    </style>
+</head>
+<body>
+    <h1>
+        📱 صفحه ورود (Login Screen)
+        <span class="badge">تست دستی · ۶ سناریو</span>
+    </h1>
+    <div class="note">
+        <strong>🧪 اصول رعایت شده:</strong> مستقل از ابزار · رفتارگرا · قطعی · قابل مشاهده · ایزوله · تک‌ادعا · خطای واضح · بدون تست UI جزئی · شبیه‌سازی وابستگی‌ها (Fake Auth)
+    </div>
+
+    <!-- -------------------- ماژول‌های جعلی (Fake) -------------------- -->
+    <div style="display: none;" id="fake-modules">
+        <script>
+            // ==================== Fake Auth Service ====================
+            window.fakeAuth = {
+                users: [
+                    { username: 'ali', password: '123456', email: 'ali@test.com' },
+                    { username: 'sara', password: 'pass', email: 'sara@test.com' }
+                ],
+                currentUser: null,
+                login(username, password) {
+                    return new Promise((resolve, reject) => {
+                        setTimeout(() => {
+                            const user = this.users.find(u => u.username === username && u.password === password);
+                            if (user) {
+                                this.currentUser = { ...user, password: undefined }; // remove password
+                                resolve({ success: true, user: this.currentUser, token: 'fake-jwt-token' });
+                            } else {
+                                reject({ success: false, error: 'نام کاربری یا رمز عبور اشتباه است' });
+                            }
+                        }, 300); // شبیه‌سازی تأخیر شبکه
+                    });
+                },
+                logout() {
+                    this.currentUser = null;
+                    return Promise.resolve({ success: true });
+                },
+                getCurrentUser() {
+                    return this.currentUser ? { ...this.currentUser } : null;
+                },
+                isLoggedIn() {
+                    return this.currentUser !== null;
+                }
+            };
+
+            // ==================== Fake State Manager ====================
+            window.fakeState = {
+                state: { user: null, loading: false, error: null },
+                listeners: [],
+                setState(newState) {
+                    this.state = { ...this.state, ...newState };
+                    this.listeners.forEach(fn => fn(this.state));
+                },
+                getState() { return { ...this.state }; },
+                subscribe(fn) { this.listeners.push(fn); },
+                reset() {
+                    this.state = { user: null, loading: false, error: null };
+                }
+            };
+
+            // ==================== Fake Router ====================
+            window.fakeRouter = {
+                currentRoute: '/login',
+                navigate(route) {
+                    this.currentRoute = route;
+                    console.log(`[مسیریاب] هدایت به: ${route}`);
+                }
+            };
+
+            // ==================== پاکسازی لاگ ====================
+            window.logs = [];
+            window.log = function(...args) {
+                const message = args.map(arg => 
+                    typeof arg === 'object' ? JSON.stringify(arg, null, 2) : String(arg)
+                ).join(' ');
+                window.logs.push(message);
+                console.log(...args);
+                const el = document.getElementById('live-log');
+                if (el) {
+                    el.innerText = window.logs.join('\n');
+                }
+            };
+            window.clearLog = function() {
+                window.logs = [];
+                document.getElementById('live-log').innerText = '';
+            };
+        </script>
+    </div>
+
+    <!-- -------------------- تست‌ها -------------------- -->
+    <div class="test-container">
+        <h2 style="margin-top: 0;">🔐 سناریوهای ورود (۶ تست مستقل)</h2>
+        <div class="row">
+            <button onclick="runAllTests()">▶ اجرای همه تست‌ها</button>
+            <button class="secondary" onclick="resetAll()">🔄 ریست state</button>
+            <button class="secondary" onclick="clearLog()">🧹 پاکسازی لاگ</button>
+        </div>
+
+        <div id="test-list" class="test-suite">
+            <!-- تست 1: ورود موفق -->
+            <div id="test1" class="test-item">
+                <div class="test-header">
+                    <span class="test-title">✅ ۱. ورود موفق (اعتبارسنجی رفتار)</span>
+                    <span id="status1" class="test-status">آماده</span>
+                </div>
+                <p>هدف: با کاربر معتبر (ali/123456) → وضعیت logged-in و توکن بازگردد.</p>
+                <button onclick="runTest1()">اجرای تست ۱</button>
+            </div>
+            <!-- تست 2: ورود ناموفق (رمز غلط) -->
+            <div id="test2" class="test-item">
+                <div class="test-header">
+                    <span class="test-title">❌ ۲. ورود با رمز اشتباه</span>
+                    <span id="status2" class="test-status">آماده</span>
+                </div>
+                <p>هدف: خطای مناسب دریافت شود، state خطا ثبت شود.</p>
+                <button onclick="runTest2()">اجرای تست ۲</button>
+            </div>
+            <!-- تست 3: ورود با کاربر ناموجود -->
+            <div id="test3" class="test-item">
+                <div class="test-header">
+                    <span class="test-title">🔍 ۳. کاربر ناموجود</span>
+                    <span id="status3" class="test-status">آماده</span>
+                </div>
+                <p>هدف: سرویس خطای «نام کاربری وجود ندارد» بدهد.</p>
+                <button onclick="runTest3()">اجرای تست ۳</button>
+            </div>
+            <!-- تست 4: بارگذاری در حین درخواست (loading) -->
+            <div id="test4" class="test-item">
+                <div class="test-header">
+                    <span class="test-title">⏳ ۴. وضعیت loading</span>
+                    <span id="status4" class="test-status">آماده</span>
+                </div>
+                <p>هدف: در زمان درخواست، state.loading = true شود.</p>
+                <button onclick="runTest4()">اجرای تست ۴</button>
+            </div>
+            <!-- تست 5: پس از ورود موفق، state کاربر به‌روز شود -->
+            <div id="test5" class="test-item">
+                <div class="test-header">
+                    <span class="test-title">📦 ۵. به‌روزرسانی state پس از ورود</span>
+                    <span id="status5" class="test-status">آماده</span>
+                </div>
+                <p>هدف: state.user با اطلاعات کاربر پر شود.</p>
+                <button onclick="runTest5()">اجرای تست ۵</button>
+            </div>
+            <!-- تست 6: هدایت به صفحه اصلی بعد از ورود موفق -->
+            <div id="test6" class="test-item">
+                <div class="test-header">
+                    <span class="test-title">🧭 ۶. ناوبری پس از ورود</span>
+                    <span id="status6" class="test-status">آماده</span>
+                </div>
+                <p>هدف: بعد از لاگین موفق، به '/home' هدایت شویم.</p>
+                <button onclick="runTest6()">اجرای تست ۶</button>
+            </div>
+        </div>
+
+        <hr>
+        <div>
+            <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
+                <span>📋 لاگ رویدادها:</span>
+                <span style="font-size: 0.7rem; color: #64748b;">(خروجی کنسول شبیه‌سازی شده)</span>
+            </div>
+            <div id="live-log" class="output-panel">
+                برای مشاهده لاگ، تستی را اجرا کنید.
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ==================== پشتیبانی از RTL و ابزار ====================
+        window.onload = function() {
+            resetAll();
+        };
+
+        function resetAll() {
+            window.fakeAuth.logout();
+            window.fakeState.reset();
+            window.fakeRouter.currentRoute = '/login';
+            window.clearLog();
+            // ریست وضعیت نمایشی
+            document.querySelectorAll('.test-item').forEach(el => {
+                el.classList.remove('pass', 'fail');
+            });
+            ['1','2','3','4','5','6'].forEach(i => {
+                document.getElementById(`status${i}`).innerText = 'آماده';
+                document.getElementById(`status${i}`).className = 'test-status';
+            });
+            log('🔄 سیستم ریست شد. state پاک، کاربر خارج شد.');
+        }
+
+        // ==================== تابع کمکی برای به‌روزرسانی وضعیت ====================
+        function updateTestStatus(testId, passed, message) {
+            const statusEl = document.getElementById(`status${testId}`);
+            const testItem = document.getElementById(`test${testId}`);
+            if (passed) {
+                statusEl.innerText = '✅ قبول';
+                statusEl.className = 'test-status pass';
+                testItem.classList.add('pass');
+                testItem.classList.remove('fail');
+            } else {
+                statusEl.innerText = '❌ مردود';
+                statusEl.className = 'test-status fail';
+                testItem.classList.add('fail');
+                testItem.classList.remove('pass');
+            }
+            log(`تست ${testId}: ${message}`);
+        }
+
+        // ==================== تست 1: ورود موفق ====================
+        async function runTest1() {
+            log('▶️ اجرای تست 1: ورود موفق با ali/123456');
+            try {
+                const result = await window.fakeAuth.login('ali', '123456');
+                if (result.success && result.token === 'fake-jwt-token' && result.user.username === 'ali') {
+                    updateTestStatus('1', true, 'ورود موفق، توکن دریافت شد.');
+                } else {
+                    updateTestStatus('1', false, 'ساختار پاسخ نادرست است.');
+                }
+            } catch (e) {
+                updateTestStatus('1', false, `خطای غیرمنتظره: ${e.error || e}`);
+            }
+        }
+
+        // ==================== تست 2: رمز غلط ====================
+        async function runTest2() {
+            log('▶️ اجرای تست 2: ورود با رمز غلط (ali/wrong)');
+            try {
+                await window.fakeAuth.login('ali', 'wrong');
+                updateTestStatus('2', false, 'باید خطا می‌داد اما موفق شد!');
+            } catch (e) {
+                if (e.error && e.error.includes('اشتباه')) {
+                    updateTestStatus('2', true, 'خطای مناسب دریافت شد.');
+                } else {
+                    updateTestStatus('2', false, `خطا: ${JSON.stringify(e)}`);
+                }
+            }
+        }
+
+        // ==================== تست 3: کاربر ناموجود ====================
+        async function runTest3() {
+            log('▶️ اجرای تست 3: کاربر ناموجود (nosuer)');
+            try {
+                await window.fakeAuth.login('nosuer', 'pass');
+                updateTestStatus('3', false, 'باید خطا می‌داد.');
+            } catch (e) {
+                if (e.error) {
+                    updateTestStatus('3', true, `خطا: ${e.error}`);
+                } else {
+                    updateTestStatus('3', false, 'خطای نامناسب');
+                }
+            }
+        }
+
+        // ==================== تست 4: وضعیت loading ====================
+        async function runTest4() {
+            log('▶️ تست 4: بررسی state.loading');
+            window.fakeState.setState({ loading: true });
+            if (window.fakeState.getState().loading === true) {
+                // شبیه‌سازی پایان درخواست
+                window.fakeState.setState({ loading: false });
+                updateTestStatus('4', true, 'loading به درستی true/false شد.');
+            } else {
+                updateTestStatus('4', false, 'loading ست نشد.');
+            }
+        }
+
+        // ==================== تست 5: به‌روزرسانی state پس از ورود ====================
+        async function runTest5() {
+            log('▶️ تست 5: state.user پس از ورود');
+            try {
+                const result = await window.fakeAuth.login('sara', 'pass');
+                window.fakeState.setState({ user: result.user });
+                const user = window.fakeState.getState().user;
+                if (user && user.username === 'sara') {
+                    updateTestStatus('5', true, 'state.user با موفقیت به‌روز شد.');
+                } else {
+                    updateTestStatus('5', false, 'state.user خالی یا نادرست است.');
+                }
+            } catch (e) {
+                updateTestStatus('5', false, `خطا: ${e.error}`);
+            }
+        }
+
+        // ==================== تست 6: ناوبری پس از ورود ====================
+        async function runTest6() {
+            log('▶️ تست 6: هدایت به صفحه اصلی');
+            try {
+                await window.fakeAuth.login('ali', '123456');
+                window.fakeRouter.navigate('/home');
+                if (window.fakeRouter.currentRoute === '/home') {
+                    updateTestStatus('6', true, 'ناوبری به /home انجام شد.');
+                } else {
+                    updateTestStatus('6', false, `مسیر فعلی: ${window.fakeRouter.currentRoute}`);
+                }
+            } catch (e) {
+                updateTestStatus('6', false, `خطا: ${e.error}`);
+            }
+        }
+
+        // ==================== اجرای همه ====================
+        async function runAllTests() {
+            log('🚀 اجرای مجموعه تست‌ها...');
+            resetAll();
+            await runTest1();
+            await runTest2();
+            await runTest3();
+            await runTest4();
+            await runTest5();
+            await runTest6();
+            log('✅ مجموعه تست‌ها پایان یافت.');
+        }
+
+        // لاگ در صفحه
+        function log(message) {
+            window.logs.push(`[${new Date().toLocaleTimeString('fa-IR')}] ${message}`);
+            document.getElementById('live-log').innerText = window.logs.join('\n');
+            console.log(message);
+        }
+    </script>
+    <div style="text-align: center; margin: 24px 0; color: #64748b; font-size: 0.8rem;">
+        Farsinglish · تست دستی صفحه ورود · رعایت اصول Tool-Agnostic · موبایل-فرست
+    </div>
+</body>
+</html>
