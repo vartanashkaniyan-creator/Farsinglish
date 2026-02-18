@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>تست قرارداد - فرم اینپوت (ورژن اصلاحی)</title>
+    <title>تست قرارداد - فرم اینپوت (نسخه نهایی)</title>
     <style>
         * {
             box-sizing: border-box;
@@ -83,6 +83,13 @@
         .btn-secondary:hover {
             background: #e2e8f0;
         }
+        .btn-success {
+            background: #48bb78;
+            color: white;
+        }
+        .btn-success:hover {
+            background: #38a169;
+        }
         .output {
             background: #1a202c;
             color: #a0eec0;
@@ -126,14 +133,14 @@
             font-size: 0.75rem;
             font-weight: 600;
         }
-        .live-preview {
-            background: white;
-            border: 2px solid #e2e8f0;
+        .test-input-area {
+            background: #f9f9fc;
+            border: 2px dashed #cbd5e0;
             border-radius: 16px;
             padding: 20px;
             margin-top: 25px;
         }
-        .preview-title {
+        .test-input-title {
             font-weight: 600;
             color: #4a5568;
             margin-bottom: 15px;
@@ -146,10 +153,10 @@
 <body>
     <div class="header">
         <h1>
-            🧪 تست قرارداد (ورژن اصلاحی)
+            🧪 تست قرارداد (نسخه نهایی)
             <span>form-input.component</span>
         </h1>
-        <div class="subtitle">بررسی ۸ قرارداد اصلی با رفع مشکل required star</div>
+        <div class="subtitle">بررسی ۸ قرارداد اصلی - بدون پیش‌نمایش زنده</div>
     </div>
 
     <div class="test-panel">
@@ -160,8 +167,11 @@
             <button class="btn btn-secondary" onclick="clearConsole()">
                 🗑️ پاک کردن خروجی
             </button>
-            <button class="btn btn-secondary" onclick="runSingleTest('required')">
-                ⭐ تست required (اصلاح شده)
+            <button class="btn btn-success" onclick="runSingleTest('required')">
+                ⭐ تست required (تک‌تست)
+            </button>
+            <button class="btn btn-success" onclick="runSingleTest('props')">
+                📋 تست props
             </button>
         </div>
 
@@ -170,13 +180,16 @@
             ⏳ برای شروع تست‌ها دکمه بالایی را بزنید...
         </div>
 
-        <!-- پیش‌نمایش زنده کامپوننت -->
-        <div class="live-preview">
-            <div class="preview-title">
-                <span>🔍 پیش‌نمایش زنده کامپوننت (با required)</span>
-                <span class="badge">برای تست چشمی</span>
+        <!-- بخش تست دستی ساده (اختیاری) -->
+        <div class="test-input-area">
+            <div class="test-input-title">
+                <span>🖊️ تست دستی سریع</span>
+                <span class="badge">اختیاری</span>
             </div>
-            <div id="live-preview-container"></div>
+            <div id="manual-test-container"></div>
+            <p style="color: #718096; font-size: 0.85rem; margin-top: 10px;">
+                برای تست دستی، در فیلد زیر تایپ کنید. این بخش فقط برای کمک به درک عملکرد است و در تست‌های خودکار نقشی ندارد.
+            </p>
         </div>
     </div>
 
@@ -203,14 +216,14 @@
                 wrapper.className = 'form-input-wrapper';
                 wrapper.dataset.testid = 'form-input';
 
-                // ========== ایجاد label ==========
+                // ایجاد label
                 if (this.props.label) {
                     const label = document.createElement('label');
                     label.htmlFor = this.id;
                     label.className = 'form-label';
                     label.textContent = this.props.label;
 
-                    // === اصلاح اصلی: اضافه کردن ستاره required به درستی ===
+                    // اضافه کردن ستاره required
                     if (this.props.required) {
                         const starSpan = document.createElement('span');
                         starSpan.className = 'required-star';
@@ -224,7 +237,7 @@
                     wrapper.appendChild(label);
                 }
 
-                // ========== ایجاد input ==========
+                // ایجاد input
                 const input = document.createElement('input');
                 input.id = this.id;
                 input.type = this.props.type;
@@ -233,7 +246,7 @@
                 input.name = this.props.name;
                 input.disabled = this.props.disabled;
                 
-                // === اعمال required روی تگ input ===
+                // اعمال required روی تگ input
                 if (this.props.required) {
                     input.required = true;
                     input.setAttribute('aria-required', 'true');
@@ -289,7 +302,7 @@
 
         // ==================== سیستم لاگ ====================
         const output = document.getElementById('output');
-        const liveContainer = document.getElementById('live-preview-container');
+        const manualContainer = document.getElementById('manual-test-container');
 
         function log(message, type = 'info') {
             const time = new Date().toLocaleTimeString('fa-IR', { hour12: false });
@@ -338,7 +351,7 @@
             if (testTypes()) passed++;
             await delay(150);
             
-            // تست 6: required (اصلاح شده)
+            // تست 6: required
             if (testRequired()) passed++;
             await delay(100);
             
@@ -357,8 +370,8 @@
                 log(`⚠️ نتیجه نهایی: ${passed} از ${total} تست موفق`, passed > 5 ? 'warning' : 'error');
             }
             
-            // نمایش پیش‌نمایش
-            showLivePreview();
+            // نمایش تست دستی ساده
+            showManualTest();
         }
 
         // تست 1: props
@@ -462,9 +475,9 @@
             }
         }
 
-        // تست 6: required (اصلاح شده)
+        // تست 6: required
         function testRequired() {
-            log('📋 تست 6: required (نسخه اصلاح شده)', 'info');
+            log('📋 تست 6: required', 'info');
             try {
                 const div = document.createElement('div');
                 const input = new FormInput({ label: 'فیلد الزامی', required: true });
@@ -526,24 +539,32 @@
             }
         }
 
-        // تست انفرادی required
-        function runSingleTest(type) {
-            if (type === 'required') {
-                clearConsole();
-                log('⭐ اجرای تست مجزای required', 'info');
-                testRequired();
-                showLivePreview();
+        // تست انفرادی
+        function runSingleTest(testName) {
+            clearConsole();
+            log(`🧪 اجرای تست مجزای: ${testName}`, 'info');
+            
+            switch(testName) {
+                case 'required':
+                    testRequired();
+                    break;
+                case 'props':
+                    testProps();
+                    break;
+                default:
+                    log('❌ تست نامعتبر', 'error');
             }
         }
 
-        function showLivePreview() {
-            liveContainer.innerHTML = '';
+        // نمایش تست دستی ساده
+        function showManualTest() {
+            manualContainer.innerHTML = '';
             const input = new FormInput({ 
-                label: 'فیلد آزمایشی (required)', 
-                required: true,
-                placeholder: 'این فیلد اجباری است...'
+                label: 'تست دستی',
+                placeholder: 'هر چیزی تایپ کنید...',
+                onChange: (val) => console.log('مقدار:', val)
             });
-            input.render(liveContainer);
+            input.render(manualContainer);
         }
 
         function delay(ms) {
@@ -566,8 +587,8 @@
         `;
         document.head.appendChild(style);
 
-        // نمایش پیش‌نمایش اولیه
-        window.addEventListener('load', showLivePreview);
+        // نمایش تست دستی هنگام بارگذاری
+        window.addEventListener('load', showManualTest);
     </script>
 </body>
 </html>
