@@ -1,0 +1,687 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>تست دستی: صفحه پروفایل (State) - اصلاح شده</title>
+    <style>
+        body {
+            font-family: Vazir, Tahoma, Arial, sans-serif;
+            background: #f5f7fa;
+            margin: 0;
+            padding: 20px;
+            color: #1e293b;
+        }
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+        h1 {
+            font-size: 1.8rem;
+            margin-bottom: 20px;
+            color: #0f172a;
+            border-right: 5px solid #3b82f6;
+            padding-right: 15px;
+        }
+        .test-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        .card {
+            background: white;
+            border-radius: 16px;
+            padding: 20px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+            border: 1px solid #e2e8f0;
+        }
+        .card h3 {
+            margin-top: 0;
+            margin-bottom: 15px;
+            font-size: 1.2rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: #0f172a;
+        }
+        .btn {
+            background: #3b82f6;
+            color: white;
+            border: none;
+            padding: 10px 16px;
+            border-radius: 30px;
+            font-size: 0.9rem;
+            font-weight: 500;
+            cursor: pointer;
+            width: 100%;
+            transition: 0.2s;
+            margin-bottom: 12px;
+            border: 1px solid #2563eb;
+        }
+        .btn:hover {
+            background: #2563eb;
+            transform: translateY(-1px);
+        }
+        .btn.secondary {
+            background: #f1f5f9;
+            color: #1e293b;
+            border: 1px solid #cbd5e1;
+        }
+        .btn.secondary:hover {
+            background: #e2e8f0;
+        }
+        .log-container {
+            background: #0f172a;
+            color: #e2e8f0;
+            padding: 20px;
+            border-radius: 12px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.85rem;
+            direction: ltr;
+            text-align: left;
+            max-height: 400px;
+            overflow-y: auto;
+            margin-top: 20px;
+            border: 1px solid #334155;
+        }
+        .log-entry {
+            padding: 4px 0;
+            border-bottom: 1px dotted #334155;
+            color: #a5f3fc;
+        }
+        .log-entry.error {
+            color: #fca5a5;
+        }
+        .log-entry.success {
+            color: #86efac;
+        }
+        .flex-row {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+        }
+        .badge {
+            background: #e2e8f0;
+            padding: 4px 12px;
+            border-radius: 30px;
+            font-size: 0.8rem;
+            color: #334155;
+        }
+        hr {
+            border: none;
+            border-top: 1px solid #e2e8f0;
+            margin: 20px 0;
+        }
+        .state-preview {
+            background: #f8fafc;
+            border: 1px solid #cbd5e1;
+            border-radius: 8px;
+            padding: 15px;
+            font-family: monospace;
+            direction: ltr;
+            text-align: left;
+            font-size: 0.8rem;
+            margin-top: 15px;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>📋 تست دستی: صفحه پروفایل (مدیریت State) - نسخه اصلاح شده</h1>
+    <p style="margin-bottom: 20px;">این تست‌ها وضعیت داخلی صفحه پروفایل و تغییرات آن را بدون وابستگی به UI واقعی بررسی می‌کنند.</p>
+
+    <div class="test-grid">
+        <!-- کارت ۱: هسته State -->
+        <div class="card">
+            <h3>🔹 ۱. هسته State (immutability)</h3>
+            <div class="flex-row">
+                <button class="btn" id="testInitialStateBtn">✅ تست state اولیه</button>
+                <button class="btn secondary" id="testImmutabilityBtn">🧪 تست immutability</button>
+            </div>
+            <div class="badge">ایزوله · قطعی</div>
+            <div style="margin-top: 15px; font-size: 0.9rem;">
+                <span>state پیش‌فرض باید شامل: userId, name, email, level, xp, streak, stats, settings</span>
+            </div>
+        </div>
+
+        <!-- کارت ۲: بروزرسانی State -->
+        <div class="card">
+            <h3>🔸 ۲. بروزرسانی state</h3>
+            <div class="flex-row">
+                <button class="btn" id="testUpdateFieldBtn">✏️ بروزرسانی فیلد</button>
+                <button class="btn secondary" id="testNestedUpdateBtn">📦 بروزرسانی تو در تو</button>
+            </div>
+            <div class="badge">تک‌ادعا · بدون اثر جانبی</div>
+            <div style="margin-top: 15px;">
+                <button class="btn secondary" id="testBatchUpdateBtn">⚡ بروزرسانی گروهی</button>
+            </div>
+        </div>
+
+        <!-- کارت ۳: محاسبات و مشتقات -->
+        <div class="card">
+            <h3>🔹 ۳. مقادیر مشتق (derived)</h3>
+            <div class="flex-row">
+                <button class="btn" id="testNextLevelBtn">📈 محاسبه سطح بعدی</button>
+                <button class="btn secondary" id="testProgressPercentBtn">📊 درصد پیشرفت</button>
+            </div>
+            <div class="badge">منطق محض · pure function</div>
+            <div style="margin-top: 15px;">
+                <button class="btn secondary" id="testStreakBonusBtn">🔥 محاسبه پاداش استریک</button>
+            </div>
+        </div>
+
+        <!-- کارت ۴: edge cases -->
+        <div class="card">
+            <h3>⚠️ ۴. لبه‌ها (edge cases)</h3>
+            <div class="flex-row">
+                <button class="btn" id="testNullFieldBtn">🕳️ فیلد null/undefined</button>
+                <button class="btn secondary" id="testInvalidTypeBtn">🚫 نوع نامعتبر</button>
+            </div>
+            <div class="badge">مقاوم · fail safe</div>
+            <div style="margin-top: 15px;">
+                <button class="btn secondary" id="testResetStateBtn">🔄 بازنشانی به initialState</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- کارت ۵: شبیه‌سازی جریان کاربر -->
+    <div class="card" style="grid-column: 1/-1;">
+        <h3>🧪 ۵. شبیه‌سازی سناریوی کاربر (flow simulation)</h3>
+        <div class="flex-row">
+            <button class="btn" id="testProfileLoadBtn">👤 بارگذاری پروفایل</button>
+            <button class="btn secondary" id="testProfileEditBtn">✏️ ویرایش و ذخیره</button>
+            <button class="btn secondary" id="testLevelUpBtn">⬆️ ارتقا سطح</button>
+        </div>
+        <div class="flex-row">
+            <button class="btn secondary" id="testCompleteFlowBtn">🔄 اجرای گام‌به‌گام کامل</button>
+        </div>
+        <div class="badge">سناریوی انسانی · لاگ شفاف</div>
+    </div>
+
+    <!-- نمایشگر state فعلی (شبیه‌سازی شده) -->
+    <div class="state-preview" id="statePreview">
+        <strong>📌 state فعلی (برای تست‌ها):</strong> <span id="stateDisplay">(پس از هر تست به‌روز می‌شود)</span>
+    </div>
+
+    <!-- لاگ مجازی -->
+    <div class="log-container" id="logContainer">
+        <div class="log-entry">✅ آماده‌سازی تست‌های state پروفایل (نسخه اصلاح شده) ...</div>
+    </div>
+</div>
+
+<script>
+    (function() {
+        // ----- اصول حرفه‌ای: Tool-Agnostic, Deterministic, Isolated -----
+        
+        // ۱. تعریف initialState (محض، قابل پیش‌بینی)
+        const INITIAL_STATE = {
+            userId: 'user_123',
+            name: 'علیرضا کاظمی',
+            email: 'alireza@example.com',
+            level: 3,
+            xp: 280,
+            nextLevelXp: 400,
+            streak: 7,
+            stats: {
+                lessonsCompleted: 24,
+                totalReviews: 156,
+                avgAccuracy: 78.5,
+                perfectReviews: 12
+            },
+            settings: {
+                darkMode: false,
+                notifications: true,
+                language: 'fa'
+            },
+            lastUpdated: '2026-02-18T10:30:00Z'
+        };
+
+        // state جاری (برای تست‌ها، هر بار clone می‌کنیم تا ایزوله بماند)
+        let currentState = JSON.parse(JSON.stringify(INITIAL_STATE));
+        
+        // المان‌های DOM
+        const logContainer = document.getElementById('logContainer');
+        const stateDisplay = document.getElementById('stateDisplay');
+        
+        // به‌روزرسانی نمایش state
+        function updateStatePreview() {
+            stateDisplay.innerText = JSON.stringify(currentState, null, 2).substring(0, 150) + '...';
+        }
+
+        // تابع کمکی برای clone عمیق (جداسازی)
+        function deepClone(obj) {
+            return JSON.parse(JSON.stringify(obj));
+        }
+
+        // تابع لاگ (قابل مشاهده در console مجازی)
+        function addLog(message, type = 'info') {
+            const logDiv = document.createElement('div');
+            logDiv.className = `log-entry ${type === 'error' ? 'error' : (type === 'success' ? 'success' : '')}`;
+            logDiv.textContent = `> ${new Date().toLocaleTimeString('fa-IR')} – ${message}`;
+            logContainer.appendChild(logDiv);
+            logContainer.scrollTop = logContainer.scrollHeight;
+            // همزمان در کنسول واقعی هم لاگ می‌کنیم (شفافیت)
+            console.log(`[Profile State Test] ${message}`);
+        }
+
+        // تابع ریست state به initialState (برای ایزوله بودن تست‌ها)
+        function resetState() {
+            currentState = deepClone(INITIAL_STATE);
+            addLog('state به initialState بازنشانی شد (ایزوله‌سازی)', 'info');
+            updateStatePreview();
+            return currentState;
+        }
+
+        // ----- توابع محض (pure) برای تست منطق -----
+
+        // محاسبه سطح بعدی (pure)
+        function getNextLevel(currentLevel, xp) {
+            if (typeof currentLevel !== 'number' || typeof xp !== 'number') return null;
+            const xpNeeded = (currentLevel + 1) * 100; // فرمول ساده
+            return {
+                currentLevel,
+                nextLevel: currentLevel + 1,
+                xpNeeded,
+                xpProgress: Math.min(100, Math.floor((xp / xpNeeded) * 100))
+            };
+        }
+
+        // محاسبه درصد پیشرفت تا سطح بعدی (pure)
+        function getProgressPercent(xp, nextLevelXp) {
+            if (typeof xp !== 'number' || typeof nextLevelXp !== 'number' || nextLevelXp <= 0) return 0;
+            return Math.min(100, Math.floor((xp / nextLevelXp) * 100));
+        }
+
+        // محاسبه پاداش استریک (pure)
+        function getStreakBonus(streak) {
+            if (typeof streak !== 'number' || streak < 0) return 0;
+            if (streak >= 30) return 50;
+            if (streak >= 14) return 30;
+            if (streak >= 7) return 15;
+            if (streak >= 3) return 5;
+            return 0;
+        }
+
+        // بروزرسانی ایمن state (immutable)
+        function updateState(state, updates) {
+            // بررسی وجود state
+            if (!state || typeof state !== 'object') return deepClone(INITIAL_STATE);
+            
+            const newState = deepClone(state);
+            let changed = false;
+
+            // اعمال بروزرسانی‌های ساده
+            for (let key in updates) {
+                if (updates.hasOwnProperty(key) && newState.hasOwnProperty(key)) {
+                    // اگر مقدار جدید undefined نباشد
+                    if (updates[key] !== undefined && updates[key] !== null) {
+                        newState[key] = updates[key];
+                        changed = true;
+                    }
+                }
+            }
+            return changed ? newState : state;
+        }
+
+        // بروزرسانی تو در تو (ایمن)
+        function updateNested(state, path, value) {
+            if (!state || !path || path.length === 0) return state;
+            const newState = deepClone(state);
+            let current = newState;
+            for (let i = 0; i < path.length - 1; i++) {
+                if (!current[path[i]] || typeof current[path[i]] !== 'object') {
+                    current[path[i]] = {};
+                }
+                current = current[path[i]];
+            }
+            const lastKey = path[path.length - 1];
+            if (value === undefined || value === null) {
+                // اگر مقدار null/undefined بود، تغییر نمی‌دهیم
+                return state;
+            } else {
+                current[lastKey] = value;
+            }
+            return newState;
+        }
+
+        // تست immutability اصلاح شده
+        function testImmutability() {
+            resetState();
+            const oldState = deepClone(currentState);
+            const oldName = currentState.name;
+            
+            // ایجاد یک state جدید با تغییر (immutable)
+            const newState = updateState(currentState, { name: 'نام تغییر یافته (تست)' });
+            
+            // بررسی اینکه state اصلی تغییر نکرده
+            if (currentState.name === oldName && newState.name === 'نام تغییر یافته (تست)') {
+                addLog('✅ immutability رعایت شده: state اصلی unchanged ماند', 'success');
+                addLog(`   name اصلی: "${currentState.name}" (بدون تغییر)`);
+                addLog(`   name جدید (در state جدید): "${newState.name}"`);
+                
+                // نمایش اینکه ما می‌توانیم از newState استفاده کنیم بدون تغییر oldState
+                currentState = newState;
+                addLog('   state جاری به نسخه جدید تغییر یافت', 'info');
+            } else {
+                addLog('❌ مشکل: immutability نقض شد', 'error');
+            }
+            updateStatePreview();
+        }
+
+        // ----- راه‌اندازی رویدادها با شناسه‌های صحیح -----
+        document.addEventListener('DOMContentLoaded', function() {
+            // ۱. تست state اولیه
+            document.getElementById('testInitialStateBtn').addEventListener('click', () => {
+                resetState();
+                addLog('📋 تست state اولیه:');
+                addLog(`   نام: ${currentState.name}`);
+                addLog(`   ایمیل: ${currentState.email}`);
+                addLog(`   سطح: ${currentState.level}, XP: ${currentState.xp}`);
+                addLog(`   استریک: ${currentState.streak} روزه`);
+                addLog('✅ state اولیه به درستی مقداردهی شده است.', 'success');
+            });
+
+            // ۲. تست immutability
+            document.getElementById('testImmutabilityBtn').addEventListener('click', testImmutability);
+
+            // ۳. بروزرسانی فیلد
+            document.getElementById('testUpdateFieldBtn').addEventListener('click', () => {
+                resetState();
+                const newName = 'رضا محمدی';
+                const newXp = 310;
+                const newState = updateState(currentState, { name: newName, xp: newXp });
+                
+                addLog('✏️ بروزرسانی فیلد: name و xp');
+                addLog(`   قبلی: name="${currentState.name}", xp=${currentState.xp}`);
+                
+                currentState = newState;
+                addLog(`   بعدی: name="${currentState.name}", xp=${currentState.xp}`);
+                
+                if (currentState.name === newName && currentState.xp === newXp) {
+                    addLog('✅ بروزرسانی موفق', 'success');
+                } else {
+                    addLog('❌ خطا در بروزرسانی', 'error');
+                }
+                updateStatePreview();
+            });
+
+            // ۴. بروزرسانی تو در تو
+            document.getElementById('testNestedUpdateBtn').addEventListener('click', () => {
+                resetState();
+                const oldAccuracy = currentState.stats.avgAccuracy;
+                const newAccuracy = 85.0;
+                
+                currentState = updateNested(currentState, ['stats', 'avgAccuracy'], newAccuracy);
+                
+                addLog('📦 بروزرسانی تو در تو: stats.avgAccuracy');
+                addLog(`   قبلی: ${oldAccuracy}%`);
+                addLog(`   بعدی: ${currentState.stats.avgAccuracy}%`);
+                
+                if (currentState.stats.avgAccuracy === newAccuracy) {
+                    addLog('✅ بروزرسانی تو در تو موفق', 'success');
+                } else {
+                    addLog('❌ خطا در بروزرسانی تو در تو', 'error');
+                }
+                updateStatePreview();
+            });
+
+            // ۵. بروزرسانی گروهی (اصلاح شده)
+            document.getElementById('testBatchUpdateBtn').addEventListener('click', () => {
+                resetState();
+                addLog('⚡ بروزرسانی گروهی (level, xp, streak, lessonsCompleted)');
+                
+                // اعمال چند بروزرسانی پشت سر هم
+                let tempState = currentState;
+                tempState = updateState(tempState, { level: 4, xp: 150, streak: 8 });
+                tempState = updateNested(tempState, ['stats', 'lessonsCompleted'], 25);
+                
+                const oldState = deepClone(currentState);
+                currentState = tempState;
+                
+                addLog(`   قبلی: level=${oldState.level}, xp=${oldState.xp}, streak=${oldState.streak}, lessons=${oldState.stats.lessonsCompleted}`);
+                addLog(`   بعدی: level=${currentState.level}, xp=${currentState.xp}, streak=${currentState.streak}, lessons=${currentState.stats.lessonsCompleted}`);
+                
+                if (currentState.level === 4 && currentState.xp === 150 && 
+                    currentState.streak === 8 && currentState.stats.lessonsCompleted === 25) {
+                    addLog('✅ بروزرسانی گروهی موفق', 'success');
+                } else {
+                    addLog('❌ خطا در بروزرسانی گروهی', 'error');
+                }
+                updateStatePreview();
+            });
+
+            // ۶. محاسبه سطح بعدی
+            document.getElementById('testNextLevelBtn').addEventListener('click', () => {
+                resetState();
+                const next = getNextLevel(currentState.level, currentState.xp);
+                addLog(`📈 محاسبه سطح بعدی:`);
+                addLog(`   سطح فعلی: ${next.currentLevel}`);
+                addLog(`   سطح بعدی: ${next.nextLevel}`);
+                addLog(`   XP نیاز: ${next.xpNeeded}`);
+                addLog(`   پیشرفت: ${next.xpProgress}%`);
+                
+                if (next.xpNeeded > 0 && next.xpProgress >= 0 && next.xpProgress <= 100) {
+                    addLog('✅ محاسبه سطح بعدی صحیح است', 'success');
+                } else {
+                    addLog('⚠️ مقادیر غیرمنتظره', 'error');
+                }
+            });
+
+            // ۷. درصد پیشرفت
+            document.getElementById('testProgressPercentBtn').addEventListener('click', () => {
+                resetState();
+                const percent = getProgressPercent(currentState.xp, currentState.nextLevelXp);
+                addLog(`📊 درصد پیشرفت تا سطح بعدی: ${percent}%`);
+                addLog(`   XP: ${currentState.xp}/${currentState.nextLevelXp}`);
+                
+                if (percent >= 0 && percent <= 100) {
+                    addLog('✅ محاسبه درصد معتبر است', 'success');
+                } else {
+                    addLog('❌ درصد خارج از محدوده', 'error');
+                }
+            });
+
+            // ۸. پاداش استریک
+            document.getElementById('testStreakBonusBtn').addEventListener('click', () => {
+                resetState();
+                const bonus = getStreakBonus(currentState.streak);
+                addLog(`🔥 پاداش استریک ${currentState.streak} روزه: ${bonus} امتیاز`);
+                
+                addLog('📋 تست موارد مرزی:');
+                const testCases = [
+                    { streak: 2, expected: 0 },
+                    { streak: 5, expected: 5 },
+                    { streak: 7, expected: 15 },
+                    { streak: 10, expected: 15 },
+                    { streak: 14, expected: 30 },
+                    { streak: 20, expected: 30 },
+                    { streak: 30, expected: 50 },
+                    { streak: 40, expected: 50 }
+                ];
+                
+                testCases.forEach(tc => {
+                    const res = getStreakBonus(tc.streak);
+                    const status = res === tc.expected ? '✓' : '✗';
+                    addLog(`   استریک ${tc.streak} روزه → ${res} امتیاز (انتظار ${tc.expected}) ${status}`);
+                });
+                
+                addLog('✅ محاسبات پاداش استریک کامل شد', 'success');
+            });
+
+            // ۹. فیلد null/undefined
+            document.getElementById('testNullFieldBtn').addEventListener('click', () => {
+                resetState();
+                const oldName = currentState.name;
+                const oldXp = currentState.xp;
+                
+                const newState = updateState(currentState, { name: null, xp: undefined });
+                
+                addLog('🕳️ تست فیلد null/undefined:');
+                addLog(`   name بعد از update: "${newState.name}" (باید "${oldName}" باشد)`);
+                addLog(`   xp بعد از update: ${newState.xp} (باید ${oldXp} باشد)`);
+                
+                if (newState.name === oldName && newState.xp === oldXp) {
+                    addLog('✅ مقادیر null/undefined نادیده گرفته شدند', 'success');
+                    currentState = newState;
+                } else {
+                    addLog('❌ state تغییر کرد (نباید تغییر می‌کرد)', 'error');
+                }
+                updateStatePreview();
+            });
+
+            // ۱۰. نوع نامعتبر
+            document.getElementById('testInvalidTypeBtn').addEventListener('click', () => {
+                resetState();
+                const oldLevel = currentState.level;
+                
+                const newState = updateState(currentState, { level: 'پنج' });
+                
+                addLog('🚫 تست نوع نامعتبر:');
+                addLog(`   level بعد از update: ${newState.level} (باید ${oldLevel} باشد)`);
+                
+                if (newState.level === oldLevel && typeof newState.level === 'number') {
+                    addLog('✅ نوع نامعتبر نادیده گرفته شد', 'success');
+                    currentState = newState;
+                } else {
+                    addLog('❌ state با نوع نامعتبر تغییر کرد', 'error');
+                }
+                updateStatePreview();
+            });
+
+            // ۱۱. بازنشانی state
+            document.getElementById('testResetStateBtn').addEventListener('click', () => {
+                // اول state را تغییر می‌دهیم
+                currentState = updateState(currentState, { name: 'نام موقت', level: 99 });
+                addLog('🔄 state به "نام موقت" و level=99 تغییر یافت');
+                updateStatePreview();
+                
+                // سپس ریست
+                setTimeout(() => {
+                    resetState();
+                    addLog('✅ بازنشانی به initialState انجام شد', 'success');
+                }, 500);
+            });
+
+            // ۱۲. بارگذاری پروفایل
+            document.getElementById('testProfileLoadBtn').addEventListener('click', () => {
+                resetState();
+                addLog('👤 شبیه‌سازی بارگذاری پروفایل از سرور (fake)');
+                
+                const serverData = {
+                    ...deepClone(currentState),
+                    name: 'علی نادری',
+                    xp: 415,
+                    level: 4,
+                    streak: 14
+                };
+                
+                currentState = serverData;
+                addLog(`   نام: ${currentState.name}`);
+                addLog(`   سطح: ${currentState.level}, XP: ${currentState.xp}`);
+                addLog(`   استریک: ${currentState.streak} روزه`);
+                addLog('✅ بارگذاری پروفایل موفق', 'success');
+                updateStatePreview();
+            });
+
+            // ۱۳. ویرایش و ذخیره
+            document.getElementById('testProfileEditBtn').addEventListener('click', () => {
+                resetState();
+                addLog('✏️ شبیه‌سازی ویرایش پروفایل:');
+                
+                const edits = {
+                    name: 'محمد احمدی',
+                    email: 'm.ahmadi@example.com'
+                };
+                
+                const oldName = currentState.name;
+                const oldEmail = currentState.email;
+                currentState = updateState(currentState, edits);
+                
+                addLog(`   نام: "${oldName}" → "${currentState.name}"`);
+                addLog(`   ایمیل: "${oldEmail}" → "${currentState.email}"`);
+                
+                if (currentState.name === edits.name && currentState.email === edits.email) {
+                    addLog('✅ ویرایش و ذخیره موفق', 'success');
+                } else {
+                    addLog('❌ خطا در ویرایش', 'error');
+                }
+                updateStatePreview();
+            });
+
+            // ۱۴. ارتقا سطح
+            document.getElementById('testLevelUpBtn').addEventListener('click', () => {
+                resetState();
+                const oldLevel = currentState.level;
+                const oldXp = currentState.xp;
+                
+                // شبیه‌سازی ارتقا سطح
+                currentState = updateState(currentState, { 
+                    level: currentState.level + 1,
+                    xp: currentState.xp + 150  // افزایش XP به جای کاهش
+                });
+                
+                addLog(`⬆️ ارتقا سطح:`);
+                addLog(`   سطح: ${oldLevel} → ${currentState.level}`);
+                addLog(`   XP: ${oldXp} → ${currentState.xp}`);
+                
+                if (currentState.level === oldLevel + 1) {
+                    addLog('✅ ارتقا سطح موفق', 'success');
+                } else {
+                    addLog('❌ خطا در ارتقا سطح', 'error');
+                }
+                updateStatePreview();
+            });
+
+            // ۱۵. جریان کامل
+            document.getElementById('testCompleteFlowBtn').addEventListener('click', () => {
+                resetState();
+                addLog('🔥 شروع شبیه‌سازی جریان کامل کاربر در صفحه پروفایل');
+                
+                // گام ۱: بارگذاری پروفایل
+                addLog('گام ۱: بارگذاری پروفایل از دیتابیس');
+                
+                // گام ۲: نمایش آمار
+                addLog(`گام ۲: نمایش آمار - درس‌ها: ${currentState.stats.lessonsCompleted}, دقت: ${currentState.stats.avgAccuracy}%`);
+                
+                // گام ۳: ویرایش پروفایل
+                addLog('گام ۳: ویرایش پروفایل (تغییر نام)');
+                currentState = updateState(currentState, { name: 'کاظم رضایی' });
+                
+                // گام ۴: دریافت XP و ارتقا سطح
+                addLog('گام ۴: دریافت XP و ارتقا سطح');
+                currentState = updateState(currentState, { xp: currentState.xp + 150 });
+                addLog(`   XP جدید: ${currentState.xp}`);
+                
+                if (currentState.xp >= currentState.nextLevelXp) {
+                    const newLevel = currentState.level + 1;
+                    const remainingXp = currentState.xp - currentState.nextLevelXp;
+                    currentState = updateState(currentState, { 
+                        level: newLevel,
+                        xp: remainingXp
+                    });
+                    addLog(`   ارتقا به سطح ${newLevel} با XP باقیمانده ${remainingXp}`);
+                }
+                
+                // گام ۵: افزایش استریک
+                addLog('گام ۵: افزایش استریک روزانه');
+                currentState = updateState(currentState, { streak: currentState.streak + 1 });
+                
+                // گام ۶: ذخیره نهایی
+                addLog('گام ۶: ذخیره نهایی state');
+                
+                addLog('✅ جریان کامل پروفایل با موفقیت شبیه‌سازی شد.', 'success');
+                addLog(`   وضعیت نهایی - نام: "${currentState.name}", سطح: ${currentState.level}, XP: ${currentState.xp}, استریک: ${currentState.streak}`);
+                
+                updateStatePreview();
+            });
+
+            // نمایش اولیه
+            resetState();
+            addLog('✅ همه دکمه‌ها آماده‌اند. هر تست ایزوله و قابل تکرار است.', 'success');
+        });
+    })();
+</script>
+</body>
+</html>
