@@ -1,0 +1,573 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>تست قرارداد - فرم اینپوت (ورژن اصلاحی)</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            font-family: 'Segoe UI', system-ui, sans-serif;
+        }
+        body {
+            background: #f0f2f5;
+            padding: 20px;
+            max-width: 900px;
+            margin: 0 auto;
+        }
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 20px;
+            margin-bottom: 25px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+        }
+        h1 {
+            font-size: 1.6rem;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        h1 span {
+            background: rgba(255,255,255,0.2);
+            padding: 5px 12px;
+            border-radius: 50px;
+            font-size: 0.9rem;
+        }
+        .subtitle {
+            opacity: 0.9;
+            font-size: 0.95rem;
+        }
+        .test-panel {
+            background: white;
+            border-radius: 24px;
+            padding: 25px;
+            box-shadow: 0 8px 30px rgba(0,0,0,0.08);
+            margin-bottom: 25px;
+        }
+        .button-group {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+            margin-bottom: 25px;
+        }
+        .btn {
+            padding: 14px 28px;
+            border: none;
+            border-radius: 16px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+        }
+        .btn-primary {
+            background: #667eea;
+            color: white;
+        }
+        .btn-primary:hover {
+            background: #5a67d8;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(102,126,234,0.3);
+        }
+        .btn-secondary {
+            background: #edf2f7;
+            color: #4a5568;
+        }
+        .btn-secondary:hover {
+            background: #e2e8f0;
+        }
+        .output {
+            background: #1a202c;
+            color: #a0eec0;
+            padding: 20px;
+            border-radius: 18px;
+            font-family: 'JetBrains Mono', 'Courier New', monospace;
+            font-size: 0.9rem;
+            line-height: 1.7;
+            white-space: pre-wrap;
+            direction: ltr;
+            max-height: 450px;
+            overflow-y: auto;
+            border: 2px solid #2d3748;
+            box-shadow: inset 0 4px 12px rgba(0,0,0,0.3);
+        }
+        .test-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 15px;
+            margin: 25px 0;
+        }
+        .test-card {
+            background: #f8fafd;
+            border-radius: 18px;
+            padding: 18px;
+            border: 2px solid #e9eef2;
+        }
+        .test-card h3 {
+            color: #2d3748;
+            margin-bottom: 12px;
+            font-size: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .badge {
+            background: #c3dafe;
+            color: #434190;
+            padding: 4px 12px;
+            border-radius: 40px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+        .live-preview {
+            background: white;
+            border: 2px solid #e2e8f0;
+            border-radius: 16px;
+            padding: 20px;
+            margin-top: 25px;
+        }
+        .preview-title {
+            font-weight: 600;
+            color: #4a5568;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>
+            🧪 تست قرارداد (ورژن اصلاحی)
+            <span>form-input.component</span>
+        </h1>
+        <div class="subtitle">بررسی ۸ قرارداد اصلی با رفع مشکل required star</div>
+    </div>
+
+    <div class="test-panel">
+        <div class="button-group">
+            <button class="btn btn-primary" onclick="runAllTests()">
+                🚀 اجرای تمام تست‌ها (۸ مورد)
+            </button>
+            <button class="btn btn-secondary" onclick="clearConsole()">
+                🗑️ پاک کردن خروجی
+            </button>
+            <button class="btn btn-secondary" onclick="runSingleTest('required')">
+                ⭐ تست required (اصلاح شده)
+            </button>
+        </div>
+
+        <!-- نمایشگر خروجی -->
+        <div id="output" class="output">
+            ⏳ برای شروع تست‌ها دکمه بالایی را بزنید...
+        </div>
+
+        <!-- پیش‌نمایش زنده کامپوننت -->
+        <div class="live-preview">
+            <div class="preview-title">
+                <span>🔍 پیش‌نمایش زنده کامپوننت (با required)</span>
+                <span class="badge">برای تست چشمی</span>
+            </div>
+            <div id="live-preview-container"></div>
+        </div>
+    </div>
+
+    <script>
+        // ==================== کامپوننت اصلی form-input ====================
+        class FormInput {
+            constructor(props = {}) {
+                this.props = {
+                    label: props.label || '',
+                    type: props.type || 'text',
+                    value: props.value || '',
+                    placeholder: props.placeholder || '',
+                    disabled: props.disabled || false,
+                    required: props.required || false,
+                    name: props.name || `input_${Date.now()}`,
+                    onChange: props.onChange || null
+                };
+                this.element = null;
+                this.id = `input_${Math.random().toString(36).substring(2, 10)}`;
+            }
+
+            render(container) {
+                const wrapper = document.createElement('div');
+                wrapper.className = 'form-input-wrapper';
+                wrapper.dataset.testid = 'form-input';
+
+                // ========== ایجاد label ==========
+                if (this.props.label) {
+                    const label = document.createElement('label');
+                    label.htmlFor = this.id;
+                    label.className = 'form-label';
+                    label.textContent = this.props.label;
+
+                    // === اصلاح اصلی: اضافه کردن ستاره required به درستی ===
+                    if (this.props.required) {
+                        const starSpan = document.createElement('span');
+                        starSpan.className = 'required-star';
+                        starSpan.textContent = ' *';
+                        starSpan.style.color = '#e53e3e';
+                        starSpan.style.marginRight = '4px';
+                        starSpan.style.fontWeight = 'bold';
+                        label.appendChild(starSpan);
+                    }
+                    
+                    wrapper.appendChild(label);
+                }
+
+                // ========== ایجاد input ==========
+                const input = document.createElement('input');
+                input.id = this.id;
+                input.type = this.props.type;
+                input.value = this.props.value;
+                input.placeholder = this.props.placeholder;
+                input.name = this.props.name;
+                input.disabled = this.props.disabled;
+                
+                // === اعمال required روی تگ input ===
+                if (this.props.required) {
+                    input.required = true;
+                    input.setAttribute('aria-required', 'true');
+                }
+
+                // کلاس‌های CSS
+                input.className = `form-control ${this.props.disabled ? 'is-disabled' : ''}`;
+                
+                // رویداد onChange
+                input.addEventListener('input', (e) => {
+                    if (this.props.onChange) {
+                        this.props.onChange(e.target.value, e);
+                    }
+                });
+
+                wrapper.appendChild(input);
+                
+                if (container) {
+                    container.appendChild(wrapper);
+                    this.element = wrapper;
+                }
+
+                return wrapper;
+            }
+
+            // متدهای کمکی برای تست
+            getValue() {
+                return this.element?.querySelector('input')?.value || '';
+            }
+
+            setValue(val) {
+                const input = this.element?.querySelector('input');
+                if (input && !input.disabled) {
+                    input.value = val;
+                    if (this.props.onChange) this.props.onChange(val);
+                }
+            }
+
+            isDisabled() {
+                return this.element?.querySelector('input')?.disabled || false;
+            }
+
+            hasRequiredStar() {
+                const label = this.element?.querySelector('.form-label');
+                if (!label) return false;
+                return label.querySelector('.required-star') !== null;
+            }
+
+            isInputRequired() {
+                return this.element?.querySelector('input')?.required || false;
+            }
+        }
+
+        // ==================== سیستم لاگ ====================
+        const output = document.getElementById('output');
+        const liveContainer = document.getElementById('live-preview-container');
+
+        function log(message, type = 'info') {
+            const time = new Date().toLocaleTimeString('fa-IR', { hour12: false });
+            const colors = {
+                success: '#68d391',
+                error: '#fc8181',
+                info: '#63b3ed',
+                warning: '#fbbf24'
+            };
+            const color = colors[type] || '#a0eec0';
+            output.innerHTML += `<div style="color: ${color}; margin: 3px 0;"><span style="opacity:0.7;">[${time}]</span> ${message}</div>`;
+            output.scrollTop = output.scrollHeight;
+        }
+
+        function clearConsole() {
+            output.innerHTML = '🧹 خروجی پاک شد.\n⏳ برای اجرای دوباره تست‌ها دکمه را بزنید...\n';
+        }
+
+        // ==================== اجرای تست‌ها ====================
+        async function runAllTests() {
+            clearConsole();
+            log('🔵 ===============================================', 'info');
+            log('🔵 شروع اجرای مجموعه تست‌های قرارداد (۸ مورد)', 'info');
+            log('🔵 ===============================================', 'info');
+            
+            let passed = 0;
+            const total = 8;
+
+            // تست 1: بررسی props
+            if (testProps()) passed++;
+            await delay(100);
+            
+            // تست 2: رندر DOM
+            if (testRender()) passed++;
+            await delay(100);
+            
+            // تست 3: onChange
+            if (testOnChange()) passed++;
+            await delay(100);
+            
+            // تست 4: disabled
+            if (testDisabled()) passed++;
+            await delay(100);
+            
+            // تست 5: type‌ها
+            if (testTypes()) passed++;
+            await delay(150);
+            
+            // تست 6: required (اصلاح شده)
+            if (testRequired()) passed++;
+            await delay(100);
+            
+            // تست 7: placeholder
+            if (testPlaceholder()) passed++;
+            await delay(100);
+            
+            // تست 8: name
+            if (testName()) passed++;
+            
+            log('🔵 ===============================================', 'info');
+            if (passed === total) {
+                log(`✅ نتیجه نهایی: ${passed} از ${total} تست با موفقیت ✅`, 'success');
+                log('🎉 تمام قراردادها به درستی پیاده‌سازی شده‌اند', 'success');
+            } else {
+                log(`⚠️ نتیجه نهایی: ${passed} از ${total} تست موفق`, passed > 5 ? 'warning' : 'error');
+            }
+            
+            // نمایش پیش‌نمایش
+            showLivePreview();
+        }
+
+        // تست 1: props
+        function testProps() {
+            log('📋 تست 1: دریافت props اولیه', 'info');
+            try {
+                const props = { label: 'تست', type: 'email', value: 'test@mail.com', placeholder: 'ایمیل', disabled: false, required: true };
+                const input = new FormInput(props);
+                
+                if (input.props.label === props.label && 
+                    input.props.type === props.type && 
+                    input.props.value === props.value) {
+                    log('  ✅ props به درستی ذخیره شدند', 'success');
+                    return true;
+                }
+                throw new Error('عدم تطابق props');
+            } catch (e) {
+                log(`  ❌ خطا: ${e.message}`, 'error');
+                return false;
+            }
+        }
+
+        // تست 2: رندر
+        function testRender() {
+            log('📋 تست 2: رندر DOM', 'info');
+            try {
+                const div = document.createElement('div');
+                const input = new FormInput({ label: 'نام', required: true });
+                input.render(div);
+                
+                const label = div.querySelector('.form-label');
+                if (!label) throw new Error('label وجود ندارد');
+                
+                log('  ✅ رندر با موفقیت انجام شد', 'success');
+                return true;
+            } catch (e) {
+                log(`  ❌ خطا: ${e.message}`, 'error');
+                return false;
+            }
+        }
+
+        // تست 3: onChange
+        function testOnChange() {
+            log('📋 تست 3: رویداد onChange', 'info');
+            try {
+                let changed = false;
+                const div = document.createElement('div');
+                const input = new FormInput({ 
+                    value: 'قدیم',
+                    onChange: (val) => { if (val === 'جدید') changed = true; }
+                });
+                input.render(div);
+                input.setValue('جدید');
+                
+                if (!changed) throw new Error('onChange کار نمی‌کند');
+                log('  ✅ onChange با مقدار صحیح ارسال شد', 'success');
+                return true;
+            } catch (e) {
+                log(`  ❌ خطا: ${e.message}`, 'error');
+                return false;
+            }
+        }
+
+        // تست 4: disabled
+        function testDisabled() {
+            log('📋 تست 4: وضعیت disabled', 'info');
+            try {
+                const div = document.createElement('div');
+                const input = new FormInput({ disabled: true });
+                input.render(div);
+                
+                if (!input.isDisabled()) throw new Error('غیرفعال نیست');
+                input.setValue('تست');
+                if (input.getValue() === 'تست') throw new Error('مقدار تغییر کرد');
+                
+                log('  ✅ disabled به درستی کار می‌کند', 'success');
+                return true;
+            } catch (e) {
+                log(`  ❌ خطا: ${e.message}`, 'error');
+                return false;
+            }
+        }
+
+        // تست 5: type‌ها
+        function testTypes() {
+            log('📋 تست 5: انواع type', 'info');
+            try {
+                const types = ['text', 'email', 'password', 'number', 'tel', 'url'];
+                for (const t of types) {
+                    const div = document.createElement('div');
+                    const input = new FormInput({ type: t });
+                    input.render(div);
+                    const inp = div.querySelector('input');
+                    if (inp.type !== t) throw new Error(`type ${t} مشکل دارد`);
+                }
+                log('  ✅ تمام type‌ها پشتیبانی می‌شوند', 'success');
+                return true;
+            } catch (e) {
+                log(`  ❌ خطا: ${e.message}`, 'error');
+                return false;
+            }
+        }
+
+        // تست 6: required (اصلاح شده)
+        function testRequired() {
+            log('📋 تست 6: required (نسخه اصلاح شده)', 'info');
+            try {
+                const div = document.createElement('div');
+                const input = new FormInput({ label: 'فیلد الزامی', required: true });
+                input.render(div);
+                
+                // بررسی وجود ستاره
+                if (!input.hasRequiredStar()) {
+                    throw new Error('ستاره required در label وجود ندارد');
+                }
+                
+                // بررسی required روی input
+                if (!input.isInputRequired()) {
+                    throw new Error('ویژگی required روی input تنظیم نشده');
+                }
+                
+                log('  ✅ required به درستی پیاده‌سازی شد (ستاره + ویژگی)', 'success');
+                return true;
+            } catch (e) {
+                log(`  ❌ خطا: ${e.message}`, 'error');
+                return false;
+            }
+        }
+
+        // تست 7: placeholder
+        function testPlaceholder() {
+            log('📋 تست 7: placeholder', 'info');
+            try {
+                const div = document.createElement('div');
+                const input = new FormInput({ placeholder: 'متن راهنما...' });
+                input.render(div);
+                
+                const inp = div.querySelector('input');
+                if (inp.placeholder !== 'متن راهنما...') throw new Error('placeholder نادرست');
+                
+                log('  ✅ placeholder به درستی نمایش می‌یابد', 'success');
+                return true;
+            } catch (e) {
+                log(`  ❌ خطا: ${e.message}`, 'error');
+                return false;
+            }
+        }
+
+        // تست 8: name
+        function testName() {
+            log('📋 تست 8: ویژگی name', 'info');
+            try {
+                const div = document.createElement('div');
+                const input = new FormInput({ name: 'user_field' });
+                input.render(div);
+                
+                const inp = div.querySelector('input');
+                if (inp.name !== 'user_field') throw new Error('name نادرست');
+                
+                log('  ✅ name به درستی تنظیم می‌شود', 'success');
+                return true;
+            } catch (e) {
+                log(`  ❌ خطا: ${e.message}`, 'error');
+                return false;
+            }
+        }
+
+        // تست انفرادی required
+        function runSingleTest(type) {
+            if (type === 'required') {
+                clearConsole();
+                log('⭐ اجرای تست مجزای required', 'info');
+                testRequired();
+                showLivePreview();
+            }
+        }
+
+        function showLivePreview() {
+            liveContainer.innerHTML = '';
+            const input = new FormInput({ 
+                label: 'فیلد آزمایشی (required)', 
+                required: true,
+                placeholder: 'این فیلد اجباری است...'
+            });
+            input.render(liveContainer);
+        }
+
+        function delay(ms) {
+            return new Promise(resolve => setTimeout(resolve, ms));
+        }
+
+        // استایل‌های اضافی
+        const style = document.createElement('style');
+        style.textContent = `
+            .form-input-wrapper { margin-bottom: 15px; }
+            .form-label { display: block; margin-bottom: 6px; color: #2d3748; font-weight: 500; }
+            .form-control {
+                width: 100%; padding: 12px 16px; border: 2px solid #e2e8f0;
+                border-radius: 14px; font-size: 1rem; transition: all 0.2s;
+                background: white;
+            }
+            .form-control:focus { outline: none; border-color: #667eea; box-shadow: 0 0 0 3px rgba(102,126,234,0.1); }
+            .form-control.is-disabled { background: #f7fafc; border-color: #cbd5e0; cursor: not-allowed; opacity: 0.6; }
+            .required-star { color: #e53e3e; font-weight: bold; margin-right: 4px; }
+        `;
+        document.head.appendChild(style);
+
+        // نمایش پیش‌نمایش اولیه
+        window.addEventListener('load', showLivePreview);
+    </script>
+</body>
+</html>
