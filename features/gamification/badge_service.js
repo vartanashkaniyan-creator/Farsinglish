@@ -1,22 +1,16 @@
 /**
- * سرویس مدیریت نشان‌ها (Badge Service) - نسخه نهایی
+ * سرویس مدیریت نشان‌ها (Badge Service) - نسخه نهایی با بهبودهای پیشرفته
  * مسئولیت: تعریف، اعطا و بازیابی نشان‌های کاربر با قابلیت tracking پیشرفت
  * 
- * اصول رعایت شده:
- * - SOLID (SRP, OCP, DIP, ISP, LSP)
- * - KISS, DRY, YAGNI
- * - State Machine برای چرخه حیات نشان‌ها
- * - Progress Tracking برای نمایش درصد پیشرفت
- * - Retry Mechanism برای خطاهای موقت
- * - Factory Pattern برای ایجاد سرویس
- * - Observer Pattern برای رویدادها
- * - Strategy Pattern برای معیارها (داخلی)
- * - Immutable State
- * - Comprehensive Error Handling
- * - Structured Logging
+ * بهبودهای اعمال شده:
+ * - Atomic Operations با قفل هوشمند (جلوگیری از Race Condition)
+ * - Memoization با TTL برای کاهش فراخوانی‌های تکراری
+ * - Metrics دقیق برای Observability
+ * - Circuit Breaker برای Repository Calls
+ * - Batch Processing با Micro-batching (اختیاری، غیرفعال پیش‌فرض)
  */
 
-import { CONFIG } from '../../core/config/app-config.js';
+import { CONFIG } from '../../core/config/app_config.js';
 import { logger } from '../../core/utils/logger.js';
 
 // ================ ثابت‌ها و Enumeration ها ================
@@ -128,6 +122,27 @@ class BadgeService {
     /** @type {boolean} */
     #is_initialized = false;
     
+    // ================ بهبودهای جدید ================
+    
+    /** @type {Map<string, boolean>} - قفل هوشمند برای Atomic Operations */
+    #operation_locks = new Map();
+    
+    /** @type {Map<string, {value: any, timestamp: number}>} - کش Memoization */
+    #memo_cache = new Map();
+    
+    /** @type {Object} - Metrics دقیق */
+    #metrics = {
+        awards: new Map(),      // badge_id -> count
+        failures: new Map(),    // operation -> count
+        latency: new Map(),     // operation -> {sum, count}
+        cache_hits: 0,
+        cache_misses: 0,
+        circuit_breaker_trips: 0
+    };
+    
+    /** @type {Map<string, Object>} - Circuit Breakers */
+    #circuit_breakers = new Map();
+    
     /**
      * @param {Object} dependencies - وابستگی‌های تزریق شده
      * @param {Object} dependencies.badge_repository - مخزن نشان‌ها
@@ -153,6 +168,22 @@ class BadgeService {
         this.lesson_repository = lesson_repository;
         this.event_bus = event_bus;
         this.cache_service = cache_service;
+        
+        // اعمال Memoization روی متدهای پرمصرف
+        this.#get_completed_lessons_count = this.#memoize(
+            this.#get_completed_lessons_count.bind(this),
+            5000 // 5 ثانیه
+        );
+        
+        this.#get_user_points = this.#memoize(
+            this.#get_user_points.bind(this),
+            5000
+        );
+        
+        this.#get_login_streak = this.#memoize(
+            this.#get_login_streak.bind(this),
+            5000
+        );
         
         // مقداردهی اولیه
         this.#initialize();
@@ -257,9 +288,15 @@ class BadgeService {
      * @private
      */
     async #with_retry(operation, operation_name, retry_count = 0) {
+        const start_time = Date.now();
+        
         try {
-            return await operation();
+            const result = await operation();
+            this.#record_metric(operation_name, Date.now() - start_time, true);
+            return result;
         } catch (error) {
+            this.#record_metric(operation_name, Date.now() - start_time, false);
+            
             if (retry_count >= this.#max_retries) {
                 logger.error('operation_failed_max_retries', {
                     operation: operation_name,
@@ -279,6 +316,119 @@ class BadgeService {
             
             await new Promise(resolve => setTimeout(resolve, delay));
             return this.#with_retry(operation, operation_name, retry_count + 1);
+        }
+    }
+    
+    /**
+     * قفل هوشمند برای Atomic Operations
+     * @private
+     */
+    async #with_lock(operation_id, fn) {
+        while (this.#operation_locks.get(operation_id)) {
+            await new Promise(resolve => setTimeout(resolve, 10));
+        }
+        this.#operation_locks.set(operation_id, true);
+        try {
+            return await fn();
+        } finally {
+            this.#operation_locks.delete(operation_id);
+        }
+    }
+    
+    /**
+     * Circuit Breaker برای محافظت از Repository Calls
+     * @private
+     */
+    async #with_circuit_breaker(operation_name, fn) {
+        const breaker = this.#circuit_breakers.get(operation_name) || {
+            failures: 0,
+            last_failure: null,
+            state: 'CLOSED' // CLOSED, OPEN, HALF_OPEN
+        };
+        
+        if (breaker.state === 'OPEN') {
+            const cooldown = Date.now() - (breaker.last_failure || 0);
+            if (cooldown > 30000) { // 30 ثانیه
+                breaker.state = 'HALF_OPEN';
+            } else {
+                this.#metrics.circuit_breaker_trips++;
+                throw new Error(`circuit_breaker_open: ${operation_name}`);
+            }
+        }
+        
+        try {
+            const result = await fn();
+            if (breaker.state === 'HALF_OPEN') {
+                breaker.state = 'CLOSED';
+                breaker.failures = 0;
+            }
+            this.#circuit_breakers.set(operation_name, breaker);
+            return result;
+        } catch (error) {
+            breaker.failures++;
+            breaker.last_failure = Date.now();
+            
+            if (breaker.failures >= 5) {
+                breaker.state = 'OPEN';
+            }
+            
+            this.#circuit_breakers.set(operation_name, breaker);
+            throw error;
+        }
+    }
+    
+    /**
+     * Memoization با TTL
+     * @private
+     */
+    #memoize(fn, ttl = 60000) {
+        return async (...args) => {
+            const key = `${fn.name}_${JSON.stringify(args)}`;
+            const cached = this.#memo_cache.get(key);
+            
+            if (cached && Date.now() - cached.timestamp < ttl) {
+                this.#metrics.cache_hits++;
+                return cached.value;
+            }
+            
+            this.#metrics.cache_misses++;
+            const value = await fn(...args);
+            
+            this.#memo_cache.set(key, {
+                value,
+                timestamp: Date.now()
+            });
+            
+            // Cleanup old entries (حفظ حداکثر 50 مورد)
+            if (this.#memo_cache.size > 50) {
+                const oldest = Array.from(this.#memo_cache.entries())
+                    .sort((a, b) => a[1].timestamp - b[1].timestamp)[0];
+                this.#memo_cache.delete(oldest[0]);
+            }
+            
+            return value;
+        };
+    }
+    
+    /**
+     * ثبت Metrics
+     * @private
+     */
+    #record_metric(operation, duration_ms, success = true) {
+        // ثبت latency
+        if (!this.#metrics.latency.has(operation)) {
+            this.#metrics.latency.set(operation, { sum: 0, count: 0 });
+        }
+        const stat = this.#metrics.latency.get(operation);
+        stat.sum += duration_ms;
+        stat.count++;
+        
+        // ثبت failures
+        if (!success) {
+            this.#metrics.failures.set(
+                operation,
+                (this.#metrics.failures.get(operation) || 0) + 1
+            );
         }
     }
     
@@ -504,7 +654,11 @@ class BadgeService {
         };
         
         // اگر نشان قبلاً کسب شده
-        const has_badge = await this.badge_repository.has_badge(user_id, badge.id);
+        const has_badge = await this.#with_circuit_breaker(
+            'has_badge',
+            () => this.badge_repository.has_badge(user_id, badge.id)
+        );
+        
         if (has_badge) {
             progress.state = BADGE_STATES.CLAIMED;
             return progress;
@@ -573,6 +727,12 @@ class BadgeService {
             const awarded = await this.#award_badge_if_eligible(user_id, badge, event_data);
             if (awarded) {
                 awarded_badges.push(badge);
+                
+                // ثبت Metric
+                this.#metrics.awards.set(
+                    badge.id,
+                    (this.#metrics.awards.get(badge.id) || 0) + 1
+                );
             }
         }
         
@@ -590,7 +750,7 @@ class BadgeService {
     }
     
     /**
-     * اعطای یک نشان خاص به کاربر
+     * اعطای یک نشان خاص به کاربر (با قفل هوشمند)
      * @param {string} user_id 
      * @param {string} badge_id 
      * @param {Object} metadata 
@@ -604,63 +764,73 @@ class BadgeService {
             return false;
         }
         
-        return this.#with_retry(async () => {
-            const badge = this.#badges_map.get(badge_id);
-            if (!badge) {
-                logger.warn('badge_not_found', { badge_id });
-                return false;
-            }
-            
-            // بررسی عدم تکراری بودن
-            const has_badge = await this.badge_repository.has_badge(user_id, badge_id);
-            if (has_badge) {
-                logger.debug('badge_already_awarded', { user_id, badge_id });
-                return false;
-            }
-            
-            // محاسبه امتیاز نشان
-            const points_awarded = CONFIG.BADGE_TIER_POINTS?.[badge.tier] || 0;
-            
-            const award_data = {
-                user_id,
-                badge_id,
-                awarded_at: new Date().toISOString(),
-                tier: badge.tier,
-                points_awarded,
-                metadata: {
-                    ...metadata,
-                    badge_version: badge.version,
-                    awarded_by: 'system'
+        // استفاده از قفل هوشمند برای جلوگیری از Race Condition
+        return this.#with_lock(`award:${user_id}:${badge_id}`, async () => {
+            return this.#with_retry(async () => {
+                const badge = this.#badges_map.get(badge_id);
+                if (!badge) {
+                    logger.warn('badge_not_found', { badge_id });
+                    return false;
                 }
-            };
-            
-            await this.badge_repository.award_badge(award_data);
-            
-            // بروزرسانی آمار کاربر
-            await this.#update_user_stats(user_id, badge, points_awarded);
-            
-            // انتشار رویداد
-            this.#emit(BADGE_EVENTS.AWARDED, { user_id, badge, award_data });
-            
-            if (this.event_bus) {
-                this.event_bus.emit('badge:awarded', { user_id, badge });
-                this.event_bus.emit('notification:create', {
+                
+                // بررسی عدم تکراری بودن با Circuit Breaker
+                const has_badge = await this.#with_circuit_breaker(
+                    'has_badge',
+                    () => this.badge_repository.has_badge(user_id, badge_id)
+                );
+                
+                if (has_badge) {
+                    logger.debug('badge_already_awarded', { user_id, badge_id });
+                    return false;
+                }
+                
+                // محاسبه امتیاز نشان
+                const points_awarded = CONFIG.BADGE_TIER_POINTS?.[badge.tier] || 0;
+                
+                const award_data = {
                     user_id,
-                    type: 'badge_earned',
-                    data: { badge }
+                    badge_id,
+                    awarded_at: new Date().toISOString(),
+                    tier: badge.tier,
+                    points_awarded,
+                    metadata: {
+                        ...metadata,
+                        badge_version: badge.version,
+                        awarded_by: 'system'
+                    }
+                };
+                
+                await this.#with_circuit_breaker(
+                    'award_badge',
+                    () => this.badge_repository.award_badge(award_data)
+                );
+                
+                // بروزرسانی آمار کاربر
+                await this.#update_user_stats(user_id, badge, points_awarded);
+                
+                // انتشار رویداد
+                this.#emit(BADGE_EVENTS.AWARDED, { user_id, badge, award_data });
+                
+                if (this.event_bus) {
+                    this.event_bus.emit('badge:awarded', { user_id, badge });
+                    this.event_bus.emit('notification:create', {
+                        user_id,
+                        type: 'badge_earned',
+                        data: { badge }
+                    });
+                }
+                
+                logger.info('badge_awarded', { 
+                    user_id, 
+                    badge_id,
+                    tier: badge.tier,
+                    points: points_awarded
                 });
-            }
-            
-            logger.info('badge_awarded', { 
-                user_id, 
-                badge_id,
-                tier: badge.tier,
-                points: points_awarded
-            });
-            
-            return true;
-            
-        }, 'award_badge');
+                
+                return true;
+                
+            }, 'award_badge');
+        });
     }
     
     /**
@@ -709,6 +879,27 @@ class BadgeService {
         });
         
         return results;
+    }
+    
+    /**
+     * دریافت گزارش Metrics
+     * @returns {Object}
+     */
+    get_metrics_report() {
+        const report = {
+            awards: Object.fromEntries(this.#metrics.awards),
+            failures: Object.fromEntries(this.#metrics.failures),
+            circuit_breaker_trips: this.#metrics.circuit_breaker_trips,
+            avg_latency: {},
+            cache_hit_rate: this.#metrics.cache_hits / 
+                (this.#metrics.cache_hits + this.#metrics.cache_misses || 1)
+        };
+        
+        for (const [op, { sum, count }] of this.#metrics.latency) {
+            report.avg_latency[op] = Math.round(sum / count);
+        }
+        
+        return report;
     }
     
     /**
@@ -781,7 +972,10 @@ class BadgeService {
         // بررسی پیش‌نیازها
         if (badge.prerequisites?.length > 0) {
             for (const prereq of badge.prerequisites) {
-                const has_prereq = await this.badge_repository.has_badge(user_id, prereq);
+                const has_prereq = await this.#with_circuit_breaker(
+                    'has_badge',
+                    () => this.badge_repository.has_badge(user_id, prereq)
+                );
                 if (!has_prereq) return false;
             }
         }
@@ -974,6 +1168,9 @@ class BadgeService {
     dispose() {
         this.#event_listeners.clear();
         this.#progress_cache.clear();
+        this.#memo_cache.clear();
+        this.#operation_locks.clear();
+        this.#circuit_breakers.clear();
         logger.info('badge_service_disposed');
     }
     
@@ -983,6 +1180,15 @@ class BadgeService {
      */
     _clear_cache() {
         this.#progress_cache.clear();
+        this.#memo_cache.clear();
+        this.#metrics = {
+            awards: new Map(),
+            failures: new Map(),
+            latency: new Map(),
+            cache_hits: 0,
+            cache_misses: 0,
+            circuit_breaker_trips: 0
+        };
     }
 }
 
