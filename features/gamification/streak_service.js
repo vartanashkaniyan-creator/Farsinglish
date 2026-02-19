@@ -13,6 +13,25 @@ import { StreakDTO } from '../../shared/dto/streak.dto.js';
  */
 
 /**
+ * @template T
+ * @typedef {Object} Result
+ * @property {boolean} success
+ * @property {T|null} data
+ * @property {string|null} error
+ */
+
+/**
+ * @typedef {Object} TimeProvider
+ * @property {function(): Date} now
+ */
+
+/**
+ * @typedef {Object} CacheEntry
+ * @property {StreakDTO} data
+ * @property {number} expires_at
+ */
+
+/**
  * کلاس سرویس استریک - تک‌وظیفگی: مدیریت استریک کاربر
  * وارونگی وابستگی: وابسته به انتزاع repository
  */
@@ -28,6 +47,15 @@ export class StreakService {
     
     /** @type {Object} */
     #config;
+    
+    /** @type {TimeProvider} */
+    #time_provider;
+    
+    /** @type {Map<string, CacheEntry>} */
+    #cache;
+    
+    /** @type {number} */
+    #cache_ttl_ms;
 
     /**
      * تزریق وابستگی در constructor
@@ -37,14 +65,19 @@ export class StreakService {
         this.#streak_repository = dependencies.streak_repository;
         this.#logger = dependencies.logger || logger;
         this.#state_manager = dependencies.state_manager || state_manager;
-        this.#config = STREAK_CONFIG;
+        this.#config = dependencies.config || STREAK_CONFIG;
+        this.#time_provider = dependencies.time_provider || { now: () => new Date() };
+        this.#cache = new Map();
+        this.#cache_ttl_ms = dependencies.cache_ttl_ms || 5 * 60 * 1000; // 5 دقیقه
     }
 
     /**
      * بررسی Eligibility فریز
      * @private
+     * @param {Object} streak_data
+     * @returns {boolean}
      */
-    is_freeze_eligible(streak_data) {
+    #is_freeze_eligible(streak_data) {
         return streak_data.freeze_count > 0 && 
                streak_data.current_streak >= this.#config.streak_required_for_freeze;
     }
@@ -52,38 +85,52 @@ export class StreakService {
     /**
      * بررسی و به‌روزرسانی استریک کاربر
      * @param {string} user_id
-     * @returns {Promise<StreakDTO>}
+     * @returns {Promise<Result<StreakDTO>>}
      */
     async update_streak(user_id) {
         if (!user_id?.trim()) {
             this.#logger.error('update_streak: user_id is required');
-            throw new Error('user_id is required');
+            return { success: false, data: null, error: 'user_id is required' };
         }
 
         try {
             const streak_data = await this.#streak_repository.get_by_user_id(user_id);
             
             if (!streak_data) {
-                return await this.#create_initial_streak(user_id);
+                const initial = await this.#create_initial_streak(user_id);
+                return { success: true, data: initial, error: null };
             }
 
             const today = this.#get_today_date();
-            const updated_streak = this.#calculate_streak(streak_data, today);
+            let updated_streak = this.#calculate_streak(streak_data, today);
+            
+            // مهاجرت خودکار در همه مسیرها
+            updated_streak = this.#migrate_if_needed(updated_streak);
             
             const saved_streak = await this.#streak_repository.save(updated_streak);
+            
+            // به‌روزرسانی کش
+            this.#set_cache(user_id, saved_streak);
+            
             this.#update_streak_state(saved_streak);
             
-            return new StreakDTO(saved_streak);
+            return { success: true, data: new StreakDTO(saved_streak), error: null };
             
         } catch (error) {
             this.#logger.error('Failed to update streak', { user_id, error: error.message });
-            throw new Error(`Streak update failed: ${error.message}`);
+            return { 
+                success: false, 
+                data: null, 
+                error: `Streak update failed: ${error.message}` 
+            };
         }
     }
 
     /**
      * ایجاد استریک اولیه برای کاربر جدید
      * @private
+     * @param {string} user_id
+     * @returns {Promise<Object>}
      */
     async #create_initial_streak(user_id) {
         const initial_streak = {
@@ -93,16 +140,19 @@ export class StreakService {
             last_activity_date: this.#get_today_date(),
             is_frozen: false,
             freeze_count: this.#config.max_freeze_per_month,
+            freeze_history: [],
             version: 2
         };
 
-        const saved = await this.#streak_repository.save(initial_streak);
-        return new StreakDTO(saved);
+        return await this.#streak_repository.save(initial_streak);
     }
 
     /**
      * محاسبه استریک بر اساس آخرین فعالیت
      * @private
+     * @param {Object} streak_data
+     * @param {string} today
+     * @returns {Object}
      */
     #calculate_streak(streak_data, today) {
         if (streak_data.last_activity_date === today) {
@@ -127,6 +177,9 @@ export class StreakService {
     /**
      * افزایش استریک
      * @private
+     * @param {Object} streak_data
+     * @param {string} today
+     * @returns {Object}
      */
     #increment_streak(streak_data, today) {
         const new_streak = {
@@ -141,15 +194,18 @@ export class StreakService {
             streak_data.longest_streak
         );
         
-        return this.#migrate_if_needed(new_streak);
+        return new_streak;
     }
 
     /**
      * مدیریت شکست استریک
      * @private
+     * @param {Object} streak_data
+     * @param {string} today
+     * @returns {Object}
      */
     #handle_streak_break(streak_data, today) {
-        if (this.is_freeze_eligible(streak_data)) {
+        if (this.#is_freeze_eligible(streak_data)) {
             return {
                 ...streak_data,
                 freeze_count: streak_data.freeze_count - 1,
@@ -177,6 +233,8 @@ export class StreakService {
     /**
      * مهاجرت خودکار داده
      * @private
+     * @param {Object} streak_data
+     * @returns {Object}
      */
     #migrate_if_needed(streak_data) {
         if (!streak_data.version || streak_data.version < 2) {
@@ -190,56 +248,82 @@ export class StreakService {
     }
 
     /**
-     * دریافت استریک کاربر
+     * دریافت استریک کاربر (با کش)
      * @param {string} user_id
-     * @returns {Promise<StreakDTO|null>}
+     * @returns {Promise<Result<StreakDTO|null>>}
      */
     async get_streak(user_id) {
-        if (!user_id?.trim()) return null;
+        if (!user_id?.trim()) {
+            return { success: false, data: null, error: 'user_id is required' };
+        }
+
+        // بررسی کش
+        const cached = this.#get_cached(user_id);
+        if (cached) {
+            return { success: true, data: cached, error: null };
+        }
 
         try {
             const data = await this.#streak_repository.get_by_user_id(user_id);
-            return data ? new StreakDTO(data) : null;
+            if (data) {
+                const dto = new StreakDTO(data);
+                this.#set_cache(user_id, dto);
+                return { success: true, data: dto, error: null };
+            }
+            return { success: true, data: null, error: null };
+            
         } catch (error) {
             this.#logger.error('Failed to get streak', { user_id, error: error.message });
-            return null;
+            return { success: false, data: null, error: error.message };
         }
     }
 
     /**
      * بررسی فعالیت امروز
      * @param {string} user_id
-     * @returns {Promise<boolean>}
+     * @returns {Promise<Result<boolean>>}
      */
     async has_activity_today(user_id) {
-        const streak = await this.get_streak(user_id);
-        return streak?.last_activity_date === this.#get_today_date();
+        const result = await this.get_streak(user_id);
+        if (!result.success) {
+            return { success: false, data: false, error: result.error };
+        }
+        
+        const has_activity = result.data?.last_activity_date === this.#get_today_date();
+        return { success: true, data: has_activity, error: null };
     }
 
     /**
      * دریافت زمان باقیمانده
      * @param {string} user_id
-     * @returns {Promise<number>}
+     * @returns {Promise<Result<number>>}
      */
     async get_remaining_grace_period(user_id) {
-        const streak = await this.get_streak(user_id);
-        if (!streak) return 0;
+        const result = await this.get_streak(user_id);
+        if (!result.success) {
+            return { success: false, data: 0, error: result.error };
+        }
+        
+        if (!result.data) {
+            return { success: true, data: 0, error: null };
+        }
 
-        const last_date = new Date(streak.last_activity_date);
-        const current_date = new Date();
+        const last_date = new Date(result.data.last_activity_date);
+        const current_date = this.#time_provider.now();
         const hours_passed = (current_date - last_date) / (1000 * 60 * 60);
 
-        return Math.max(0, this.#config.grace_hours - hours_passed);
+        const remaining = Math.max(0, this.#config.grace_hours - hours_passed);
+        return { success: true, data: remaining, error: null };
     }
 
     /**
      * ریست استریک
      * @param {string} user_id
-     * @returns {Promise<StreakDTO>}
+     * @returns {Promise<Result<StreakDTO>>}
      */
     async reset_streak(user_id) {
         if (!user_id?.trim()) {
-            throw new Error('user_id is required');
+            return { success: false, data: null, error: 'user_id is required' };
         }
 
         try {
@@ -255,26 +339,72 @@ export class StreakService {
             };
 
             const saved = await this.#streak_repository.save(reset_data);
+            
+            // به‌روزرسانی کش
+            this.#set_cache(user_id, saved);
+            
             this.#update_streak_state(saved);
             this.#logger.info('Streak reset', { user_id });
             
-            return new StreakDTO(saved);
+            return { success: true, data: new StreakDTO(saved), error: null };
             
         } catch (error) {
             this.#logger.error('Failed to reset streak', { user_id, error: error.message });
-            throw error;
+            return { success: false, data: null, error: error.message };
         }
+    }
+
+    /**
+     * پاک کردن کش
+     * @param {string} user_id
+     */
+    invalidate_cache(user_id) {
+        this.#cache.delete(user_id);
+    }
+
+    /**
+     * دریافت از کش
+     * @private
+     * @param {string} user_id
+     * @returns {StreakDTO|null}
+     */
+    #get_cached(user_id) {
+        const entry = this.#cache.get(user_id);
+        if (!entry) return null;
+        
+        const now = this.#time_provider.now().getTime();
+        if (now > entry.expires_at) {
+            this.#cache.delete(user_id);
+            return null;
+        }
+        
+        return entry.data;
+    }
+
+    /**
+     * ذخیره در کش
+     * @private
+     * @param {string} user_id
+     * @param {Object} data
+     */
+    #set_cache(user_id, data) {
+        const expires_at = this.#time_provider.now().getTime() + this.#cache_ttl_ms;
+        this.#cache.set(user_id, {
+            data: new StreakDTO(data),
+            expires_at
+        });
     }
 
     /**
      * به‌روزرسانی state
      * @private
+     * @param {Object} streak_data
      */
     #update_streak_state(streak_data) {
         this.#state_manager.update_state({
             gamification: {
                 streak: new StreakDTO(streak_data),
-                last_updated: new Date().toISOString()
+                last_updated: this.#time_provider.now().toISOString()
             }
         });
     }
@@ -282,14 +412,18 @@ export class StreakService {
     /**
      * تاریخ امروز
      * @private
+     * @returns {string}
      */
     #get_today_date() {
-        return new Date().toISOString().split('T')[0];
+        return this.#time_provider.now().toISOString().split('T')[0];
     }
 
     /**
      * اختلاف روز
      * @private
+     * @param {Date} date1
+     * @param {Date} date2
+     * @returns {number}
      */
     #get_date_diff(date1, date2) {
         const utc1 = Date.UTC(date1.getFullYear(), date1.getMonth(), date1.getDate());
