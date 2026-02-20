@@ -1,1439 +1,1022 @@
-// core/navigation/router.js
 /**
- * Router - سیستم مسیریابی پیشرفته برای PWA
- * مسئولیت: مدیریت ناوبری، مسیرهای تو در تو، Middleware، Lazy Loading، Cache، Transition و پارامترها
- * اصل SRP: فقط مدیریت مسیریابی و ناوبری
- * اصل OCP: قابل توسعه برای انواع Route و Middleware
- * اصل DIP: وابستگی به اینترفیس‌های Route و Middleware
- * اصل LSP: قابلیت جایگزینی Routeهای مختلف
- * اصل ISP: اینترفیس‌های کوچک و مجزا
+ * @fileoverview سیستم مسیریابی پیشرفته و مقیاس‌پذیر برای PWA
+ * @author Farsinglish Team
+ * @version 2.0.0
+ * @module core/navigation/router
+ * 
+ * @description این ماژول یک سیستم مسیریابی حرفه‌ای با پشتیبانی از:
+ * - State Machine برای مدیریت دقیق وضعیت‌ها
+ * - WeakMap برای کش بهینه و بدون Memory Leak
+ * - AbortController برای لغو درخواست‌های نیمه‌کاره
+ * - Symbol برای ثابت‌های امن
+ * - Meta Inheritance برای کاهش کد تکراری
  */
 
-// ============ Interfaces ============
-class IRoute {
+// ============ Symbol Constants ============
+/**
+ * @readonly
+ * @enum {Symbol}
+ */
+const ROUTER_SYMBOLS = {
+    /** @type {Symbol} وضعیت فعلی مسیریاب */
+    STATE: Symbol('router:state'),
+    /** @type {Symbol} کش مسیرها */
+    CACHE: Symbol('router:cache'),
+    /** @type {Symbol} کنترل‌کننده‌های لغو */
+    ABORT_CONTROLLERS: Symbol('router:abort_controllers'),
+    /** @type {Symbol} صف تراکنش‌ها */
+    TRANSACTION_QUEUE: Symbol('router:transaction_queue'),
+    /** @type {Symbol} تاریخچه ناوبری */
+    HISTORY: Symbol('router:history'),
+    /** @type {Symbol} وضعیت قفل */
+    LOCK_STATE: Symbol('router:lock_state')
+};
+
+// ============ Type Definitions ============
+
+/**
+ * @typedef {Object} RouteConfig
+ * @property {string} path - مسیر
+ * @property {Function|string|HTMLElement} component - کامپوننت
+ * @property {string} [name] - نام مسیر
+ * @property {Object} [meta] - متادیتا
+ * @property {Function[]} [middlewares] - middlewareها
+ * @property {RouteConfig[]} [children] - مسیرهای فرزند
+ * @property {string} [redirect] - مسیر هدایت
+ * @property {string[]} [alias] - نام‌های مستعار
+ */
+
+/**
+ * @typedef {Object} RouteMatch
+ * @property {Route} route - مسیر تطابق یافته
+ * @property {Object.<string, string>} params - پارامترها
+ * @property {Object.<string, string>} query - query string
+ * @property {string} hash - hash
+ * @property {string} full_path - مسیر کامل
+ */
+
+/**
+ * @typedef {Object} NavigationResult
+ * @property {boolean} success - موفقیت
+ * @property {RouteMatch} [to] - مسیر مقصد
+ * @property {RouteMatch} [from] - مسیر مبدأ
+ * @property {string} [error] - خطا
+ * @property {number} navigation_id - شناسه ناوبری
+ */
+
+/**
+ * @typedef {('idle'|'navigating'|'loading'|'error'|'locked')} RouterState
+ */
+
+// ============ Router State Machine ============
+
+/**
+ * ماشین حالت مسیریاب
+ * @class RouterStateMachine
+ */
+class RouterStateMachine {
+    /** @type {RouterState} */
+    #state = 'idle';
+    /** @type {Map<RouterState, Set<RouterState>>} */
+    #transitions = new Map();
+    /** @type {Set<Function>} */
+    #listeners = new Set();
+
+    constructor() {
+        this.#initializeTransitions();
+    }
+
+    /**
+     * مقداردهی اولیه transitions مجاز
+     * @private
+     */
+    #initializeTransitions() {
+        this.#transitions.set('idle', new Set(['navigating', 'locked']));
+        this.#transitions.set('navigating', new Set(['loading', 'error', 'idle']));
+        this.#transitions.set('loading', new Set(['idle', 'error']));
+        this.#transitions.set('error', new Set(['idle', 'locked']));
+        this.#transitions.set('locked', new Set(['idle']));
+    }
+
+    /**
+     * تغییر حالت
+     * @param {RouterState} new_state - حالت جدید
+     * @param {*} [context] - context تغییر
+     * @returns {boolean} موفقیت تغییر
+     */
+    transition(new_state, context = null) {
+        const allowed = this.#transitions.get(this.#state)?.has(new_state);
+        
+        if (!allowed) {
+            console.warn(`⚠️ Transition forbidden: ${this.#state} → ${new_state}`);
+            return false;
+        }
+
+        const old_state = this.#state;
+        this.#state = new_state;
+        this.#notifyListeners(old_state, new_state, context);
+        
+        return true;
+    }
+
+    /**
+     * دریافت حالت فعلی
+     * @returns {RouterState}
+     */
+    get state() {
+        return this.#state;
+    }
+
+    /**
+     * بررسی وضعیت
+     * @param {RouterState} state - حالت مورد نظر
+     * @returns {boolean}
+     */
+    is(state) {
+        return this.#state === state;
+    }
+
+    /**
+     * افزودن شنونده تغییر حالت
+     * @param {Function} listener - تابع شنونده
+     * @returns {Function} تابع حذف شنونده
+     */
+    onStateChange(listener) {
+        this.#listeners.add(listener);
+        return () => this.#listeners.delete(listener);
+    }
+
+    /**
+     * اطلاع‌رسانی به شنونده‌ها
+     * @private
+     */
+    #notifyListeners(old_state, new_state, context) {
+        this.#listeners.forEach(listener => {
+            try {
+                listener(old_state, new_state, context);
+            } catch (error) {
+                console.error('❌ State listener error:', error);
+            }
+        });
+    }
+}
+
+// ============ Enhanced Route Cache with WeakMap ============
+
+/**
+ * @typedef {Object} CachedRoute
+ * @property {Node} element - المان کش شده
+ * @property {number} timestamp - زمان کش
+ * @property {number} access_count - تعداد دسترسی
+ * @property {AbortController} abort_controller - کنترل‌کننده لغو
+ */
+
+/**
+ * کش پیشرفته مسیرها با WeakMap
+ * @class RouteCache
+ */
+class RouteCache {
+    /** @type {WeakMap<object, CachedRoute>} */
+    #cache = new WeakMap();
+    /** @type {Map<string, {ref: object, size: number}>} */
+    #key_map = new Map();
+    /** @type {number} */
+    #max_size;
+    /** @type {number} */
+    #ttl;
+
+    /**
+     * @param {number} max_size - حداکثر اندازه کش
+     * @param {number} ttl - زمان زندگی (ms)
+     */
+    constructor(max_size = 15, ttl = 300000) { // 5 دقیقه پیش‌فرض
+        this.#max_size = max_size;
+        this.#ttl = ttl;
+    }
+
+    /**
+     * ایجاد کلید یکتا برای کش
+     * @param {string} key - کلید اصلی
+     * @returns {object} کلید WeakMap
+     */
+    #createWeakKey(key) {
+        return { key };
+    }
+
+    /**
+     * ذخیره در کش
+     * @param {string} key - کلید
+     * @param {Node} element - المان
+     * @param {AbortController} abort_controller - کنترل‌کننده لغو
+     */
+    set(key, element, abort_controller) {
+        // پاکسازی کش قدیمی اگر لازم باشد
+        if (this.#key_map.size >= this.#max_size) {
+            this.#evictOldest();
+        }
+
+        const weak_key = this.#createWeakKey(key);
+        const cached = {
+            element: element.cloneNode(true),
+            timestamp: Date.now(),
+            access_count: 1,
+            abort_controller
+        };
+
+        this.#cache.set(weak_key, cached);
+        this.#key_map.set(key, { ref: weak_key, size: this.#calculateSize(element) });
+    }
+
+    /**
+     * دریافت از کش
+     * @param {string} key - کلید
+     * @returns {Node|null} المان کش شده یا null
+     */
+    get(key) {
+        const entry = this.#key_map.get(key);
+        if (!entry) return null;
+
+        const cached = this.#cache.get(entry.ref);
+        if (!cached) {
+            this.#key_map.delete(key);
+            return null;
+        }
+
+        // بررسی TTL
+        if (Date.now() - cached.timestamp > this.#ttl) {
+            this.delete(key);
+            return null;
+        }
+
+        cached.access_count++;
+        return cached.element.cloneNode(true);
+    }
+
+    /**
+     * حذف از کش
+     * @param {string} key - کلید
+     */
+    delete(key) {
+        const entry = this.#key_map.get(key);
+        if (entry) {
+            const cached = this.#cache.get(entry.ref);
+            if (cached?.abort_controller) {
+                cached.abort_controller.abort();
+            }
+            this.#cache.delete(entry.ref);
+            this.#key_map.delete(key);
+        }
+    }
+
+    /**
+     * پاکسازی کامل کش
+     */
+    clear() {
+        for (const [key, entry] of this.#key_map) {
+            const cached = this.#cache.get(entry.ref);
+            if (cached?.abort_controller) {
+                cached.abort_controller.abort();
+            }
+        }
+        this.#cache = new WeakMap();
+        this.#key_map.clear();
+    }
+
+    /**
+     * محاسبه اندازه تقریبی المان
+     * @private
+     */
+    #calculateSize(element) {
+        return element.innerHTML?.length || 0;
+    }
+
+    /**
+     * حذف قدیمی‌ترین کش
+     * @private
+     */
+    #evictOldest() {
+        let oldest_key = null;
+        let oldest_time = Infinity;
+
+        for (const [key, entry] of this.#key_map) {
+            const cached = this.#cache.get(entry.ref);
+            if (cached && cached.timestamp < oldest_time) {
+                oldest_time = cached.timestamp;
+                oldest_key = key;
+            }
+        }
+
+        if (oldest_key) {
+            this.delete(oldest_key);
+        }
+    }
+}
+
+// ============ Enhanced Route with Meta Inheritance ============
+
+/**
+ * مسیر پیشرفته با قابلیت‌های اضافی
+ * @class Route
+ */
+class Route {
+    /** @type {string} */
+    path;
+    /** @type {Function|string|HTMLElement} */
+    component;
+    /** @type {string} */
+    name;
+    /** @type {Object} */
+    meta;
+    /** @type {Function[]} */
+    middlewares;
+    /** @type {Route[]} */
+    children;
+    /** @type {string} */
+    redirect;
+    /** @type {string[]} */
+    alias;
+    
+    /** @type {RegExp} */
+    #regex;
+    /** @type {string[]} */
+    #param_names;
+    /** @type {*} */
+    #loaded_component = null;
+    /** @type {Promise|null} */
+    #loading_promise = null;
+    /** @type {Set<AbortController>} */
+    #abort_controllers = new Set();
+
+    /**
+     * @param {string} path - مسیر
+     * @param {RouteConfig['component']} component - کامپوننت
+     * @param {RouteConfig} [options] - گزینه‌ها
+     */
     constructor(path, component, options = {}) {
         this.path = path;
         this.component = component;
         this.name = options.name || '';
-        this.meta = options.meta || {};
+        this.meta = this.#inheritMeta(options.meta, options.parent_meta);
         this.middlewares = options.middlewares || [];
-        this.children = options.children || [];
+        this.children = (options.children || []).map(child => 
+            new Route(child.path, child.component, {
+                ...child,
+                parent_meta: this.meta
+            })
+        );
         this.redirect = options.redirect;
         this.alias = options.alias || [];
-    }
 
-    match(currentPath) {}
-    getParams(path) {}
-    toRouteObject() {}
-    async loadComponent() {}
-    unloadComponent() {}
-}
-
-class IMiddleware {
-    async beforeEnter(to, from, next) {}
-    async afterEnter(to, from) {}
-    async beforeLeave(to, from, next) {}
-}
-
-class INavigationGuard {
-    async canNavigate(to, from) {}
-}
-
-// ============ Route Validator ============
-class RouteValidator {
-    static validateRoute(route) {
-        const errors = [];
-
-        if (!route.path) {
-            errors.push('مسیر نمی‌تواند خالی باشد');
-        }
-
-        if (!route.component) {
-            errors.push('کامپوننت الزامی است');
-        } else if (typeof route.component !== 'function' && 
-                   !(route.component instanceof HTMLElement) && 
-                   typeof route.component !== 'string' &&
-                   !(route.component?.name === 'lazyLoader')) {
-            errors.push('کامپوننت باید تابع، المان HTML، رشته یا lazy loader باشد');
-        }
-
-        if (route.name && typeof route.name !== 'string') {
-            errors.push('نام مسیر باید رشته باشد');
-        }
-
-        if (route.children && !Array.isArray(route.children)) {
-            errors.push('children باید آرایه باشد');
-        }
-
-        if (route.path.includes(':')) {
-            const paramPattern = /:([^/]+)/g;
-            let match;
-            const params = new Set();
-            
-            while ((match = paramPattern.exec(route.path)) !== null) {
-                const paramName = match[1];
-                if (params.has(paramName)) {
-                    errors.push(`پارامتر تکراری ${paramName} در مسیر`);
-                }
-                params.add(paramName);
-            }
-        }
-
-        return {
-            isValid: errors.length === 0,
-            errors
-        };
-    }
-
-    static validateRoutes(routes) {
-        const results = [];
-        routes.forEach(route => {
-            results.push({
-                path: route.path,
-                ...this.validateRoute(route)
-            });
-        });
-        return results;
-    }
-}
-
-// ============ Route Cache ============
-class RouteCache {
-    constructor(maxSize = 10) {
-        this.cache = new Map();
-        this.maxSize = maxSize;
-        this.accessOrder = [];
-    }
-
-    get(key) {
-        if (this.cache.has(key)) {
-            this.accessOrder = this.accessOrder.filter(k => k !== key);
-            this.accessOrder.push(key);
-            return this.cache.get(key);
-        }
-        return null;
-    }
-
-    set(key, component) {
-        if (this.cache.size >= this.maxSize) {
-            const oldest = this.accessOrder.shift();
-            if (oldest && this.cache.has(oldest)) {
-                const oldRoute = this.cache.get(oldest);
-                if (oldRoute?.unloadComponent) {
-                    oldRoute.unloadComponent();
-                }
-                this.cache.delete(oldest);
-            }
-        }
-
-        this.cache.set(key, component);
-        this.accessOrder = this.accessOrder.filter(k => k !== key);
-        this.accessOrder.push(key);
-    }
-
-    clear() {
-        for (const [key, route] of this.cache.entries()) {
-            if (route?.unloadComponent) {
-                route.unloadComponent();
-            }
-        }
-        this.cache.clear();
-        this.accessOrder = [];
-    }
-
-    has(key) {
-        return this.cache.has(key);
-    }
-
-    size() {
-        return this.cache.size;
-    }
-}
-
-// ============ Route Implementation ============
-class Route extends IRoute {
-    constructor(path, component, options = {}) {
-        // اعتبارسنجی
-        const validation = RouteValidator.validateRoute({ path, component, ...options });
-        if (!validation.isValid) {
-            throw new Error(`مسیر نامعتبر: ${validation.errors.join(', ')}`);
-        }
-
-        super(path, component, options);
-        this._regex = this._pathToRegex(path);
-        this._paramNames = this._extractParamNames(path);
-        this._loadedComponent = null;
-        this._loadingPromise = null;
-        this._children = (options.children || []).map(child => 
-            new Route(child.path, child.component, child)
-        );
+        this.#regex = this.#pathToRegex(path);
+        this.#param_names = this.#extractParamNames(path);
     }
 
     /**
-     * بررسی تطابق مسیر
+     * ارث‌بری meta از والد
+     * @private
      */
-    match(currentPath) {
-        const [pathWithoutQuery] = currentPath.split('?');
-        const match = pathWithoutQuery.match(this._regex);
+    #inheritMeta(meta = {}, parent_meta = {}) {
+        return {
+            ...parent_meta,
+            ...meta,
+            // ترکیب آرایه‌ها به جای بازنویسی
+            guards: [
+                ...(parent_meta.guards || []),
+                ...(meta.guards || [])
+            ],
+            permissions: [
+                ...(parent_meta.permissions || []),
+                ...(meta.permissions || [])
+            ]
+        };
+    }
+
+    /**
+     * بارگذاری کامپوننت با قابلیت لغو
+     * @param {AbortController} [parent_controller] - کنترل‌کننده والد
+     * @returns {Promise<*>}
+     */
+    async loadComponent(parent_controller = null) {
+        if (this.#loaded_component) return this.#loaded_component;
+        if (this.#loading_promise) return this.#loading_promise;
+
+        const abort_controller = new AbortController();
+        this.#abort_controllers.add(abort_controller);
+
+        if (parent_controller) {
+            parent_controller.signal.addEventListener('abort', () => {
+                abort_controller.abort();
+            });
+        }
+
+        this.#loading_promise = (async () => {
+            try {
+                if (typeof this.component === 'function' && this.component.name === 'lazyLoader') {
+                    // بررسی وضعیت لغو قبل از بارگذاری
+                    if (abort_controller.signal.aborted) {
+                        throw new Error('Loading cancelled');
+                    }
+
+                    const module = await Promise.race([
+                        this.component(),
+                        new Promise((_, reject) => {
+                            abort_controller.signal.addEventListener('abort', () => {
+                                reject(new Error('Loading cancelled'));
+                            });
+                        })
+                    ]);
+
+                    // بررسی مجدد بعد از بارگذاری
+                    if (abort_controller.signal.aborted) {
+                        throw new Error('Loading cancelled after completion');
+                    }
+
+                    this.#loaded_component = module.default || module;
+                } else {
+                    this.#loaded_component = this.component;
+                }
+
+                return this.#loaded_component;
+            } catch (error) {
+                if (error.message === 'Loading cancelled') {
+                    console.log(`⏸️ Loading cancelled for route: ${this.path}`);
+                } else {
+                    console.error(`❌ Error loading route ${this.path}:`, error);
+                }
+                throw error;
+            } finally {
+                this.#abort_controllers.delete(abort_controller);
+                this.#loading_promise = null;
+            }
+        })();
+
+        return this.#loading_promise;
+    }
+
+    /**
+     * لغو بارگذاری
+     */
+    abort() {
+        this.#abort_controllers.forEach(controller => controller.abort());
+        this.#abort_controllers.clear();
+    }
+
+    /**
+     * پاکسازی منابع
+     */
+    dispose() {
+        this.abort();
+        this.#loaded_component = null;
+        this.#loading_promise = null;
+        this.children.forEach(child => child.dispose?.());
+    }
+
+    // ... سایر متدهای موجود ...
+    #pathToRegex(path) {
+        const pattern = path
+            .replace(/:([^/]+)/g, '([^/?#]+)')
+            .replace(/\*/g, '.*');
+        return new RegExp(`^${pattern}$`);
+    }
+
+    #extractParamNames(path) {
+        const param_names = [];
+        const param_pattern = /:([^/]+)/g;
+        let match;
+        while ((match = param_pattern.exec(path)) !== null) {
+            param_names.push(match[1]);
+        }
+        return param_names;
+    }
+
+    match(current_path) {
+        const [path_without_query] = current_path.split('?');
+        const match = path_without_query.match(this.#regex);
         
         if (!match) return null;
 
         const params = {};
-        this._paramNames.forEach((name, index) => {
+        this.#param_names.forEach((name, index) => {
             params[name] = decodeURIComponent(match[index + 1] || '');
         });
 
         return {
             route: this,
             params,
-            query: this._extractQuery(currentPath),
-            hash: this._extractHash(currentPath)
+            query: this.#extractQuery(current_path),
+            hash: this.#extractHash(current_path)
         };
     }
 
-    /**
-     * استخراج پارامترها از مسیر
-     */
-    getParams(path) {
-        const [pathWithoutQuery] = path.split('?');
-        const match = pathWithoutQuery.match(this._regex);
-        if (!match) return {};
-
-        const params = {};
-        this._paramNames.forEach((name, index) => {
-            params[name] = decodeURIComponent(match[index + 1] || '');
-        });
-
-        return params;
-    }
-
-    /**
-     * تبدیل به آبجکت استاندارد
-     */
-    toRouteObject() {
-        return {
-            path: this.path,
-            name: this.name,
-            component: this.component,
-            meta: this.meta,
-            children: this._children.map(child => child.toRouteObject()),
-            redirect: this.redirect,
-            alias: this.alias
-        };
-    }
-
-    /**
-     * بارگذاری کامپوننت (با پشتیبانی از lazy loading)
-     */
-    async loadComponent() {
-        if (this._loadedComponent) return this._loadedComponent;
-        if (this._loadingPromise) return this._loadingPromise;
-
-        this._loadingPromise = (async () => {
-            try {
-                if (typeof this.component === 'function' && this.component.name === 'lazyLoader') {
-                    const module = await this.component();
-                    this._loadedComponent = module.default || module;
-                } else {
-                    this._loadedComponent = this.component;
-                }
-                return this._loadedComponent;
-            } catch (error) {
-                console.error(`❌ خطا در بارگذاری کامپوننت مسیر ${this.path}:`, error);
-                throw error;
-            } finally {
-                this._loadingPromise = null;
-            }
-        })();
-
-        return this._loadingPromise;
-    }
-
-    /**
-     * پاک کردن کامپوننت بارگذاری شده
-     */
-    unloadComponent() {
-        this._loadedComponent = null;
-        this._loadingPromise = null;
-    }
-
-    /**
-     * بررسی lazy بودن کامپوننت
-     */
-    isLazy() {
-        return typeof this.component === 'function' && this.component.name === 'lazyLoader';
-    }
-
-    /**
-     * دریافت فرزندان
-     */
-    get children() {
-        return this._children;
-    }
-
-    /**
-     * تبدیل مسیر به regex
-     */
-    _pathToRegex(path) {
-        const pattern = path
-            .replace(/:([^\/]+)/g, '([^/?#]+)')
-            .replace(/\*/g, '.*');
-        
-        return new RegExp(`^${pattern}$`);
-    }
-
-    /**
-     * استخراج نام پارامترها
-     */
-    _extractParamNames(path) {
-        const paramNames = [];
-        const paramPattern = /:([^/]+)/g;
-        let match;
-        
-        while ((match = paramPattern.exec(path)) !== null) {
-            paramNames.push(match[1]);
-        }
-        
-        return paramNames;
-    }
-
-    /**
-     * استخراج query string
-     */
-    _extractQuery(path) {
+    #extractQuery(path) {
         const query = {};
-        const queryIndex = path.indexOf('?');
-        
-        if (queryIndex !== -1) {
-            const queryStr = path.substring(queryIndex + 1).split('#')[0];
-            const params = new URLSearchParams(queryStr);
-            
-            params.forEach((value, key) => {
-                query[key] = value;
-            });
+        const query_index = path.indexOf('?');
+        if (query_index !== -1) {
+            const query_str = path.substring(query_index + 1).split('#')[0];
+            const params = new URLSearchParams(query_str);
+            params.forEach((value, key) => { query[key] = value; });
         }
-        
         return query;
     }
 
-    /**
-     * استخراج hash
-     */
-    _extractHash(path) {
-        const hashIndex = path.indexOf('#');
-        return hashIndex !== -1 ? path.substring(hashIndex + 1) : '';
+    #extractHash(path) {
+        const hash_index = path.indexOf('#');
+        return hash_index !== -1 ? path.substring(hash_index + 1) : '';
     }
 }
 
-// ============ Scroll Behavior ============
-class ScrollBehavior {
-    constructor(options = {}) {
-        this.scrollToTop = options.scrollToTop ?? true;
-        this.smoothScroll = options.smoothScroll ?? true;
-        this.saveScrollPosition = options.saveScrollPosition ?? true;
-        this.scrollPositions = new Map();
-        this.scrollDelay = options.scrollDelay || 100;
-    }
+// ============ Enhanced Router with All Features ============
 
-    async handleScroll(to, from) {
-        if (this.saveScrollPosition && from) {
-            const scrollY = window.scrollY;
-            const scrollX = window.scrollX;
-            this.scrollPositions.set(from.fullPath, { x: scrollX, y: scrollY });
-        }
-
-        // تاخیر کوتاه برای اطمینان از رندر کامل صفحه
-        await new Promise(resolve => setTimeout(resolve, this.scrollDelay));
-
-        if (this.saveScrollPosition && this.scrollPositions.has(to.fullPath)) {
-            const { x, y } = this.scrollPositions.get(to.fullPath);
-            window.scrollTo({
-                top: y,
-                left: x,
-                behavior: this.smoothScroll ? 'smooth' : 'auto'
-            });
-        } 
-        else if (this.scrollToTop) {
-            const focusedElement = document.querySelector(':focus');
-            if (focusedElement) {
-                focusedElement.blur();
-            }
-            
-            window.scrollTo({
-                top: 0,
-                left: 0,
-                behavior: this.smoothScroll ? 'smooth' : 'auto'
-            });
-
-            const appElement = document.getElementById('app');
-            if (appElement) {
-                appElement.setAttribute('tabindex', '-1');
-                appElement.focus({ preventScroll: true });
-            }
-        }
-    }
-
-    clearPosition(path) {
-        this.scrollPositions.delete(path);
-    }
-
-    clearAll() {
-        this.scrollPositions.clear();
-    }
-}
-
-// ============ Breadcrumb Manager ============
-class BreadcrumbManager {
-    constructor() {
-        this.breadcrumbs = [];
-        this.updateCallbacks = [];
-        this.routes = null;
-    }
-
-    generateBreadcrumbs(route, routes) {
-        if (routes) this.routes = routes;
-        
-        const breadcrumbs = [];
-        let currentPath = '';
-        
-        const pathSegments = route.path.split('/').filter(Boolean);
-        
-        for (let i = 0; i < pathSegments.length; i++) {
-            const segment = pathSegments[i];
-            currentPath += `/${segment}`;
-            
-            const matchedRoute = this._findMatchingRoute(currentPath);
-            
-            breadcrumbs.push({
-                name: matchedRoute?.route?.meta?.breadcrumb || this._formatSegment(segment),
-                path: currentPath,
-                params: this._extractParamsForSegment(matchedRoute, segment, i),
-                isClickable: !!matchedRoute
-            });
-        }
-
-        this.breadcrumbs = breadcrumbs;
-        this._notifyUpdate();
-        
-        return breadcrumbs;
-    }
-
-    getBreadcrumbs() {
-        return this.breadcrumbs;
-    }
-
-    onUpdate(callback) {
-        this.updateCallbacks.push(callback);
-        return () => {
-            this.updateCallbacks = this.updateCallbacks.filter(cb => cb !== callback);
-        };
-    }
-
-    _notifyUpdate() {
-        this.updateCallbacks.forEach(cb => cb(this.breadcrumbs));
-    }
-
-    _findMatchingRoute(path) {
-        if (!this.routes) return null;
-        
-        for (const route of this.routes.values()) {
-            const match = route.match(path);
-            if (match) return match;
-            
-            for (const childRoute of route.children) {
-                const childMatch = childRoute.match(path);
-                if (childMatch) return childMatch;
-            }
-        }
-        return null;
-    }
-
-    _formatSegment(segment) {
-        return segment
-            .split('-')
-            .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-            .join(' ');
-    }
-
-    _extractParamsForSegment(route, segment, index) {
-        const params = {};
-        if (route?.route?._paramNames && route.route._paramNames.length > index) {
-            params[route.route._paramNames[index]] = segment;
-        }
-        return params;
-    }
-}
-
-// ============ Navigation Guards ============
-class AuthGuard extends INavigationGuard {
-    constructor(authService) {
-        super();
-        this.authService = authService;
-    }
-
-    async canNavigate(to, from) {
-        if (!to.route.meta?.requiresAuth) {
-            return { allowed: true };
-        }
-
-        try {
-            const isAuthenticated = await this.authService.checkAuth();
-            
-            if (!isAuthenticated) {
-                return {
-                    allowed: false,
-                    redirect: {
-                        name: 'login',
-                        query: { redirect: to.fullPath }
-                    },
-                    reason: 'نیاز به ورود به سیستم'
-                };
-            }
-
-            return { allowed: true };
-        } catch (error) {
-            console.error('خطا در بررسی احراز هویت:', error);
-            return {
-                allowed: false,
-                redirect: { name: 'error' },
-                reason: 'خطا در بررسی احراز هویت'
-            };
-        }
-    }
-}
-
-class RoleGuard extends INavigationGuard {
-    constructor(userService) {
-        super();
-        this.userService = userService;
-    }
-
-    async canNavigate(to, from) {
-        const requiredRole = to.route.meta?.requiredRole;
-        
-        if (!requiredRole) {
-            return { allowed: true };
-        }
-
-        try {
-            const userRole = await this._getUserRole();
-            
-            if (userRole !== requiredRole) {
-                return {
-                    allowed: false,
-                    redirect: { name: 'forbidden' },
-                    reason: 'دسترسی غیرمجاز'
-                };
-            }
-
-            return { allowed: true };
-        } catch (error) {
-            console.error('خطا در بررسی نقش کاربر:', error);
-            return {
-                allowed: false,
-                redirect: { name: 'error' },
-                reason: 'خطا در بررسی سطح دسترسی'
-            };
-        }
-    }
-
-    async _getUserRole() {
-        // TODO: پیاده‌سازی واقعی دریافت نقش کاربر
-        return 'user';
-    }
-}
-
-class PermissionGuard extends INavigationGuard {
-    constructor(permissionService) {
-        super();
-        this.permissionService = permissionService;
-    }
-
-    async canNavigate(to, from) {
-        const requiredPermissions = to.route.meta?.permissions || [];
-        
-        if (requiredPermissions.length === 0) {
-            return { allowed: true };
-        }
-
-        try {
-            const hasPermission = await this._checkPermissions(requiredPermissions);
-            
-            if (!hasPermission) {
-                return {
-                    allowed: false,
-                    redirect: { name: 'forbidden' },
-                    reason: 'شما مجوز دسترسی به این صفحه را ندارید'
-                };
-            }
-
-            return { allowed: true };
-        } catch (error) {
-            console.error('خطا در بررسی مجوزها:', error);
-            return {
-                allowed: false,
-                redirect: { name: 'error' },
-                reason: 'خطا در بررسی مجوزهای دسترسی'
-            };
-        }
-    }
-
-    async _checkPermissions(permissions) {
-        // TODO: پیاده‌سازی واقعی بررسی مجوزها
-        return true;
-    }
-}
-
-// ============ Middlewares ============
-class LoggingMiddleware extends IMiddleware {
-    async beforeEnter(to, from, next) {
-        console.group(`🚦 [Router] Navigation from ${from?.path || '/'} to ${to.path}`);
-        console.log(`📌 Route: ${to.route.name || 'unnamed'}`);
-        console.log(`📊 Params:`, to.params);
-        console.log(`🔍 Query:`, to.query);
-        console.log(`🏷️ Meta:`, to.route.meta);
-        console.groupEnd();
-        next();
-    }
-
-    async afterEnter(to, from) {
-        console.log(`✅ [Router] Successfully navigated to ${to.path}`);
-    }
-
-    async beforeLeave(to, from, next) {
-        console.log(`👋 [Router] Leaving ${from.path} for ${to.path}`);
-        next();
-    }
-}
-
-class LoadingMiddleware extends IMiddleware {
-    constructor(stateManager) {
-        super();
-        this.stateManager = stateManager;
-        this.startTime = null;
-    }
-
-    async beforeEnter(to, from, next) {
-        this.startTime = Date.now();
-        
-        await this.stateManager?.dispatch('UI_STATE_CHANGE', {
-            isLoading: true,
-            loadingMessage: 'در حال بارگذاری...',
-            loadingProgress: 0
-        });
-        
-        next();
-    }
-
-    async afterEnter(to, from) {
-        const loadTime = Date.now() - (this.startTime || Date.now());
-        
-        await this.stateManager?.dispatch('UI_STATE_CHANGE', {
-            isLoading: false,
-            loadingMessage: null,
-            loadingProgress: 100,
-            lastLoadTime: loadTime
-        });
-
-        if (loadTime > 500) {
-            console.warn(`⚠️ بارگذاری صفحه ${to.path} ${loadTime}ms طول کشید`);
-        }
-    }
-
-    async beforeLeave(to, from, next) {
-        setTimeout(() => next(), 50);
-    }
-}
-
-class TransitionMiddleware extends IMiddleware {
-    constructor(options = {}) {
-        super();
-        this.duration = options.duration || 300;
-        this.easing = options.easing || 'ease-in-out';
-        this.animationClass = options.animationClass || 'page-transition';
-    }
-
-    async beforeLeave(to, from, next) {
-        const appElement = document.getElementById('app');
-        if (appElement) {
-            appElement.style.transition = `opacity ${this.duration}ms ${this.easing}`;
-            appElement.style.opacity = '0';
-            appElement.classList.add(this.animationClass, 'page-exit');
-            
-            await new Promise(resolve => setTimeout(resolve, this.duration));
-        }
-        next();
-    }
-
-    async afterEnter(to, from) {
-        const appElement = document.getElementById('app');
-        if (appElement) {
-            appElement.style.transition = `opacity ${this.duration}ms ${this.easing}`;
-            appElement.style.opacity = '1';
-            appElement.classList.add(this.animationClass, 'page-enter');
-            
-            setTimeout(() => {
-                appElement.classList.remove(this.animationClass, 'page-enter', 'page-exit');
-                appElement.style.transition = '';
-            }, this.duration);
-        }
-    }
-}
-
-class TitleMiddleware extends IMiddleware {
-    constructor(options = {}) {
-        super();
-        this.defaultTitle = options.defaultTitle || 'Farsinglish';
-        this.titleSeparator = options.titleSeparator || ' | ';
-        this.appendDefault = options.appendDefault ?? true;
-    }
-
-    async afterEnter(to, from) {
-        let title = to.route.meta?.title || '';
-        
-        if (title) {
-            Object.keys(to.params || {}).forEach(key => {
-                title = title.replace(`:${key}`, to.params[key]);
-            });
-        }
-
-        if (this.appendDefault && title) {
-            title = `${title}${this.titleSeparator}${this.defaultTitle}`;
-        } else if (!title) {
-            title = this.defaultTitle;
-        }
-
-        document.title = title;
-
-        const metaDescription = document.querySelector('meta[name="description"]');
-        if (metaDescription && to.route.meta?.description) {
-            metaDescription.setAttribute('content', to.route.meta.description);
-        }
-
-        const metaKeywords = document.querySelector('meta[name="keywords"]');
-        if (metaKeywords && to.route.meta?.keywords) {
-            metaKeywords.setAttribute('content', to.route.meta.keywords.join(', '));
-        }
-
-        const canonical = document.querySelector('link[rel="canonical"]');
-        if (canonical && to.route.meta?.canonical) {
-            canonical.setAttribute('href', to.route.meta.canonical);
-        }
-    }
-}
-
-class AnalyticsMiddleware extends IMiddleware {
-    constructor(analyticsService) {
-        super();
-        this.analyticsService = analyticsService;
-    }
-
-    async afterEnter(to, from) {
-        const analyticsData = {
-            page: to.route.name || to.path,
-            title: document.title,
-            timestamp: new Date().toISOString(),
-            params: to.params,
-            query: to.query,
-            referrer: from?.fullPath || document.referrer,
-            loadTime: performance.now()
-        };
-
-        if (this.analyticsService) {
-            await this.analyticsService.trackPageView(analyticsData);
-        } else {
-            console.log('[Analytics] Page view:', analyticsData);
-        }
-    }
-}
-
-// ============ Router Class ============
+/**
+ * مسیریاب اصلی با قابلیت‌های پیشرفته
+ * @class Router
+ * @fires router:navigation - هنگام ناوبری
+ * @fires router:error - هنگام خطا
+ * @fires router:state_change - هنگام تغییر وضعیت
+ */
 class Router {
+    /** @type {Map<string, Route>} */
+    #routes = new Map();
+    /** @type {RouteMatch|null} */
+    #current_route = null;
+    /** @type {RouteMatch|null} */
+    #previous_route = null;
+    /** @type {string} */
+    #mode;
+    /** @type {string} */
+    #base;
+    /** @type {Function[]} */
+    #middlewares = [];
+    /** @type {Function[]} */
+    #guards = [];
+    /** @type {RouteCache} */
+    [ROUTER_SYMBOLS.CACHE];
+    /** @type {RouterStateMachine} */
+    [ROUTER_SYMBOLS.STATE];
+    /** @type {Set<AbortController>} */
+    [ROUTER_SYMBOLS.ABORT_CONTROLLERS] = new Set();
+    /** @type {Array} */
+    [ROUTER_SYMBOLS.TRANSACTION_QUEUE] = [];
+    /** @type {Array} */
+    [ROUTER_SYMBOLS.HISTORY] = [];
+    /** @type {boolean} */
+    [ROUTER_SYMBOLS.LOCK_STATE] = false;
+
+    /**
+     * @param {Object} options - گزینه‌ها
+     * @param {string} [options.mode='hash'] - حالت مسیریاب
+     * @param {string} [options.base='/'] - مسیر پایه
+     * @param {number} [options.cache_size=15] - اندازه کش
+     */
     constructor(options = {}) {
-        this.routes = new Map();
-        this.currentRoute = null;
-        this.previousRoute = null;
-        this.history = [];
-        this.mode = options.mode || 'hash';
-        this.base = options.base || '/';
-        this.middlewares = [...(options.middlewares || [])];
-        this.guards = [...(options.guards || [])];
-        this.isNavigating = false;
-        this.maxHistorySize = options.maxHistorySize || 50;
-        this.routeCache = new RouteCache(options.cacheSize || 10);
-        this.cacheEnabled = options.cacheEnabled ?? true;
-        this.scrollBehavior = options.scrollBehavior || new ScrollBehavior();
-        this.breadcrumbManager = new BreadcrumbManager();
-        this.notFoundRoute = options.notFoundRoute || null;
-        this.errorHandler = options.errorHandler || null;
-
-        // اضافه کردن middleware پیش‌فرض
-        if (options.enableLogging !== false) {
-            this.middlewares.push(new LoggingMiddleware());
-        }
-
-        this._setupEventListeners();
+        this.#mode = options.mode || 'hash';
+        this.#base = options.base || '/';
+        this[ROUTER_SYMBOLS.CACHE] = new RouteCache(options.cache_size || 15);
+        this[ROUTER_SYMBOLS.STATE] = new RouterStateMachine();
+        
+        this.#setupEventListeners();
+        this.#setupStateListeners();
     }
 
     /**
-     * ایجاد lazy loader
+     * تنظیم شنونده‌های وضعیت
+     * @private
+     */
+    #setupStateListeners() {
+        this[ROUTER_SYMBOLS.STATE].onStateChange((old_state, new_state, context) => {
+            const event = new CustomEvent('router:state_change', {
+                detail: { old_state, new_state, context }
+            });
+            window.dispatchEvent(event);
+        });
+    }
+
+    /**
+     * ایجاد lazy loader با قابلیت لغو
+     * @param {Function} loader - تابع بارگذاری
+     * @returns {Function} lazy loader
      */
     lazy(loader) {
-        const lazyLoader = async () => {
+        const lazy_loader = async () => {
+            const abort_controller = new AbortController();
+            this[ROUTER_SYMBOLS.ABORT_CONTROLLERS].add(abort_controller);
+
             try {
-                const module = await loader();
-                return module.default || module;
-            } catch (error) {
-                console.error('❌ خطا در lazy loading:', error);
-                throw error;
+                const result = await Promise.race([
+                    loader(),
+                    new Promise((_, reject) => {
+                        abort_controller.signal.addEventListener('abort', () => {
+                            reject(new Error('Lazy loading cancelled'));
+                        });
+                    })
+                ]);
+                return result;
+            } finally {
+                this[ROUTER_SYMBOLS.ABORT_CONTROLLERS].delete(abort_controller);
             }
         };
         
-        Object.defineProperty(lazyLoader, 'name', { value: 'lazyLoader' });
-        return lazyLoader;
+        Object.defineProperty(lazy_loader, 'name', { value: 'lazyLoader' });
+        return lazy_loader;
     }
 
     /**
-     * افزودن route جدید
-     */
-    addRoute(path, component, options = {}) {
-        try {
-            const route = new Route(path, component, options);
-            
-            if (options.name) {
-                if (this.routes.has(options.name)) {
-                    console.warn(`⚠️ Route با نام ${options.name} از قبل وجود دارد و بازنویسی می‌شود`);
-                }
-                this.routes.set(options.name, route);
-            }
-            
-            this.routes.set(path, route);
-            
-            console.log(`✅ Route added: ${path} (${options.name || 'unnamed'})`);
-            
-            return this;
-        } catch (error) {
-            console.error(`❌ خطا در افزودن route ${path}:`, error);
-            if (this.errorHandler) {
-                this.errorHandler(error);
-            }
-            return this;
-        }
-    }
-
-    /**
-     * افزودن چند route به صورت همزمان
-     */
-    addRoutes(routes) {
-        routes.forEach(route => {
-            this.addRoute(route.path, route.component, route);
-        });
-        return this;
-    }
-
-    /**
-     * شروع مسیریابی
-     */
-    start() {
-        try {
-            this._processInitialRoute();
-            this._renderCurrentRoute();
-            
-            // اتصال breadcrumb manager به routes
-            this.breadcrumbManager.routes = this.routes;
-            
-            console.log('🚀 Router started in', this.mode, 'mode');
-            
-            return this;
-        } catch (error) {
-            console.error('❌ خطا در شروع مسیریابی:', error);
-            if (this.errorHandler) {
-                this.errorHandler(error);
-            }
-            return this;
-        }
-    }
-
-    /**
-     * ناوبری به مسیر جدید
+     * ناوبری به مسیر با transaction
+     * @param {string} path - مسیر مقصد
+     * @param {Object} [options] - گزینه‌ها
+     * @returns {Promise<NavigationResult>}
      */
     async navigateTo(path, options = {}) {
-        if (this.isNavigating) {
-            console.warn('⚠️ Navigation already in progress');
-            return false;
+        const navigation_id = Date.now();
+        
+        // بررسی قفل
+        if (this[ROUTER_SYMBOLS.LOCK_STATE]) {
+            this[ROUTER_SYMBOLS.TRANSACTION_QUEUE].push({ path, options, navigation_id });
+            return { success: false, navigation_id, error: 'Router locked' };
         }
 
-        this.isNavigating = true;
-        const navigationId = Date.now();
+        // بررسی وضعیت
+        if (!this[ROUTER_SYMBOLS.STATE].transition('navigating', { path, navigation_id })) {
+            return { success: false, navigation_id, error: 'Invalid state transition' };
+        }
 
         try {
-            const to = this._resolvePath(path);
+            const abort_controller = new AbortController();
+            this[ROUTER_SYMBOLS.ABORT_CONTROLLERS].add(abort_controller);
+
+            const to = this.#resolvePath(path);
             
             if (!to) {
-                if (this.notFoundRoute) {
-                    return await this.navigateTo(this.notFoundRoute);
-                }
                 throw new Error(`Route not found: ${path}`);
             }
 
-            const guardResult = await this._checkGuards(to, this.currentRoute);
-            if (!guardResult.allowed) {
-                if (guardResult.redirect) {
-                    return await this.navigateTo(
-                        typeof guardResult.redirect === 'string' 
-                            ? guardResult.redirect 
-                            : this._buildPathFromRoute(guardResult.redirect)
-                    );
+            // بررسی guards
+            const guard_result = await this.#checkGuards(to, this.#current_route);
+            if (!guard_result.allowed) {
+                if (guard_result.redirect) {
+                    return this.navigateTo(guard_result.redirect);
                 }
-                throw new Error(`Navigation blocked: ${guardResult.reason}`);
+                throw new Error(`Navigation blocked: ${guard_result.reason}`);
             }
 
-            await this._runMiddlewares('beforeLeave', this.currentRoute, to);
+            // اجرای middlewareهای قبل از خروج
+            await this.#runMiddlewares('beforeLeave', this.#current_route, to, abort_controller);
 
-            this.previousRoute = this.currentRoute;
-            this.currentRoute = to;
+            this.#previous_route = this.#current_route;
+            this.#current_route = to;
 
-            this._updateBrowserUrl(to.fullPath, options);
-            this._addToHistory(to);
+            // به‌روزرسانی URL
+            this.#updateBrowserUrl(to.full_path, options);
 
-            await this._runMiddlewares('beforeEnter', to, this.previousRoute);
+            // اجرای middlewareهای قبل از ورود
+            await this.#runMiddlewares('beforeEnter', to, this.#previous_route, abort_controller);
 
-            const renderSuccess = await this._renderCurrentRoute();
-            if (!renderSuccess) {
+            // رندر
+            const render_result = await this.#renderCurrentRoute(abort_controller);
+            if (!render_result) {
                 throw new Error('Failed to render route');
             }
 
-            await this.scrollBehavior.handleScroll(to, this.previousRoute);
-            
-            await this._runMiddlewares('afterEnter', to, this.previousRoute);
+            // اجرای middlewareهای بعد از ورود
+            await this.#runMiddlewares('afterEnter', to, this.#previous_route, abort_controller);
 
-            this._emitNavigationEvent(to, this.previousRoute, navigationId);
+            // افزودن به تاریخچه
+            this.#addToHistory(to);
 
-            return true;
+            // تغییر وضعیت به idle
+            this[ROUTER_SYMBOLS.STATE].transition('idle', { success: true });
+
+            // انتشار رویداد
+            this.#emitNavigationEvent(to, this.#previous_route, navigation_id);
+
+            return {
+                success: true,
+                to,
+                from: this.#previous_route,
+                navigation_id
+            };
 
         } catch (error) {
             console.error('❌ Navigation failed:', error);
             
-            if (this.previousRoute) {
-                this.currentRoute = this.previousRoute;
-                await this._renderCurrentRoute();
-            }
+            this[ROUTER_SYMBOLS.STATE].transition('error', { error });
             
-            if (this.errorHandler) {
-                this.errorHandler(error);
-            }
-            
-            return false;
+            const error_event = new CustomEvent('router:error', {
+                detail: { error, navigation_id }
+            });
+            window.dispatchEvent(error_event);
+
+            return {
+                success: false,
+                navigation_id,
+                error: error.message
+            };
+
         } finally {
-            this.isNavigating = false;
+            this[ROUTER_SYMBOLS.ABORT_CONTROLLERS].clear();
         }
     }
 
     /**
-     * ناوبری با نام route
+     * اجرای تراکنش‌های معلق
+     * @returns {Promise<void>}
      */
-    async navigateByName(name, params = {}, query = {}) {
-        const route = this.routes.get(name);
-        if (!route) {
-            throw new Error(`Route with name "${name}" not found`);
-        }
+    async processTransactionQueue() {
+        if (this[ROUTER_SYMBOLS.TRANSACTION_QUEUE].length === 0) return;
 
-        let path = route.path;
-        Object.keys(params).forEach(key => {
-            path = path.replace(`:${key}`, encodeURIComponent(params[key]));
-        });
-
-        if (Object.keys(query).length > 0) {
-            const queryString = new URLSearchParams(query).toString();
-            path += `?${queryString}`;
-        }
-
-        return await this.navigateTo(path);
-    }
-
-    /**
-     * بازگشت به صفحه قبل
-     */
-    async goBack() {
-        if (this.history.length > 1) {
-            this.history.pop();
-            const previous = this.history[this.history.length - 1];
-            return await this.navigateTo(previous.fullPath, { replace: true });
-        }
+        this[ROUTER_SYMBOLS.LOCK_STATE] = true;
         
-        return await this.navigateTo('/');
-    }
+        const queue = [...this[ROUTER_SYMBOLS.TRANSACTION_QUEUE]];
+        this[ROUTER_SYMBOLS.TRANSACTION_QUEUE] = [];
 
-    /**
-     * رفتن به جلو در تاریخچه
-     */
-    async goForward() {
-        // TODO: پیاده‌سازی forward
-        return false;
-    }
-
-    /**
-     * بازگشت به تعداد مشخصی صفحه
-     */
-    async go(delta) {
-        const targetIndex = this.history.length - 1 + delta;
-        if (targetIndex >= 0 && targetIndex < this.history.length) {
-            const target = this.history[targetIndex];
-            return await this.navigateTo(target.fullPath, { replace: true });
-        }
-        return false;
-    }
-
-    /**
-     * دریافت route فعلی
-     */
-    getCurrentRoute() {
-        return this.currentRoute;
-    }
-
-    /**
-     * دریافت route قبلی
-     */
-    getPreviousRoute() {
-        return this.previousRoute;
-    }
-
-    /**
-     * بررسی وجود route
-     */
-    hasRoute(path) {
-        return !!this._resolvePath(path);
-    }
-
-    /**
-     * دریافت route با نام
-     */
-    getRouteByName(name) {
-        return this.routes.get(name) || null;
-    }
-
-    /**
-     * اضافه کردن middleware
-     */
-    addMiddleware(middleware) {
-        if (!middleware.beforeEnter && !middleware.afterEnter && !middleware.beforeLeave) {
-            throw new Error('Middleware must implement at least one hook');
-        }
-        
-        this.middlewares.push(middleware);
-        return this;
-    }
-
-    /**
-     * اضافه کردن guard
-     */
-    addGuard(guard) {
-        if (!guard.canNavigate) {
-            throw new Error('Guard must implement canNavigate method');
-        }
-        
-        this.guards.push(guard);
-        return this;
-    }
-
-    /**
-     * دریافت breadcrumbs
-     */
-    getBreadcrumbs() {
-        return this.breadcrumbManager.getBreadcrumbs();
-    }
-
-    /**
-     * پاک کردن کش
-     */
-    clearCache() {
-        this.routeCache.clear();
-    }
-
-    /**
-     * بازنشانی مسیریاب
-     */
-    reset() {
-        this.currentRoute = null;
-        this.previousRoute = null;
-        this.history = [];
-        this.routeCache.clear();
-        this.isNavigating = false;
-        
-        this._processInitialRoute();
-        this._renderCurrentRoute();
-    }
-
-    // ============ Private Methods ============
-
-    /**
-     * تنظیم event listeners
-     */
-    _setupEventListeners() {
-        window.addEventListener('hashchange', () => {
-            if (this.mode === 'hash' && !this.isNavigating) {
-                const hash = window.location.hash.substring(1) || '/';
-                this.navigateTo(hash, { replace: true });
-            }
-        });
-
-        window.addEventListener('popstate', () => {
-            if (this.mode === 'history' && !this.isNavigating) {
-                const path = window.location.pathname.replace(this.base, '') || '/';
-                this.navigateTo(path, { replace: true });
-            }
-        });
-
-        window.addEventListener('beforeunload', (event) => {
-            if (this.isNavigating) {
-                event.preventDefault();
-                event.returnValue = 'در حال انتقال به صفحه دیگر...';
-            }
-        });
-
-        window.addEventListener('offline', () => {
-            console.warn('⚠️ اتصال به اینترنت قطع شد');
-        });
-
-        window.addEventListener('online', () => {
-            console.log('✅ اتصال به اینترنت برقرار شد');
-            // TODO: می‌توان route فعلی را مجدداً بارگذاری کرد
-        });
-    }
-
-    /**
-     * پردازش مسیر اولیه
-     */
-    _processInitialRoute() {
-        let initialPath = '/';
-        
-        if (this.mode === 'hash') {
-            initialPath = window.location.hash.substring(1) || '/';
-        } else if (this.mode === 'history') {
-            initialPath = window.location.pathname.replace(this.base, '') || '/';
-        }
-        
-        this.currentRoute = this._resolvePath(initialPath) || this._resolvePath('/');
-        
-        if (!this.currentRoute && this.notFoundRoute) {
-            this.currentRoute = this._resolvePath(this.notFoundRoute);
-        }
-    }
-
-    /**
-     * رندر route فعلی
-     */
-    async _renderCurrentRoute() {
-        if (!this.currentRoute?.route) {
-            console.error('❌ No route to render');
-            return false;
+        for (const item of queue) {
+            await this.navigateTo(item.path, item.options);
         }
 
-        const appElement = document.getElementById('app');
-        if (!appElement) {
-            console.error('❌ App element (#app) not found');
-            return false;
-        }
-
-        try {
-            const cacheKey = this.currentRoute.fullPath;
-            
-            // بررسی کش
-            if (this.cacheEnabled) {
-                const cached = this.routeCache.get(cacheKey);
-                if (cached) {
-                    appElement.innerHTML = '';
-                    
-                    if (cached instanceof Node) {
-                        appElement.appendChild(cached.cloneNode(true));
-                    } else {
-                        appElement.appendChild(cached);
-                    }
-                    
-                    this.breadcrumbManager.generateBreadcrumbs(this.currentRoute, this.routes);
-                    return true;
-                }
-            }
-
-            // بارگذاری کامپوننت
-            const component = await this.currentRoute.route.loadComponent();
-            
-            // پاک کردن محتوای قبلی
-            appElement.innerHTML = '';
-
-            // رندر کامپوننت
-            let renderedComponent;
-            
-            if (typeof component === 'function') {
-                renderedComponent = await component(this.currentRoute);
-            } else if (component instanceof HTMLElement) {
-                renderedComponent = component.cloneNode(true);
-            } else if (typeof component === 'string') {
-                appElement.innerHTML = component;
-                renderedComponent = appElement.firstChild;
-            }
-
-            if (renderedComponent) {
-                if (!(renderedComponent instanceof Node)) {
-                    const tempDiv = document.createElement('div');
-                    tempDiv.innerHTML = renderedComponent;
-                    renderedComponent = tempDiv.firstChild;
-                }
-                
-                appElement.appendChild(renderedComponent);
-                
-                // ذخیره در کش
-                if (this.cacheEnabled) {
-                    this.routeCache.set(cacheKey, renderedComponent.cloneNode(true));
-                }
-            }
-
-            // تولید breadcrumbs
-            this.breadcrumbManager.generateBreadcrumbs(this.currentRoute, this.routes);
-
-            return true;
-
-        } catch (error) {
-            console.error('❌ خطا در رندر route:', error);
-            
-            appElement.innerHTML = `
-                <div class="error-container">
-                    <h2>خطا در بارگذاری صفحه</h2>
-                    <p>${error.message}</p>
-                    <button onclick="window.location.reload()">تلاش مجدد</button>
-                </div>
-            `;
-            
-            return false;
-        }
+        this[ROUTER_SYMBOLS.LOCK_STATE] = false;
     }
 
     /**
-     * resolve کردن مسیر
+     * قفل کردن مسیریاب
      */
-    _resolvePath(path) {
-        let cleanPath = path;
-        
-        if (this.mode === 'history' && path.startsWith(this.base)) {
-            cleanPath = path.substring(this.base.length);
+    lock() {
+        this[ROUTER_SYMBOLS.LOCK_STATE] = true;
+        this[ROUTER_SYMBOLS.STATE].transition('locked');
+    }
+
+    /**
+     * باز کردن قفل
+     */
+    unlock() {
+        this[ROUTER_SYMBOLS.LOCK_STATE] = false;
+        this[ROUTER_SYMBOLS.STATE].transition('idle');
+        this.processTransactionQueue();
+    }
+
+    /**
+     * پاکسازی کامل منابع
+     */
+    dispose() {
+        // لغو همه درخواست‌ها
+        this[ROUTER_SYMBOLS.ABORT_CONTROLLERS].forEach(controller => controller.abort());
+        this[ROUTER_SYMBOLS.ABORT_CONTROLLERS].clear();
+
+        // پاکسازی کش
+        this[ROUTER_SYMBOLS.CACHE].clear();
+
+        // پاکسازی routeها
+        this.#routes.forEach(route => route.dispose?.());
+        this.#routes.clear();
+
+        // پاکسازی تاریخچه
+        this[ROUTER_SYMBOLS.HISTORY] = [];
+        this[ROUTER_SYMBOLS.TRANSACTION_QUEUE] = [];
+
+        console.log('✅ Router disposed');
+    }
+
+    // ... سایر متدهای کمکی ...
+
+    #resolvePath(path) {
+        let clean_path = path;
+        if (this.#mode === 'history' && path.startsWith(this.#base)) {
+            clean_path = path.substring(this.#base.length);
         }
 
-        // حذف hash و query برای تطابق
-        const pathWithoutHash = cleanPath.split('#')[0];
-        const pathWithoutQuery = pathWithoutHash.split('?')[0];
+        const path_without_hash = clean_path.split('#')[0];
+        const path_without_query = path_without_hash.split('?')[0];
 
-        for (const route of this.routes.values()) {
-            const match = route.match(cleanPath);
+        for (const route of this.#routes.values()) {
+            const match = route.match(clean_path);
             if (match) {
                 return {
                     ...match,
-                    fullPath: cleanPath,
-                    path: pathWithoutQuery
+                    full_path: clean_path,
+                    path: path_without_query
                 };
-            }
-        }
-
-        for (const route of this.routes.values()) {
-            for (const childRoute of route.children) {
-                const match = childRoute.match(cleanPath);
-                if (match) {
-                    return {
-                        ...match,
-                        fullPath: cleanPath,
-                        path: pathWithoutQuery
-                    };
-                }
             }
         }
 
         return null;
     }
 
-    /**
-     * ساخت مسیر از آبجکت route
-     */
-    _buildPathFromRoute(routeConfig) {
-        if (typeof routeConfig === 'string') return routeConfig;
-        
-        const route = this.routes.get(routeConfig.name);
-        if (!route) return '/';
-        
-        let path = route.path;
-        if (routeConfig.params) {
-            Object.keys(routeConfig.params).forEach(key => {
-                path = path.replace(`:${key}`, encodeURIComponent(routeConfig.params[key]));
-            });
-        }
-        
-        if (routeConfig.query) {
-            const queryString = new URLSearchParams(routeConfig.query).toString();
-            path += `?${queryString}`;
-        }
-        
-        return path;
-    }
-
-    /**
-     * اجرای middlewares
-     */
-    async _runMiddlewares(hook, to, from) {
-        const allMiddlewares = [
-            ...this.middlewares,
+    async #runMiddlewares(hook, to, from, abort_controller) {
+        const all_middlewares = [
+            ...this.#middlewares,
             ...(to?.route?.middlewares || [])
         ];
 
-        for (const middleware of allMiddlewares) {
+        for (const middleware of all_middlewares) {
+            if (abort_controller.signal.aborted) {
+                throw new Error('Navigation cancelled');
+            }
+
             if (middleware[hook]) {
-                try {
-                    await new Promise((resolve, reject) => {
-                        const next = (error) => {
-                            if (error) reject(error);
-                            else resolve();
-                        };
-                        
-                        Promise.resolve(middleware[hook](to, from, next))
-                            .then(resolve)
-                            .catch(reject);
-                    });
-                } catch (error) {
-                    console.error(`❌ Middleware error in ${hook}:`, error);
-                    if (hook === 'beforeLeave' || hook === 'beforeEnter') {
-                        throw error;
-                    }
-                }
+                await middleware[hook](to, from);
             }
         }
     }
 
-    /**
-     * بررسی guards
-     */
-    async _checkGuards(to, from) {
-        const allGuards = [
-            ...this.guards,
+    async #checkGuards(to, from) {
+        const all_guards = [
+            ...this.#guards,
             ...(to?.route?.meta?.guards || [])
         ];
 
-        for (const guard of allGuards) {
-            try {
-                const result = await guard.canNavigate(to, from);
-                if (!result.allowed) {
-                    return result;
-                }
-            } catch (error) {
-                console.error('❌ Guard error:', error);
-                return {
-                    allowed: false,
-                    redirect: { name: 'error' },
-                    reason: error.message
-                };
+        for (const guard of all_guards) {
+            const result = await guard.canNavigate(to, from);
+            if (!result.allowed) {
+                return result;
             }
         }
         
         return { allowed: true };
     }
 
-    /**
-     * به‌روزرسانی URL مرورگر
-     */
-    _updateBrowserUrl(path, options) {
-        const fullPath = this.mode === 'hash' 
-            ? `#${path}` 
-            : `${this.base}${path}`.replace(/\/+/g, '/');
+    async #renderCurrentRoute(abort_controller) {
+        if (!this.#current_route?.route) return false;
 
-        if (options.replace) {
-            window.history.replaceState({}, '', fullPath);
-        } else {
-            window.history.pushState({}, '', fullPath);
+        const app_element = document.getElementById('app');
+        if (!app_element) return false;
+
+        try {
+            const cache_key = this.#current_route.full_path;
+            
+            // بررسی کش
+            const cached = this[ROUTER_SYMBOLS.CACHE].get(cache_key);
+            if (cached) {
+                app_element.innerHTML = '';
+                app_element.appendChild(cached);
+                return true;
+            }
+
+            // بارگذاری کامپوننت با قابلیت لغو
+            const component = await this.#current_route.route.loadComponent(abort_controller);
+            
+            if (abort_controller.signal.aborted) {
+                throw new Error('Render cancelled');
+            }
+
+            // رندر
+            app_element.innerHTML = '';
+            
+            let rendered;
+            if (typeof component === 'function') {
+                rendered = await component(this.#current_route);
+            } else if (component instanceof HTMLElement) {
+                rendered = component.cloneNode(true);
+            } else if (typeof component === 'string') {
+                app_element.innerHTML = component;
+                rendered = app_element.firstChild;
+            }
+
+            if (rendered) {
+                if (!(rendered instanceof Node)) {
+                    const temp = document.createElement('div');
+                    temp.innerHTML = rendered;
+                    rendered = temp.firstChild;
+                }
+                
+                app_element.appendChild(rendered);
+                
+                // ذخیره در کش
+                this[ROUTER_SYMBOLS.CACHE].set(cache_key, rendered, abort_controller);
+            }
+
+            return true;
+
+        } catch (error) {
+            if (error.message === 'Render cancelled') {
+                console.log('⏸️ Render cancelled');
+                return false;
+            }
+            throw error;
         }
     }
 
-    /**
-     * افزودن به تاریخچه
-     */
-    _addToHistory(route) {
-        this.history.push({
+    #updateBrowserUrl(path, options) {
+        const full_path = this.#mode === 'hash' 
+            ? `#${path}` 
+            : `${this.#base}${path}`.replace(/\/+/g, '/');
+
+        if (options.replace) {
+            window.history.replaceState({}, '', full_path);
+        } else {
+            window.history.pushState({}, '', full_path);
+        }
+    }
+
+    #addToHistory(route) {
+        this[ROUTER_SYMBOLS.HISTORY].push({
             path: route.path,
-            fullPath: route.fullPath,
+            full_path: route.full_path,
             name: route.route.name,
             timestamp: Date.now()
         });
 
-        if (this.history.length > this.maxHistorySize) {
-            this.history.shift();
+        if (this[ROUTER_SYMBOLS.HISTORY].length > 50) {
+            this[ROUTER_SYMBOLS.HISTORY].shift();
         }
     }
 
-    /**
-     * انتشار event ناوبری
-     */
-    _emitNavigationEvent(to, from, navigationId) {
+    #emitNavigationEvent(to, from, navigation_id) {
         const event = new CustomEvent('router:navigation', {
-            detail: {
-                to,
-                from,
-                navigationId,
-                timestamp: Date.now(),
-                historySize: this.history.length
-            },
-            bubbles: true,
-            cancelable: true
+            detail: { to, from, navigation_id, timestamp: Date.now() }
         });
-        
         window.dispatchEvent(event);
+    }
+
+    #setupEventListeners() {
+        window.addEventListener('hashchange', () => {
+            if (this.#mode === 'hash' && !this[ROUTER_SYMBOLS.STATE].is('navigating')) {
+                const hash = window.location.hash.substring(1) || '/';
+                this.navigateTo(hash, { replace: true });
+            }
+        });
+
+        window.addEventListener('popstate', () => {
+            if (this.#mode === 'history' && !this[ROUTER_SYMBOLS.STATE].is('navigating')) {
+                const path = window.location.pathname.replace(this.#base, '') || '/';
+                this.navigateTo(path, { replace: true });
+            }
+        });
+
+        window.addEventListener('beforeunload', () => {
+            this.dispose();
+        });
+    }
+
+    // API عمومی
+    addRoute(path, component, options = {}) {
+        const route = new Route(path, component, options);
+        if (options.name) this.#routes.set(options.name, route);
+        this.#routes.set(path, route);
+        return this;
+    }
+
+    addRoutes(routes) {
+        routes.forEach(route => this.addRoute(route.path, route.component, route));
+        return this;
+    }
+
+    start() {
+        this.#processInitialRoute();
+        this.#renderCurrentRoute(new AbortController());
+        console.log('🚀 Router started in', this.#mode, 'mode');
+        return this;
+    }
+
+    #processInitialRoute() {
+        let initial_path = '/';
+        if (this.#mode === 'hash') {
+            initial_path = window.location.hash.substring(1) || '/';
+        } else if (this.#mode === 'history') {
+            initial_path = window.location.pathname.replace(this.#base, '') || '/';
+        }
+        this.#current_route = this.#resolvePath(initial_path) || this.#resolvePath('/');
+    }
+
+    getCurrentRoute() {
+        return this.#current_route;
+    }
+
+    getState() {
+        return this[ROUTER_SYMBOLS.STATE].state;
+    }
+
+    clearCache() {
+        this[ROUTER_SYMBOLS.CACHE].clear();
     }
 }
 
-// ============ Router Factory ============
-class RouterFactory {
-    static create(options = {}) {
-        const router = new Router(options);
-        
-        if (options.routes) {
-            router.addRoutes(options.routes);
-        }
-        
-        if (options.stateManager) {
-            router.addMiddleware(new LoadingMiddleware(options.stateManager));
-        }
-        
-        if (options.analyticsService) {
-            router.addMiddleware(new AnalyticsMiddleware(options.analyticsService));
-        }
-        
-        if (options.authService) {
-            router.addGuard(new AuthGuard(options.authService));
-        }
-        
-        if (options.titleMiddleware !== false) {
-            router.addMiddleware(new TitleMiddleware({
-                defaultTitle: options.defaultTitle,
-                appendDefault: options.appendDefaultTitle
-            }));
-        }
-        
-        if (options.transitions !== false) {
-            router.addMiddleware(new TransitionMiddleware(options.transitionOptions));
-        }
-        
-        return router;
-    }
+// ============ Factory برای ساخت آسان ============
 
-    static createForPWA(options = {}) {
-        return RouterFactory.create({
-            mode: 'hash',
-            enableLogging: false,
-            cacheEnabled: true,
-            cacheSize: 15,
-            ...options
+/**
+ * @class RouterFactory
+ */
+class RouterFactory {
+    /**
+     * ایجاد مسیریاب با تنظیمات پیش‌فرض
+     * @param {Object} options - گزینه‌ها
+     * @returns {Router}
+     */
+    static create(options = {}) {
+        return new Router({
+            mode: options.mode || 'hash',
+            base: options.base || '/',
+            cache_size: options.cache_size || 15
         });
     }
 
-    static createForWeb(options = {}) {
+    /**
+     * ایجاد مسیریاب مخصوص PWA
+     * @param {Object} options - گزینه‌ها
+     * @returns {Router}
+     */
+    static createForPWA(options = {}) {
         return RouterFactory.create({
-            mode: 'history',
-            enableLogging: true,
-            cacheEnabled: true,
+            mode: 'hash',
+            cache_size: 20,
             ...options
         });
     }
@@ -1444,19 +1027,7 @@ export {
     Router,
     RouterFactory,
     Route,
-    RouteValidator,
+    RouterStateMachine,
     RouteCache,
-    ScrollBehavior,
-    BreadcrumbManager,
-    IRoute,
-    IMiddleware,
-    INavigationGuard,
-    AuthGuard,
-    RoleGuard,
-    PermissionGuard,
-    LoggingMiddleware,
-    LoadingMiddleware,
-    TransitionMiddleware,
-    TitleMiddleware,
-    AnalyticsMiddleware
+    ROUTER_SYMBOLS
 };
