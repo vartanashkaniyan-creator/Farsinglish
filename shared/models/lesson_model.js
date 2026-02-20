@@ -1,50 +1,227 @@
-    
-// shared/models/lesson-model.js
 /**
- * Lesson Model - مدل داده درس برای سیستم آموزش زبان
- * مسئولیت: نمایش، اعتبارسنجی و مدیریت داده‌های درس با پشتیبانی از SRS
- * اصل SRP: فقط مدیریت داده‌های درس
- * اصل OCP: قابلیت افزودن نوع درس جدید بدون تغییر هسته
- * اصل DIP: وابستگی به اینترفیس‌ها
+ * @fileoverview مدل داده درس برای سیستم آموزش زبان Farsinglish
+ * @author Farsinglish Team
+ * @version 1.0.0
+ */
+
+/**
+ * @typedef {Object} LessonContent
+ * @property {string} text - متن اصلی درس
+ * @property {string|null} audioUrl - آدرس فایل صوتی
+ * @property {string|null} videoUrl - آدرس فایل ویدیویی
+ * @property {Array<string>} images - لیست تصاویر
+ * @property {Array<Exercise>} exercises - لیست تمرین‌ها
+ * @property {Array<Vocabulary>} vocabulary - لیست لغات
+ * @property {Array<string>} grammarPoints - نکات گرامری
+ */
+
+/**
+ * @typedef {Object} Vocabulary
+ * @property {string} id - شناسه کلمه
+ * @property {string} term - کلمه به انگلیسی
+ * @property {string} meaning - معنی فارسی
+ * @property {Array<string>} examples - مثال‌ها
+ * @property {boolean} mastered - آیا مسلط شده
+ */
+
+/**
+ * @typedef {Object} Exercise
+ * @property {string} id - شناسه تمرین
+ * @property {string} type - نوع تمرین
+ * @property {string} title - عنوان تمرین
+ * @property {Array<Object>} questions - سوالات
+ * @property {boolean} completed - تکمیل شده؟
+ */
+
+/**
+ * @typedef {Object} SRSData
+ * @property {number} easeFactor - فاکتور آسانی (۱.۳ تا ۵.۰)
+ * @property {number} interval - فاصله مرور بر حسب روز
+ * @property {string|null} nextReview - تاریخ مرور بعدی
+ * @property {number} reviewCount - تعداد مرورها
+ * @property {string|null} lastReviewed - آخرین مرور
+ * @property {number} streak - تعداد پاسخ‌های پشت سر هم صحیح
+ * @property {number} lastQuality - کیفیت آخرین پاسخ (۰-۵)
+ * @property {number} totalReviews - کل مرورها
+ */
+
+/**
+ * @typedef {Object} LessonStats
+ * @property {number} totalAttempts - کل تلاش‌ها
+ * @property {number} averageScore - میانگین نمرات
+ * @property {number} completionRate - درصد تکمیل
+ * @property {number} averageTimeSpent - میانگین زمان صرف شده
+ * @property {number} bestScore - بهترین نمره
+ * @property {number} totalTimeSpent - کل زمان صرف شده
+ */
+
+/**
+ * @typedef {Object} LessonMetadata
+ * @property {number} version - نسخه درس
+ * @property {string} locale - زبان (fa/en)
+ * @property {string} createdBy - ایجاد کننده
+ */
+
+/**
+ * @typedef {Object} LessonValidationResult
+ * @property {boolean} isValid - معتبر بودن
+ * @property {Array<Object>} errors - لیست خطاها
+ * @property {LessonModel} model - مدل درس
+ */
+
+/**
+ * @typedef {Object} LessonWarning
+ * @property {string} field - فیلد مرتبط
+ * @property {string} message - پیام اخطار
+ */
+
+/**
+ * @typedef {Object} LessonSummary
+ * @property {string} id - شناسه درس
+ * @property {string} title - عنوان درس
+ * @property {string} type - نوع درس
+ * @property {number} difficulty - سطح سختی
+ * @property {number} order - ترتیب
+ * @property {string} status - وضعیت
+ * @property {number} xpReward - جایزه XP
+ * @property {number} estimatedDuration - زمان تخمینی
+ * @property {boolean} isAvailable - قابل دسترسی؟
+ * @property {number} progress - درصد پیشرفت
+ * @property {boolean} dueForReview - نیاز به مرور؟
+ */
+
+/**
+ * @typedef {Object} SRSStats
+ * @property {boolean} mastered - مسلط شده؟
+ * @property {boolean} due - نیاز به مرور؟
+ * @property {number} progress - درصد پیشرفت
+ * @property {number} retention - نرخ نگهداری
+ * @property {string} stage - مرحله SRS
+ * @property {string|null} nextReview - مرور بعدی
+ * @property {number} reviewCount - تعداد مرورها
+ * @property {number} interval - فاصله مرور
+ * @property {number} easeFactor - فاکتور آسانی
+ * @property {number} streak - رکورد پشت سر هم
+ */
+
+/**
+ * @typedef {Object} DetailedStats
+ * @property {Object} general - آمار عمومی
+ * @property {SRSStats} srs - آمار SRS
+ * @property {Object} vocabulary - آمار لغات
+ * @property {Object} exercises - آمار تمرین‌ها
+ * @property {string} mastery - سطح تسلط
+ * @property {number} progress - درصد پیشرفت
+ */
+
+/**
+ * @typedef {Object} ReviewRecommendation
+ * @property {string} action - اقدام پیشنهادی
+ * @property {string} message - پیام
+ * @property {string} priority - اولویت
+ * @property {string} reason - دلیل
+ */
+
+/**
+ * @typedef {Object} MasteryPrediction
+ * @property {number} remainingReviews - مرورهای باقیمانده
+ * @property {number} estimatedMinutes - زمان تخمینی (دقیقه)
+ * @property {number} estimatedDays - روزهای تخمینی
+ * @property {number} confidence - درصد اطمینان
+ */
+
+/**
+ * @typedef {Object} LessonDiff
+ * @property {boolean} hasChanges - آیا تغییری داشته؟
+ * @property {Array<Object>} changes - لیست تغییرات
+ * @property {string} timestamp - زمان مقایسه
  */
 
 // ============ Constants ============
+
+/**
+ * انواع درس
+ * @readonly
+ * @enum {string}
+ */
 const LessonType = Object.freeze({
+    /** درس لغت و واژگان */
     VOCABULARY: 'vocabulary',
+    /** درس دستور زبان */
     GRAMMAR: 'grammar',
+    /** درس شنیداری */
     LISTENING: 'listening',
+    /** درس گفتاری */
     SPEAKING: 'speaking',
+    /** درس خواندن */
     READING: 'reading',
+    /** درس نوشتاری */
     WRITING: 'writing',
+    /** درس ترکیبی */
     MIXED: 'mixed'
 });
 
+/**
+ * سطح سختی درس
+ * @readonly
+ * @enum {number}
+ */
 const DifficultyLevel = Object.freeze({
+    /** آسان */
     EASY: 1,
+    /** متوسط */
     MEDIUM: 2,
+    /** سخت */
     HARD: 3,
+    /** پیشرفته */
     ADVANCED: 4,
+    /** خبره */
     EXPERT: 5
 });
 
+/**
+ * وضعیت درس
+ * @readonly
+ * @enum {string}
+ */
 const LessonStatus = Object.freeze({
+    /** قفل شده */
     LOCKED: 'locked',
+    /** باز شده */
     UNLOCKED: 'unlocked',
+    /** در حال انجام */
     IN_PROGRESS: 'in_progress',
+    /** تکمیل شده */
     COMPLETED: 'completed',
+    /** نیاز به مرور */
     REVIEW_PENDING: 'review_pending',
+    /** مسلط شده */
     MASTERED: 'mastered'
 });
 
+/**
+ * سطح تسلط
+ * @readonly
+ * @enum {string}
+ */
 const MasteryLevel = Object.freeze({
+    /** تازه کار */
     NOVICE: 'novice',
+    /** مبتدی */
     BEGINNER: 'beginner',
+    /** متوسط */
     INTERMEDIATE: 'intermediate',
+    /** پیشرفته */
     ADVANCED: 'advanced',
+    /** خبره */
     EXPERT: 'expert'
 });
 
-// ============ SRS Configuration ============
+/**
+ * فواصل مرور SRS بر اساس سطح سختی
+ * @readonly
+ * @enum {Array<number>}
+ */
 const SRSIntervals = Object.freeze({
     [DifficultyLevel.EASY]: [1, 3, 7, 14, 30, 60, 90, 180],
     [DifficultyLevel.MEDIUM]: [1, 2, 5, 10, 21, 40, 70, 120],
@@ -54,26 +231,69 @@ const SRSIntervals = Object.freeze({
 });
 
 // ============ Error Classes ============
+
+/**
+ * خطای پایه مدل درس
+ * @extends Error
+ */
 class LessonModelError extends Error {
+    /**
+     * @param {string} message - پیام خطا
+     * @param {string|null} [field=null] - فیلد مرتبط با خطا
+     * @param {Error|null} [cause=null] - خطای اصلی
+     */
     constructor(message, field = null, cause = null) {
         super(message);
         this.name = 'LessonModelError';
+        /** @type {string|null} */
         this.field = field;
+        /** @type {Error|null} */
         this.cause = cause;
+        /** @type {string} */
         this.timestamp = new Date().toISOString();
     }
 }
 
+/**
+ * خطای اعتبارسنجی درس
+ * @extends LessonModelError
+ */
 class LessonValidationError extends LessonModelError {
+    /**
+     * @param {Array<Object>} errors - لیست خطاهای اعتبارسنجی
+     */
     constructor(errors) {
         super('اعتبارسنجی درس با خطا مواجه شد');
         this.name = 'LessonValidationError';
+        /** @type {Array<Object>} */
         this.errors = errors;
     }
 }
 
 // ============ Lesson Model Class ============
+
+/**
+ * کلاس اصلی مدل درس
+ * @class
+ * @classdesc مدیریت داده‌های درس با پشتیبانی کامل از SRS
+ */
 class LessonModel {
+    /**
+     * ایجاد یک نمونه جدید از درس
+     * @param {Object} data - داده‌های اولیه درس
+     * @param {string} [data.id] - شناسه درس (تولید خودکار در صورت عدم وجود)
+     * @param {string} [data.courseId=null] - شناسه دوره
+     * @param {string} [data.moduleId=null] - شناسه ماژول
+     * @param {string} data.title - عنوان درس
+     * @param {string} [data.description=''] - توضیحات درس
+     * @param {LessonType} [data.type=LessonType.VOCABULARY] - نوع درس
+     * @param {string} [data.category='general'] - دسته‌بندی
+     * @param {Array<string>} [data.tags=[]] - برچسب‌ها
+     * @param {DifficultyLevel} [data.difficulty=DifficultyLevel.MEDIUM] - سطح سختی
+     * @param {number} [data.order=1] - ترتیب درس
+     * @param {LessonContent} [data.content={}] - محتوای درس
+     * @throws {LessonModelError} در صورت خطا در ساخت
+     */
     constructor(data = {}) {
         try {
             // شناسه‌ها
@@ -112,7 +332,7 @@ class LessonModel {
             this.unlockables = Array.isArray(data.unlockables) ? [...data.unlockables] : [];
             
             // زمان‌بندی
-            this.estimatedDuration = Math.max(1, data.estimatedDuration || 10); // دقیقه
+            this.estimatedDuration = Math.max(1, data.estimatedDuration || 10);
             this.maxAttempts = Math.max(1, data.maxAttempts || 3);
             
             // وضعیت
@@ -166,10 +386,93 @@ class LessonModel {
         }
     }
 
+    // ============ Computed Properties (Getters) ============
+
+    /**
+     * درصد پیشرفت درس
+     * @type {number}
+     */
+    get progress() {
+        return this.getProgress();
+    }
+
+    /**
+     * آیا درس قفل است؟
+     * @type {boolean}
+     */
+    get isLocked() {
+        return this.status === LessonStatus.LOCKED;
+    }
+
+    /**
+     * آیا درس باز است؟
+     * @type {boolean}
+     */
+    get isUnlocked() {
+        return this.status === LessonStatus.UNLOCKED;
+    }
+
+    /**
+     * آیا درس در حال انجام است؟
+     * @type {boolean}
+     */
+    get isInProgress() {
+        return this.status === LessonStatus.IN_PROGRESS;
+    }
+
+    /**
+     * آیا درس تکمیل شده است؟
+     * @type {boolean}
+     */
+    get isCompleted() {
+        return this.status === LessonStatus.COMPLETED;
+    }
+
+    /**
+     * آیا درس نیاز به مرور دارد؟
+     * @type {boolean}
+     */
+    get isReviewPending() {
+        return this.status === LessonStatus.REVIEW_PENDING;
+    }
+
+    /**
+     * آیا درس مسلط شده است؟
+     * @type {boolean}
+     */
+    get isMastered() {
+        return this.status === LessonStatus.MASTERED;
+    }
+
+    /**
+     * آیا درس برای مرور آماده است؟
+     * @type {boolean}
+     */
+    get isAvailable() {
+        return this.isAvailableForReview();
+    }
+
+    /**
+     * نرخ نگهداری
+     * @type {number}
+     */
+    get retention() {
+        return this._calculateRetentionRate();
+    }
+
+    /**
+     * مرحله SRS
+     * @type {string}
+     */
+    get srsStage() {
+        return this._getSRSStage();
+    }
+
     // ============ Public Methods ============
 
     /**
      * تبدیل به آبجکت ساده
+     * @returns {Object} آبجکت ساده شده با تمام فیلدها
      */
     toObject() {
         return {
@@ -205,7 +508,8 @@ class LessonModel {
     }
 
     /**
-     * تبدیل به JSON
+     * تبدیل به JSON (برای JSON.stringify)
+     * @returns {Object} آبجکت قابل تبدیل به JSON
      */
     toJSON() {
         return this.toObject();
@@ -213,6 +517,7 @@ class LessonModel {
 
     /**
      * تبدیل به فرمت مناسب برای IndexedDB
+     * @returns {Object} آبجکت مناسب برای ذخیره در دیتابیس
      */
     toDBFormat() {
         const obj = this.toObject();
@@ -223,6 +528,7 @@ class LessonModel {
 
     /**
      * تبدیل به فرمت مناسب برای API
+     * @returns {Object} آبجکت مناسب برای ارسال به سرور
      */
     toAPIFormat() {
         const obj = this.toObject();
@@ -235,6 +541,7 @@ class LessonModel {
 
     /**
      * ایجاد خلاصه درس (برای لیست‌ها)
+     * @returns {LessonSummary} خلاصه درس
      */
     toSummary() {
         return {
@@ -254,6 +561,7 @@ class LessonModel {
 
     /**
      * ایجاد کش از درس
+     * @returns {Object} آبجکت مناسب برای کش
      */
     toCache() {
         return {
@@ -272,7 +580,63 @@ class LessonModel {
     }
 
     /**
+     * بررسی معتبر بودن کش
+     * @param {number} maxAge - حداکثر سن مجاز بر حسب میلی‌ثانیه
+     * @returns {boolean} آیا کش معتبر است؟
+     */
+    isCacheValid(maxAge = 3600000) { // 1 ساعت پیش‌فرض
+        const cache = this.toCache();
+        if (!cache.cachedAt) return false;
+        
+        const cacheAge = Date.now() - new Date(cache.cachedAt).getTime();
+        return cacheAge < maxAge;
+    }
+
+    /**
+     * ایجاد کپی عمیق از درس
+     * @returns {LessonModel} کپی جدید از درس
+     */
+    clone() {
+        return new LessonModel(this.toObject());
+    }
+
+    /**
+     * مقایسه با درس دیگر
+     * @param {LessonModel} other - درس دیگر برای مقایسه
+     * @returns {boolean} آیا برابر هستند؟
+     */
+    equals(other) {
+        if (!(other instanceof LessonModel)) return false;
+        return this.id === other.id &&
+               this.updatedAt === other.updatedAt &&
+               JSON.stringify(this.srsData) === JSON.stringify(other.srsData);
+    }
+
+    /**
+     * به‌روزرسانی با حفظ Immutability
+     * @param {Object} updates - تغییرات مورد نظر
+     * @returns {LessonModel} نمونه جدید با اعمال تغییرات
+     */
+    with(updates) {
+        return new LessonModel({
+            ...this.toObject(),
+            ...updates,
+            updatedAt: new Date().toISOString()
+        });
+    }
+
+    /**
+     * به‌روزرسانی همزمان چند فیلد
+     * @param {Object} updates - تغییرات
+     * @returns {LessonModel} نمونه جدید
+     */
+    updateBatch(updates) {
+        return this.with(updates);
+    }
+
+    /**
      * اعتبارسنجی پایه
+     * @returns {LessonValidationResult} نتیجه اعتبارسنجی
      */
     validate() {
         const errors = [];
@@ -293,6 +657,7 @@ class LessonModel {
 
     /**
      * اعتبارسنجی عمیق محتوا
+     * @returns {Object} نتیجه اعتبارسنجی با اخطارها
      */
     validateDeep() {
         const basicValidation = this.validate();
@@ -335,21 +700,20 @@ class LessonModel {
 
     /**
      * به‌روزرسانی درس
+     * @param {Object} updates - تغییرات
+     * @returns {LessonModel} نمونه جدید
      */
     update(updates) {
-        return new LessonModel({
-            ...this.toObject(),
-            ...updates,
-            updatedAt: new Date().toISOString()
-        });
+        return this.with(updates);
     }
 
     /**
      * باز کردن درس
+     * @returns {LessonModel} نمونه جدید با وضعیت باز
      */
     unlock() {
         if (this.status === LessonStatus.LOCKED) {
-            return this.update({
+            return this.with({
                 status: LessonStatus.UNLOCKED
             });
         }
@@ -358,9 +722,10 @@ class LessonModel {
 
     /**
      * شروع درس
+     * @returns {LessonModel} نمونه جدید با وضعیت در حال انجام
      */
     start() {
-        return this.update({
+        return this.with({
             status: LessonStatus.IN_PROGRESS,
             stats: {
                 ...this.stats,
@@ -371,11 +736,14 @@ class LessonModel {
 
     /**
      * تکمیل درس
+     * @param {number} [score=100] - نمره کسب شده
+     * @param {number} [timeSpent=0] - زمان صرف شده
+     * @returns {LessonModel} نمونه جدید با وضعیت تکمیل
      */
     complete(score = 100, timeSpent = 0) {
         const completedScore = Math.max(0, Math.min(100, score));
         
-        return this.update({
+        return this.with({
             status: completedScore >= 70 ? LessonStatus.COMPLETED : LessonStatus.IN_PROGRESS,
             stats: {
                 ...this.stats,
@@ -390,6 +758,8 @@ class LessonModel {
 
     /**
      * اعمال الگوریتم SM-2 برای SRS
+     * @param {number} quality - کیفیت پاسخ (۰ تا ۵)
+     * @returns {LessonModel} نمونه جدید با SRS به‌روز شده
      */
     applySM2(quality) {
         // اعتبارسنجی quality (0-5)
@@ -433,7 +803,7 @@ class LessonModel {
         const nextReview = new Date();
         nextReview.setDate(nextReview.getDate() + interval);
         
-        return this.update({
+        return this.with({
             srsData: {
                 easeFactor,
                 interval,
@@ -449,6 +819,8 @@ class LessonModel {
 
     /**
      * محاسبه مرور بعدی با فرمول SRS ساده
+     * @param {number} performance - عملکرد (۰-۱۰۰)
+     * @returns {LessonModel} نمونه جدید
      */
     calculateNextReview(performance) {
         const performanceScore = Math.max(0, Math.min(100, performance));
@@ -459,6 +831,7 @@ class LessonModel {
 
     /**
      * بررسی آماده بودن برای مرور
+     * @returns {boolean} آیا برای مرور آماده است؟
      */
     isAvailableForReview() {
         if (!this.srsData.nextReview) return false;
@@ -471,6 +844,7 @@ class LessonModel {
 
     /**
      * دریافت زمان تخمینی تا مرور بعدی
+     * @returns {string|null} زمان تخمینی به صورت متنی
      */
     getEstimatedReviewTime() {
         if (!this.srsData.nextReview) return null;
@@ -496,6 +870,7 @@ class LessonModel {
 
     /**
      * دریافت آمار SRS
+     * @returns {SRSStats} آمار کامل SRS
      */
     getSRSStats() {
         const mastered = this.srsData.reviewCount >= 5 && this.srsData.interval >= 30;
@@ -519,6 +894,7 @@ class LessonModel {
 
     /**
      * دریافت پیشرفت درس (۰-۱۰۰)
+     * @returns {number} درصد پیشرفت
      */
     getProgress() {
         return Math.min(100, Math.round((this.srsData.reviewCount / 10) * 100));
@@ -526,6 +902,7 @@ class LessonModel {
 
     /**
      * دریافت سطح تسلط
+     * @returns {string} سطح تسلط
      */
     getMasteryLevel() {
         const vocabStats = this._getVocabularyStats();
@@ -547,6 +924,7 @@ class LessonModel {
 
     /**
      * دریافت آمار کامل درس
+     * @returns {DetailedStats} آمار تفصیلی درس
      */
     getDetailedStats() {
         return {
@@ -568,6 +946,7 @@ class LessonModel {
 
     /**
      * پیش‌بینی زمان مورد نیاز برای تسلط
+     * @returns {MasteryPrediction} پیش‌بینی زمان تسلط
      */
     predictMasteryTime() {
         const srsStats = this.getSRSStats();
@@ -587,6 +966,7 @@ class LessonModel {
 
     /**
      * دریافت توصیه برای مرور بعدی
+     * @returns {ReviewRecommendation} توصیه مرور
      */
     getReviewRecommendation() {
         if (!this.isAvailableForReview()) {
@@ -638,6 +1018,8 @@ class LessonModel {
 
     /**
      * مقایسه با درس دیگر
+     * @param {LessonModel} other - درس دیگر
+     * @returns {number} نتیجه مقایسه
      */
     compareTo(other) {
         if (!(other instanceof LessonModel)) {
@@ -652,6 +1034,8 @@ class LessonModel {
 
     /**
      * ایجاد Diff بین دو نسخه
+     * @param {LessonModel} other - درس دیگر
+     * @returns {LessonDiff} تفاوت‌ها
      */
     diff(other) {
         const changes = [];
@@ -680,6 +1064,7 @@ class LessonModel {
 
     /**
      * ایجاد درس پیش‌فرض
+     * @returns {LessonModel} درس پیش‌فرض
      */
     static createDefault() {
         return new LessonModel({
@@ -695,6 +1080,8 @@ class LessonModel {
 
     /**
      * ایجاد از داده خام
+     * @param {Object} data - داده خام
+     * @returns {LessonModel} نمونه درس
      */
     static fromRawData(data) {
         return new LessonModel(data);
@@ -702,6 +1089,8 @@ class LessonModel {
 
     /**
      * بازسازی از فرمت DB
+     * @param {Object} dbData - داده دیتابیس
+     * @returns {LessonModel} نمونه درس
      */
     static fromDBFormat(dbData) {
         return new LessonModel(dbData);
@@ -709,6 +1098,8 @@ class LessonModel {
 
     /**
      * بازسازی از کش
+     * @param {Object} cacheData - داده کش
+     * @returns {Object} خلاصه درس
      */
     static fromCache(cacheData) {
         return {
@@ -729,6 +1120,7 @@ class LessonModel {
 
     /**
      * دریافت اسکیما
+     * @returns {Object} اسکیما
      */
     static getSchema() {
         return {
@@ -745,6 +1137,8 @@ class LessonModel {
 
     /**
      * مرتب‌سازی بر اساس اولویت مرور
+     * @param {Array<LessonModel>} lessons - لیست درس‌ها
+     * @returns {Array<LessonModel>} لیست مرتب شده
      */
     static sortByReviewPriority(lessons) {
         return [...lessons].sort((a, b) => {
@@ -767,6 +1161,8 @@ class LessonModel {
 
     /**
      * مرتب‌سازی بر اساس وضعیت
+     * @param {Array<LessonModel>} lessons - لیست درس‌ها
+     * @returns {Array<LessonModel>} لیست مرتب شده
      */
     static sortByStatus(lessons) {
         const statusPriority = {
@@ -785,17 +1181,33 @@ class LessonModel {
 
     // ============ Private Methods ============
 
+    /**
+     * اعتبارسنجی اولیه
+     * @private
+     */
     _validate() {
-        if (!this.id) throw new LessonModelError('شناسه درس الزامی است');
+        if (!this.id) throw new LessonModelError('شناسه درس الزامی است', 'id');
         if (!this.title?.trim()) throw new LessonModelError('عنوان درس الزامی است', 'title');
     }
 
+    /**
+     * اعتبارسنجی نوع درس
+     * @private
+     * @param {string} type - نوع درس
+     * @returns {string} نوع معتبر
+     */
     _validateType(type) {
         return Object.values(LessonType).includes(type) 
             ? type 
             : LessonType.VOCABULARY;
     }
 
+    /**
+     * اعتبارسنجی سطح سختی
+     * @private
+     * @param {number} difficulty - سطح سختی
+     * @returns {number} سطح معتبر
+     */
     _validateDifficulty(difficulty) {
         const diffNum = parseInt(difficulty);
         return diffNum >= 1 && diffNum <= 5 
@@ -803,16 +1215,34 @@ class LessonModel {
             : DifficultyLevel.MEDIUM;
     }
 
+    /**
+     * اعتبارسنجی وضعیت
+     * @private
+     * @param {string} status - وضعیت
+     * @returns {string} وضعیت معتبر
+     */
     _validateStatus(status) {
         return Object.values(LessonStatus).includes(status) 
             ? status 
             : LessonStatus.LOCKED;
     }
 
+    /**
+     * اعتبارسنجی فاکتور آسانی
+     * @private
+     * @param {number} easeFactor - فاکتور آسانی
+     * @returns {number} فاکتور معتبر
+     */
     _validateEaseFactor(easeFactor) {
         return Math.max(1.3, Math.min(5.0, easeFactor));
     }
 
+    /**
+     * اعتبارسنجی تمرین‌ها
+     * @private
+     * @param {Array} exercises - لیست تمرین‌ها
+     * @returns {Array} تمرین‌های معتبر
+     */
     _validateExercises(exercises) {
         return exercises.map(ex => ({
             id: ex.id || this._generateId(),
@@ -823,6 +1253,12 @@ class LessonModel {
         }));
     }
 
+    /**
+     * اعتبارسنجی لغات
+     * @private
+     * @param {Array} vocabulary - لیست لغات
+     * @returns {Array} لغات معتبر
+     */
     _validateVocabulary(vocabulary) {
         return vocabulary.map(v => ({
             id: v.id || this._generateId(),
@@ -834,10 +1270,21 @@ class LessonModel {
         }));
     }
 
+    /**
+     * تولید شناسه یکتا
+     * @private
+     * @returns {string} شناسه یکتا
+     */
     _generateId() {
         return `lesson_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
     }
 
+    /**
+     * محاسبه میانگین نمرات
+     * @private
+     * @param {number} newScore - نمره جدید
+     * @returns {number} میانگین جدید
+     */
     _calculateAverageScore(newScore) {
         if (this.stats.totalAttempts === 0) {
             return newScore;
@@ -849,6 +1296,11 @@ class LessonModel {
         );
     }
 
+    /**
+     * محاسبه درصد تکمیل
+     * @private
+     * @returns {number} درصد تکمیل
+     */
     _calculateCompletionRate() {
         if (!this.content.exercises?.length) return 0;
         
@@ -856,6 +1308,12 @@ class LessonModel {
         return Math.round((completed / this.content.exercises.length) * 100);
     }
 
+    /**
+     * محاسبه میانگین زمان
+     * @private
+     * @param {number} newTime - زمان جدید
+     * @returns {number} میانگین جدید
+     */
     _calculateAverageTime(newTime) {
         if (this.stats.totalAttempts === 0) return newTime;
         
@@ -865,6 +1323,11 @@ class LessonModel {
         );
     }
 
+    /**
+     * محاسبه نرخ نگهداری
+     * @private
+     * @returns {number} نرخ نگهداری
+     */
     _calculateRetentionRate() {
         if (!this.srsData.lastReviewed) return 0;
         
@@ -879,6 +1342,11 @@ class LessonModel {
         return Math.round(retention);
     }
 
+    /**
+     * دریافت مرحله SRS
+     * @private
+     * @returns {string} مرحله SRS
+     */
     _getSRSStage() {
         const { interval, reviewCount } = this.srsData;
         
@@ -888,6 +1356,11 @@ class LessonModel {
         return 'mastered';
     }
 
+    /**
+     * دریافت آمار لغات
+     * @private
+     * @returns {Object} آمار لغات
+     */
     _getVocabularyStats() {
         const vocab = this.content.vocabulary || [];
         const learned = vocab.filter(v => v.mastered).length;
@@ -899,6 +1372,11 @@ class LessonModel {
         };
     }
 
+    /**
+     * دریافت آمار تمرین‌ها
+     * @private
+     * @returns {Object} آمار تمرین‌ها
+     */
     _getExerciseStats() {
         const exercises = this.content.exercises || [];
         const completed = exercises.filter(e => e.completed).length;
@@ -910,6 +1388,11 @@ class LessonModel {
         };
     }
 
+    /**
+     * دریافت اخطارها
+     * @private
+     * @returns {Array<LessonWarning>} لیست اخطارها
+     */
     _getWarnings() {
         const warnings = [];
         
@@ -938,7 +1421,18 @@ class LessonModel {
 }
 
 // ============ Lesson Factory ============
+
+/**
+ * کارخانه ساخت درس
+ * @class
+ */
 class LessonFactory {
+    /**
+     * ایجاد درس بر اساس نوع
+     * @param {string} type - نوع درس
+     * @param {Object} data - داده‌های اضافی
+     * @returns {LessonModel} نمونه درس
+     */
     static create(type, data = {}) {
         const baseData = {
             title: data.title || `درس ${type} جدید`,
@@ -1016,6 +1510,12 @@ class LessonFactory {
         }
     }
 
+    /**
+     * ایجاد درس واژگان
+     * @param {Array} words - لیست کلمات
+     * @param {Object} options - گزینه‌های اضافی
+     * @returns {LessonModel} درس واژگان
+     */
     static createVocabularyLesson(words, options = {}) {
         return this.create(LessonType.VOCABULARY, {
             vocabulary: words.map(w => ({
@@ -1027,6 +1527,12 @@ class LessonFactory {
         });
     }
 
+    /**
+     * ایجاد درس گرامر
+     * @param {Array} points - نکات گرامری
+     * @param {Object} options - گزینه‌های اضافی
+     * @returns {LessonModel} درس گرامر
+     */
     static createGrammarLesson(points, options = {}) {
         return this.create(LessonType.GRAMMAR, {
             grammarPoints: points,
@@ -1034,14 +1540,24 @@ class LessonFactory {
         });
     }
 
+    /**
+     * ایجاد Builder برای درس
+     * @returns {LessonBuilder} نمونه LessonBuilder
+     */
     static builder() {
         return new LessonBuilder();
     }
 }
 
 // ============ Lesson Builder ============
+
+/**
+ * Builder برای ساخت گام‌به‌گام درس
+ * @class
+ */
 class LessonBuilder {
     constructor() {
+        /** @private */
         this.data = {
             content: {},
             tags: [],
@@ -1050,38 +1566,75 @@ class LessonBuilder {
         };
     }
 
+    /**
+     * تنظیم اطلاعات پایه
+     * @param {string} title - عنوان درس
+     * @param {string} description - توضیحات
+     * @returns {LessonBuilder} نمونه Builder
+     */
     setBasicInfo(title, description) {
         this.data.title = title;
         this.data.description = description;
         return this;
     }
 
+    /**
+     * تنظیم نوع درس
+     * @param {string} type - نوع درس
+     * @returns {LessonBuilder} نمونه Builder
+     */
     setType(type) {
         this.data.type = type;
         return this;
     }
 
+    /**
+     * تنظیم سطح سختی
+     * @param {number} difficulty - سطح سختی
+     * @returns {LessonBuilder} نمونه Builder
+     */
     setDifficulty(difficulty) {
         this.data.difficulty = difficulty;
         return this;
     }
 
+    /**
+     * تنظیم ترتیب
+     * @param {number} order - ترتیب
+     * @returns {LessonBuilder} نمونه Builder
+     */
     setOrder(order) {
         this.data.order = order;
         return this;
     }
 
+    /**
+     * تنظیم پاداش‌ها
+     * @param {number} xp - جایزه XP
+     * @param {number} [coins=10] - جایزه سکه
+     * @returns {LessonBuilder} نمونه Builder
+     */
     setRewards(xp, coins = 10) {
         this.data.xpReward = xp;
         this.data.coinReward = coins;
         return this;
     }
 
+    /**
+     * تنظیم زمان تخمینی
+     * @param {number} minutes - زمان بر حسب دقیقه
+     * @returns {LessonBuilder} نمونه Builder
+     */
     setDuration(minutes) {
         this.data.estimatedDuration = minutes;
         return this;
     }
 
+    /**
+     * افزودن لغات
+     * @param {Array} vocabList - لیست لغات
+     * @returns {LessonBuilder} نمونه Builder
+     */
     addVocabulary(vocabList) {
         if (!this.data.content.vocabulary) {
             this.data.content.vocabulary = [];
@@ -1090,6 +1643,11 @@ class LessonBuilder {
         return this;
     }
 
+    /**
+     * افزودن تمرین‌ها
+     * @param {Array} exerciseList - لیست تمرین‌ها
+     * @returns {LessonBuilder} نمونه Builder
+     */
     addExercises(exerciseList) {
         if (!this.data.content.exercises) {
             this.data.content.exercises = [];
@@ -1098,26 +1656,50 @@ class LessonBuilder {
         return this;
     }
 
+    /**
+     * تنظیم پیش‌نیازها
+     * @param {Array} prereqs - لیست پیش‌نیازها
+     * @returns {LessonBuilder} نمونه Builder
+     */
     setPrerequisites(prereqs) {
         this.data.prerequisites = prereqs;
         return this;
     }
 
+    /**
+     * افزودن برچسب
+     * @param {string} tag - برچسب
+     * @returns {LessonBuilder} نمونه Builder
+     */
     addTag(tag) {
         this.data.tags.push(tag);
         return this;
     }
 
+    /**
+     * تنظیم محتوا
+     * @param {Object} content - محتوای درس
+     * @returns {LessonBuilder} نمونه Builder
+     */
     setContent(content) {
         this.data.content = { ...this.data.content, ...content };
         return this;
     }
 
+    /**
+     * تنظیم پریمیوم بودن
+     * @param {boolean} isPremium - آیا پریمیوم است؟
+     * @returns {LessonBuilder} نمونه Builder
+     */
     setPremium(isPremium) {
         this.data.isPremium = isPremium;
         return this;
     }
 
+    /**
+     * ساخت درس نهایی
+     * @returns {LessonModel} نمونه درس ساخته شده
+     */
     build() {
         return new LessonModel(this.data);
     }
