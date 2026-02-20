@@ -1,26 +1,147 @@
-// core/state/state-manager.js
 /**
- * State Manager - مدیریت متمرکز وضعیت برنامه
- * مسئولیت: نگهداری و به‌روزرسانی state مرکزی با الگوی Pub/Sub
- * اصل SRP: فقط مدیریت state و انتشار تغییرات
- * اصل OCP: قابلیت افزودن middleware بدون تغییر کد اصلی
- * اصل DIP: وابستگی به Interface نه پیاده‌سازی
- * اصل LSP: تمام middlewareها و listenerها قابل جایگزینی هستند
- * اصل ISP: اینترفیس‌های کوچک و مجزا
+ * @fileoverview مدیریت متمرکز وضعیت برنامه با الگوی Pub/Sub
+ * @author Farsinglish Team
+ * @version 1.0.0
+ */
+
+// ============ Type Definitions ============
+
+/**
+ * @typedef {Object} AuthState
+ * @property {boolean} isAuthenticated - وضعیت احراز هویت
+ * @property {boolean} isLoading - وضعیت بارگذاری
+ * @property {Object|null} user - اطلاعات کاربر
+ * @property {string|null} token - توکن احراز هویت
+ * @property {string|null} sessionId - شناسه نشست
+ * @property {string|null} lastLogin - آخرین زمان ورود
+ */
+
+/**
+ * @typedef {Object} LearningState
+ * @property {Object|null} currentLesson - درس فعلی
+ * @property {Array<Object>} lessons - لیست درس‌ها
+ * @property {Array<string>} completedLessons - درس‌های تکمیل شده
+ * @property {number} xp - امتیاز تجربه
+ * @property {number} level - سطح کاربر
+ * @property {number} streakDays - روزهای پشت سر هم
+ * @property {number} dailyGoal - هدف روزانه
+ * @property {string|null} lastReview - آخرین زمان مرور
+ */
+
+/**
+ * @typedef {Object} ProgressState
+ * @property {Object} currentProgress - پیشرفت جاری
+ * @property {Object} todayProgress - پیشرفت امروز
+ * @property {number} todayProgress.lessonsCompleted - درس‌های تکمیل شده امروز
+ * @property {number} todayProgress.xpEarned - XP کسب شده امروز
+ * @property {number} todayProgress.timeSpent - زمان صرف شده امروز
+ * @property {Object} weeklyStats - آمار هفتگی
+ * @property {Array<Object>} achievements - دستاوردها
+ */
+
+/**
+ * @typedef {Object} SettingsState
+ * @property {string} language - زبان برنامه
+ * @property {string} theme - تم برنامه
+ * @property {boolean} soundEnabled - وضعیت صدا
+ * @property {boolean} notificationsEnabled - وضعیت اعلان‌ها
+ * @property {boolean} srsEnabled - وضعیت SRS
+ * @property {boolean} autoPlayAudio - پخش خودکار صدا
+ */
+
+/**
+ * @typedef {Object} UIState
+ * @property {string} currentScreen - صفحه فعلی
+ * @property {boolean} isLoading - وضعیت بارگذاری UI
+ * @property {string|null} error - خطای UI
+ * @property {string|null} modal - مودال فعال
+ * @property {boolean} sidebarOpen - وضعیت سایدبار
+ * @property {Object|null} toast - اعلان موقت
+ */
+
+/**
+ * @typedef {Object} MetaState
+ * @property {string|null} lastUpdated - آخرین زمان به‌روزرسانی
+ * @property {string} version - نسخه برنامه
+ * @property {string} environment - محیط اجرا
+ */
+
+/**
+ * @typedef {Object} AppState
+ * @property {AuthState} auth - وضعیت احراز هویت
+ * @property {LearningState} learning - وضعیت یادگیری
+ * @property {ProgressState} progress - وضعیت پیشرفت
+ * @property {SettingsState} settings - تنظیمات
+ * @property {UIState} ui - وضعیت رابط کاربری
+ * @property {MetaState} meta - فراداده
+ */
+
+/**
+ * @typedef {Object} Action
+ * @property {string} type - نوع اکشن
+ * @property {*} [payload] - داده‌های اکشن
+ * @property {number} timestamp - زمان اجرا
+ */
+
+/**
+ * @typedef {Object} HistoryInfo
+ * @property {boolean} canUndo - قابلیت بازگشت
+ * @property {boolean} canRedo - قابلیت جلو رفتن
+ * @property {number} pastCount - تعداد stateهای گذشته
+ * @property {number} futureCount - تعداد stateهای آینده
+ * @property {Action|null} lastAction - آخرین اکشن
+ */
+
+/**
+ * @typedef {Object} BatchItem
+ * @property {string} type - نوع اکشن
+ * @property {*} payload - داده‌ها
+ * @property {number} priority - اولویت (0-10)
+ */
+
+/**
+ * @typedef {Object} CacheEntry
+ * @property {*} value - مقدار کش شده
+ * @property {number} timestamp - زمان ایجاد
  */
 
 // ============ Interfaces ============
+
+/**
+ * @interface IStateListener
+ */
 class IStateListener {
+    /**
+     * @param {AppState} state - state فعلی
+     * @param {AppState} prevState - state قبلی
+     * @param {Action} action - اکشن اجرا شده
+     */
     onStateChanged(state, prevState, action) {}
 }
 
+/**
+ * @interface IStateMiddleware
+ */
 class IStateMiddleware {
+    /**
+     * @param {AppState} state - state فعلی
+     * @param {Action} action - اکشن در حال اجرا
+     * @returns {Promise<boolean|void>} false برای توقف زنجیره
+     */
     beforeUpdate(state, action) {}
+    
+    /**
+     * @param {AppState} state - state جدید
+     * @param {AppState} prevState - state قبلی
+     * @param {Action} action - اکشن اجرا شده
+     */
     afterUpdate(state, prevState, action) {}
 }
 
 // ============ Action Types ============
-const ActionTypes = Object.freeze({
+
+/** @enum {string} */
+export const ActionTypes = Object.freeze({
     // Auth Actions
     USER_LOGIN: 'USER_LOGIN',
     USER_LOGOUT: 'USER_LOGOUT',
@@ -57,23 +178,24 @@ const ActionTypes = Object.freeze({
     REDO: 'REDO',
     RESET: 'RESET',
     SNAPSHOT_RESTORE: 'SNAPSHOT_RESTORE',
-    TRANSACTION_ROLLBACK: 'TRANSACTION_ROLLBACK'
+    TRANSACTION_ROLLBACK: 'TRANSACTION_ROLLBACK',
+    TIME_TRAVEL: 'TIME_TRAVEL'
 });
 
 // ============ Initial State ============
-const initialState = Object.freeze({
-    // Authentication
+
+/** @type {Readonly<AppState>} */
+const INITIAL_STATE = Object.freeze({
     auth: {
         isAuthenticated: false,
         isLoading: false,
         error: null,
         user: null,
         token: null,
-        lastLogin: null,
-        sessionId: null
+        sessionId: null,
+        lastLogin: null
     },
     
-    // Learning Data
     learning: {
         currentLesson: null,
         lessons: [],
@@ -86,7 +208,6 @@ const initialState = Object.freeze({
         lastReview: null
     },
     
-    // Progress Tracking
     progress: {
         currentProgress: {},
         todayProgress: {
@@ -105,7 +226,6 @@ const initialState = Object.freeze({
         achievements: []
     },
     
-    // App Settings
     settings: {
         language: 'fa',
         theme: 'light',
@@ -119,7 +239,6 @@ const initialState = Object.freeze({
         highContrast: false
     },
     
-    // UI State
     ui: {
         currentScreen: 'home',
         isLoading: false,
@@ -131,7 +250,6 @@ const initialState = Object.freeze({
         scrollPosition: {}
     },
     
-    // Metadata
     meta: {
         lastUpdated: null,
         version: '1.0.0',
@@ -140,50 +258,115 @@ const initialState = Object.freeze({
 });
 
 // ============ State Manager Class ============
+
+/**
+ * مدیریت متمرکز وضعیت برنامه
+ * @class
+ * @implements {IStateListener}
+ */
 class StateManager {
+    /**
+     * @constructor
+     * @param {Object} options - گزینه‌های پیکربندی
+     * @param {number} [options.maxHistory=50] - حداکثر تعداد state در تاریخچه
+     * @param {number} [options.maxActionHistory=100] - حداکثر تعداد اکشن در تاریخچه
+     * @param {boolean} [options.enableLogging=true] - فعال‌سازی لاگ
+     * @param {boolean} [options.enablePersistence=false] - فعال‌سازی ذخیره‌سازی
+     * @param {string} [options.storageKey='farsinglish_state'] - کلید ذخیره‌سازی
+     */
     constructor(options = {}) {
         if (StateManager.instance) {
             return StateManager.instance;
         }
         
-        this.state = this._deepClone(initialState);
-        this.previousState = this._deepClone(initialState);
-        this.listeners = new Set();
+        // State
+        /** @private @type {AppState} */
+        this.state = this._deepClone(INITIAL_STATE);
+        
+        /** @private @type {AppState} */
+        this.previousState = this._deepClone(INITIAL_STATE);
+        
+        // Listeners - بهبود ۲: WeakMap برای listenerها
+        /** @private @type {WeakMap<Object, Function>} */
+        this.listenerRefs = new WeakMap();
+        
+        /** @private @type {Set<Function>} */
+        this.listenerFunctions = new Set();
+        
+        // Middlewares
+        /** @private @type {Array<IStateMiddleware>} */
         this.middlewares = [];
+        
+        // State management
+        /** @private @type {boolean} */
         this.isUpdating = false;
         
-        // History for time travel
+        // بهبود ۴: Lock Manager
+        /** @private @type {boolean} */
+        this._lock = false;
+        
+        /** @private @type {Array<Function>} */
+        this._queue = [];
+        
+        // History
+        /** @private @type {{past: AppState[], future: AppState[]}} */
         this.history = {
-            past: [],  // Previous states
-            future: [] // Undone states
+            past: [],
+            future: []
         };
+        
+        /** @private @type {number} */
         this.maxHistory = options.maxHistory || 50;
         
-        // Action history for debugging
+        // Action history
+        /** @private @type {Array<{action: Action, stateAfter: AppState}>} */
         this.actionHistory = [];
+        
+        /** @private @type {number} */
         this.maxActionHistory = options.maxActionHistory || 100;
         
         // Computed values
+        /** @private @type {Map<string, {fn: Function, dependencies: string[], value: any, lastState: AppState|null}>} */
         this.computedValues = new Map();
+        
+        /** @private @type {Map<string, string[]>} */
         this.computedDependencies = new Map();
         
         // Snapshots
+        /** @private @type {Map<string, {state: AppState, timestamp: number, history: Array, past: AppState[], future: AppState[]}>} */
         this.snapshots = new Map();
         
-        // Selector cache
+        // بهبود ۵: Selector Cache
+        /** @private @type {Map<string, CacheEntry>} */
         this.selectorCache = new Map();
         
+        /** @private @type {number} */
+        this.cacheTTL = 5000; // 5 ثانیه
+        
         // Batch mode
+        /** @private @type {boolean} */
         this.batchMode = false;
+        
+        /** @private @type {BatchItem[]} */
         this.batchedActions = [];
         
+        /** @private @type {BatchItem[]} */
+        this.priorityQueue = [];
+        
         // Lazy loading
+        /** @private @type {Set<string>} */
         this.loadedSections = new Set();
+        
+        /** @private @type {Map<string, Promise<any>>} */
         this.loadingPromises = new Map();
+        
+        // بهبود ۱: Throttle برای notifier
+        /** @private @type {Function} */
+        this._throttledNotify = this._throttle(this._notifyListeners.bind(this), 16);
         
         StateManager.instance = this;
         
-        // Add default middlewares in development
+        // Add default middlewares
         if (options.enableLogging !== false) {
             this.addMiddleware(new PerformanceLoggingMiddleware());
         }
@@ -192,7 +375,7 @@ class StateManager {
             this.addMiddleware(new PersistenceMiddleware(options.storageKey));
         }
         
-        if (process.env.NODE_ENV === 'development' && options.enableValidation) {
+        if (process.env.NODE_ENV === 'development' && options.enableValidation !== false) {
             this.addMiddleware(new DevStateValidator(this));
         }
         
@@ -201,6 +384,7 @@ class StateManager {
 
     /**
      * دریافت state فعلی (immutable)
+     * @returns {Readonly<AppState>}
      */
     getState() {
         return Object.freeze(this._deepClone(this.state));
@@ -208,54 +392,82 @@ class StateManager {
 
     /**
      * دریافت state قبلی
+     * @returns {Readonly<AppState>}
      */
     getPreviousState() {
         return Object.freeze(this._deepClone(this.previousState));
     }
 
     /**
-     * بررسی تغییر state در مسیر مشخص
+     * دریافت مقدار از مسیر مشخص
+     * @param {string} path - مسیر با نقطه (مثال: 'auth.user.name')
+     * @returns {*}
+     * @private
      */
-    hasChanged(path) {
-        const [currentValue, previousValue] = this._getValuesByPath(path);
-        return !this._isEqual(currentValue, previousValue);
+    _getValueByPath(path) {
+        return path.split('.').reduce((acc, part) => acc && acc[part], this.state);
     }
 
     /**
-     * ایجاد selector برای دسترسی بهینه به state
+     * بررسی تغییر state در مسیر مشخص
+     * @param {string} path - مسیر با نقطه
+     * @returns {boolean}
      */
-    createSelector(selectorFn) {
-        let lastState = null;
-        let lastResult = null;
-        let lastHash = null;
+    hasChanged(path) {
+        const current = this._getValueByPath(path);
+        const previous = this._getValueByPath.call({ state: this.previousState }, path);
+        return !this._isEqual(current, previous);
+    }
+
+    /**
+     * ایجاد selector با کش
+     * @template T
+     * @param {function(AppState): T} selectorFn - تابع انتخاب‌گر
+     * @param {number} [ttl=5000] - زمان اعتبار کش (میلی‌ثانیه)
+     * @returns {function(): T}
+     */
+    createSelector(selectorFn, ttl = this.cacheTTL) {
+        const cacheKey = `selector_${this._quickHash(selectorFn.toString())}`;
         
         return () => {
-            const currentState = this.state;
+            const now = Date.now();
+            const cached = this.selectorCache.get(cacheKey);
             
-            // محاسبه hash سریع برای تشخیص تغییر
-            const hash = this._quickHash(currentState);
-            
-            if (currentState !== lastState || hash !== lastHash) {
-                lastResult = selectorFn(currentState);
-                lastState = currentState;
-                lastHash = hash;
+            if (cached && (now - cached.timestamp) < ttl) {
+                return cached.value;
             }
             
-            return Object.freeze(this._deepClone(lastResult));
+            const value = selectorFn(this.state);
+            this.selectorCache.set(cacheKey, { value, timestamp: now });
+            
+            // پاکسازی خودکار کش قدیمی
+            if (this.selectorCache.size > 100) {
+                const oldest = [...this.selectorCache.entries()]
+                    .sort((a, b) => a[1].timestamp - b[1].timestamp)[0];
+                this.selectorCache.delete(oldest[0]);
+            }
+            
+            return value;
         };
     }
 
     /**
      * انتخاب مستقیم بخشی از state
+     * @template T
+     * @param {function(AppState): T} selectorFn - تابع انتخاب‌گر
+     * @returns {T}
      */
     select(selectorFn) {
-        return Object.freeze(this._deepClone(selectorFn(this.state)));
+        return this._deepClone(selectorFn(this.state));
     }
 
     /**
      * انتخاب چند بخش از state به صورت همزمان
+     * @param {Object.<string, function(AppState): *>} selectors - آبجکت انتخاب‌گرها
+     * @returns {Object.<string, *>}
      */
     selectMany(selectors) {
+        /** @type {Object.<string, *>} */
         const result = {};
         for (const [key, selector] of Object.entries(selectors)) {
             result[key] = this.select(selector);
@@ -264,50 +476,8 @@ class StateManager {
     }
 
     /**
-     * تعریف مقدار محاسبه‌شده
-     */
-    defineComputed(key, computeFn, dependencies) {
-        this.computedValues.set(key, {
-            fn: computeFn,
-            dependencies,
-            value: null,
-            lastState: null,
-            lastHash: null
-        });
-        
-        this.computedDependencies.set(key, dependencies);
-        this._updateComputed(key);
-        
-        return this;
-    }
-
-    /**
-     * دریافت مقدار محاسبه‌شده
-     */
-    getComputed(key) {
-        const computed = this.computedValues.get(key);
-        if (!computed) {
-            throw new Error(`Computed value '${key}' not defined`);
-        }
-        
-        if (this._shouldUpdateComputed(key)) {
-            this._updateComputed(key);
-        }
-        
-        return computed.value;
-    }
-
-    /**
-     * حذف مقدار محاسبه‌شده
-     */
-    removeComputed(key) {
-        this.computedValues.delete(key);
-        this.computedDependencies.delete(key);
-        return this;
-    }
-
-    /**
      * شروع دسته‌ای از تغییرات
+     * @returns {this}
      */
     beginBatch() {
         this.batchMode = true;
@@ -317,6 +487,7 @@ class StateManager {
 
     /**
      * پایان دسته تغییرات
+     * @returns {Promise<AppState>}
      */
     async endBatch() {
         if (!this.batchMode) {
@@ -332,133 +503,163 @@ class StateManager {
             return this.getState();
         }
         
-        this.isUpdating = true;
-        
-        try {
-            this.previousState = this._deepClone(this.state);
+        return this._withLock(async () => {
+            this.isUpdating = true;
             
-            for (const action of actions) {
-                this.state = this._reducer(this.state, action);
-            }
-            
-            // اعتبارسنجی
-            if (!this._validateState(this.state)) {
-                throw new Error('Invalid state after batch update');
-            }
-            
-            // ذخیره در تاریخچه
-            this._addToHistory({ type: ActionTypes.BATCH_UPDATE, payload: actions });
-            
-            // اجرای middlewareها
-            for (const middleware of this.middlewares) {
-                if (middleware.afterUpdate) {
-                    await middleware.afterUpdate(this.state, this.previousState, {
-                        type: ActionTypes.BATCH_UPDATE,
-                        payload: actions
-                    });
+            try {
+                this.previousState = this._deepClone(this.state);
+                
+                // مرتب‌سازی بر اساس اولویت
+                actions.sort((a, b) => (b.priority || 0) - (a.priority || 0));
+                
+                for (const action of actions) {
+                    this.state = this._reducer(this.state, action);
                 }
+                
+                if (!this._validateState(this.state)) {
+                    throw new Error('Invalid state after batch update');
+                }
+                
+                this._addToHistory({ type: ActionTypes.BATCH_UPDATE, payload: actions });
+                
+                for (const middleware of this.middlewares) {
+                    if (middleware.afterUpdate) {
+                        await middleware.afterUpdate(this.state, this.previousState, {
+                            type: ActionTypes.BATCH_UPDATE,
+                            payload: actions
+                        });
+                    }
+                }
+                
+                this._updateAllComputed();
+                this._throttledNotify({ type: ActionTypes.BATCH_UPDATE, payload: actions });
+                
+                return this.getState();
+                
+            } catch (error) {
+                console.error('Batch update failed:', error);
+                throw error;
+            } finally {
+                this.isUpdating = false;
             }
-            
-            // به‌روزرسانی computed values
-            this._updateAllComputed();
-            
-            // اطلاع‌رسانی
-            this._notifyListeners({ type: ActionTypes.BATCH_UPDATE, payload: actions });
-            
-            return this.getState();
-            
-        } catch (error) {
-            console.error('Batch update failed:', error);
-            throw error;
-        } finally {
-            this.isUpdating = false;
-        }
+        });
     }
 
     /**
-     * ایجاد تراکنش برای تغییرات اتمیک
+     * انتشار action با اولویت
+     * @param {string} type - نوع اکشن
+     * @param {*} [payload] - داده‌ها
+     * @param {number} [priority=0] - اولویت (0-10)
+     * @returns {Promise<AppState>}
      */
-    createTransaction() {
-        return new StateTransaction(this);
+    async dispatchWithPriority(type, payload = {}, priority = 0) {
+        if (this.batchMode) {
+            this.priorityQueue.push({ type, payload, priority });
+            this.priorityQueue.sort((a, b) => b.priority - a.priority);
+            return this.getState();
+        }
+        return this.dispatch(type, payload);
     }
 
     /**
      * انتشار action
+     * @param {string} type - نوع اکشن
+     * @param {*} [payload] - داده‌ها
+     * @returns {Promise<AppState>}
+     * @throws {Error} در صورت خطا در به‌روزرسانی
      */
     async dispatch(type, payload = {}) {
-        // بررسی batch mode
         if (this.batchMode) {
-            this.batchedActions.push({ type, payload, timestamp: Date.now() });
+            this.batchedActions.push({ type, payload, priority: 0, timestamp: Date.now() });
             return this.getState();
         }
         
-        if (this.isUpdating) {
-            console.warn('State update already in progress');
-            return this.getState();
+        return this._withLock(async () => {
+            if (this.isUpdating) {
+                console.warn('State update already in progress');
+                return this.getState();
+            }
+
+            this.isUpdating = true;
+            /** @type {Action} */
+            const action = { type, payload, timestamp: Date.now() };
+
+            try {
+                // Before middleware
+                for (const middleware of this.middlewares) {
+                    if (middleware.beforeUpdate) {
+                        const result = await middleware.beforeUpdate(this.state, action);
+                        if (result === false) return this.getState();
+                    }
+                }
+
+                this.previousState = this._deepClone(this.state);
+                
+                // History management
+                if (![ActionTypes.UNDO, ActionTypes.REDO, ActionTypes.RESET].includes(type)) {
+                    this.history.past.push(this._deepClone(this.state));
+                    if (this.history.past.length > this.maxHistory) {
+                        this.history.past.shift();
+                    }
+                    this.history.future = [];
+                }
+                
+                const newState = this._reducer(this.state, action);
+                
+                if (!this._validateState(newState)) {
+                    throw new Error('Invalid state after update');
+                }
+                
+                this.state = newState;
+                this._addToHistory(action);
+                this._updateAllComputed();
+                
+                // After middleware
+                for (const middleware of this.middlewares) {
+                    if (middleware.afterUpdate) {
+                        await middleware.afterUpdate(this.state, this.previousState, action);
+                    }
+                }
+                
+                this._throttledNotify(action);
+                
+                return this.getState();
+                
+            } catch (error) {
+                console.error('State update failed:', error);
+                throw error;
+            } finally {
+                this.isUpdating = false;
+            }
+        });
+    }
+
+    /**
+     * اجرای تابع با قفل (Lock Manager)
+     * @param {Function} fn - تابع برای اجرا
+     * @returns {Promise<any>}
+     * @private
+     */
+    async _withLock(fn) {
+        if (this._lock) {
+            await new Promise(resolve => this._queue.push(resolve));
         }
-
-        this.isUpdating = true;
-        const action = { type, payload, timestamp: Date.now() };
-
+        
+        this._lock = true;
         try {
-            // قبل از update - middlewareها
-            for (const middleware of this.middlewares) {
-                if (middleware.beforeUpdate) {
-                    await middleware.beforeUpdate(this.state, action);
-                }
-            }
-
-            // ذخیره state قبلی
-            this.previousState = this._deepClone(this.state);
-            
-            // ذخیره در history برای undo
-            if (type !== ActionTypes.UNDO && type !== ActionTypes.REDO && type !== ActionTypes.RESET) {
-                this.history.past.push(this._deepClone(this.state));
-                if (this.history.past.length > this.maxHistory) {
-                    this.history.past.shift();
-                }
-                // پاک کردن future بعد از action جدید
-                this.history.future = [];
-            }
-            
-            // اعمال تغییرات
-            const newState = this._reducer(this.state, action);
-            
-            // اعتبارسنجی
-            if (!this._validateState(newState)) {
-                throw new Error('Invalid state after update');
-            }
-            
-            this.state = newState;
-            
-            // ذخیره در تاریخچه اکشن‌ها
-            this._addToHistory(action);
-            
-            // به‌روزرسانی computed values
-            this._updateAllComputed();
-            
-            // بعد از update - middlewareها
-            for (const middleware of this.middlewares) {
-                if (middleware.afterUpdate) {
-                    await middleware.afterUpdate(this.state, this.previousState, action);
-                }
-            }
-            
-            // اطلاع‌رسانی
-            this._notifyListeners(action);
-            
-            return this.getState();
-            
-        } catch (error) {
-            console.error('State update failed:', error);
-            throw error;
+            return await fn();
         } finally {
-            this.isUpdating = false;
+            this._lock = false;
+            if (this._queue.length) {
+                const next = this._queue.shift();
+                next();
+            }
         }
     }
 
     /**
      * بازگشت به state قبلی
+     * @returns {HistoryInfo}
      */
     undo() {
         if (this.history.past.length === 0) {
@@ -466,21 +667,19 @@ class StateManager {
                 success: false, 
                 message: 'No more actions to undo',
                 canUndo: false,
-                canRedo: this.history.future.length > 0
+                canRedo: this.history.future.length > 0,
+                pastCount: this.history.past.length,
+                futureCount: this.history.future.length,
+                lastAction: this.actionHistory[this.actionHistory.length - 1]?.action || null
             };
         }
 
-        // ذخیره state فعلی در future
         this.history.future.unshift(this._deepClone(this.state));
-        
-        // بازیابی آخرین state از past
         const previousState = this.history.past.pop();
         this.previousState = this._deepClone(this.state);
         this.state = previousState;
         
-        this._notifyListeners({ type: ActionTypes.UNDO, payload: null });
-        
-        // به‌روزرسانی computed values
+        this._throttledNotify({ type: ActionTypes.UNDO, payload: null });
         this._updateAllComputed();
         
         return { 
@@ -489,12 +688,14 @@ class StateManager {
             canUndo: this.history.past.length > 0,
             canRedo: this.history.future.length > 0,
             pastCount: this.history.past.length,
-            futureCount: this.history.future.length
+            futureCount: this.history.future.length,
+            lastAction: this.actionHistory[this.actionHistory.length - 1]?.action || null
         };
     }
 
     /**
      * جلو رفتن به state بعدی
+     * @returns {HistoryInfo}
      */
     redo() {
         if (this.history.future.length === 0) {
@@ -502,21 +703,19 @@ class StateManager {
                 success: false, 
                 message: 'No more actions to redo',
                 canUndo: this.history.past.length > 0,
-                canRedo: false
+                canRedo: false,
+                pastCount: this.history.past.length,
+                futureCount: 0,
+                lastAction: this.actionHistory[this.actionHistory.length - 1]?.action || null
             };
         }
 
-        // ذخیره state فعلی در past
         this.history.past.push(this._deepClone(this.state));
-        
-        // بازیابی اولین state از future
         const nextState = this.history.future.shift();
         this.previousState = this._deepClone(this.state);
         this.state = nextState;
         
-        this._notifyListeners({ type: ActionTypes.REDO, payload: null });
-        
-        // به‌روزرسانی computed values
+        this._throttledNotify({ type: ActionTypes.REDO, payload: null });
         this._updateAllComputed();
         
         return { 
@@ -525,12 +724,14 @@ class StateManager {
             canUndo: this.history.past.length > 0,
             canRedo: this.history.future.length > 0,
             pastCount: this.history.past.length,
-            futureCount: this.history.future.length
+            futureCount: this.history.future.length,
+            lastAction: this.actionHistory[this.actionHistory.length - 1]?.action || null
         };
     }
 
     /**
      * دریافت وضعیت تاریخچه
+     * @returns {HistoryInfo}
      */
     getHistoryInfo() {
         return {
@@ -538,15 +739,52 @@ class StateManager {
             canRedo: this.history.future.length > 0,
             pastCount: this.history.past.length,
             futureCount: this.history.future.length,
-            lastAction: this.actionHistory[this.actionHistory.length - 1] || null
+            lastAction: this.actionHistory[this.actionHistory.length - 1]?.action || null
         };
     }
 
     /**
+     * جستجو در تاریخچه
+     * @param {Object} query - معیارهای جستجو
+     * @returns {Array<{state: AppState, action: Action}>}
+     */
+    searchHistory(query) {
+        return this.actionHistory
+            .filter(item => {
+                return Object.entries(query).every(([key, value]) => 
+                    item.action[key] === value
+                );
+            })
+            .map(item => ({
+                state: item.stateAfter,
+                action: item.action
+            }));
+    }
+
+    /**
+     * رفتن به ایندکس مشخص در تاریخچه
+     * @param {number} index - ایندکس
+     * @returns {boolean}
+     */
+    goToHistoryIndex(index) {
+        if (index < 0 || index >= this.actionHistory.length) {
+            return false;
+        }
+
+        const targetState = this.actionHistory[index].stateAfter;
+        this.state = this._deepClone(targetState);
+        this._throttledNotify({ type: ActionTypes.TIME_TRAVEL, payload: { index } });
+        this._updateAllComputed();
+        return true;
+    }
+
+    /**
      * ایجاد snapshot
+     * @param {string} [name] - نام snapshot
+     * @returns {string}
      */
     takeSnapshot(name) {
-        const snapshotName = name || `snapshot-${Date.now()}`;
+        const snapshotName = name || `snapshot_${Date.now()}`;
         this.snapshots.set(snapshotName, {
             state: this._deepClone(this.state),
             timestamp: Date.now(),
@@ -561,6 +799,9 @@ class StateManager {
 
     /**
      * بازگشت به snapshot
+     * @param {string} name - نام snapshot
+     * @returns {boolean}
+     * @throws {Error} در صورت عدم وجود snapshot
      */
     restoreSnapshot(name) {
         const snapshot = this.snapshots.get(name);
@@ -575,7 +816,7 @@ class StateManager {
         this.history.future = this._deepClone(snapshot.future);
         
         this._updateAllComputed();
-        this._notifyListeners({ type: ActionTypes.SNAPSHOT_RESTORE, payload: { name } });
+        this._throttledNotify({ type: ActionTypes.SNAPSHOT_RESTORE, payload: { name } });
         
         console.log(`📸 Snapshot '${name}' restored`);
         return true;
@@ -583,6 +824,7 @@ class StateManager {
 
     /**
      * دریافت لیست snapshots
+     * @returns {Array<{name: string, timestamp: number, timeAgo: string}>}
      */
     listSnapshots() {
         return Array.from(this.snapshots.entries()).map(([name, data]) => ({
@@ -594,73 +836,18 @@ class StateManager {
 
     /**
      * حذف snapshot
+     * @param {string} name - نام snapshot
+     * @returns {boolean}
      */
     deleteSnapshot(name) {
         return this.snapshots.delete(name);
     }
 
     /**
-     * ثبت listener
-     */
-    subscribe(listener) {
-        if (typeof listener !== 'function' && !listener.onStateChanged) {
-            throw new Error('Listener must be a function or implement IStateListener');
-        }
-        
-        this.listeners.add(listener);
-        
-        return () => this.unsubscribe(listener);
-    }
-
-    /**
-     * حذف listener
-     */
-    unsubscribe(listener) {
-        this.listeners.delete(listener);
-    }
-
-    /**
-     * افزودن middleware
-     */
-    addMiddleware(middleware) {
-        if (!middleware.beforeUpdate && !middleware.afterUpdate) {
-            throw new Error('Middleware must implement beforeUpdate or afterUpdate');
-        }
-        
-        this.middlewares.push(middleware);
-        return this;
-    }
-
-    /**
-     * حذف middleware
-     */
-    removeMiddleware(middleware) {
-        const index = this.middlewares.indexOf(middleware);
-        if (index > -1) {
-            this.middlewares.splice(index, 1);
-        }
-        return this;
-    }
-
-    /**
-     * پاک‌سازی state
-     */
-    reset() {
-        this.state = this._deepClone(initialState);
-        this.previousState = this._deepClone(initialState);
-        this.actionHistory = [];
-        this.history = { past: [], future: [] };
-        this.computedValues.clear();
-        this.selectorCache.clear();
-        
-        this._notifyListeners({ type: ActionTypes.RESET, payload: null });
-        console.log('State reset to initial');
-        
-        return this.getState();
-    }
-
-    /**
      * بارگذاری تنبل بخشی از state
+     * @param {string} section - نام بخش
+     * @param {Function} loader - تابع بارگذاری
+     * @returns {Promise<*>}
      */
     async loadSection(section, loader) {
         if (this.loadedSections.has(section)) {
@@ -671,6 +858,7 @@ class StateManager {
             return this.loadingPromises.get(section);
         }
         
+        /** @type {Promise<any>} */
         const promise = (async () => {
             try {
                 const data = await loader();
@@ -689,12 +877,164 @@ class StateManager {
         return promise;
     }
 
+    /**
+     * بارگذاری state ذخیره شده (Partial Hydration)
+     * @param {Object} persistedState - state ذخیره شده
+     * @returns {Promise<void>}
+     */
+    async hydrate(persistedState) {
+        const critical = ['auth', 'settings'];
+        
+        for (const section of critical) {
+            if (persistedState[section]) {
+                this.state[section] = {
+                    ...this.state[section],
+                    ...persistedState[section]
+                };
+            }
+        }
+        
+        // غیر بحرانی با delay
+        setTimeout(() => {
+            const nonCritical = ['learning', 'progress', 'ui'];
+            for (const section of nonCritical) {
+                if (persistedState[section]) {
+                    this.state[section] = {
+                        ...this.state[section],
+                        ...persistedState[section]
+                    };
+                }
+            }
+            this._updateAllComputed();
+        }, 100);
+    }
+
+    /**
+     * ثبت listener با قابلیت فیلتر
+     * @param {Function|IStateListener} listener - تابع یا شیء listener
+     * @param {string|Function} [filter] - فیلتر برای تغییرات خاص
+     * @returns {Function} تابع لغو اشتراک
+     */
+    subscribe(listener, filter) {
+        if (typeof listener !== 'function' && !listener.onStateChanged) {
+            throw new Error('Listener must be a function or implement IStateListener');
+        }
+
+        /** @type {Function} */
+        let wrappedListener;
+
+        if (filter) {
+            /** @type {Function} */
+            let predicate;
+
+            if (typeof filter === 'string') {
+                predicate = (state) => this._getValueByPath.call({ state }, filter);
+            } else {
+                predicate = filter;
+            }
+
+            wrappedListener = (state, prevState, action) => {
+                if (predicate(state) !== predicate(prevState)) {
+                    if (typeof listener === 'function') {
+                        listener(state, prevState, action);
+                    } else {
+                        listener.onStateChanged(state, prevState, action);
+                    }
+                }
+            };
+        } else {
+            wrappedListener = (state, prevState, action) => {
+                if (typeof listener === 'function') {
+                    listener(state, prevState, action);
+                } else {
+                    listener.onStateChanged(state, prevState, action);
+                }
+            };
+        }
+
+        // بهبود ۲: استفاده از WeakMap برای اشیاء
+        if (typeof listener === 'object' && listener !== null) {
+            this.listenerRefs.set(listener, wrappedListener);
+        } else {
+            this.listenerFunctions.add(wrappedListener);
+        }
+
+        return () => this.unsubscribe(listener);
+    }
+
+    /**
+     * حذف listener
+     * @param {Function|IStateListener} listener - listener برای حذف
+     */
+    unsubscribe(listener) {
+        if (typeof listener === 'object' && listener !== null) {
+            const wrapped = this.listenerRefs.get(listener);
+            if (wrapped) {
+                this.listenerFunctions.delete(wrapped);
+                this.listenerRefs.delete(listener);
+            }
+        } else {
+            this.listenerFunctions.delete(listener);
+        }
+    }
+
+    /**
+     * افزودن middleware
+     * @param {IStateMiddleware} middleware - middleware
+     * @returns {this}
+     */
+    addMiddleware(middleware) {
+        if (!middleware.beforeUpdate && !middleware.afterUpdate) {
+            throw new Error('Middleware must implement beforeUpdate or afterUpdate');
+        }
+        
+        this.middlewares.push(middleware);
+        return this;
+    }
+
+    /**
+     * حذف middleware
+     * @param {IStateMiddleware} middleware - middleware
+     * @returns {this}
+     */
+    removeMiddleware(middleware) {
+        const index = this.middlewares.indexOf(middleware);
+        if (index > -1) {
+            this.middlewares.splice(index, 1);
+        }
+        return this;
+    }
+
+    /**
+     * پاک‌سازی state
+     * @returns {AppState}
+     */
+    reset() {
+        this.state = this._deepClone(INITIAL_STATE);
+        this.previousState = this._deepClone(INITIAL_STATE);
+        this.actionHistory = [];
+        this.history = { past: [], future: [] };
+        this.computedValues.clear();
+        this.selectorCache.clear();
+        this.priorityQueue = [];
+        
+        this._throttledNotify({ type: ActionTypes.RESET, payload: null });
+        console.log('State reset to initial');
+        
+        return this.getState();
+    }
+
     // ============ Private Methods ============
 
     /**
      * Reducer اصلی
+     * @param {AppState} state - state فعلی
+     * @param {Action} action - اکشن
+     * @returns {AppState} state جدید
+     * @private
      */
     _reducer(state, action) {
+        /** @type {AppState} */
         const newState = this._deepClone(state);
         
         switch (action.type) {
@@ -715,7 +1055,7 @@ class StateManager {
                 
             case ActionTypes.USER_LOGOUT:
                 newState.auth = {
-                    ...initialState.auth,
+                    ...INITIAL_STATE.auth,
                     lastLogin: state.auth.lastLogin
                 };
                 break;
@@ -736,7 +1076,7 @@ class StateManager {
                 break;
                 
             case ActionTypes.LESSON_COMPLETE:
-                const { lessonId, score, xpEarned, timeSpent } = action.payload;
+                const { lessonId, xpEarned, timeSpent } = action.payload;
                 
                 if (!newState.learning.completedLessons.includes(lessonId)) {
                     newState.learning.completedLessons.push(lessonId);
@@ -819,10 +1159,10 @@ class StateManager {
                 break;
                 
             case ActionTypes.RESET:
-                return this._deepClone(initialState);
+                return this._deepClone(INITIAL_STATE);
                 
             default:
-                // ناشناخته بودن action خطا نیست، فقط نادیده می‌گیریم
+                // Unknown actions are ignored
                 break;
         }
         
@@ -832,19 +1172,17 @@ class StateManager {
     }
 
     /**
-     * اطلاع‌رسانی به listeners
+     * اطلاع‌رسانی به listeners (با throttle)
+     * @param {Action} action - اکشن
+     * @private
      */
     _notifyListeners(action) {
         const currentState = this.getState();
         const previousState = this.getPreviousState();
         
-        this.listeners.forEach(listener => {
+        this.listenerFunctions.forEach(listener => {
             try {
-                if (typeof listener === 'function') {
-                    listener(currentState, previousState, action);
-                } else if (listener.onStateChanged) {
-                    listener.onStateChanged(currentState, previousState, action);
-                }
+                listener(currentState, previousState, action);
             } catch (error) {
                 console.error('Error in state listener:', error);
             }
@@ -852,11 +1190,35 @@ class StateManager {
     }
 
     /**
+     * تابع throttle
+     * @param {Function} fn - تابع
+     * @param {number} limit - محدودیت زمانی
+     * @returns {Function}
+     * @private
+     */
+    _throttle(fn, limit) {
+        /** @type {boolean} */
+        let inThrottle;
+        
+        return (...args) => {
+            if (!inThrottle) {
+                fn(...args);
+                inThrottle = true;
+                setTimeout(() => {
+                    inThrottle = false;
+                }, limit);
+            }
+        };
+    }
+
+    /**
      * افزودن به تاریخچه اکشن‌ها
+     * @param {Action} action - اکشن
+     * @private
      */
     _addToHistory(action) {
         this.actionHistory.push({
-            ...action,
+            action,
             stateAfter: this._deepClone(this.state)
         });
         
@@ -867,17 +1229,18 @@ class StateManager {
 
     /**
      * به‌روزرسانی تمام مقادیر محاسبه‌شده
+     * @private
      */
     _updateAllComputed() {
         for (const key of this.computedValues.keys()) {
-            if (this._shouldUpdateComputed(key)) {
-                this._updateComputed(key);
-            }
+            this._updateComputed(key);
         }
     }
 
     /**
      * به‌روزرسانی یک مقدار محاسبه‌شده
+     * @param {string} key - کلید
+     * @private
      */
     _updateComputed(key) {
         const computed = this.computedValues.get(key);
@@ -887,38 +1250,10 @@ class StateManager {
     }
 
     /**
-     * بررسی نیاز به به‌روزرسانی مقدار محاسبه‌شده
-     */
-    _shouldUpdateComputed(key) {
-        const computed = this.computedValues.get(key);
-        if (!computed || !computed.dependencies) return true;
-        
-        for (const dep of computed.dependencies) {
-            const [current, previous] = this._getValuesByPath(dep);
-            if (!this._isEqual(current, previous)) {
-                return true;
-            }
-        }
-        
-        return false;
-    }
-
-    /**
-     * دریافت مقادیر از مسیر مشخص
-     */
-    _getValuesByPath(path) {
-        const getValue = (obj, path) => {
-            return path.split('.').reduce((acc, part) => acc && acc[part], obj);
-        };
-        
-        return [
-            getValue(this.state, path),
-            getValue(this.previousState, path)
-        ];
-    }
-
-    /**
      * کلون عمیق
+     * @param {*} obj - آبجکت
+     * @returns {*}
+     * @private
      */
     _deepClone(obj) {
         if (obj === null || typeof obj !== 'object') return obj;
@@ -930,13 +1265,16 @@ class StateManager {
         try {
             return structuredClone(obj);
         } catch {
-            // Fallback for older browsers
             return JSON.parse(JSON.stringify(obj));
         }
     }
 
     /**
      * مقایسه عمیق
+     * @param {*} a - مقدار اول
+     * @param {*} b - مقدار دوم
+     * @returns {boolean}
+     * @private
      */
     _isEqual(a, b) {
         if (a === b) return true;
@@ -951,7 +1289,10 @@ class StateManager {
     }
 
     /**
-     * هش سریع برای تشخیص تغییر
+     * هش سریع
+     * @param {*} obj - آبجکت
+     * @returns {string}
+     * @private
      */
     _quickHash(obj) {
         try {
@@ -970,6 +1311,9 @@ class StateManager {
 
     /**
      * محاسبه سطح بر اساس XP
+     * @param {number} xp - امتیاز تجربه
+     * @returns {number}
+     * @private
      */
     _calculateLevel(xp) {
         const levels = [
@@ -987,6 +1331,9 @@ class StateManager {
 
     /**
      * اعتبارسنجی state
+     * @param {AppState} state - state
+     * @returns {boolean}
+     * @private
      */
     _validateState(state) {
         const requiredKeys = ['auth', 'learning', 'progress', 'settings', 'ui', 'meta'];
@@ -1010,6 +1357,9 @@ class StateManager {
 
     /**
      * فرمت زمان نسبی
+     * @param {number} timestamp - زمان
+     * @returns {string}
+     * @private
      */
     _timeAgo(timestamp) {
         const seconds = Math.floor((Date.now() - timestamp) / 1000);
@@ -1019,17 +1369,69 @@ class StateManager {
         if (seconds < 86400) return `${Math.floor(seconds / 3600)} hours ago`;
         return `${Math.floor(seconds / 86400)} days ago`;
     }
+
+    /**
+     * دیباگ
+     * @returns {Object}
+     */
+    debug() {
+        return {
+            state: this.getState(),
+            historySize: this.actionHistory.length,
+            listenersCount: this.listenerFunctions.size,
+            middlewaresCount: this.middlewares.length,
+            lastAction: this.actionHistory[this.actionHistory.length - 1]?.action || null,
+            computedKeys: Array.from(this.computedValues.keys()),
+            snapshots: this.listSnapshots(),
+            queueLength: this._queue.length,
+            cacheSize: this.selectorCache.size
+        };
+    }
+
+    /**
+     * ردیابی تغییرات یک مسیر
+     * @param {string} path - مسیر
+     * @returns {Array<{action: string, value: *, timestamp: number}>}
+     */
+    trace(path) {
+        return this.actionHistory
+            .map(item => ({
+                action: item.action.type,
+                value: this._getValueByPath.call({ state: item.stateAfter }, path),
+                timestamp: item.action.timestamp
+            }));
+    }
 }
 
 // ============ State Transaction ============
+
+/**
+ * تراکنش state برای تغییرات اتمیک
+ * @class
+ */
 class StateTransaction {
+    /**
+     * @constructor
+     * @param {StateManager} stateManager - مدیریت state
+     */
     constructor(stateManager) {
+        /** @private @type {StateManager} */
         this.stateManager = stateManager;
+        
+        /** @private @type {AppState|null} */
         this.originalState = null;
+        
+        /** @private @type {Array<Action>} */
         this.changes = [];
+        
+        /** @private @type {boolean} */
         this.committed = false;
     }
 
+    /**
+     * شروع تراکنش
+     * @returns {this}
+     */
     begin() {
         this.originalState = this.stateManager._deepClone(this.stateManager.state);
         this.changes = [];
@@ -1037,14 +1439,24 @@ class StateTransaction {
         return this;
     }
 
+    /**
+     * افزودن تغییر
+     * @param {string} type - نوع اکشن
+     * @param {*} [payload] - داده‌ها
+     * @returns {this}
+     */
     addChange(type, payload) {
         if (this.committed) {
             throw new Error('Transaction already committed');
         }
-        this.changes.push({ type, payload });
+        this.changes.push({ type, payload, timestamp: Date.now() });
         return this;
     }
 
+    /**
+     * اعمال تراکنش
+     * @returns {Promise<boolean>}
+     */
     async commit() {
         if (!this.originalState) {
             throw new Error('Transaction not started');
@@ -1073,6 +1485,10 @@ class StateTransaction {
         }
     }
 
+    /**
+     * بازگشت از تراکنش
+     * @returns {Promise<boolean>}
+     */
     async rollback() {
         if (!this.originalState || this.committed) {
             return false;
@@ -1080,7 +1496,7 @@ class StateTransaction {
         
         this.stateManager.state = this.stateManager._deepClone(this.originalState);
         this.stateManager._updateAllComputed();
-        this.stateManager._notifyListeners({ 
+        this.stateManager._throttledNotify({ 
             type: ActionTypes.TRANSACTION_ROLLBACK, 
             payload: null 
         });
@@ -1091,6 +1507,10 @@ class StateTransaction {
         return true;
     }
 
+    /**
+     * دریافت تغییرات
+     * @returns {Array<Action>}
+     */
     getChanges() {
         return [...this.changes];
     }
@@ -1099,15 +1519,32 @@ class StateTransaction {
 // ============ Middleware Classes ============
 
 /**
- * Logging Middleware با قابلیت اندازه‌گیری performance
+ * Middleware لاگ‌گیری با اندازه‌گیری performance
+ * @implements {IStateMiddleware}
  */
 class PerformanceLoggingMiddleware {
+    /**
+     * @constructor
+     * @param {Object} options - گزینه‌ها
+     * @param {number} [options.slowActionThreshold=100] - آستانه action کند (ms)
+     * @param {boolean} [options.enabled=true] - فعال بودن
+     */
     constructor(options = {}) {
-        this.slowActionThreshold = options.slowActionThreshold || 100; // ms
+        /** @private @type {number} */
+        this.slowActionThreshold = options.slowActionThreshold || 100;
+        
+        /** @private @type {Map<string, number>} */
         this.performanceMarks = new Map();
+        
+        /** @private @type {boolean} */
         this.enabled = options.enabled !== false;
     }
     
+    /**
+     * قبل از به‌روزرسانی
+     * @param {AppState} state - state فعلی
+     * @param {Action} action - اکشن
+     */
     async beforeUpdate(state, action) {
         if (!this.enabled) return;
         
@@ -1118,6 +1555,12 @@ class PerformanceLoggingMiddleware {
         console.log('Timestamp:', new Date(action.timestamp).toLocaleTimeString());
     }
     
+    /**
+     * بعد از به‌روزرسانی
+     * @param {AppState} state - state جدید
+     * @param {AppState} prevState - state قبلی
+     * @param {Action} action - اکشن
+     */
     async afterUpdate(state, prevState, action) {
         if (!this.enabled) return;
         
@@ -1141,7 +1584,16 @@ class PerformanceLoggingMiddleware {
         console.groupEnd();
     }
     
+    /**
+     * پیدا کردن تغییرات
+     * @param {Object} newState - state جدید
+     * @param {Object} oldState - state قبلی
+     * @param {string} [path=''] - مسیر جاری
+     * @returns {Array<string>}
+     * @private
+     */
     _findChanges(newState, oldState, path = '') {
+        /** @type {Array<string>} */
         const changes = [];
         
         for (const key in newState) {
@@ -1159,18 +1611,37 @@ class PerformanceLoggingMiddleware {
 }
 
 /**
- * Persistence Middleware برای ذخیره در localStorage
+ * Middleware ذخیره‌سازی در localStorage
+ * @implements {IStateMiddleware}
  */
 class PersistenceMiddleware {
+    /**
+     * @constructor
+     * @param {string} [storageKey='farsinglish_state'] - کلید ذخیره‌سازی
+     * @param {Object} options - گزینه‌ها
+     * @param {number} [options.saveDelay=500] - تأخیر ذخیره (ms)
+     * @param {Array<string>} [options.persistedSections] - بخش‌های ذخیره‌شونده
+     */
     constructor(storageKey = 'farsinglish_state', options = {}) {
+        /** @private @type {string} */
         this.storageKey = storageKey;
-        this.saveDelay = options.saveDelay || 500; // ms
-        this.saveTimeout = null;
+        
+        /** @private @type {number} */
+        this.saveDelay = options.saveDelay || 500;
+        
+        /** @private @type {Array<string>} */
         this.persistedSections = options.persistedSections || ['auth', 'learning', 'settings'];
+        
+        /** @private @type {number|null} */
+        this.saveTimeout = null;
     }
     
+    /**
+     * قبل از به‌روزرسانی
+     * @param {AppState} state - state فعلی
+     * @param {Action} action - اکشن
+     */
     async beforeUpdate(state, action) {
-        // بارگذاری state ذخیره شده
         if (action.type === 'APP_INIT') {
             const savedState = localStorage.getItem(this.storageKey);
             if (savedState) {
@@ -1185,15 +1656,22 @@ class PersistenceMiddleware {
         }
     }
     
+    /**
+     * بعد از به‌روزرسانی
+     * @param {AppState} state - state جدید
+     * @param {AppState} prevState - state قبلی
+     * @param {Action} action - اکشن
+     */
     async afterUpdate(state, prevState, action) {
-        // ذخیره با debounce
         if (this.saveTimeout) {
             clearTimeout(this.saveTimeout);
         }
         
         this.saveTimeout = setTimeout(() => {
             try {
+                /** @type {Object} */
                 const stateToSave = {};
+                
                 for (const section of this.persistedSections) {
                     if (state[section]) {
                         stateToSave[section] = state[section];
@@ -1212,11 +1690,19 @@ class PersistenceMiddleware {
 }
 
 /**
- * Dev State Validator برای بررسی نوع داده‌ها
+ * Middleware اعتبارسنجی state در محیط توسعه
+ * @implements {IStateMiddleware}
  */
 class DevStateValidator {
+    /**
+     * @constructor
+     * @param {StateManager} stateManager - مدیریت state
+     */
     constructor(stateManager) {
+        /** @private @type {StateManager} */
         this.stateManager = stateManager;
+        
+        /** @private @type {Object} */
         this.schema = {
             auth: {
                 isAuthenticated: 'boolean',
@@ -1238,6 +1724,10 @@ class DevStateValidator {
         };
     }
     
+    /**
+     * بعد از به‌روزرسانی
+     * @param {AppState} state - state جدید
+     */
     afterUpdate(state) {
         const errors = this._validateState(state);
         if (errors.length > 0) {
@@ -1245,7 +1735,16 @@ class DevStateValidator {
         }
     }
     
+    /**
+     * اعتبارسنجی state
+     * @param {Object} state - state
+     * @param {Object} [schema] - schema
+     * @param {string} [path=''] - مسیر
+     * @returns {Array<string>}
+     * @private
+     */
     _validateState(state, schema = this.schema, path = '') {
+        /** @type {Array<string>} */
         const errors = [];
         
         for (const [key, expectedType] of Object.entries(schema)) {
@@ -1277,6 +1776,13 @@ class DevStateValidator {
         return errors;
     }
     
+    /**
+     * بررسی نوع
+     * @param {*} value - مقدار
+     * @param {string} expectedType - نوع مورد انتظار
+     * @returns {boolean}
+     * @private
+     */
     _checkType(value, expectedType) {
         if (expectedType === 'null') return value === null;
         if (expectedType === 'array') return Array.isArray(value);
@@ -1286,6 +1792,8 @@ class DevStateValidator {
 }
 
 // ============ Singleton Instance ============
+
+/** @type {StateManager} */
 const stateManager = new StateManager({
     enableLogging: true,
     enablePersistence: true,
@@ -1295,6 +1803,7 @@ const stateManager = new StateManager({
 });
 
 // ============ Export ============
+
 export {
     StateManager,
     stateManager,
