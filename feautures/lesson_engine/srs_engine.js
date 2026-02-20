@@ -1,14 +1,14 @@
 /**
  * @file srs_engine.js
- * @version 3.0.0
+ * @version 3.1.0
  * @description موتور پیشرفته الگوریتم مرور هوشمند (SRS) با معماری Plugin-Based، Event-Driven و Middleware
  * @copyright Farsinglish Project 2024
  * 
  * ویژگی‌ها:
  * - پشتیبانی از الگوریتم‌های SM-2، Anki، FSRS
  * - معماری استراتژی برای توسعه‌پذیری (OCP)
- * - سیستم Event-Driven برای ارتباط با سایر ماژول‌ها
- * - Serialization + Migration خودکار
+ * - سیستم Event-Driven با Throttling
+ * - Serialization + Migration خودکار با Circular Dependency Guard
  * - Adaptive Parameters (شخصی‌سازی بر اساس عملکرد کاربر)
  * - Middleware Pipeline برای افزودن قابلیت‌های جانبی
  * - Result Pattern برای مدیریت خطا
@@ -16,6 +16,7 @@
  * - Cache هوشمند با LRU
  * - Composite Validator
  * - Telemetry داخلی
+ * - Plugin System واقعی با Hooks
  */
 
 // ============== ثابت‌ها و پیکربندی ==============
@@ -48,7 +49,13 @@ export const DEFAULTS = Object.freeze({
     ADAPTATION_FACTOR: 0.1,
     
     // Retention factor
-    RETENTION_FACTOR: 10
+    RETENTION_FACTOR: 10,
+    
+    // Mature interval threshold
+    MATURE_INTERVAL: 21,
+    
+    // Throttling
+    EVENT_THROTTLE_MS: 100
 });
 
 /** @type {Readonly<Record<string, number>>} */
@@ -63,10 +70,11 @@ export const FSRS_CONSTANTS = Object.freeze({
 });
 
 /** @type {string} */
-export const VERSION = '3.0.0';
+export const VERSION = '3.1.0';
 
 /** @type {Readonly<Record<string, string>>} */
 export const CHANGELOG = Object.freeze({
+    '3.1.0': 'Added Plugin System, Event Throttling, Circular Dependency Guard, Removed PERFECT',
     '3.0.0': 'Added Event-Driven, Serialization, Adaptive Parameters, Middleware',
     '2.0.0': 'Added FSRS algorithm, Result Pattern, Cache',
     '1.0.0': 'Initial version with SM-2 and Anki'
@@ -79,8 +87,7 @@ export const ReviewQuality = Object.freeze({
     AGAIN: 0,
     HARD: 1,
     GOOD: 2,
-    EASY: 3,
-    PERFECT: 4
+    EASY: 3
 });
 
 /** @enum {string} */
@@ -100,7 +107,8 @@ export const ErrorCode = Object.freeze({
     ALGORITHM_NOT_FOUND: 'ALGORITHM_NOT_FOUND',
     CACHE_ERROR: 'CACHE_ERROR',
     MIGRATION_ERROR: 'MIGRATION_ERROR',
-    MIDDLEWARE_ERROR: 'MIDDLEWARE_ERROR'
+    MIDDLEWARE_ERROR: 'MIDDLEWARE_ERROR',
+    PLUGIN_ERROR: 'PLUGIN_ERROR'
 });
 
 /** @enum {string} */
@@ -110,7 +118,20 @@ export const EventType = Object.freeze({
     ALGORITHM_CHANGED: 'algorithm:changed',
     PARAMETERS_ADAPTED: 'parameters:adapted',
     CACHE_CLEARED: 'cache:cleared',
-    ERROR: 'error'
+    ENGINE_INITIALIZED: 'engine:initialized',
+    CACHE_HIT: 'cache:hit',
+    MIDDLEWARE_ERROR: 'middleware:error',
+    ERROR: 'error',
+    PLUGIN_EXECUTED: 'plugin:executed'
+});
+
+/** @enum {string} */
+export const PluginHook = Object.freeze({
+    BEFORE_CALCULATE: 'beforeCalculate',
+    AFTER_CALCULATE: 'afterCalculate',
+    BEFORE_SAVE: 'beforeSave',
+    AFTER_LOAD: 'afterLoad',
+    ON_ERROR: 'onError'
 });
 
 // ============== Type Definitions ==============
@@ -126,6 +147,10 @@ export const EventType = Object.freeze({
  * @property {number} easeBonus
  * @property {number} easePenalty
  * @property {number} hardPenalty
+ * @property {number} againMultiplier
+ * @property {number} hardMultiplier
+ * @property {number} goodMultiplier
+ * @property {number} easyMultiplier
  */
 
 /**
@@ -202,15 +227,29 @@ export const EventType = Object.freeze({
  * @property {string} name
  */
 
-// ============== Event Bus ==============
+/**
+ * @typedef {Object} Plugin
+ * @property {string} name
+ * @property {function(SRSEngine): void} [onRegister]
+ * @property {function(MiddlewareContext): MiddlewareContext} [beforeCalculate]
+ * @property {function(SRSResult, MiddlewareContext): SRSResult} [afterCalculate]
+ * @property {function(Object): Object} [beforeSave]
+ * @property {function(Object): Object} [afterLoad]
+ * @property {function(ErrorResult): void} [onError]
+ */
+
+// ============== Event Bus with Throttling ==============
 
 /**
  * @class EventBus
- * @description سیستم انتشار/اشتراک رویداد برای ارتباط ماژول‌ها
+ * @description سیستم انتشار/اشتراک رویداد با قابلیت Throttling
  */
 class EventBus {
     /** @type {Map<string, Set<EventListener>>} */
     #listeners = new Map();
+    
+    /** @type {Map<string, NodeJS.Timeout>} */
+    #throttles = new Map();
 
     /**
      * @param {string} event
@@ -240,6 +279,11 @@ class EventBus {
      * @param {*} data
      */
     emit(event, data) {
+        // Throttling
+        if (this.#throttles.has(event)) {
+            return;
+        }
+
         const payload = {
             type: event,
             data,
@@ -253,13 +297,27 @@ class EventBus {
                 console.error(`Error in event listener for ${event}:`, error);
             }
         });
+
+        // Set throttle
+        const throttleTimeout = setTimeout(() => {
+            this.#throttles.delete(event);
+        }, DEFAULTS.EVENT_THROTTLE_MS);
+        
+        this.#throttles.set(event, throttleTimeout);
     }
 
     /** @param {string} event */
     clear(event) {
         if (event) {
+            const timeout = this.#throttles.get(event);
+            if (timeout) {
+                clearTimeout(timeout);
+                this.#throttles.delete(event);
+            }
             this.#listeners.delete(event);
         } else {
+            this.#throttles.forEach(timeout => clearTimeout(timeout));
+            this.#throttles.clear();
             this.#listeners.clear();
         }
     }
@@ -269,6 +327,125 @@ class EventBus {
         return Array.from(this.#listeners.keys());
     }
 }
+
+// ============== Validators ==============
+
+/** @type {Readonly<Record<string, import('./types').ValidationRule>>} */
+const VALIDATORS = Object.freeze({
+    quality: {
+        validate: (q) => Number.isInteger(q) && q >= 0 && q <= 4,
+        code: ErrorCode.INVALID_QUALITY,
+        message: 'Quality must be integer between 0 and 4'
+    },
+    repetition: {
+        validate: (r) => r === undefined || (Number.isInteger(r) && r >= 0),
+        code: ErrorCode.INVALID_REPETITION,
+        message: 'Repetition must be non-negative integer'
+    },
+    easeFactor: {
+        validate: (e) => e === undefined || (typeof e === 'number' && e >= DEFAULTS.MIN_EASE_FACTOR && e <= DEFAULTS.MAX_EASE_FACTOR),
+        code: ErrorCode.INVALID_EASE_FACTOR,
+        message: `Ease factor must be between ${DEFAULTS.MIN_EASE_FACTOR} and ${DEFAULTS.MAX_EASE_FACTOR}`
+    },
+    interval: {
+        validate: (i) => i === undefined || (typeof i === 'number' && i >= 0 && i <= DEFAULTS.MAX_INTERVAL),
+        code: ErrorCode.INVALID_INTERVAL,
+        message: `Interval must be between 0 and ${DEFAULTS.MAX_INTERVAL}`
+    }
+});
+
+// ============== Cache Implementation ==============
+
+/**
+ * @template K, V
+ * @class LRUCache
+ */
+class LRUCache {
+    /** @type {Map<K, V>} */
+    #cache;
+    /** @type {number} */
+    #maxSize;
+
+    /**
+     * @param {number} maxSize
+     */
+    constructor(maxSize) {
+        this.#cache = new Map();
+        this.#maxSize = maxSize;
+    }
+
+    /**
+     * @param {K} key
+     * @returns {V | undefined}
+     */
+    get(key) {
+        const item = this.#cache.get(key);
+        if (item !== undefined) {
+            // Refresh item (move to end)
+            this.#cache.delete(key);
+            this.#cache.set(key, item);
+        }
+        return item;
+    }
+
+    /**
+     * @param {K} key
+     * @param {V} value
+     */
+    set(key, value) {
+        if (this.#cache.size >= this.#maxSize) {
+            // Remove oldest (first item)
+            const firstKey = this.#cache.keys().next().value;
+            this.#cache.delete(firstKey);
+        }
+        this.#cache.set(key, value);
+    }
+
+    /**
+     * @param {K} key
+     * @returns {boolean}
+     */
+    has(key) {
+        return this.#cache.has(key);
+    }
+
+    clear() {
+        this.#cache.clear();
+    }
+
+    /** @returns {number} */
+    get size() {
+        return this.#cache.size;
+    }
+
+    /** @returns {[K, V][]} */
+    entries() {
+        return Array.from(this.#cache.entries());
+    }
+}
+
+// ============== Result Factory ==============
+
+export const Result = Object.freeze({
+    /**
+     * @param {SRSResult} data
+     * @returns {SuccessResult}
+     */
+    ok: (data) => ({ success: true, data }),
+
+    /**
+     * @param {ErrorCode} code
+     * @param {string} message
+     * @param {string} [stack]
+     * @returns {ErrorResult}
+     */
+    fail: (code, message, stack = '') => ({ 
+        success: false, 
+        code, 
+        message,
+        stack: stack || new Error().stack 
+    })
+});
 
 // ============== Strategy Interfaces ==============
 
@@ -623,125 +800,6 @@ class FSRSStrategy extends IStrategy {
     }
 }
 
-// ============== Validators ==============
-
-/** @type {Readonly<Record<string, import('./types').ValidationRule>>} */
-const VALIDATORS = Object.freeze({
-    quality: {
-        validate: (q) => Number.isInteger(q) && q >= 0 && q <= 5,
-        code: ErrorCode.INVALID_QUALITY,
-        message: 'Quality must be integer between 0 and 5'
-    },
-    repetition: {
-        validate: (r) => r === undefined || (Number.isInteger(r) && r >= 0),
-        code: ErrorCode.INVALID_REPETITION,
-        message: 'Repetition must be non-negative integer'
-    },
-    easeFactor: {
-        validate: (e) => e === undefined || (typeof e === 'number' && e >= DEFAULTS.MIN_EASE_FACTOR && e <= DEFAULTS.MAX_EASE_FACTOR),
-        code: ErrorCode.INVALID_EASE_FACTOR,
-        message: `Ease factor must be between ${DEFAULTS.MIN_EASE_FACTOR} and ${DEFAULTS.MAX_EASE_FACTOR}`
-    },
-    interval: {
-        validate: (i) => i === undefined || (typeof i === 'number' && i >= 0 && i <= DEFAULTS.MAX_INTERVAL),
-        code: ErrorCode.INVALID_INTERVAL,
-        message: `Interval must be between 0 and ${DEFAULTS.MAX_INTERVAL}`
-    }
-});
-
-// ============== Cache Implementation ==============
-
-/**
- * @template K, V
- * @class LRUCache
- */
-class LRUCache {
-    /** @type {Map<K, V>} */
-    #cache;
-    /** @type {number} */
-    #maxSize;
-
-    /**
-     * @param {number} maxSize
-     */
-    constructor(maxSize) {
-        this.#cache = new Map();
-        this.#maxSize = maxSize;
-    }
-
-    /**
-     * @param {K} key
-     * @returns {V | undefined}
-     */
-    get(key) {
-        const item = this.#cache.get(key);
-        if (item !== undefined) {
-            // Refresh item (move to end)
-            this.#cache.delete(key);
-            this.#cache.set(key, item);
-        }
-        return item;
-    }
-
-    /**
-     * @param {K} key
-     * @param {V} value
-     */
-    set(key, value) {
-        if (this.#cache.size >= this.#maxSize) {
-            // Remove oldest (first item)
-            const firstKey = this.#cache.keys().next().value;
-            this.#cache.delete(firstKey);
-        }
-        this.#cache.set(key, value);
-    }
-
-    /**
-     * @param {K} key
-     * @returns {boolean}
-     */
-    has(key) {
-        return this.#cache.has(key);
-    }
-
-    clear() {
-        this.#cache.clear();
-    }
-
-    /** @returns {number} */
-    get size() {
-        return this.#cache.size;
-    }
-
-    /** @returns {[K, V][]} */
-    entries() {
-        return Array.from(this.#cache.entries());
-    }
-}
-
-// ============== Result Factory ==============
-
-export const Result = Object.freeze({
-    /**
-     * @param {SRSResult} data
-     * @returns {SuccessResult}
-     */
-    ok: (data) => ({ success: true, data }),
-
-    /**
-     * @param {ErrorCode} code
-     * @param {string} message
-     * @param {string} [stack]
-     * @returns {ErrorResult}
-     */
-    fail: (code, message, stack = '') => ({ 
-        success: false, 
-        code, 
-        message,
-        stack: stack || new Error().stack 
-    })
-});
-
 // ============== Main Engine Class ==============
 
 /**
@@ -773,8 +831,11 @@ export class SRSEngine {
     /** @type {Array<import('./types').Middleware>} */
     #middlewares;
     
-    /** @type {Map<string, any>} */
+    /** @type {Map<string, Plugin>} */
     #plugins;
+    
+    /** @type {WeakSet<Object>} */
+    static #migrationGuard = new WeakSet();
 
     /**
      * @param {Partial<SRSConfig>} config
@@ -824,7 +885,10 @@ export class SRSEngine {
                 extra: { startTime }
             };
 
-            // 3. Pre-processing middleware
+            // 3. Execute plugins (before)
+            context = this.#executePlugins(PluginHook.BEFORE_CALCULATE, context) || context;
+
+            // 4. Pre-processing middleware
             for (const mw of this.#middlewares) {
                 if (mw.before) {
                     try {
@@ -835,7 +899,7 @@ export class SRSEngine {
                 }
             }
 
-            // 4. Cache check
+            // 5. Cache check
             const cacheKey = this.#generateCacheKey(context.quality, context.currentData);
             const cached = this.#cache.get(cacheKey);
             if (cached) {
@@ -843,14 +907,14 @@ export class SRSEngine {
                 return Result.ok(cached);
             }
 
-            // 5. Execute strategy
+            // 6. Execute strategy
             const result = this.#currentStrategy.calculate(
                 context.quality, 
                 context.currentData, 
                 context.config
             );
             
-            // 6. Post-processing middleware
+            // 7. Post-processing middleware
             let finalResult = result;
             for (const mw of this.#middlewares) {
                 if (mw.after) {
@@ -862,13 +926,16 @@ export class SRSEngine {
                 }
             }
 
-            // 7. Cache result
+            // 8. Execute plugins (after)
+            finalResult = this.#executePlugins(PluginHook.AFTER_CALCULATE, finalResult, context) || finalResult;
+
+            // 9. Cache result
             this.#cache.set(cacheKey, finalResult);
             
-            // 8. Track metrics
+            // 10. Track metrics
             this.#trackMetrics(quality, finalResult);
             
-            // 9. Emit event
+            // 11. Emit event
             this.#emit(EventType.CARD_REVIEWED, {
                 quality,
                 result: finalResult,
@@ -885,6 +952,7 @@ export class SRSEngine {
             );
             
             this.#emit(EventType.ERROR, errorResult);
+            this.#executePlugins(PluginHook.ON_ERROR, errorResult);
             return errorResult;
         }
     }
@@ -893,7 +961,7 @@ export class SRSEngine {
      * محاسبه دسته‌ای برای چند کارت
      * @param {Array<{quality: number, data: SRSData}>} reviews
      * @param {boolean} parallel
-     * @returns {Result[]}
+     * @returns {Promise<Result[]> | Result[]}
      */
     calculateBatch(reviews, parallel = false) {
         if (parallel) {
@@ -956,25 +1024,34 @@ export class SRSEngine {
 
     /**
      * ثبت پلاگین جدید
-     * @param {string} name
-     * @param {any} plugin
+     * @param {Plugin} plugin
      * @returns {SRSEngine}
      */
-    registerPlugin(name, plugin) {
-        this.#plugins.set(name, plugin);
+    registerPlugin(plugin) {
+        this.#plugins.set(plugin.name, plugin);
         if (plugin.onRegister) {
             plugin.onRegister(this);
         }
+        this.#emit(EventType.PLUGIN_EXECUTED, { plugin: plugin.name, action: 'registered' });
         return this;
     }
 
     /**
      * دریافت پلاگین
      * @param {string} name
-     * @returns {any}
+     * @returns {Plugin | undefined}
      */
     getPlugin(name) {
         return this.#plugins.get(name);
+    }
+
+    /**
+     * حذف پلاگین
+     * @param {string} name
+     * @returns {boolean}
+     */
+    unregisterPlugin(name) {
+        return this.#plugins.delete(name);
     }
 
     /**
@@ -1075,7 +1152,7 @@ export class SRSEngine {
      * @returns {Object}
      */
     toJSON() {
-        return {
+        const data = {
             __version: VERSION,
             __timestamp: Date.now(),
             config: this.#config,
@@ -1084,6 +1161,9 @@ export class SRSEngine {
             strategies: Array.from(this.#strategies.keys()),
             currentStrategy: this.#currentStrategy.name
         };
+
+        // Execute plugins (before save)
+        return this.#executePlugins(PluginHook.BEFORE_SAVE, data) || data;
     }
 
     /**
@@ -1095,6 +1175,12 @@ export class SRSEngine {
     static fromJSON(json, migrate = true) {
         try {
             let data = json;
+            
+            // Circular dependency guard
+            if (SRSEngine.#migrationGuard.has(data)) {
+                throw new Error('Circular reference detected in migration');
+            }
+            SRSEngine.#migrationGuard.add(data);
             
             // Migration if needed
             if (migrate && data.__version && data.__version !== VERSION) {
@@ -1124,7 +1210,10 @@ export class SRSEngine {
                 }
             }
             
-            return engine;
+            SRSEngine.#migrationGuard.delete(data);
+            
+            // Execute plugins (after load)
+            return engine.#executePlugins(PluginHook.AFTER_LOAD, engine) || engine;
         } catch (error) {
             throw new Error(`Failed to restore SRSEngine: ${error.message}`);
         }
@@ -1141,7 +1230,8 @@ export class SRSEngine {
             algorithm: this.#config.algorithm,
             strategy: this.#currentStrategy.name,
             middlewareCount: this.#middlewares.length,
-            pluginCount: this.#plugins.size
+            pluginCount: this.#plugins.size,
+            cacheEfficiency: this.#calculateCacheEfficiency()
         };
     }
 
@@ -1219,7 +1309,7 @@ export class SRSEngine {
     #initMetrics() {
         return {
             totalReviews: 0,
-            qualityDistribution: [0, 0, 0, 0, 0, 0],
+            qualityDistribution: [0, 0, 0, 0, 0],
             averageEase: DEFAULTS.DEFAULT_EASE_FACTOR,
             averageInterval: 0,
             lastReset: this.#timeProvider().toISOString(),
@@ -1264,22 +1354,40 @@ export class SRSEngine {
     /** @private */
     #trackMetrics(quality, result) {
         if (!this.#config.enableTelemetry) return;
-
-        this.#metrics.totalReviews++;
-        this.#metrics.qualityDistribution[quality]++;
         
-        // Update moving average of ease factor
+        this.#incrementTotalReviews();
+        this.#updateQualityDistribution(quality);
+        this.#updateAverageEase(result.data.easeFactor);
+        this.#updateAverageInterval(result.data.interval);
+        this.#updateCacheStats();
+    }
+
+    /** @private */
+    #incrementTotalReviews() {
+        this.#metrics.totalReviews++;
+    }
+
+    /** @private */
+    #updateQualityDistribution(quality) {
+        this.#metrics.qualityDistribution[quality]++;
+    }
+
+    /** @private */
+    #updateAverageEase(newEase) {
         const total = this.#metrics.totalReviews;
         const currentAvg = this.#metrics.averageEase;
-        const newEase = result.data.easeFactor;
         this.#metrics.averageEase = (currentAvg * (total - 1) + newEase) / total;
-        
-        // Update average interval
-        const currentIntervalAvg = this.#metrics.averageInterval;
-        const newInterval = result.data.interval;
-        this.#metrics.averageInterval = (currentIntervalAvg * (total - 1) + newInterval) / total;
-        
-        // Cache stats
+    }
+
+    /** @private */
+    #updateAverageInterval(newInterval) {
+        const total = this.#metrics.totalReviews;
+        const currentAvg = this.#metrics.averageInterval;
+        this.#metrics.averageInterval = (currentAvg * (total - 1) + newInterval) / total;
+    }
+
+    /** @private */
+    #updateCacheStats() {
         if (this.#cache.size > 0) {
             this.#metrics.cacheHits++;
         } else {
@@ -1303,8 +1411,44 @@ export class SRSEngine {
     }
 
     /** @private */
+    #calculateCacheEfficiency() {
+        return this.#metrics.totalReviews > 0
+            ? Number((this.#metrics.cacheHits / this.#metrics.totalReviews * 100).toFixed(1))
+            : 0;
+    }
+
+    /** @private */
     #emit(event, data) {
         this.#eventBus.emit(event, data);
+    }
+
+    /** @private */
+    #executePlugins(hook, ...args) {
+        let result = args[0];
+        
+        for (const plugin of this.#plugins.values()) {
+            if (plugin[hook]) {
+                try {
+                    const pluginResult = plugin[hook](...args);
+                    if (pluginResult !== undefined) {
+                        result = pluginResult;
+                    }
+                    this.#emit(EventType.PLUGIN_EXECUTED, { 
+                        plugin: plugin.name, 
+                        hook,
+                        success: true 
+                    });
+                } catch (error) {
+                    this.#emit(EventType.PLUGIN_ERROR, {
+                        plugin: plugin.name,
+                        hook,
+                        error: error.message
+                    });
+                }
+            }
+        }
+        
+        return result;
     }
 
     /** @private */
@@ -1323,6 +1467,12 @@ export class SRSEngine {
             fromVersion = '3.0.0';
         }
         
+        // Migration path: 3.0.0 -> 3.1.0
+        if (fromVersion === '3.0.0' && toVersion >= '3.1.0') {
+            migrated = SRSEngine.#migrateV3ToV31(migrated);
+            fromVersion = '3.1.0';
+        }
+        
         migrated.__version = toVersion;
         migrated.__migrated = true;
         
@@ -1336,7 +1486,7 @@ export class SRSEngine {
             __version: '2.0.0',
             metrics: data.metrics || {
                 totalReviews: 0,
-                qualityDistribution: [0, 0, 0, 0, 0, 0],
+                qualityDistribution: [0, 0, 0, 0, 0],
                 averageEase: DEFAULTS.DEFAULT_EASE_FACTOR
             }
         };
@@ -1352,6 +1502,21 @@ export class SRSEngine {
                 easeBonus: DEFAULTS.EASE_BONUS,
                 easePenalty: DEFAULTS.EASE_PENALTY,
                 hardPenalty: DEFAULTS.HARD_PENALTY
+            }
+        };
+    }
+
+    /** @private */
+    static #migrateV3ToV31(data) {
+        return {
+            ...data,
+            __version: '3.1.0',
+            config: {
+                ...data.config,
+                againMultiplier: DEFAULTS.AGAIN_MULTIPLIER,
+                hardMultiplier: DEFAULTS.HARD_MULTIPLIER,
+                goodMultiplier: DEFAULTS.GOOD_MULTIPLIER,
+                easyMultiplier: DEFAULTS.EASY_MULTIPLIER
             }
         };
     }
@@ -1410,8 +1575,8 @@ export function calculate_deck_stats(cards, now = new Date()) {
 
         totalInterval += card.interval || 0;
         
-        // Mature cards (interval > 21 days)
-        if (card.interval > 21) matureCards++;
+        // Mature cards (using DEFAULTS.MATURE_INTERVAL)
+        if (card.interval > DEFAULTS.MATURE_INTERVAL) matureCards++;
     });
 
     const avgInterval = totalInterval / cards.length;
@@ -1441,6 +1606,7 @@ if (typeof window !== 'undefined') {
         AlgorithmType,
         ErrorCode,
         EventType,
+        PluginHook,
         DEFAULTS,
         VERSION,
         CHANGELOG
