@@ -1,0 +1,244 @@
+{
+  "$schema": "./schemas/gamification_schema.json",
+  "version": "1.0.0",
+  "lastUpdated": "2025-02-21T10:30:00Z",
+  "validUntil": "2026-02-21T00:00:00Z",
+  "metadata": {
+    "name": "Farsinglish Gamification Config",
+    "locale": "fa-IR",
+    "description": "تنظیمات گیمیفیکیشن اپلیکیشن آموزش زبان فارسینگلیش",
+    "author": "Farsinglish Team",
+    "tags": ["gamification", "points", "badges", "levels", "streaks"]
+  },
+  
+  "points": {
+    "base": {
+      "completeLesson": { "value": 10, "min": 5, "max": 100, "description": "امتیاز تکمیل درس" },
+      "perfectLesson": { "value": 25, "min": 10, "max": 200, "description": "امتیاز درس عالی" },
+      "dailyStreak": { "value": 5, "min": 1, "max": 50, "description": "امتیاز استریک روزانه" },
+      "weeklyStreak": { "value": 20, "min": 5, "max": 100, "description": "امتیاز استریک هفتگی" },
+      "login": { "value": 2, "min": 1, "max": 10, "description": "امتیاز ورود روزانه" },
+      "share": { "value": 15, "min": 5, "max": 50, "description": "امتیاز اشتراک‌گذاری" }
+    },
+    "bonus": {
+      "firstOfDay": { "value": 10, "min": 5, "max": 50 },
+      "fiveDayStreak": { "value": 50, "min": 25, "max": 200 },
+      "tenDayStreak": { "value": 150, "min": 100, "max": 500 },
+      "thirtyDayStreak": { "value": 500, "min": 250, "max": 1000 }
+    },
+    "multipliers": {
+      "weekend": 1.5,
+      "holiday": 2.0,
+      "doublePointsEvent": 2.0
+    }
+  },
+
+  "levels": [
+    {
+      "id": 1,
+      "name": "زبان‌آموز نوپا",
+      "nameEn": "Beginner Linguist",
+      "minPoints": 0,
+      "maxPoints": 100,
+      "badgeId": "badge_beginner",
+      "icon": "🌱",
+      "color": "#4CAF50",
+      "gradient": ["#4CAF50", "#2E7D32"],
+      "benefits": ["دسترسی به درس‌های پایه", "۱ مرور رایگان روزانه"],
+      "requiredBadges": []
+    },
+    {
+      "id": 2,
+      "name": "کاوشگر واژه‌ها",
+      "nameEn": "Word Explorer",
+      "minPoints": 101,
+      "maxPoints": 300,
+      "badgeId": "badge_explorer",
+      "icon": "🔍",
+      "color": "#2196F3",
+      "gradient": ["#2196F3", "#0D47A1"],
+      "benefits": ["درس‌های متوسط", "۲ مرور اضافه", "آمار پیشرفت"],
+      "requiredBadges": ["badge_beginner"]
+    },
+    {
+      "id": 3,
+      "name": "استاد مکالمه",
+      "nameEn": "Conversation Master",
+      "minPoints": 301,
+      "maxPoints": 600,
+      "badgeId": "badge_master",
+      "icon": "🎯",
+      "color": "#FF9800",
+      "gradient": ["#FF9800", "#F57C00"],
+      "benefits": ["همه درس‌ها", "مرور نامحدود", "چالش‌های ویژه"],
+      "requiredBadges": ["badge_explorer"]
+    },
+    {
+      "id": 4,
+      "name": "افسانه زبان",
+      "nameEn": "Language Legend",
+      "minPoints": 601,
+      "maxPoints": 1000,
+      "badgeId": "badge_legend",
+      "icon": "👑",
+      "color": "#F44336",
+      "gradient": ["#F44336", "#B71C1C"],
+      "benefits": ["ویژگی‌های ویژه", "دسترسی بتا", "نشان افتخار"],
+      "requiredBadges": ["badge_master"]
+    }
+  ],
+
+  "badges": [
+    {
+      "id": "badge_first_lesson",
+      "name": "گام اول",
+      "nameEn": "First Step",
+      "description": "اولین درس خود را کامل کن",
+      "icon": "🎓",
+      "imageUrl": "/assets/badges/first_lesson.svg",
+      "points": { "value": 20, "min": 10, "max": 50 },
+      "rarity": { "type": "string", "enum": ["common", "rare", "epic", "legendary"], "value": "common" },
+      "achievementCondition": {
+        "type": "completeLesson",
+        "count": 1
+      },
+      "requiredBadges": [],
+      "displayPriority": 1,
+      "category": "onboarding"
+    },
+    {
+      "id": "badge_streak_7",
+      "name": "هفت روز آتشین",
+      "nameEn": "Fire Streak",
+      "description": "۷ روز متوالی درس بخوان",
+      "icon": "🔥",
+      "imageUrl": "/assets/badges/streak_7.svg",
+      "points": { "value": 100, "min": 50, "max": 200 },
+      "rarity": { "type": "string", "enum": ["common", "rare", "epic", "legendary"], "value": "rare" },
+      "achievementCondition": {
+        "type": "dailyStreak",
+        "days": 7
+      },
+      "requiredBadges": ["badge_first_lesson"],
+      "displayPriority": 2,
+      "category": "streak"
+    },
+    {
+      "id": "badge_perfect_week",
+      "name": "هفته طلایی",
+      "nameEn": "Golden Week",
+      "description": "همه درس‌های هفته را عالی تمام کن",
+      "icon": "⭐",
+      "imageUrl": "/assets/badges/perfect_week.svg",
+      "points": { "value": 200, "min": 100, "max": 400 },
+      "rarity": { "type": "string", "enum": ["common", "rare", "epic", "legendary"], "value": "epic" },
+      "achievementCondition": {
+        "type": "perfectLessons",
+        "count": 7,
+        "timeframe": "weekly"
+      },
+      "requiredBadges": ["badge_streak_7"],
+      "displayPriority": 3,
+      "category": "perfection"
+    },
+    {
+      "id": "badge_vocab_master",
+      "name": "لغت‌دان حرفه‌ای",
+      "nameEn": "Vocabulary Master",
+      "description": "۵۰۰ لغت را یاد بگیر",
+      "icon": "📚",
+      "imageUrl": "/assets/badges/vocab_master.svg",
+      "points": { "value": 500, "min": 250, "max": 1000 },
+      "rarity": { "type": "string", "enum": ["common", "rare", "epic", "legendary"], "value": "legendary" },
+      "achievementCondition": {
+        "type": "vocabularyLearned",
+        "count": 500
+      },
+      "requiredBadges": ["badge_perfect_week"],
+      "displayPriority": 4,
+      "category": "vocabulary"
+    }
+  ],
+
+  "streaks": {
+    "freeze": {
+      "enabled": true,
+      "cost": 50,
+      "maxPerMonth": 3,
+      "itemName": "فریز استریک",
+      "description": "استریک امروز را بدون مطالعه حفظ کن",
+      "requiredBadges": ["badge_streak_7"]
+    },
+    "milestones": [
+      { "days": 7, "reward": 100, "badge": "badge_streak_7" },
+      { "days": 30, "reward": 500, "badge": "badge_streak_30" },
+      { "days": 100, "reward": 2000, "badge": "badge_streak_100" },
+      { "days": 365, "reward": 10000, "badge": "badge_streak_365" }
+    ],
+    "reminder": {
+      "enabled": true,
+      "hour": 20,
+      "minute": 0,
+      "message": "🔥 استریک امروزت را حفظ کن! فقط ۵ دقیقه وقت بذار."
+    }
+  },
+
+  "challenges": {
+    "daily": {
+      "count": 3,
+      "refresh": "00:00",
+      "types": ["completeLessons", "perfectScore", "streakProtect"],
+      "rewards": {
+        "basePoints": 50,
+        "bonusItems": ["streak_freeze", "extra_time"]
+      }
+    },
+    "weekly": {
+      "count": 5,
+      "refresh": "MON 00:00",
+      "types": ["totalLessons", "totalTime", "badgesEarned"],
+      "rewards": {
+        "basePoints": 200,
+        "bonusBadges": true
+      }
+    }
+  },
+
+  "economy": {
+    "currency": {
+      "name": "سکه دانش",
+      "nameEn": "Knowledge Coin",
+      "symbol": "🪙",
+      "initialBalance": 50,
+      "minBalance": 0,
+      "maxBalance": 10000
+    },
+    "shop": {
+      "streakFreeze": { "price": 50, "maxPerDay": 1, "requiredBadges": ["badge_streak_7"] },
+      "extraReview": { "price": 30, "maxPerDay": 3 },
+      "doublePoints": { "price": 100, "duration": 24, "unit": "hours" }
+    }
+  },
+
+  "features": {
+    "doublePointsEvent": {
+      "enabled": false,
+      "startDate": null,
+      "endDate": null,
+      "multiplier": 2.0
+    },
+    "seasonalBadges": {
+      "enabled": true,
+      "seasons": ["spring", "summer", "autumn", "winter"],
+      "currentSeason": "winter"
+    },
+    "a_b_testing": {
+      "enabled": true,
+      "groups": ["control", "variant_a", "variant_b"],
+      "features": {
+        "streakFreeze": "variant_a",
+        "doublePoints": "variant_b"
+      }
+    }
+  }
+}
