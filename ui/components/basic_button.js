@@ -1,236 +1,213 @@
 /**
- * کامپوننت دکمه پایه
- * مسئول: نمایش دکمه با استایل‌ها و حالت‌های مختلف
- * بدون وابستگی خارجی – کاملاً مستقل و قابل استفاده مجدد
+ * BasicButton v2.7.1
+ * کامپوننت دکمه حرفه‌ای
+ * رعایت SOLID، DI، snake_case، Fluent API، RTL و دسترسی‌پذیری
  */
 
-// ---------- ثابت‌های ظاهری ----------
-const VARIANTS = {
-    PRIMARY: 'primary',
-    SECONDARY: 'secondary',
-    OUTLINE: 'outline',
-    GHOST: 'ghost',
-    ICON: 'icon'
+/** @typedef {Object} ButtonOptions
+ * @property {string} [text] - متن دکمه
+ * @property {string} [variant] - نوع دکمه (primary, secondary, outline, ghost, icon)
+ * @property {string} [size] - اندازه (small, medium, large)
+ * @property {boolean} [disabled] - غیرفعال بودن
+ * @property {boolean} [loading] - حالت در حال بارگذاری
+ * @property {string} [icon] - آیکون (Font Awesome یا متن)
+ * @property {string} [aria_label] - برچسب دسترسی
+ * @property {Function} [on_click] - تابع کلیک
+ * @property {boolean} [full_width] - عرض کامل
+ */
+
+const DEFAULTS = {
+    VARIANT: 'primary',
+    SIZE: 'medium',
+    CLICK_THRESHOLD: 300
 };
 
-const SIZES = {
-    SMALL: 'small',
-    MEDIUM: 'medium',
-    LARGE: 'large'
-};
+export class ButtonState {
+    #text = '';
+    #disabled = false;
+    #loading = false;
 
-const DEFAULT_VARIANT = VARIANTS.PRIMARY;
-const DEFAULT_SIZE = SIZES.MEDIUM;
-
-export class BasicButton {
-    /**
-     * @param {Object} options - تنظیمات دکمه
-     * @param {string} [options.text] - متن دکمه
-     * @param {string} [options.variant] - نوع دکمه (primary, secondary, outline, ghost, icon)
-     * @param {string} [options.size] - اندازه (small, medium, large)
-     * @param {boolean} [options.disabled] - غیرفعال بودن
-     * @param {boolean} [options.loading] - حالت در حال بارگذاری
-     * @param {string} [options.icon] - آیکون (کلاس Font Awesome یا متن)
-     * @param {string} [options.ariaLabel] - برچسب دسترسی
-     * @param {Function} [options.onClick] - تابع کلیک
-     * @param {boolean} [options.fullWidth] - عرض کامل
-     */
     constructor(options = {}) {
-        this._options = this._mergeWithDefaults(options);
-        this._element = null;
-        this._clickHandler = null;
-        this._currentText = this._options.text || '';
-        this._isLoading = this._options.loading || false;
-        this._isDisabled = this._options.disabled || false;
+        this.#text = options.text || '';
+        this.#disabled = options.disabled || false;
+        this.#loading = options.loading || false;
     }
 
-    /** @private */
-    _mergeWithDefaults(options) {
-        return {
-            text: options.text || '',
-            variant: options.variant || DEFAULT_VARIANT,
-            size: options.size || DEFAULT_SIZE,
-            disabled: options.disabled || false,
-            loading: options.loading || false,
-            icon: options.icon || null,
-            ariaLabel: options.ariaLabel || null,
-            onClick: options.onClick || null,
-            fullWidth: options.fullWidth || false
-        };
+    get_state() {
+        return { text: this.#text, disabled: this.#disabled, loading: this.#loading };
     }
 
-    /**
-     * رندر دکمه
-     * @param {Object} [overrideOptions] - تنظیمات موقت برای این رندر
-     * @returns {HTMLElement} - المان button
-     */
-    render(overrideOptions = {}) {
-        const config = { ...this._options, ...overrideOptions };
-        this._isLoading = config.loading;
-        this._isDisabled = config.disabled;
-        this._currentText = config.text;
+    set_text(text) { this.#text = text; return this; }
+    set_disabled(disabled) { this.#disabled = disabled; return this; }
+    set_loading(loading) { this.#loading = loading; return this; }
+}
 
-        const button = document.createElement('button');
-        button.className = this._buildClassName(config);
-        
-        if (config.disabled || config.loading) {
-            button.disabled = true;
-        }
+export class ButtonRenderer {
+    #state;
+    #element = null;
+    #doc;
+    #click_handler = null;
+    #debounce_timeout = null;
 
-        if (config.ariaLabel) {
-            button.setAttribute('aria-label', config.ariaLabel);
-        }
+    constructor(state, doc = document) {
+        this.#state = state;
+        this.#doc = doc;
+    }
 
-        if (config.fullWidth) {
-            button.style.width = '100%';
-        }
+    /** @returns {HTMLButtonElement} */
+    render(options = {}) {
+        const config = { ...this.#state.get_state(), ...options };
+        const button = this.#doc.createElement('button');
+        button.type = 'button';
+        button.className = this.#build_class_name(config);
 
-        // محتوای داخلی
-        button.innerHTML = this._buildInnerHTML(config);
+        if (config.disabled || config.loading) button.disabled = true;
+        if (config.aria_label) button.setAttribute('aria-label', config.aria_label);
+        if (config.full_width) button.style.width = '100%';
 
-        // رویداد کلیک
-        if (config.onClick && typeof config.onClick === 'function') {
+        // حذف تمام فرزندان (innerHTML جایگزین نشد)
+        while (button.firstChild) button.removeChild(button.firstChild);
+
+        // محتوا
+        button.appendChild(this.#build_inner_content(config));
+
+        // کلیک با debounce
+        if (config.on_click && typeof config.on_click === 'function') {
             const handler = (e) => {
-                if (!button.disabled) {
-                    config.onClick(e);
-                }
+                if (button.disabled) return;
+                if (this.#debounce_timeout) return;
+                this.#debounce_timeout = setTimeout(() => this.#debounce_timeout = null, DEFAULTS.CLICK_THRESHOLD);
+                config.on_click(e);
             };
             button.addEventListener('click', handler);
-            this._clickHandler = { element: button, handler };
+            this.#click_handler = { element: button, handler };
         }
 
-        this._element = button;
+        // keyboard accessibility
+        button.addEventListener('keydown', e => {
+            if (button.disabled) return;
+            if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                button.click();
+            }
+        });
+
+        this.#element = button;
         return button;
     }
 
-    /** @private */
-    _buildClassName(config) {
-        const classes = [
-            'btn',
-            `btn-${config.variant}`,
-            `btn-${config.size}`
-        ];
-        if (config.loading) {
-            classes.push('btn-loading');
-        }
-        if (config.icon && !config.text) {
-            classes.push('btn-icon-only');
-        }
+    #build_class_name(config) {
+        const classes = ['btn', `btn-${config.variant || DEFAULTS.VARIANT}`, `btn-${config.size || DEFAULTS.SIZE}`];
+        if (config.loading) classes.push('btn-loading');
+        if (config.icon && !config.text) classes.push('btn-icon-only');
         return classes.join(' ');
     }
 
-    /** @private */
-    _buildInnerHTML(config) {
-        let html = '';
+    #build_inner_content(config) {
+        const fragment = this.#doc.createDocumentFragment();
 
-        // آیکون
-        if (config.icon) {
-            // پشتیبانی از Font Awesome یا ایموجی
-            const iconEl = config.icon.startsWith('fa-') 
-                ? `<i class="fas ${config.icon}"></i>` 
-                : `<span class="btn-icon">${config.icon}</span>`;
-            html += iconEl;
-        }
-
-        // متن
-        if (config.text) {
-            html += `<span class="btn-text">${config.text}</span>`;
-        }
-
-        // اسپینر بارگذاری
         if (config.loading) {
-            const spinner = '<span class="btn-spinner"></span>';
-            html = spinner + html; // اضافه کردن قبل
+            const spinner = this.#doc.createElement('span');
+            spinner.className = 'btn-spinner';
+            spinner.setAttribute('aria-live', 'polite');
+            fragment.appendChild(spinner);
         }
 
-        return html;
-    }
-
-    /**
-     * به‌روزرسانی متن دکمه
-     * @param {string} text - متن جدید
-     */
-    setText(text) {
-        if (!this._element) return;
-        this._currentText = text;
-        const textSpan = this._element.querySelector('.btn-text');
-        if (textSpan) {
-            textSpan.textContent = text;
-        } else if (text) {
-            // اگر span وجود ندارد، اضافه کن
-            const icon = this._element.querySelector('.btn-icon, i');
-            if (icon) {
-                icon.insertAdjacentHTML('afterend', `<span class="btn-text">${text}</span>`);
-            } else {
-                this._element.innerHTML = `<span class="btn-text">${text}</span>`;
-            }
+        if (config.icon) {
+            const icon_el = config.icon.startsWith('fa-') 
+                ? this.#create_fa_icon(config.icon)
+                : this.#create_span_icon(config.icon);
+            fragment.appendChild(icon_el);
         }
-    }
 
-    /**
-     * فعال/غیرفعال کردن دکمه
-     * @param {boolean} disabled 
-     */
-    setDisabled(disabled) {
-        if (!this._element) return;
-        this._isDisabled = disabled;
-        this._element.disabled = disabled;
-    }
-
-    /**
-     * تنظیم حالت بارگذاری
-     * @param {boolean} loading 
-     */
-    setLoading(loading) {
-        if (!this._element) return;
-        this._isLoading = loading;
-        
-        if (loading) {
-            this._element.disabled = true;
-            this._element.classList.add('btn-loading');
-            // افزودن اسپینر اگر وجود ندارد
-            if (!this._element.querySelector('.btn-spinner')) {
-                const spinner = document.createElement('span');
-                spinner.className = 'btn-spinner';
-                this._element.prepend(spinner);
-            }
-        } else {
-            this._element.disabled = this._isDisabled;
-            this._element.classList.remove('btn-loading');
-            const spinner = this._element.querySelector('.btn-spinner');
-            if (spinner) spinner.remove();
+        if (config.text) {
+            const text_span = this.#doc.createElement('span');
+            text_span.className = 'btn-text';
+            text_span.textContent = config.text;
+            fragment.appendChild(text_span);
         }
+
+        return fragment;
     }
 
-    /**
-     * دریافت وضعیت دکمه
-     * @returns {Object}
-     */
-    getState() {
-        return {
-            text: this._currentText,
-            disabled: this._isDisabled,
-            loading: this._isLoading
-        };
+    #create_fa_icon(icon) {
+        const i = this.#doc.createElement('i');
+        i.className = `fas ${icon}`;
+        return i;
     }
 
-    /**
-     * پاکسازی رویدادها و حذف المان
-     */
+    #create_span_icon(icon) {
+        const span = this.#doc.createElement('span');
+        span.className = 'btn-icon';
+        span.textContent = icon;
+        return span;
+    }
+
+    set_text(text) {
+        if (!this.#element) return this;
+        const text_span = this.#element.querySelector('.btn-text');
+        if (text_span) text_span.textContent = text;
+        else {
+            const span = this.#doc.createElement('span');
+            span.className = 'btn-text';
+            span.textContent = text;
+            this.#element.appendChild(span);
+        }
+        return this;
+    }
+
+    set_disabled(disabled) {
+        if (!this.#element) return this;
+        this.#element.disabled = disabled;
+        return this;
+    }
+
+    set_loading(loading) {
+        if (!this.#element) return this;
+        const spinner = this.#element.querySelector('.btn-spinner');
+        if (loading && !spinner) {
+            const new_spinner = this.#doc.createElement('span');
+            new_spinner.className = 'btn-spinner';
+            new_spinner.setAttribute('aria-live', 'polite');
+            this.#element.prepend(new_spinner);
+        } else if (!loading && spinner) spinner.remove();
+
+        this.#element.disabled = loading || this.#element.disabled;
+        return this;
+    }
+
     destroy() {
-        if (this._clickHandler) {
-            const { element, handler } = this._clickHandler;
+        if (this.#click_handler) {
+            const { element, handler } = this.#click_handler;
             element.removeEventListener('click', handler);
-            this._clickHandler = null;
+            clearTimeout(this.#debounce_timeout);
+            this.#debounce_timeout = null;
+            this.#click_handler = null;
         }
-        if (this._element) {
-            this._element.remove();
-            this._element = null;
+        if (this.#element) {
+            while (this.#element.firstChild) this.#element.removeChild(this.#element.firstChild);
+            this.#element.remove();
+            this.#element = null;
         }
     }
 }
 
-// ---------- واحد تست ساده (برای مرورگر) ----------
-if (typeof window !== 'undefined' && window.VITEST) {
-    window.__BASIC_BUTTON__ = { BasicButton, VARIANTS, SIZES };
+export class BasicButton {
+    #state;
+    #renderer;
+
+    constructor(options = {}, doc = document) {
+        this.#state = new ButtonState(options);
+        this.#renderer = new ButtonRenderer(this.#state, doc);
+    }
+
+    render(override_options = {}) {
+        return this.#renderer.render({ ...this.#state.get_state(), ...override_options });
+    }
+
+    set_text(text) { this.#state.set_text(text); this.#renderer.set_text(text); return this; }
+    set_disabled(disabled) { this.#state.set_disabled(disabled); this.#renderer.set_disabled(disabled); return this; }
+    set_loading(loading) { this.#state.set_loading(loading); this.#renderer.set_loading(loading); return this; }
+    get_state() { return this.#state.get_state(); }
+    destroy() { this.#renderer.destroy(); }
 }
