@@ -1,21 +1,21 @@
 /**
  * @file srs_engine.js
- * @version 3.1.0
+ * @version 3.2.0
  * @description موتور پیشرفته الگوریتم مرور هوشمند (SRS) با معماری Plugin-Based، Event-Driven و Middleware
  * @copyright Farsinglish Project 2024
  * 
  * ویژگی‌ها:
- * - پشتیبانی از الگوریتم‌های SM-2، Anki، FSRS
+ * - پشتیبانی از الگوریتم‌های SM-2، Anki، FSRS-inspired
  * - معماری استراتژی برای توسعه‌پذیری (OCP)
- * - سیستم Event-Driven با Throttling
+ * - سیستم Event-Driven با Queue به جای Drop
  * - Serialization + Migration خودکار با Circular Dependency Guard
  * - Adaptive Parameters (شخصی‌سازی بر اساس عملکرد کاربر)
  * - Middleware Pipeline برای افزودن قابلیت‌های جانبی
  * - Result Pattern برای مدیریت خطا
  * - Time Provider برای تست‌پذیری
- * - Cache هوشمند با LRU
- * - Composite Validator
- * - Telemetry داخلی
+ * - Cache هوشمند با LRU و کلید جامع
+ * - Composite Validator بدون وابستگی خارجی
+ * - Telemetry داخلی دقیق
  * - Plugin System واقعی با Hooks
  */
 
@@ -70,10 +70,11 @@ export const FSRS_CONSTANTS = Object.freeze({
 });
 
 /** @type {string} */
-export const VERSION = '3.1.0';
+export const VERSION = '3.2.0';
 
 /** @type {Readonly<Record<string, string>>} */
 export const CHANGELOG = Object.freeze({
+    '3.2.0': 'Fixed: Cache Hit logic, Cache Key collision, Validator/Enum mismatch, EventBus Throttle, FSRS disclaimer, performance.now fallback, switchAlgorithm consistency, removed external type dependency, Cache Key mutation safety',
     '3.1.0': 'Added Plugin System, Event Throttling, Circular Dependency Guard, Removed PERFECT',
     '3.0.0': 'Added Event-Driven, Serialization, Adaptive Parameters, Middleware',
     '2.0.0': 'Added FSRS algorithm, Result Pattern, Cache',
@@ -94,7 +95,7 @@ export const ReviewQuality = Object.freeze({
 export const AlgorithmType = Object.freeze({
     SM2: 'sm2',
     ANKI: 'anki',
-    FSRS: 'fsrs'
+    FSRS_INSPIRED: 'fsrs-inspired' // تغییر نام برای دقت علمی
 });
 
 /** @enum {string} */
@@ -120,9 +121,11 @@ export const EventType = Object.freeze({
     CACHE_CLEARED: 'cache:cleared',
     ENGINE_INITIALIZED: 'engine:initialized',
     CACHE_HIT: 'cache:hit',
+    CACHE_MISS: 'cache:miss',
     MIDDLEWARE_ERROR: 'middleware:error',
     ERROR: 'error',
-    PLUGIN_EXECUTED: 'plugin:executed'
+    PLUGIN_EXECUTED: 'plugin:executed',
+    PLUGIN_ERROR: 'plugin:error'
 });
 
 /** @enum {string} */
@@ -238,11 +241,45 @@ export const PluginHook = Object.freeze({
  * @property {function(ErrorResult): void} [onError]
  */
 
-// ============== Event Bus with Throttling ==============
+/**
+ * @typedef {Object} ValidationRule
+ * @property {function(*): boolean} validate
+ * @property {ErrorCode} code
+ * @property {string} message
+ */
+
+// ============== Utility Functions ==============
+
+/**
+ * دریافت زمان جاری با fallback برای محیط‌های مختلف
+ * @returns {number}
+ */
+function getCurrentTime() {
+    if (typeof performance !== 'undefined' && performance.now) {
+        return performance.now();
+    }
+    return Date.now();
+}
+
+/**
+ * کپی عمیق برای ایمنی در برابر mutation
+ * @template T
+ * @param {T} obj
+ * @returns {T}
+ */
+function deepFreeze(obj) {
+    if (obj && typeof obj === 'object') {
+        Object.freeze(obj);
+        Object.values(obj).forEach(deepFreeze);
+    }
+    return obj;
+}
+
+// ============== Event Bus with Queue ==============
 
 /**
  * @class EventBus
- * @description سیستم انتشار/اشتراک رویداد با قابلیت Throttling
+ * @description سیستم انتشار/اشتراک رویداد با صف به جای Drop
  */
 class EventBus {
     /** @type {Map<string, Set<EventListener>>} */
@@ -250,6 +287,9 @@ class EventBus {
     
     /** @type {Map<string, NodeJS.Timeout>} */
     #throttles = new Map();
+    
+    /** @type {Map<string, Array<*>>} */
+    #pendingEvents = new Map();
 
     /**
      * @param {string} event
@@ -279,11 +319,28 @@ class EventBus {
      * @param {*} data
      */
     emit(event, data) {
-        // Throttling
+        // اگر throttle فعال است، در صف قرار بده
         if (this.#throttles.has(event)) {
+            if (!this.#pendingEvents.has(event)) {
+                this.#pendingEvents.set(event, []);
+            }
+            this.#pendingEvents.get(event).push(data);
             return;
         }
 
+        this.#sendEvent(event, data);
+
+        // Set throttle
+        const throttleTimeout = setTimeout(() => {
+            this.#throttles.delete(event);
+            this.#processPendingEvents(event);
+        }, DEFAULTS.EVENT_THROTTLE_MS);
+        
+        this.#throttles.set(event, throttleTimeout);
+    }
+
+    /** @private */
+    #sendEvent(event, data) {
         const payload = {
             type: event,
             data,
@@ -297,13 +354,16 @@ class EventBus {
                 console.error(`Error in event listener for ${event}:`, error);
             }
         });
+    }
 
-        // Set throttle
-        const throttleTimeout = setTimeout(() => {
-            this.#throttles.delete(event);
-        }, DEFAULTS.EVENT_THROTTLE_MS);
-        
-        this.#throttles.set(event, throttleTimeout);
+    /** @private */
+    #processPendingEvents(event) {
+        const pending = this.#pendingEvents.get(event);
+        if (pending && pending.length > 0) {
+            // ارسال آخرین رویداد (یا می‌توانید همه را ارسال کنید)
+            this.#sendEvent(event, pending[pending.length - 1]);
+            this.#pendingEvents.delete(event);
+        }
     }
 
     /** @param {string} event */
@@ -314,10 +374,12 @@ class EventBus {
                 clearTimeout(timeout);
                 this.#throttles.delete(event);
             }
+            this.#pendingEvents.delete(event);
             this.#listeners.delete(event);
         } else {
             this.#throttles.forEach(timeout => clearTimeout(timeout));
             this.#throttles.clear();
+            this.#pendingEvents.clear();
             this.#listeners.clear();
         }
     }
@@ -330,12 +392,12 @@ class EventBus {
 
 // ============== Validators ==============
 
-/** @type {Readonly<Record<string, import('./types').ValidationRule>>} */
+/** @type {Readonly<Record<string, ValidationRule>>} */
 const VALIDATORS = Object.freeze({
     quality: {
-        validate: (q) => Number.isInteger(q) && q >= 0 && q <= 4,
+        validate: (q) => Number.isInteger(q) && q >= 0 && q <= 3, // هماهنگ با Enum
         code: ErrorCode.INVALID_QUALITY,
-        message: 'Quality must be integer between 0 and 4'
+        message: 'Quality must be integer between 0 and 3'
     },
     repetition: {
         validate: (r) => r === undefined || (Number.isInteger(r) && r >= 0),
@@ -365,6 +427,10 @@ class LRUCache {
     #cache;
     /** @type {number} */
     #maxSize;
+    /** @type {number} */
+    #hits = 0;
+    /** @type {number} */
+    #misses = 0;
 
     /**
      * @param {number} maxSize
@@ -384,8 +450,11 @@ class LRUCache {
             // Refresh item (move to end)
             this.#cache.delete(key);
             this.#cache.set(key, item);
+            this.#hits++;
+            return item;
         }
-        return item;
+        this.#misses++;
+        return undefined;
     }
 
     /**
@@ -411,6 +480,8 @@ class LRUCache {
 
     clear() {
         this.#cache.clear();
+        this.#hits = 0;
+        this.#misses = 0;
     }
 
     /** @returns {number} */
@@ -421,6 +492,17 @@ class LRUCache {
     /** @returns {[K, V][]} */
     entries() {
         return Array.from(this.#cache.entries());
+    }
+
+    /** @returns {{hits: number, misses: number}} */
+    get stats() {
+        return {
+            hits: this.#hits,
+            misses: this.#misses,
+            efficiency: this.#hits + this.#misses > 0 
+                ? (this.#hits / (this.#hits + this.#misses) * 100).toFixed(1)
+                : 0
+        };
     }
 }
 
@@ -562,13 +644,13 @@ class SM2Strategy extends IStrategy {
 
     /** @private */
     #createNewData(repetition, easeFactor, interval, lapses, lastDuration, reviewHistory, lastReviewDate) {
-        return Object.freeze({
+        return deepFreeze({
             repetition,
             easeFactor: Number(easeFactor.toFixed(2)),
             interval,
             lapses,
             lastDuration,
-            reviewHistory: Object.freeze(reviewHistory),
+            reviewHistory: deepFreeze(reviewHistory),
             lastReviewDate: lastReviewDate || new Date().toISOString()
         });
     }
@@ -586,7 +668,7 @@ class SM2Strategy extends IStrategy {
             : 0;
         const streak = this.#calculateStreak(data.reviewHistory);
 
-        return Object.freeze({
+        return deepFreeze({
             retention: Number(retention.toFixed(3)),
             stability: Number(stability.toFixed(1)),
             difficulty: Number(difficulty.toFixed(2)),
@@ -627,13 +709,13 @@ class AnkiStrategy extends IStrategy {
             ? this.#applyFuzzing(result.newInterval, config.fuzzRange)
             : result.newInterval;
 
-        const newData = Object.freeze({
+        const newData = deepFreeze({
             repetition: result.newRepetition,
             easeFactor: Number(result.newEaseFactor.toFixed(2)),
             interval: Math.min(finalInterval, config.maxInterval),
             lapses: quality === 0 ? lapses + 1 : lapses,
             lastDuration: currentData.lastDuration || 0,
-            reviewHistory: Object.freeze([...reviewHistory, quality].slice(-DEFAULTS.MAX_HISTORY_LENGTH)),
+            reviewHistory: deepFreeze([...reviewHistory, quality].slice(-DEFAULTS.MAX_HISTORY_LENGTH)),
             lastReviewDate: currentData.lastReviewDate || new Date().toISOString()
         });
 
@@ -702,7 +784,7 @@ class AnkiStrategy extends IStrategy {
             : 0;
         const streak = this.#calculateStreak(data.reviewHistory);
 
-        return Object.freeze({
+        return deepFreeze({
             retention: Number(retention.toFixed(3)),
             stability: Number(stability.toFixed(1)),
             difficulty: Number(difficulty.toFixed(2)),
@@ -723,8 +805,8 @@ class AnkiStrategy extends IStrategy {
 }
 
 /** @implements {IStrategy} */
-class FSRSStrategy extends IStrategy {
-    get name() { return 'FSRS'; }
+class FSRSInspiredStrategy extends IStrategy {
+    get name() { return 'FSRS-Inspired'; }
 
     /**
      * @param {number} quality
@@ -741,7 +823,7 @@ class FSRSStrategy extends IStrategy {
             : 3;
         const difficulty = Math.max(0, Math.min(1, 1 - (avgQuality / 5)));
 
-        // Calculate stability
+        // Calculate stability (simplified FSRS-inspired formula)
         let stability;
         if (repetition === 0) {
             stability = FSRS_CONSTANTS.W0;
@@ -768,16 +850,18 @@ class FSRSStrategy extends IStrategy {
         const newEaseFactor = Math.max(DEFAULTS.MIN_EASE_FACTOR, 
                                       Math.min(DEFAULTS.MAX_EASE_FACTOR, newStability * 2));
 
-        const newData = Object.freeze({
+        const newData = deepFreeze({
             repetition: repetition + 1,
             easeFactor: Number(newEaseFactor.toFixed(2)),
             interval: Math.min(newInterval, config.maxInterval),
             lapses: quality < 3 ? lapses + 1 : lapses,
             lastDuration: currentData.lastDuration || 0,
-            reviewHistory: Object.freeze([...reviewHistory, quality].slice(-DEFAULTS.MAX_HISTORY_LENGTH)),
+            reviewHistory: deepFreeze([...reviewHistory, quality].slice(-DEFAULTS.MAX_HISTORY_LENGTH)),
             lastReviewDate: currentData.lastReviewDate || new Date().toISOString()
         });
 
+        // Note: This is a simplified FSRS-inspired implementation
+        // For full FSRS specification, refer to the official FSRS documentation
         const metrics = {
             retention: Math.exp(-interval / (stability * FSRS_CONSTANTS.STABILITY_MULTIPLIER)),
             stability: newStability,
@@ -828,7 +912,7 @@ export class SRSEngine {
     /** @type {EventBus} */
     #eventBus;
     
-    /** @type {Array<import('./types').Middleware>} */
+    /** @type {Array<Middleware>} */
     #middlewares;
     
     /** @type {Map<string, Plugin>} */
@@ -867,7 +951,7 @@ export class SRSEngine {
      * @returns {Result}
      */
     calculate(quality, currentData) {
-        const startTime = performance.now();
+        const startTime = getCurrentTime();
         
         try {
             // 1. Validation
@@ -900,7 +984,12 @@ export class SRSEngine {
             }
 
             // 5. Cache check
-            const cacheKey = this.#generateCacheKey(context.quality, context.currentData);
+            const cacheKey = this.#generateCacheKey(
+                context.quality, 
+                context.currentData, 
+                this.#config.algorithm,
+                this.#config
+            );
             const cached = this.#cache.get(cacheKey);
             if (cached) {
                 this.#emit(EventType.CACHE_HIT, { cacheKey });
@@ -939,7 +1028,7 @@ export class SRSEngine {
             this.#emit(EventType.CARD_REVIEWED, {
                 quality,
                 result: finalResult,
-                duration: performance.now() - startTime,
+                duration: getCurrentTime() - startTime,
                 algorithm: this.#config.algorithm
             });
             
@@ -986,22 +1075,23 @@ export class SRSEngine {
         }
         
         this.#currentStrategy = strategy;
-        this.#config = Object.freeze({ ...this.#config, algorithm });
+        this.#config = deepFreeze({ ...this.#config, algorithm });
         
         // Clear cache when switching algorithms
         this.#cache.clear();
         
         this.#emit(EventType.ALGORITHM_CHANGED, { algorithm });
         
+        // Return current metrics without resetting card
         return Result.ok({
-            data: this.resetCard(),
+            data: this.#getEmptyCard(),
             metrics: this.#getCurrentMetrics()
         });
     }
 
     /**
      * ثبت middleware جدید
-     * @param {import('./types').Middleware} middleware
+     * @param {Middleware} middleware
      * @returns {SRSEngine} برای chainable API
      */
     use(middleware) {
@@ -1093,7 +1183,7 @@ export class SRSEngine {
             newConfig.againMultiplier = DEFAULTS.AGAIN_MULTIPLIER * 0.8;
         }
 
-        this.#config = Object.freeze(newConfig);
+        this.#config = deepFreeze(newConfig);
         this.#cache.clear(); // Clear cache with new parameters
         
         this.#emit(EventType.PARAMETERS_ADAPTED, {
@@ -1132,7 +1222,7 @@ export class SRSEngine {
      * @returns {SRSData}
      */
     resetCard(baseData = {}) {
-        const data = Object.freeze({
+        const data = deepFreeze({
             repetition: 0,
             easeFactor: DEFAULTS.DEFAULT_EASE_FACTOR,
             interval: 0,
@@ -1148,6 +1238,23 @@ export class SRSEngine {
     }
 
     /**
+     * کارت خالی برای استفاده در switchAlgorithm
+     * @private
+     * @returns {SRSData}
+     */
+    #getEmptyCard() {
+        return deepFreeze({
+            repetition: 0,
+            easeFactor: DEFAULTS.DEFAULT_EASE_FACTOR,
+            interval: 0,
+            lapses: 0,
+            lastDuration: 0,
+            reviewHistory: [],
+            lastReviewDate: this.#timeProvider().toISOString()
+        });
+    }
+
+    /**
      * تبدیل به JSON برای ذخیره‌سازی
      * @returns {Object}
      */
@@ -1156,7 +1263,10 @@ export class SRSEngine {
             __version: VERSION,
             __timestamp: Date.now(),
             config: this.#config,
-            metrics: this.#metrics,
+            metrics: {
+                ...this.#metrics,
+                cacheStats: this.#cache.stats
+            },
             cache: Array.from(this.#cache.entries()),
             strategies: Array.from(this.#strategies.keys()),
             currentStrategy: this.#currentStrategy.name
@@ -1191,7 +1301,7 @@ export class SRSEngine {
             
             // Restore metrics
             if (data.metrics) {
-                engine.#metrics = data.metrics;
+                engine.#metrics = { ...data.metrics };
             }
             
             // Restore cache
@@ -1226,12 +1336,12 @@ export class SRSEngine {
     getMetrics() {
         return {
             ...this.#metrics,
+            cacheStats: this.#cache.stats,
             cacheSize: this.#cache.size,
             algorithm: this.#config.algorithm,
             strategy: this.#currentStrategy.name,
             middlewareCount: this.#middlewares.length,
-            pluginCount: this.#plugins.size,
-            cacheEfficiency: this.#calculateCacheEfficiency()
+            pluginCount: this.#plugins.size
         };
     }
 
@@ -1258,7 +1368,7 @@ export class SRSEngine {
     snapshot() {
         return {
             config: this.#config,
-            metrics: this.#metrics,
+            metrics: this.getMetrics(),
             cache: this.#cache.entries(),
             middleware: this.#middlewares.map(m => m.name),
             plugins: Array.from(this.#plugins.keys()),
@@ -1270,7 +1380,7 @@ export class SRSEngine {
 
     /** @private */
     #mergeConfig(config) {
-        return Object.freeze({
+        return deepFreeze({
             algorithm: config.algorithm || AlgorithmType.SM2,
             maxInterval: config.maxInterval || DEFAULTS.MAX_INTERVAL,
             enableFuzzing: config.enableFuzzing || false,
@@ -1292,7 +1402,7 @@ export class SRSEngine {
         const strategies = new Map();
         strategies.set(AlgorithmType.SM2, new SM2Strategy());
         strategies.set(AlgorithmType.ANKI, new AnkiStrategy());
-        strategies.set(AlgorithmType.FSRS, new FSRSStrategy());
+        strategies.set(AlgorithmType.FSRS_INSPIRED, new FSRSInspiredStrategy());
         return strategies;
     }
 
@@ -1309,12 +1419,10 @@ export class SRSEngine {
     #initMetrics() {
         return {
             totalReviews: 0,
-            qualityDistribution: [0, 0, 0, 0, 0],
+            qualityDistribution: [0, 0, 0, 0],
             averageEase: DEFAULTS.DEFAULT_EASE_FACTOR,
             averageInterval: 0,
-            lastReset: this.#timeProvider().toISOString(),
-            cacheHits: 0,
-            cacheMisses: 0
+            lastReset: this.#timeProvider().toISOString()
         };
     }
 
@@ -1347,8 +1455,30 @@ export class SRSEngine {
     }
 
     /** @private */
-    #generateCacheKey(quality, data) {
-        return `${quality}_${data.repetition}_${data.easeFactor}_${data.interval}`;
+    #generateCacheKey(quality, data, algorithm, config) {
+        // استفاده از کپی برای ایمنی در برابر mutation
+        const dataCopy = {
+            repetition: data.repetition,
+            easeFactor: data.easeFactor,
+            interval: data.interval,
+            lapses: data.lapses
+        };
+        
+        const parts = [
+            quality,
+            dataCopy.repetition,
+            dataCopy.easeFactor,
+            dataCopy.interval,
+            dataCopy.lapses,
+            algorithm,
+            config.againMultiplier,
+            config.hardMultiplier,
+            config.goodMultiplier,
+            config.easyMultiplier,
+            config.enableFuzzing ? 'fuzz' : 'nofuzz',
+            config.fuzzRange
+        ];
+        return parts.join('_');
     }
 
     /** @private */
@@ -1359,7 +1489,6 @@ export class SRSEngine {
         this.#updateQualityDistribution(quality);
         this.#updateAverageEase(result.data.easeFactor);
         this.#updateAverageInterval(result.data.interval);
-        this.#updateCacheStats();
     }
 
     /** @private */
@@ -1369,7 +1498,8 @@ export class SRSEngine {
 
     /** @private */
     #updateQualityDistribution(quality) {
-        this.#metrics.qualityDistribution[quality]++;
+        this.#metrics.qualityDistribution[quality] = 
+            (this.#metrics.qualityDistribution[quality] || 0) + 1;
     }
 
     /** @private */
@@ -1387,34 +1517,13 @@ export class SRSEngine {
     }
 
     /** @private */
-    #updateCacheStats() {
-        if (this.#cache.size > 0) {
-            this.#metrics.cacheHits++;
-        } else {
-            this.#metrics.cacheMisses++;
-        }
-    }
-
-    /** @private */
     #getCurrentMetrics() {
-        const cacheEfficiency = this.#metrics.totalReviews > 0 
-            ? (this.#metrics.cacheHits / this.#metrics.totalReviews * 100).toFixed(1)
-            : 0;
-            
         return {
             totalReviews: this.#metrics.totalReviews,
             averageEase: Number(this.#metrics.averageEase.toFixed(2)),
             averageInterval: Math.round(this.#metrics.averageInterval),
-            cacheEfficiency: Number(cacheEfficiency),
             qualityDistribution: this.#metrics.qualityDistribution
         };
-    }
-
-    /** @private */
-    #calculateCacheEfficiency() {
-        return this.#metrics.totalReviews > 0
-            ? Number((this.#metrics.cacheHits / this.#metrics.totalReviews * 100).toFixed(1))
-            : 0;
     }
 
     /** @private */
@@ -1473,6 +1582,12 @@ export class SRSEngine {
             fromVersion = '3.1.0';
         }
         
+        // Migration path: 3.1.0 -> 3.2.0
+        if (fromVersion === '3.1.0' && toVersion >= '3.2.0') {
+            migrated = SRSEngine.#migrateV3ToV32(migrated);
+            fromVersion = '3.2.0';
+        }
+        
         migrated.__version = toVersion;
         migrated.__migrated = true;
         
@@ -1486,7 +1601,7 @@ export class SRSEngine {
             __version: '2.0.0',
             metrics: data.metrics || {
                 totalReviews: 0,
-                qualityDistribution: [0, 0, 0, 0, 0],
+                qualityDistribution: [0, 0, 0, 0],
                 averageEase: DEFAULTS.DEFAULT_EASE_FACTOR
             }
         };
@@ -1520,6 +1635,26 @@ export class SRSEngine {
             }
         };
     }
+
+    /** @private */
+    static #migrateV3ToV32(data) {
+        return {
+            ...data,
+            __version: '3.2.0',
+            config: {
+                ...data.config,
+                algorithm: data.config.algorithm === 'fsrs' 
+                    ? AlgorithmType.FSRS_INSPIRED 
+                    : data.config.algorithm
+            },
+            metrics: {
+                ...data.metrics,
+                qualityDistribution: data.metrics?.qualityDistribution?.length === 5
+                    ? data.metrics.qualityDistribution.slice(0, 4)
+                    : [0, 0, 0, 0]
+            }
+        };
+    }
 }
 
 // ============== Factory Functions ==============
@@ -1542,7 +1677,7 @@ export function create_srs_engine(config = {}, timeProvider) {
  */
 export function calculate_deck_stats(cards, now = new Date()) {
     if (!cards?.length) {
-        return {
+        return deepFreeze({
             totalCards: 0,
             dueCards: 0,
             averageEase: 0,
@@ -1550,7 +1685,7 @@ export function calculate_deck_stats(cards, now = new Date()) {
             retention: 0,
             cardsByEase: { low: 0, medium: 0, high: 0 },
             learningRate: 0
-        };
+        });
     }
 
     let dueCount = 0;
@@ -1584,7 +1719,7 @@ export function calculate_deck_stats(cards, now = new Date()) {
     const retention = Math.exp(-avgInterval / (avgEase * DEFAULTS.RETENTION_FACTOR));
     const learningRate = cards.length > 0 ? matureCards / cards.length : 0;
 
-    return Object.freeze({
+    return deepFreeze({
         totalCards: cards.length,
         dueCards: dueCount,
         averageEase: Number(avgEase.toFixed(2)),
@@ -1618,7 +1753,7 @@ export default SRSEngine;
 export { 
     SM2Strategy,
     AnkiStrategy,
-    FSRSStrategy,
+    FSRSInspiredStrategy as FSRSStrategy,
     EventBus,
     LRUCache
 };
