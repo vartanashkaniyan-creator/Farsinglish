@@ -1,191 +1,367 @@
 /**
- * صفحه اصلی (داشبورد)
- * مسئول: نمایش خلاصه پیشرفت، تعداد مرورهای امروز و هدایت کاربر
- * وابستگی: ReviewService, UserService, Router (تزریق شده)
- * بدون منطق تجاری – فقط نمایش و تعامل با کاربر
+ * @file home_screen.js
+ * @version 1.6.0
+ * @description Home Dashboard Screen (Balanced Architecture)
+ * JavaScript + Full JSDoc – Ready for TypeScript Migration
  */
 
-// ---------- ثابت‌های UI ----------
-const LOADING_MESSAGE = 'در حال بارگذاری...';
-const ERROR_GENERIC = 'خطا در دریافت اطلاعات';
-const DEFAULT_WELCOME = 'خوش آمدید!';
+/* =========================
+   Types & Constants
+========================= */
 
 /**
- * @typedef {Object} UserService
- * @property {function(string): Promise<Object>} getUser - دریافت اطلاعات کاربر
+ * @enum {string}
+ */
+export const ScreenState = {
+    LOADING: 'loading',
+    READY: 'ready',
+    ERROR: 'error'
+};
+
+/**
+ * @enum {string}
+ */
+export const ActionType = {
+    START_REVIEW: 'start-review',
+    BROWSE_LESSONS: 'browse-lessons',
+    RETRY: 'retry',
+    SHOW_PROFILE: 'show-profile'
+};
+
+/**
+ * @typedef {Object} UserData
+ * @property {string} id
+ * @property {string} name
+ * @property {number} level
+ */
+
+/**
+ * @typedef {Object} DashboardData
+ * @property {number} dueCount
+ * @property {UserData} user
  */
 
 /**
  * @typedef {Object} ReviewService
- * @property {function(string): Promise<number>} countDue - تعداد مرورهای امروز
- * @property {function(string, Object): Promise<Array>} getReviewsDue - دریافت لیست مرورها
+ * @property {(userId:string)=>Promise<number>} count_due
+ */
+
+/**
+ * @typedef {Object} UserService
+ * @property {(userId:string)=>Promise<Object>} get_user
  */
 
 /**
  * @typedef {Object} Router
- * @property {function(string): void} navigate - تغییر صفحه
+ * @property {(path:string)=>void} navigate
  */
 
-export class HomeScreen {
+/**
+ * @typedef {Object} AnalyticsService
+ * @property {(event:string, payload:Object)=>void} track
+ */
+
+/**
+ * @typedef {Object} ServiceDependencies
+ * @property {ReviewService} reviewService
+ * @property {UserService} userService
+ * @property {Router} router
+ * @property {AnalyticsService} [analytics]
+ */
+
+/**
+ * @typedef {Object} HomeScreenOptions
+ * @property {string} [userId]
+ */
+
+/* =========================
+   Templates (Pure / Stateless)
+========================= */
+
+const Templates = {
     /**
-     * @param {Object} deps - وابستگی‌های تزریق شده
-     * @param {ReviewService} deps.reviewService
-     * @param {UserService} deps.userService
-     * @param {Router} deps.router
+     * @returns {string}
      */
-    constructor(deps) {
-        const { reviewService, userService, router } = deps || {};
-
-        if (!reviewService) throw new Error('reviewService is required');
-        if (!userService) throw new Error('userService is required');
-        if (!router) throw new Error('router is required');
-
-        this._reviewService = reviewService;
-        this._userService = userService;
-        this._router = router;
-        this._container = null;
-        this._currentUserId = null;
-    }
-
-    /**
-     * رندر صفحه اصلی در المان container
-     * @param {HTMLElement} container - المان والد
-     * @param {string} userId - شناسه کاربر جاری
-     */
-    async render(container, userId) {
-        if (!container) throw new Error('container is required');
-        if (!userId) throw new Error('userId is required');
-
-        this._container = container;
-        this._currentUserId = userId;
-
-        await this._loadAndRender();
-    }
-
-    /** @private */
-    async _loadAndRender() {
-        this._showLoading();
-
-        try {
-            const [dueCount, user] = await Promise.all([
-                this._reviewService.countDue(this._currentUserId),
-                this._userService.getUser(this._currentUserId)
-            ]);
-
-            const html = this._buildHTML({ dueCount, user });
-            this._container.innerHTML = html;
-            this._attachEvents();
-        } catch (error) {
-            console.error('[HomeScreen] Failed to load data:', error);
-            this._showError(error.message || ERROR_GENERIC);
-        }
-    }
-
-    /** @private */
-    _showLoading() {
-        this._container.innerHTML = `<div class="loading">${LOADING_MESSAGE}</div>`;
-    }
-
-    /** @private */
-    _showError(message) {
-        this._container.innerHTML = `
-            <div class="error-container">
-                <p class="error-message">${message}</p>
-                <button class="btn btn-primary" data-action="retry">تلاش مجدد</button>
+    loading() {
+        return `
+            <div class="home loading" role="status">
+                <p>در حال بارگذاری...</p>
             </div>
         `;
-        this._attachRetry();
-    }
+    },
 
-    /** @private */
-    _attachRetry() {
-        const retryBtn = this._container.querySelector('[data-action="retry"]');
-        if (retryBtn) {
-            retryBtn.addEventListener('click', () => this._loadAndRender());
-        }
-    }
+    /**
+     * @param {string} message
+     * @returns {string}
+     */
+    error(message) {
+        return `
+            <div class="home error" role="alert">
+                <p>${message}</p>
+                <button data-action="${ActionType.RETRY}" class="btn btn-primary">
+                    تلاش مجدد
+                </button>
+            </div>
+        `;
+    },
 
-    /** @private */
-    _buildHTML(data) {
-        const { dueCount, user } = data;
-        const userName = user?.name || DEFAULT_WELCOME;
-        const level = user?.level || 1;
-        const xp = user?.xp || 0;
-        const nextLevelXp = user?.nextLevelXp || 100;
-
-        const xpProgress = Math.min(100, (xp / nextLevelXp) * 100);
-        const dueBadge = dueCount > 0 
-            ? `<span class="badge badge-warning">${dueCount} نیاز به مرور</span>`
-            : '<span class="badge badge-success">همه درس‌ها به‌روزند</span>';
+    /**
+     * @param {DashboardData} data
+     * @returns {string}
+     */
+    dashboard(data) {
+        const hasDue = data.dueCount > 0;
 
         return `
-            <div class="home-screen">
+            <div class="home ready" role="main">
                 <header class="home-header">
-                    <h1>${userName}</h1>
-                    <p>سطح ${level} · امتیاز ${xp}</p>
-                    ${dueBadge}
+                    <h1>${data.user.name}</h1>
+                    <span class="level-badge">سطح ${data.user.level}</span>
                 </header>
 
-                <div class="progress-section">
-                    <div class="progress-label">
-                        <span>پیشرفت تا سطح ${level + 1}</span>
-                        <span>${xp} / ${nextLevelXp}</span>
-                    </div>
-                    <div class="progress-bar-container">
-                        <div class="progress-bar-fill" style="width: ${xpProgress}%;"></div>
-                    </div>
-                </div>
+                <section class="due-section">
+                    ${
+                        hasDue
+                            ? `📚 ${data.dueCount} مرور در انتظار`
+                            : '✅ همه درس‌ها به‌روز هستند'
+                    }
+                </section>
 
-                <div class="action-buttons">
-                    <button class="btn btn-large btn-primary" data-action="start-review">
-                        ${dueCount > 0 ? 'شروع مرور' : 'مرور جدیدی نیست'}
+                <section class="actions">
+                    <button
+                        data-action="${ActionType.START_REVIEW}"
+                        class="btn btn-primary"
+                        ${!hasDue ? 'disabled aria-disabled="true"' : ''}
+                    >
+                        شروع مرور
                     </button>
-                    <button class="btn btn-outline" data-action="browse-lessons">
+
+                    <button
+                        data-action="${ActionType.BROWSE_LESSONS}"
+                        class="btn btn-outline"
+                    >
                         همه درس‌ها
                     </button>
-                </div>
+                </section>
 
-                ${dueCount > 0 ? `
-                    <div class="tip-card">
-                        <p>✨ امروز ${dueCount} درس برای مرور داری. هرچه زودتر شروع کنی، بهتر یاد می‌گیری!</p>
-                    </div>
-                ` : ''}
+                <button
+                    data-action="${ActionType.SHOW_PROFILE}"
+                    class="btn-icon"
+                    aria-label="پروفایل"
+                >
+                    👤
+                </button>
             </div>
         `;
     }
+};
 
-    /** @private */
-    _attachEvents() {
-        const startBtn = this._container.querySelector('[data-action="start-review"]');
-        const browseBtn = this._container.querySelector('[data-action="browse-lessons"]');
+/* =========================
+   Base Screen
+========================= */
 
-        if (startBtn) {
-            startBtn.addEventListener('click', () => {
-                this._router.navigate('/review');
-            });
+/**
+ * @abstract
+ */
+class BaseScreen {
+    /**
+     * @param {HTMLElement} container
+     */
+    constructor(container) {
+        if (!container) throw new Error('container is required');
+
+        /** @protected */
+        this.container = container;
+
+        /** @protected @type {ScreenState} */
+        this.state = ScreenState.LOADING;
+
+        /** @private */
+        this._handlers = new Map();
+
+        this._onClick = this._onClick.bind(this);
+        container.addEventListener('click', this._onClick);
+    }
+
+    /**
+     * @param {ActionType} action
+     * @param {(e:Event)=>void} handler
+     */
+    on(action, handler) {
+        this._handlers.set(action, handler);
+    }
+
+    /**
+     * @param {string} html
+     */
+    render(html) {
+        this.container.innerHTML = html;
+    }
+
+    /**
+     * @param {Event} e
+     * @private
+     */
+    _onClick(e) {
+        const el = /** @type {HTMLElement} */ (e.target).closest('[data-action]');
+        if (!el) return;
+
+        const action = el.dataset.action;
+        const handler = this._handlers.get(action);
+        if (handler) handler(e);
+    }
+
+    destroy() {
+        this.container.removeEventListener('click', this._onClick);
+        this.container.innerHTML = '';
+        this._handlers.clear();
+    }
+}
+
+/* =========================
+   Home Screen
+========================= */
+
+export class HomeScreen extends BaseScreen {
+    /**
+     * @param {HTMLElement} container
+     * @param {ServiceDependencies} deps
+     * @param {HomeScreenOptions} [options]
+     */
+    constructor(container, deps, options = {}) {
+        super(container);
+
+        if (!deps.reviewService || !deps.userService || !deps.router) {
+            throw new Error('Missing required dependencies');
         }
 
-        if (browseBtn) {
-            browseBtn.addEventListener('click', () => {
-                this._router.navigate('/lessons');
+        /** @private */
+        this.reviewService = deps.reviewService;
+
+        /** @private */
+        this.userService = deps.userService;
+
+        /** @private */
+        this.router = deps.router;
+
+        /** @private */
+        this.analytics = deps.analytics;
+
+        /** @private */
+        this.userId = options.userId || null;
+
+        /** @private @type {DashboardData|null} */
+        this.data = null;
+
+        this._registerActions();
+    }
+
+    /**
+     * @private
+     */
+    _registerActions() {
+        this.on(ActionType.START_REVIEW, () => {
+            this.analytics?.track?.('review_start', { userId: this.userId });
+            this.router.navigate('/review');
+        });
+
+        this.on(ActionType.BROWSE_LESSONS, () => {
+            this.router.navigate('/lessons');
+        });
+
+        this.on(ActionType.RETRY, () => {
+            this.load();
+        });
+
+        this.on(ActionType.SHOW_PROFILE, () => {
+            this.router.navigate('/profile');
+        });
+    }
+
+    /**
+     * @param {string} [userId]
+     * @returns {Promise<void>}
+     */
+    async load(userId) {
+        if (userId) this.userId = userId;
+        if (!this.userId) throw new Error('userId is required');
+
+        this.state = ScreenState.LOADING;
+        this.render(Templates.loading());
+
+        try {
+            const [dueCount, rawUser] = await Promise.all([
+                this.reviewService.count_due(this.userId),
+                this.userService.get_user(this.userId)
+            ]);
+
+            this.data = {
+                dueCount,
+                user: this._normalizeUser(rawUser)
+            };
+
+            this.state = ScreenState.READY;
+            this.render(Templates.dashboard(this.data));
+
+            this.analytics?.track?.('dashboard_loaded', {
+                userId: this.userId,
+                dueCount
             });
+        } catch (err) {
+            this._handleError(err);
         }
     }
 
     /**
-     * پاکسازی منابع (در صورت نیاز)
+     * @param {Partial<DashboardData>} partial
      */
+    update(partial) {
+        if (!this.data || this.state !== ScreenState.READY) return;
+
+        this.data = { ...this.data, ...partial };
+        this.render(Templates.dashboard(this.data));
+    }
+
+    /**
+     * @param {Object} user
+     * @returns {UserData}
+     * @private
+     */
+    _normalizeUser(user) {
+        return {
+            id: String(user?.id || ''),
+            name: user?.name || 'کاربر',
+            level: Number(user?.level) || 1
+        };
+    }
+
+    /**
+     * @param {Error} error
+     * @private
+     */
+    _handleError(error) {
+        this.state = ScreenState.ERROR;
+
+        console.error('[HomeScreen]', error);
+        this.analytics?.track?.('dashboard_error', {
+            userId: this.userId,
+            message: error.message
+        });
+
+        this.render(Templates.error('خطا در دریافت اطلاعات'));
+    }
+
     destroy() {
-        // برای جلوگیری از memory leak
-        if (this._container) {
-            this._container.innerHTML = '';
-        }
-        this._container = null;
-        this._currentUserId = null;
+        this.analytics?.track?.('dashboard_closed', { userId: this.userId });
+        super.destroy();
+
+        this.reviewService = null;
+        this.userService = null;
+        this.router = null;
+        this.analytics = null;
+        this.userId = null;
+        this.data = null;
     }
 }
 
-// ---------- واحد تست ساده (برای مرورگر) ----------
-if (typeof window !== 'undefined' && window.VITEST) {
-    window.__HOME_SCREEN__ = { HomeScreen };
-}
+export default HomeScreen;
