@@ -1,165 +1,237 @@
 /**
  * کامپوننت نوار پیشرفت
- * مسئول: نمایش درصد پیشرفت به صورت نوار افقی
- * بدون وابستگی خارجی – کاملاً مستقل و قابل استفاده مجدد
+ * @module progress-bar
+ * @version 2.2.0
  */
 
-// ---------- ثابت‌های ظاهری ----------
-const DEFAULT_HEIGHT = '8px';
-const DEFAULT_BACKGROUND = '#e0e0e0';
-const DEFAULT_FILL_COLOR = '#4caf50';
-const DEFAULT_ANIMATION_DURATION = '0.3s';
-const MIN_PERCENT = 0;
-const MAX_PERCENT = 100;
+const DEFAULTS = {
+    HEIGHT: '8px',
+    BACKGROUND_COLOR: '#e0e0e0',
+    FILL_COLOR: '#4caf50',
+    ANIMATION_DURATION: '0.3s',
+    BORDER_RADIUS: '4px',
+    LABEL_FONT: '12px sans-serif',
+    LABEL_COLOR: '#000000',
+    MIN_PERCENT: 0,
+    MAX_PERCENT: 100
+};
+
+const SUPPORTED_EVENTS = ['complete', 'update', 'destroy'];
 
 export class ProgressBar {
-    /**
-     * @param {Object} options - تنظیمات اولیه
-     * @param {string} [options.height] - ارتفاع نوار (مثل '8px')
-     * @param {string} [options.backgroundColor] - رنگ پس‌زمینه
-     * @param {string} [options.fillColor] - رنگ نوار پیشرفت
-     * @param {boolean} [options.animated] - آیا انیمیشن داشته باشد؟
-     * @param {boolean} [options.showLabel] - نمایش درصد به صورت متن؟
-     */
-    constructor(options = {}) {
-        this._options = {
-            height: options.height || DEFAULT_HEIGHT,
-            backgroundColor: options.backgroundColor || DEFAULT_BACKGROUND,
-            fillColor: options.fillColor || DEFAULT_FILL_COLOR,
-            animated: options.animated ?? true,
-            showLabel: options.showLabel ?? false
-        };
+    #options;
+    #element;
+    #fillElement;
+    #labelElement;
+    #state;
+    #eventListeners;
+    #instanceId;
 
-        this._element = null;
-        this._fillElement = null;
-        this._labelElement = null;
-        this._currentPercent = 0;
+    constructor(userConfig = {}) {
+        this.#instanceId = `progress-bar-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+        this.#options = this.#mergeWithDefaults(userConfig);
+        this.#element = null;
+        this.#fillElement = null;
+        this.#labelElement = null;
+        this.#state = { mounted: false, lastUpdate: Date.now(), currentPercent: 0, elementId: this.#instanceId };
+        this.#eventListeners = new Map();
+        SUPPORTED_EVENTS.forEach(e => this.#eventListeners.set(e, []));
+        this.update = this.update.bind(this);
+        this.destroy = this.destroy.bind(this);
+        this.reset = this.reset.bind(this);
     }
 
-    /**
-     * رندر نوار پیشرفت
-     * @param {number} percent - درصد پیشرفت (۰ تا ۱۰۰)
-     * @param {Object} [options] - تنظیمات موقت (جایگزین تنظیمات سازنده)
-     * @returns {HTMLElement} - المان نوار پیشرفت
-     */
-    render(percent = 0, options = {}) {
-        this._validatePercent(percent);
-        this._currentPercent = percent;
+    get percent() { return this.#state.currentPercent; }
+    get isMounted() { return this.#state.mounted; }
+    get id() { return this.#instanceId; }
 
-        // ادغام تنظیمات
-        const config = { ...this._options, ...options };
+    render(initialPercent = 0, renderConfig = {}) {
+        const validation = this.#validatePercent(initialPercent);
+        if (!validation.valid && !this.#options.silent) throw new Error(`[ProgressBar] ${validation.error}`);
+        const config = this.#mergeConfigs(renderConfig);
+        this.#state.currentPercent = this.#clampPercent(initialPercent);
+        const elements = this.#createElements(config);
+        this.#element = elements.container;
+        this.#fillElement = elements.fill;
+        this.#labelElement = elements.label;
+        this.#applyStyles(config);
+        if (config.className) this.#element.classList.add(...config.className.split(' '));
+        this.#state.mounted = true;
+        this.#state.lastUpdate = Date.now();
 
-        // ایجاد المان اصلی
+        // WAI-ARIA
+        this.#element.setAttribute('role', 'progressbar');
+        this.#element.setAttribute('aria-valuemin', DEFAULTS.MIN_PERCENT);
+        this.#element.setAttribute('aria-valuemax', DEFAULTS.MAX_PERCENT);
+        this.#element.setAttribute('aria-valuenow', this.#state.currentPercent);
+        this.#element.setAttribute('aria-valuetext', `${this.#state.currentPercent}%`);
+
+        if (this.#state.currentPercent === DEFAULTS.MAX_PERCENT) this.#emit('complete', this.#state.currentPercent);
+
+        return this.#element;
+    }
+
+    update(percent, updateConfig = {}) {
+        if (!this.#state.mounted || !this.#fillElement) {
+            if (this.#options.silent) return false;
+            throw new Error('[ProgressBar] Cannot update: component not rendered');
+        }
+        const validation = this.#validatePercent(percent);
+        if (!validation.valid) {
+            if (this.#options.silent) { console.warn(`[ProgressBar] ${validation.error}`); return false; }
+            throw new Error(`[ProgressBar] ${validation.error}`);
+        }
+
+        const clampedPercent = this.#clampPercent(percent);
+        const oldPercent = this.#state.currentPercent;
+        if (oldPercent === clampedPercent && Object.keys(updateConfig).length === 0) return true;
+
+        this.#state.currentPercent = clampedPercent;
+        this.#state.lastUpdate = Date.now();
+        const config = this.#mergeConfigs(updateConfig);
+        this.#applyStyles(config);
+        this.#fillElement.style.width = `${clampedPercent}%`;
+        if (this.#labelElement) this.#labelElement.textContent = `${Math.round(clampedPercent)}%`;
+
+        // WAI-ARIA update
+        if (this.#element) {
+            this.#element.setAttribute('aria-valuenow', clampedPercent);
+            this.#element.setAttribute('aria-valuetext', `${clampedPercent}%`);
+        }
+
+        // RTL label overflow fix
+        if (this.#labelElement) {
+            this.#labelElement.style.maxWidth = 'calc(100% - 16px)';
+            this.#labelElement.style.overflow = 'hidden';
+            this.#labelElement.style.textOverflow = 'ellipsis';
+        }
+
+        this.#emit('update', { oldPercent, newPercent: clampedPercent, timestamp: this.#state.lastUpdate });
+        if (clampedPercent === DEFAULTS.MAX_PERCENT && oldPercent !== DEFAULTS.MAX_PERCENT) {
+            this.#emit('complete', clampedPercent);
+            if (typeof config.onComplete === 'function') config.onComplete(clampedPercent);
+        }
+        return true;
+    }
+
+    setColors({ fill, background }) {
+        if (fill) { this.#options.fillColor = fill; if (this.#fillElement) this.#fillElement.style.backgroundColor = fill; }
+        if (background) { this.#options.backgroundColor = background; if (this.#element) this.#element.style.backgroundColor = background; }
+        return this;
+    }
+
+    reset(silent = false) {
+        if (!this.#state.mounted) return false;
+        const success = this.update(0, { animated: false });
+        if (success && !silent) this.#emit('reset', { timestamp: Date.now() });
+        return success;
+    }
+
+    on(event, callback) {
+        if (!SUPPORTED_EVENTS.includes(event) && event !== 'reset') { console.warn(`[ProgressBar] Unsupported event: ${event}`); return this; }
+        if (!this.#eventListeners.has(event)) this.#eventListeners.set(event, []);
+        this.#eventListeners.get(event).push(callback);
+        return this;
+    }
+
+    off(event, callback) {
+        if (!this.#eventListeners.has(event)) return this;
+        if (callback) {
+            const listeners = this.#eventListeners.get(event);
+            const index = listeners.indexOf(callback);
+            if (index !== -1) listeners.splice(index, 1);
+        } else this.#eventListeners.set(event, []);
+        return this;
+    }
+
+    destroy() {
+        if (this.#element?.parentNode) this.#element.parentNode.removeChild(this.#element);
+        this.#element = this.#fillElement = this.#labelElement = null;
+        this.#state.mounted = false;
+        this.#state.lastUpdate = Date.now();
+        this.#eventListeners.clear();
+        this.#emit('destroy', { instanceId: this.#instanceId });
+    }
+
+    getState() { return { ...this.#state }; }
+
+    #mergeWithDefaults(config) {
+        return {
+            height: config.height || DEFAULTS.HEIGHT,
+            backgroundColor: config.backgroundColor || DEFAULTS.BACKGROUND_COLOR,
+            fillColor: config.fillColor || DEFAULTS.FILL_COLOR,
+            animated: config.animated ?? true,
+            showLabel: config.showLabel ?? false,
+            className: config.className || '',
+            onComplete: config.onComplete || null,
+            direction: config.direction || 'ltr',
+            borderRadius: config.borderRadius || DEFAULTS.BORDER_RADIUS,
+            silent: config.silent ?? false,
+            labelStyles: {
+                color: config.labelStyles?.color || DEFAULTS.LABEL_COLOR,
+                font: config.labelStyles?.font || DEFAULTS.LABEL_FONT,
+                textShadow: config.labelStyles?.textShadow || 'none'
+            }
+        };
+    }
+
+    #mergeConfigs(newConfig) {
+        return { ...this.#options, ...newConfig, labelStyles: { ...this.#options.labelStyles, ...(newConfig.labelStyles || {}) } };
+    }
+
+    #createElements(config) {
         const container = document.createElement('div');
         container.className = 'progress-bar-container';
-        container.style.height = config.height;
-        container.style.backgroundColor = config.backgroundColor;
-        container.style.borderRadius = '4px';
-        container.style.overflow = 'hidden';
-        container.style.position = 'relative';
+        container.dataset.testid = 'progress-bar';
+        container.dataset.instance = this.#instanceId;
 
-        // ایجاد نوار پرکننده
         const fill = document.createElement('div');
         fill.className = 'progress-bar-fill';
-        fill.style.width = `${percent}%`;
-        fill.style.height = '100%';
-        fill.style.backgroundColor = config.fillColor;
-        fill.style.borderRadius = '4px';
-        fill.style.transition = config.animated 
-            ? `width ${DEFAULT_ANIMATION_DURATION} ease` 
-            : 'none';
-        
-        // ایجاد برچسب درصد (در صورت نیاز)
+        fill.dataset.testid = 'progress-bar-fill';
+
         let label = null;
         if (config.showLabel) {
             label = document.createElement('span');
             label.className = 'progress-bar-label';
-            label.textContent = `${Math.round(percent)}%`;
-            label.style.position = 'absolute';
-            label.style.right = '8px';
-            label.style.top = '50%';
-            label.style.transform = 'translateY(-50%)';
-            label.style.color = '#000';
-            label.style.fontSize = '12px';
-            label.style.fontWeight = 'bold';
-            label.style.textShadow = '0 1px 2px rgba(255,255,255,0.5)';
-            container.style.position = 'relative';
+            label.dataset.testid = 'progress-bar-label';
+            label.textContent = `${Math.round(this.#state.currentPercent)}%`;
         }
-
-        // اضافه کردن به DOM
-        container.appendChild(fill);
-        if (label) {
-            container.appendChild(label);
-            this._labelElement = label;
-        }
-
-        this._element = container;
-        this._fillElement = fill;
-
-        return container;
+        return { container, fill, label };
     }
 
-    /**
-     * به‌روزرسانی درصد پیشرفت
-     * @param {number} percent - درصد جدید (۰ تا ۱۰۰)
-     * @param {Object} [options] - تنظیمات موقت برای این به‌روزرسانی
-     */
-    update(percent, options = {}) {
-        if (!this._fillElement) {
-            console.warn('[ProgressBar] Cannot update: not rendered yet');
-            return;
-        }
+    #applyStyles(config) {
+        if (!this.#element || !this.#fillElement) return;
+        Object.assign(this.#element.style, { height: config.height, backgroundColor: config.backgroundColor, borderRadius: config.borderRadius, overflow: 'hidden', position: 'relative', direction: config.direction });
+        Object.assign(this.#fillElement.style, { width: `${this.#state.currentPercent}%`, height: '100%', backgroundColor: config.fillColor, borderRadius: config.borderRadius, transition: config.animated ? `width ${DEFAULTS.ANIMATION_DURATION} ease-in-out` : 'none', willChange: config.animated ? 'width' : 'auto' });
 
-        this._validatePercent(percent);
-        this._currentPercent = percent;
-
-        const config = { ...this._options, ...options };
-        const width = `${percent}%`;
-
-        // به‌روزرسانی عرض
-        this._fillElement.style.width = width;
-        this._fillElement.style.transition = config.animated 
-            ? `width ${DEFAULT_ANIMATION_DURATION} ease` 
-            : 'none';
-
-        // به‌روزرسانی برچسب
-        if (this._labelElement) {
-            this._labelElement.textContent = `${Math.round(percent)}%`;
+        if (this.#labelElement) {
+            const labelStyles = { position: 'absolute', top: '50%', transform: 'translateY(-50%)', color: config.labelStyles.color, font: config.labelStyles.font, textShadow: config.labelStyles.textShadow, pointerEvents: 'none', userSelect: 'none', whiteSpace: 'nowrap', maxWidth: 'calc(100% - 16px)', overflow: 'hidden', textOverflow: 'ellipsis' };
+            if (config.direction === 'rtl') labelStyles.left = '8px'; else labelStyles.right = '8px';
+            Object.assign(this.#labelElement.style, labelStyles);
         }
     }
 
-    /**
-     * دریافت درصد فعلی
-     * @returns {number}
-     */
-    getPercent() {
-        return this._currentPercent;
+    #validatePercent(percent) {
+        const result = { valid: true, error: null };
+        if (percent === null || percent === undefined) { result.valid = false; result.error = 'Percent cannot be null or undefined'; }
+        else if (typeof percent !== 'number') { result.valid = false; result.error = `Percent must be a number, got ${typeof percent}`; }
+        else if (isNaN(percent)) { result.valid = false; result.error = 'Percent cannot be NaN'; }
+        else if (!isFinite(percent)) { result.valid = false; result.error = 'Percent must be finite'; }
+        else if (percent < DEFAULTS.MIN_PERCENT || percent > DEFAULTS.MAX_PERCENT) { result.valid = false; result.error = `Percent must be between ${DEFAULTS.MIN_PERCENT} and ${DEFAULTS.MAX_PERCENT}`; }
+        return result;
     }
 
-    /**
-     * پاکسازی و حذف المان
-     */
-    destroy() {
-        if (this._element) {
-            this._element.remove();
-            this._element = null;
-            this._fillElement = null;
-            this._labelElement = null;
-        }
-    }
+    #clampPercent(percent) { return Math.min(DEFAULTS.MAX_PERCENT, Math.max(DEFAULTS.MIN_PERCENT, percent)); }
 
-    /** @private */
-    _validatePercent(percent) {
-        if (typeof percent !== 'number' || isNaN(percent)) {
-            throw new Error('Percent must be a number');
-        }
-        if (percent < MIN_PERCENT || percent > MAX_PERCENT) {
-            throw new Error(`Percent must be between ${MIN_PERCENT} and ${MAX_PERCENT}`);
-        }
+    #emit(event, data) {
+        if (!this.#eventListeners.has(event)) return;
+        this.#eventListeners.get(event).forEach(cb => { try { cb(data); } catch (err) { console.error(`[ProgressBar] Error in ${event} listener:`, err); } });
     }
 }
 
-// ---------- واحد تست ساده (برای مرورگر) ----------
-if (typeof window !== 'undefined' && window.VITEST) {
-    window.__PROGRESS_BAR__ = { ProgressBar };
-}
+// استاتیک
+ProgressBar.create = (config = {}) => new ProgressBar(config);
+ProgressBar.defaults = { ...DEFAULTS };
+ProgressBar.events = [...SUPPORTED_EVENTS, 'reset'];
+if (typeof window !== 'undefined' && window.VITEST) window.__PROGRESS_BAR_V2__ = { ProgressBar };
+export default ProgressBar;
