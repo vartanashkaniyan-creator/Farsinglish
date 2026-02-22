@@ -1,19 +1,19 @@
-// features/lesson/events/lesson_events.js
 
 /**
- * @typedef {function} lesson_event_listener
+ * @callback lesson_event_listener
  * @template T
  * @param {T} data - داده‌ای که هنگام انتشار رویداد ارسال می‌شود
+ * @returns {void|Promise<void>}
  */
 
 /**
- * @enum {string} نام رویدادهای درس
+ * @enum {string} نام رویدادهای Lesson
  */
 export const LESSON_EVENTS = Object.freeze({
-    LOADED: 'lesson:loaded',
-    STARTED: 'lesson:started',
-    COMPLETED: 'lesson:completed',
-    ERROR: 'lesson:error'
+    LOADED: 'lesson_loaded',
+    STARTED: 'lesson_started',
+    COMPLETED: 'lesson_completed',
+    ERROR: 'lesson_error'
 });
 
 /**
@@ -84,21 +84,31 @@ export class LessonEventBus {
      * انتشار رویداد با داده
      * @param {string} event_name
      * @param {any} data
+     * @returns {Promise<void[]>} resolves وقتی همه listenerها اجرا شدند
      */
-    emit(event_name, data) {
-        if (!this.listeners[event_name]) return;
+    async emit(event_name, data) {
+        const promises = [];
 
-        try {
-            this.listeners[event_name].forEach((cb) => cb(data));
-        } catch (error) {
-            this.logger.error(`error emitting event "${event_name}":`, error);
-        }
+        (this.listeners[event_name] || []).forEach((cb) => {
+            try {
+                const result = cb(data);
+                if (result instanceof Promise) {
+                    promises.push(result.catch((err) => this.logger.error(err)));
+                }
+            } catch (error) {
+                this.logger.error(error);
+            }
+        });
+
+        return Promise.allSettled(promises);
     }
 
     /**
-     * پاکسازی همه listenerها (مثلاً برای تست)
+     * پاکسازی همه listenerها (async-safe)
      */
     clear() {
-        this.listeners = {};
+        Object.keys(this.listeners).forEach((key) => {
+            this.listeners[key] = [];
+        });
     }
 }
