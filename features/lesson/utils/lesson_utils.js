@@ -1,4 +1,5 @@
-// features/lesson/utils/lesson_utils.js
+
+import { PERFORMANCE_LEVELS } from '../constants.js';
 
 /**
  * @typedef {Object} ValidationResult
@@ -7,70 +8,57 @@
  */
 
 /**
- * Enum برای سطح عملکرد
- */
-export const PERFORMANCE_LEVELS = Object.freeze({
-    EXCELLENT: 'excellent',
-    GOOD: 'good',
-    FAIR: 'fair',
-    POOR: 'poor'
-});
-
-/**
- * اعتبارسنجی داده‌های درس
+ * اعتبارسنجی پیشرفته داده‌های درس
  * @param {Object} lesson_data
  * @returns {ValidationResult}
  */
 export const validate_lesson_data = (lesson_data) => {
     const errors = [];
     if (!lesson_data?.id) errors.push('lesson id required');
+    else if (typeof lesson_data.id !== 'string') errors.push('lesson id must be string');
+
     if (!lesson_data?.title) errors.push('title required');
-    if (!lesson_data?.exercises || !Array.isArray(lesson_data.exercises)) errors.push('exercises must be an array');
+    else if (typeof lesson_data.title !== 'string') errors.push('title must be string');
+
+    if (!lesson_data?.exercises) errors.push('exercises required');
+    else if (!Array.isArray(lesson_data.exercises)) errors.push('exercises must be an array');
+
     return { is_valid: errors.length === 0, errors };
 };
 
 /**
- * تبدیل امتیاز به سطح عملکرد
- * @param {number} score
- * @returns {string} performance level (enum)
- */
-export const get_performance_level = (score) => {
-    if (score >= 90) return PERFORMANCE_LEVELS.EXCELLENT;
-    if (score >= 70) return PERFORMANCE_LEVELS.GOOD;
-    if (score >= 50) return PERFORMANCE_LEVELS.FAIR;
-    return PERFORMANCE_LEVELS.POOR;
-};
-
-/**
- * محاسبه فاصله Levenshtein بین دو رشته
+ * محاسبه فاصله Levenshtein بهینه بین دو رشته
  * @param {string} a
  * @param {string} b
- * @returns {number} فاصله
+ * @returns {number}
  */
 export const levenshtein_distance = (a = '', b = '') => {
-    const matrix = Array.from({ length: b.length + 1 }, () => Array(a.length + 1).fill(0));
+    if (a === b) return 0;
+    if (!a.length) return b.length;
+    if (!b.length) return a.length;
 
-    for (let i = 0; i <= b.length; i++) matrix[i][0] = i;
-    for (let j = 0; j <= a.length; j++) matrix[0][j] = j;
+    const prev_row = Array(b.length + 1).fill(0);
+    const curr_row = Array(b.length + 1).fill(0);
 
-    for (let i = 1; i <= b.length; i++) {
-        for (let j = 1; j <= a.length; j++) {
-            const cost = b[i - 1] === a[j - 1] ? 0 : 1;
-            matrix[i][j] = Math.min(
-                matrix[i - 1][j] + 1,       // حذف
-                matrix[i][j - 1] + 1,       // درج
-                matrix[i - 1][j - 1] + cost // جایگزینی
-            );
+    for (let j = 0; j <= b.length; j++) prev_row[j] = j;
+
+    for (let i = 1; i <= a.length; i++) {
+        curr_row[0] = i;
+        for (let j = 1; j <= b.length; j++) {
+            const cost = a[i - 1] === b[j - 1] ? 0 : 1;
+            curr_row[j] = Math.min(curr_row[j - 1] + 1, prev_row[j] + 1, prev_row[j - 1] + cost);
         }
+        for (let j = 0; j <= b.length; j++) prev_row[j] = curr_row[j];
     }
-    return matrix[b.length][a.length];
+
+    return curr_row[b.length];
 };
 
 /**
  * محاسبه درصد شباهت بین دو رشته
  * @param {string} a
  * @param {string} b
- * @returns {number} درصد شباهت (0 تا 100)
+ * @returns {number} درصد شباهت (0-100)
  */
 export const similarity_percentage = (a = '', b = '') => {
     const distance = levenshtein_distance(a, b);
@@ -79,10 +67,8 @@ export const similarity_percentage = (a = '', b = '') => {
 };
 
 /**
- * پاکسازی رشته از کاراکترهای خطرناک (XSS)
+ * پاکسازی رشته از کاراکترهای خطرناک
  * @param {string} input
  * @returns {string}
  */
-export const sanitize_input = (input = '') => {
-    return input.replace(/[<>\/"'`]/g, ''); // ساده، برای پروژه بزرگ توصیه به DOMPurify
-};
+export const sanitize_input = (input = '') => input.replace(/[<>\/"'`]/g, '');
