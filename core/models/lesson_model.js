@@ -1,173 +1,205 @@
 // core/models/lesson_model.js
-import { generate_uuid } from '../utils/utils.js';
-
-/** @readonly @enum {string} */
-export const LessonEvents = {
-  UPDATED: 'lesson:updated',
-  REVIEWED: 'lesson:reviewed',
-  CONTENT_LOADED: 'lesson:content_loaded',
-  LOAD_ERROR: 'lesson:load_error'
-};
+import { SRSManager } from './srs_manager.js';
+import { ContentValidator } from './content_validator.js';
+import { generate_uuid, pipe } from './utils.js';
 
 /** @readonly @enum {number} */
-export const DifficultyLevel = {
+export const difficulty_level = Object.freeze({
   VERY_EASY: 1,
   EASY: 2,
   MEDIUM: 3,
   HARD: 4,
   VERY_HARD: 5
-};
+});
 
-export class LessonError extends Error {
-  constructor(message, options = {}) {
-    super(message);
-    this.name = 'LessonError';
-    this.code = options.code || 'LESSON_ERROR';
-    this.cause = options.cause;
-  }
-}
+/** @readonly @enum {string} */
+export const lesson_events = Object.freeze({
+  UPDATED: 'lesson:updated',
+  REVIEWED: 'lesson:reviewed',
+  CONTENT_LOADED: 'lesson:content_loaded',
+  ERROR: 'lesson:error'
+});
 
-/**
- * مدل اصلی درس پیشرفته
- * @class
- * @param {Object} params
- * @param {Object} params.content - محتوای درس
- * @param {Object} params.srs_data - داده‌های SRS
- * @param {number} [params.difficulty=3] - سطح سختی
- * @param {Object} [params.services={}] - سرویس‌های تزریق شده
- */
 export class LessonModel {
   #content;
   #srs_data;
   #history = [];
   #listeners = new Map();
+
   _content_loaded = false;
 
-  constructor({ content, srs_data, difficulty = DifficultyLevel.MEDIUM, services = {} } = {}) {
-    if (!content) throw new LessonError('Content is required');
-    this.validator = services.validator;
-    this.srs_manager = services.srs_manager;
-    this.#content = content;
-    this.#srs_data = this.srs_manager?.init(srs_data) ?? srs_data ?? {};
+  constructor(
+    data = {},
+    dependencies = {}
+  ) {
+    if (!data.content) {
+      throw new Error('lesson.content is required');
+    }
+
+    ContentValidator.validate_deep(data.content);
+
     this.id = generate_uuid();
-    this.difficulty = difficulty;
+    this.difficulty = data.difficulty ?? difficulty_level.MEDIUM;
+
+    this.#content = data.content;
+
+    this.srs_manager =
+      dependencies.srs_manager ?? new SRSManager();
+
+    this.logger =
+      dependencies.logger ?? console;
+
+    this.#srs_data =
+      this.srs_manager.init_lesson(this.id, data.srs_data);
 
     this.save_snapshot();
-    return new Proxy(this, this._proxy_handler());
+
+    return new Proxy(this, this.#proxy_handler());
   }
 
-  _proxy_handler() {
-    const validators = {
-      difficulty: v => Object.values(DifficultyLevel).includes(v),
-      id: v => typeof v === 'string' && v.length > 0,
-      _content_loaded: v => typeof v === 'boolean'
-    };
+  /* ---------------- Proxy Validation ---------------- */
+
+  #proxy_handler() {
     return {
       set: (obj, prop, value) => {
-        if (validators[prop] && !validators[prop](value)) {
-          throw new LessonError(`Invalid value for ${prop}`);
+        if (prop === 'difficulty') {
+          if (!Object.values(difficulty_level).includes(value)) {
+            throw new Error('invalid difficulty level');
+          }
         }
+
         obj[prop] = value;
-        if (prop !== 'id') this.emit(LessonEvents.UPDATED, { prop, value });
+        obj.emit(lesson_events.UPDATED, { prop, value });
         return true;
       }
     };
   }
 
-  /** EventEmitter واقعی */
+  /* ---------------- Events ---------------- */
+
   on(event, callback) {
-    if (!this.#listeners.has(event)) this.#listeners.set(event, new Set());
+    if (!this.#listeners.has(event)) {
+      this.#listeners.set(event, new Set());
+    }
     this.#listeners.get(event).add(callback);
     return () => this.off(event, callback);
   }
+
   off(event, callback) {
     this.#listeners.get(event)?.delete(callback);
   }
-  emit(event, ...args) {
-    const listeners = this.#listeners.get(event);
-    if (listeners) listeners.forEach(cb => { try { cb(...args); } catch (e) { console.error(e); } });
+
+  emit(event, payload) {
+    this.#listeners
+      .get(event)
+      ?.forEach(cb => {
+        try { cb(payload); }
+        catch (e) { this.logger.error(e); }
+      });
   }
 
-  /** اعمال الگوریتم SM-2 */
-  apply_sm2(quality) {
-    if (!this.srs_manager) throw new LessonError('SRS Manager not injected');
-    this.#srs_data = this.srs_manager.apply_sm2(this.#srs_data, quality);
-    this.save_snapshot();
-    this.emit(LessonEvents.REVIEWED, quality);
+  /* ---------------- Core Logic ---------------- */
+
+  review(quality) {
+    if (!Number.isInteger(quality) || quality < 0 || quality > 5) {
+      throw new Error('invalid review quality');
+    }
+
+    try {
+      this.#srs_data =
+        this.srs_manager.apply_sm2(this.#srs_data, quality);
+
+      this.save_snapshot();
+      this.emit(lesson_events.REVIEWED, { quality });
+    } catch (error) {
+      this.logger.error(error);
+      this.emit(lesson_events.ERROR, error);
+    }
+
+    return this;
   }
 
-  /** Immutable update */
   with(updates) {
-    return new LessonModel({ ...this.to_object(), ...updates, services: { validator: this.validator, srs_manager: this.srs_manager } });
+    return new LessonModel(
+      { ...this.to_object(), ...updates },
+      { srs_manager: this.srs_manager, logger: this.logger }
+    );
   }
 
-  /** Fluent pipe */
   pipe(...operations) {
-    return operations.reduce((acc, fn) => fn(acc), this);
+    return pipe(...operations)(this);
   }
 
-  /** State History */
+  /* ---------------- State History ---------------- */
+
   save_snapshot() {
     this.#history.push(this.to_object());
     return this;
   }
+
   undo() {
-    if (this.#history.length > 1) {
-      this.#history.pop();
-      return new LessonModel({ ...this.#history[this.#history.length - 1], services: { validator: this.validator, srs_manager: this.srs_manager } });
-    }
-    return this;
+    if (this.#history.length <= 1) return this;
+
+    this.#history.pop();
+    return new LessonModel(
+      this.#history[this.#history.length - 1],
+      { srs_manager: this.srs_manager, logger: this.logger }
+    );
   }
 
-  /** Content */
+  /* ---------------- Content ---------------- */
+
   get content() {
-    return this._content_loaded ? structuredClone(this.#content) : this.#content;
+    return this._content_loaded
+      ? structuredClone(this.#content)
+      : this.#content;
   }
 
   async load_content() {
     if (this._content_loaded) return;
-    try {
-      if (this.validator?.validate_deep) this.validator.validate_deep(this.#content);
-      // شبیه‌سازی بارگذاری async
-      await new Promise(res => setTimeout(res, 0));
-      this._content_loaded = true;
-      this.emit(LessonEvents.CONTENT_LOADED);
-    } catch (error) {
-      this.emit(LessonEvents.LOAD_ERROR, error);
-      throw new LessonError('Failed to load content', { cause: error });
-    }
+
+    ContentValidator.validate_deep(this.#content);
+    this._content_loaded = true;
+    this.emit(lesson_events.CONTENT_LOADED);
   }
 
-  /** SRS */
-  calculate_next_review() {
-    return this.srs_manager?.calculate_next_review(this.#srs_data) ?? null;
-  }
+  /* ---------------- Metrics ---------------- */
 
-  /** Stats */
   get retention_rate() {
-    return this.srs_manager?.calculate_retention_rate(this.#srs_data) ?? 0;
+    return this.srs_manager.calculate_retention_rate(
+      this.#srs_data
+    );
   }
 
-  /** Async Iterator برای محتوای chunked */
-  async *[Symbol.asyncIterator]() {
-    for (const chunk of this.#content.chunks ?? [this.#content]) {
-      yield chunk;
-    }
+  calculate_next_review() {
+    return this.srs_manager.calculate_next_review(
+      this.#srs_data
+    );
   }
 
-  /** Output Formats */
+  /* ---------------- Serialization ---------------- */
+
   to_object() {
     return {
       id: this.id,
       difficulty: this.difficulty,
-      content: this._content_loaded ? structuredClone(this.#content) : this.#content,
-      srs_data: { ...this.#srs_data }
+      content: this._content_loaded
+        ? structuredClone(this.#content)
+        : this.#content,
+      srs_data: structuredClone(this.#srs_data)
     };
   }
-  to_db_format() { return this.to_object(); }
-  to_api_format() { return this.to_object(); }
 
-  /** Symbol-based comparison هوشمند */
+  to_db_format() {
+    return this.to_object();
+  }
+
+  to_api_format() {
+    return this.to_object();
+  }
+
+  /* ---------------- Smart Comparison ---------------- */
+
   [Symbol.toPrimitive](hint) {
     if (hint === 'number') return this.retention_rate;
     if (hint === 'string') return JSON.stringify(this.to_object());
@@ -177,9 +209,4 @@ export class LessonModel {
   compare_to(other_lesson) {
     return this.retention_rate - other_lesson.retention_rate;
   }
-
-  /** Localization */
-  get_localized_title(lang = 'fa') {
-    return this.#content[lang]?.title ?? this.#content.en?.title ?? '';
-  }
-  }
+      }
