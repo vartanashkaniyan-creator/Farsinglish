@@ -1,270 +1,260 @@
-/**
- * @interface IUserModel
- * @property {string} id
- * @property {string} email
- * @property {number} level
- * @method add_xp
- * @method increment_streak
- * @method to_object
- */
+// shared/models/user_model.js
 
-/**
- * @typedef {Object} UserStats
- * @property {number} total_lessons
- * @property {number} completed_lessons
- * @property {number} learned_words
- * @property {number} total_time_spent
- * @property {number} average_score
- */
-
-/**
- * @typedef {Object} NotificationSettings
- * @property {boolean} lesson_reminder
- * @property {boolean} streak_reminder
- */
-
-/**
- * @typedef {Object} DisplaySettings
- * @property {'small'|'medium'|'large'} font_size
- * @property {'light'|'dark'|'system'} theme
- */
-
-/**
- * @typedef {Object} UserSettings
- * @property {NotificationSettings} notifications
- * @property {DisplaySettings} display
- */
-
-import { UserRole, UserLevel, LanguageCode, DEFAULT_VALUES } from './constants/user_constants.js';
 import { Result } from '../../core/result.js';
+import { EmailVO, UsernameVO } from '../value-objects/index.js';
 
 /**
- * @class UserModel
- * @implements {IUserModel}
+ * @typedef {Object} UserProps
+ * @property {string} id
+ * @property {UsernameVO|string} username
+ * @property {EmailVO|string} email
+ * @property {string} [avatar]
+ * @property {Object} [settings]
  */
-class UserModel {
-    /** @readonly @type {string} */
-    id;
 
-    /** @type {string} */
-    email;
+/**
+ * @typedef {'user.created'|'user.updated'|'user.settings_changed'} UserDomainEvent
+ */
 
-    /** @type {string} */
-    username;
+/**
+ * کلاس User - مدیریت موجودیت کاربر
+ */
+export class User {
+  // ====================== Private Fields ======================
+  #id;
+  #username;
+  #email;
+  #avatar;
+  #settings;
+  #validator;
+  #metrics_collector;
+  #event_bus;
 
-    /** @type {string} */
-    first_name;
+  // ====================== Constructor ======================
+  /**
+   * @param {UserProps} props
+   * @param {Object} deps
+   * @param {Object} [deps.validator]
+   * @param {Object} [deps.metrics_collector]
+   * @param {Object} [deps.event_bus]
+   */
+  constructor(props, deps = {}) {
+    if (!props?.id) throw new Error('User id is required');
 
-    /** @type {string} */
-    last_name;
+    this.#id = props.id;
+    this.#username = this.#create_username(props.username);
+    this.#email = this.#create_email(props.email);
+    this.#avatar = props.avatar || null;
+    this.#settings = this.#deep_freeze({ ...(props.settings || {}) });
 
-    /** @type {string} */
-    full_name;
+    this.#validator = deps?.validator || null;
+    this.#metrics_collector = deps?.metrics_collector || null;
+    this.#event_bus = deps?.event_bus || null;
+  }
 
-    /** @type {number} */
-    level;
+  // ====================== Public Getters ======================
+  /** @readonly */
+  get id() { return this.#id; }
 
-    /** @type {number} */
-    xp;
+  /** @readonly */
+  get username() { return this.#username; }
 
-    /** @type {number} */
-    streak_days;
+  /** @readonly */
+  get email() { return this.#email; }
 
-    /** @type {number} */
-    daily_goal;
+  /** @readonly */
+  get avatar() { return this.#avatar; }
 
-    /** @type {boolean} */
-    is_active;
+  /** @readonly */
+  get settings() {
+    return this.#settings && Object.keys(this.#settings).length > 0
+      ? JSON.parse(JSON.stringify(this.#settings))
+      : {};
+  }
 
-    /** @type {boolean} */
-    is_verified;
+  // ====================== Public Methods ======================
+  /**
+   * Factory method امن برای ایجاد کاربر
+   * @param {UserProps} raw
+   * @param {Object} deps
+   * @returns {Result<User, Error>}
+   */
+  static create(raw, deps = {}) {
+    try {
+      if (!raw?.id) return Result.fail(new Error('User creation failed: id is required'));
+      if (!raw?.email) return Result.fail(new Error('User creation failed: email is required'));
+      const user = new User(raw, deps);
+      return Result.ok(user);
+    } catch (error) {
+      error.message = `User creation failed: ${error.message}`;
+      return Result.fail(error);
+    }
+  }
 
-    /** @type {boolean} */
-    is_premium;
-
-    /** @type {string} */
-    last_active;
-
-    /** @readonly @type {string} */
-    created_at;
-
-    /** @type {string} */
-    updated_at;
-
-    /** @type {string|null} */
-    last_streak_update;
-
-    /** @type {UserStats} */
-    stats;
-
-    /** @type {UserSettings} */
-    settings;
-
-    /** @private @type {IUserValidator} */
-    _validator;
-
-    /** @private @type {IEventEmitter} */
-    _events;
-
-    /** @private @type {IAchievementManager} */
-    _achievements;
-
-    /** @private @type {Console} */
-    _logger;
-
-    /**
-     * @param {Object} data
-     * @param {IUserValidator} validator
-     * @param {IEventEmitter} events
-     * @param {IAchievementManager} achievements
-     * @param {Console} logger
-     */
-    constructor(data = {}, validator, events, achievements, logger = console) {
-        if (!validator || !events || !achievements) {
-            throw new Error('validator, events, and achievements are required');
-        }
-
-        this._validator = validator;
-        this._events = events;
-        this._achievements = achievements.init(this);
-        this._logger = logger;
-
-        this.id = crypto.randomUUID?.() || `user_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`;
-        this.email = data.email || '';
-        this.username = data.username || '';
-        this.first_name = data.first_name || '';
-        this.last_name = data.last_name || '';
-        this.full_name = data.full_name || this._get_full_name();
-
-        this.language = data.language || LanguageCode.PERSIAN;
-        this.level = this._validate_level(data.level || UserLevel.BEGINNER);
-        this.xp = Math.max(0, data.xp || 0);
-        this.streak_days = Math.max(0, data.streak_days || 0);
-        this.daily_goal = Math.max(DEFAULT_VALUES.DAILY_GOAL_MIN, Math.min(DEFAULT_VALUES.DAILY_GOAL_MAX, data.daily_goal || DEFAULT_VALUES.DAILY_GOAL_DEFAULT));
-
-        this.is_active = data.is_active !== false;
-        this.is_verified = data.is_verified || false;
-        this.is_premium = data.is_premium || false;
-        this.last_active = data.last_active || new Date().toISOString();
-        this.created_at = data.created_at || new Date().toISOString();
-        this.updated_at = data.updated_at || new Date().toISOString();
-        this.last_streak_update = data.last_streak_update || null;
-
-        this.stats = { ...DEFAULT_VALUES.STATS, ...data.stats };
-        this.settings = { ...DEFAULT_VALUES.SETTINGS, ...data.settings };
-
-        this._achievements.load(data.achievements);
-        this._validate();
+  /**
+   * به‌روزرسانی پروفایل با بازگشت نمونه جدید
+   * @param {Object} payload
+   * @returns {Result<User, Error>}
+   */
+  update_profile(payload) {
+    if (!payload || typeof payload !== 'object') {
+      return Result.fail(new Error('Invalid payload'));
     }
 
-    /**
-     * @param {number} amount
-     * @returns {Result<Object>}
-     * @throws {Error} اگر مقدار XP نامعتبر باشد
-     */
-    add_xp(amount) {
-        return Result.tryCatch(() => {
-            if (amount <= 0) return Result.success({ user: this });
-
-            const old_level = this.level;
-            const new_xp = this.xp + amount;
-            const new_level = UserLevel.calculate_level(new_xp);
-
-            const updated_user = this._clone({ xp: new_xp, level: new_level, stats: { ...this.stats, total_time_spent: this.stats.total_time_spent + Math.floor(amount / DEFAULT_VALUES.XP_PER_MINUTE) }, updated_at: new Date().toISOString() });
-
-            const new_achievements = updated_user._achievements.check_unlocked();
-
-            if (new_level > old_level) {
-                this._events.emit('level_up', { old_level, new_level });
-            }
-
-            return { user: updated_user, level_up: new_level > old_level, new_achievements };
-        }, 'خطا در افزایش XP');
+    if (this.#validator) {
+      const validation = this.#validator.validate_update_profile(payload);
+      if (!validation.success) return Result.fail(validation.error);
     }
 
-    /**
-     * @returns {Result<Object>}
-     */
-    increment_streak() {
-        return Result.tryCatch(() => {
-            const today = new Date().toDateString();
-            const last_update = this.last_streak_update ? new Date(this.last_streak_update).toDateString() : null;
+    try {
+      const new_username = payload.username 
+        ? this.#create_username(payload.username)
+        : this.#username;
+        
+      const new_email = payload.email
+        ? this.#create_email(payload.email)
+        : this.#email;
 
-            if (last_update === today) return Result.success({ user: this, streak_increased: false });
+      const updated_user = new User({
+        id: this.#id,
+        username: new_username,
+        email: new_email,
+        avatar: payload.avatar ?? this.#avatar,
+        settings: this.#settings
+      }, this.#get_dependencies());
 
-            const yesterday = new Date();
-            yesterday.setDate(yesterday.getDate() - 1);
+      this.#dispatch_domain_event('user.updated', updated_user.to_json());
+      this.#track_metric('user_profile_updated', { user_id: this.#id });
 
-            const new_streak_days = last_update === yesterday.toDateString() ? this.streak_days + 1 : 1;
+      return Result.ok(updated_user);
+    } catch (error) {
+      return Result.fail(error);
+    }
+  }
 
-            const updated_user = this._clone({ streak_days: new_streak_days, last_streak_update: new Date().toISOString(), updated_at: new Date().toISOString() });
-            const new_achievements = updated_user._achievements.check_unlocked();
-
-            return { user: updated_user, streak_increased: true, new_streak_days, new_achievements };
-        }, 'خطا در افزایش استریک');
+  /**
+   * به‌روزرسانی تنظیمات با اعتبارسنجی و Immutability
+   * @param {Object} new_settings
+   * @returns {Result<User, Error>}
+   */
+  update_settings(new_settings) {
+    if (!new_settings || typeof new_settings !== 'object') {
+      return Result.fail(new Error('Invalid settings'));
     }
 
-    /**
-     * @returns {Object}
-     */
-    to_object() {
-        return {
-            id: this.id,
-            email: this.email,
-            username: this.username,
-            first_name: this.first_name,
-            last_name: this.last_name,
-            full_name: this.full_name,
-            language: this.language,
-            role: this.role,
-            level: this.level,
-            xp: this.xp,
-            streak_days: this.streak_days,
-            daily_goal: this.daily_goal,
-            is_active: this.is_active,
-            is_verified: this.is_verified,
-            is_premium: this.is_premium,
-            last_active: this.last_active,
-            created_at: this.created_at,
-            updated_at: this.updated_at,
-            last_streak_update: this.last_streak_update,
-            stats: { ...this.stats },
-            settings: JSON.parse(JSON.stringify(this.settings)),
-            achievements: this._achievements.toJSON()
-        };
+    if (this.#validator) {
+      const validation = this.#validator.validate_settings(new_settings);
+      if (!validation.success) return Result.fail(validation.error);
     }
 
-    /**
-     * @private
-     */
-    _validate() {
-        if (!this.full_name && (this.first_name || this.last_name)) {
-            this.full_name = this._get_full_name();
-        }
-        this.updated_at = new Date().toISOString();
-    }
+    const merged_settings = this.#deep_merge(this.#settings, new_settings);
+    const updated_user = new User({
+      ...this.to_json(),
+      settings: merged_settings
+    }, this.#get_dependencies());
 
-    /**
-     * @private
-     */
-    _validate_level(level) {
-        return Math.max(UserLevel.MIN, Math.min(UserLevel.MAX, parseInt(level) || UserLevel.MIN));
-    }
+    this.#dispatch_domain_event('user.settings_changed', updated_user.to_json());
+    return Result.ok(updated_user);
+  }
 
-    /**
-     * @private
-     */
-    _get_full_name() {
-        if (this.first_name && this.last_name) return `${this.first_name} ${this.last_name}`.trim();
-        return this.first_name || this.last_name || this.username;
-    }
+  /**
+   * تبدیل به JSON (Deep Clone)
+   * @returns {Object}
+   */
+  to_json() {
+    return {
+      id: this.#id,
+      username: this.#username.value,
+      email: this.#email.value,
+      avatar: this.#avatar,
+      settings: JSON.parse(JSON.stringify(this.#settings))
+    };
+  }
 
-    /**
-     * @private
-     */
-    _clone(overrides = {}) {
-        return new UserModel({ ...this.to_object(), ...overrides }, this._validator, this._events, this._achievements, this._logger);
+  /**
+   * بررسی اعتبار کاربر
+   * @returns {boolean}
+   */
+  is_valid() {
+    try {
+      return !!(this.#id && this.#username?.value && this.#email?.value);
+    } catch {
+      return false;
     }
-}
+  }
 
-export { UserModel };
+  /**
+   * مقایسه دو User بر اساس Value
+   * @param {User} other
+   * @returns {boolean}
+   */
+  equals(other) {
+    if (!(other instanceof User)) return false;
+    return this.#id === other.#id &&
+           this.#username.value === other.#username.value &&
+           this.#email.value === other.#email.value;
+  }
+
+  // ====================== Private Methods ======================
+  #create_username(value) {
+    return value instanceof UsernameVO ? value : new UsernameVO(value || '');
+  }
+
+  #create_email(value) {
+    return value instanceof EmailVO ? value : new EmailVO(value);
+  }
+
+  #deep_freeze(obj) {
+    if (obj === null || typeof obj !== 'object') return obj;
+    Object.keys(obj).forEach(key => {
+      const value = obj[key];
+      if (typeof value === 'object' && value !== null) {
+        this.#deep_freeze(value);
+      }
+    });
+    return Object.freeze(obj);
+  }
+
+  #deep_merge(target, source) {
+    const output = { ...target };
+    Object.keys(source).forEach(key => {
+      if (this.#is_object(target[key]) && this.#is_object(source[key])) {
+        output[key] = this.#deep_merge(target[key], source[key]);
+      } else {
+        output[key] = source[key];
+      }
+    });
+    return output;
+  }
+
+  #is_object(item) {
+    return item && typeof item === 'object' && !Array.isArray(item);
+  }
+
+  #get_dependencies() {
+    return {
+      validator: this.#validator,
+      metrics_collector: this.#metrics_collector,
+      event_bus: this.#event_bus
+    };
+  }
+
+  #dispatch_domain_event(event_type, data) {
+    if (!this.#event_bus) return;
+    const event = {
+      type: event_type,
+      payload: data,
+      metadata: {
+        timestamp: Date.now(),
+        user_id: this.#id,
+        version: '1.0.0'
+      }
+    };
+    this.#event_bus.emit(`user:${event_type}`, event);
+  }
+
+  #track_metric(metric_name, data) {
+    if (!this.#metrics_collector) return;
+    this.#metrics_collector.track(metric_name, data);
+  }
+    }
