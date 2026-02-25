@@ -1,0 +1,76 @@
+/* Migration Progress UI */
+.migration-progress-container {
+    width: 100%;
+    margin: 1rem 0;
+}
+
+.migration-progress-bar {
+    height: 24px;
+    background-color: var(--progress-bg, #e0e0e0);
+    border-radius: 12px;
+    overflow: hidden;
+    transition: all 0.3s ease;
+}
+
+[dir="rtl"] .migration-progress-bar {
+    transform: scaleX(-1);
+}
+
+/* سطح‌های پیشرفت */
+.progress-level-0  { background: linear-gradient(90deg, var(--progress-color-0, #c8e6c9) 0%, var(--progress-color-light-0, #e8f5e9) 100%); }
+.progress-level-10 { background: linear-gradient(90deg, var(--progress-color-10, #a5d6a7) 0%, var(--progress-color-light-10, #c8e6c9) 100%); }
+.progress-level-20 { background: linear-gradient(90deg, var(--progress-color-20, #81c784) 0%, var(--progress-color-light-20, #a5d6a7) 100%); }
+.progress-level-30 { background: linear-gradient(90deg, var(--progress-color-30, #66bb6a) 0%, var(--progress-color-light-30, #81c784) 100%); }
+.progress-level-40 { background: linear-gradient(90deg, var(--progress-color-40, #4caf50) 0%, var(--progress-color-light-40, #66bb6a) 100%); }
+.progress-level-50 { background: linear-gradient(90deg, var(--progress-color-50, #43a047) 0%, var(--progress-color-light-50, #4caf50) 100%); }
+.progress-level-60 { background: linear-gradient(90deg, var(--progress-color-60, #388e3c) 0%, var(--progress-color-light-60, #43a047) 100%); }
+.progress-level-70 { background: linear-gradient(90deg, var(--progress-color-70, #2e7d32) 0%, var(--progress-color-light-70, #388e3c) 100%); }
+.progress-level-80 { background: linear-gradient(90deg, var(--progress-color-80, #1b5e20) 0%, var(--progress-color-light-80, #2e7d32) 100%); }
+.progress-level-90 { background: linear-gradient(90deg, var(--progress-color-90, #104d15) 0%, var(--progress-color-light-90, #1b5e20) 100%); }
+.progress-level-100 { background: linear-gradient(90deg, var(--progress-color-100, #0b3d10) 0%, var(--progress-color-light-100, #104d15) 100%); }
+
+.progress-completed {
+    background: var(--success-color, #2e7d32) !important;
+}
+
+.migration-progress-text {
+    margin-top: 8px;
+    font-size: 14px;
+    color: var(--text-color, #333);
+    text-align: center;
+}
+
+[dir="rtl"] .migration-progress-text {
+    font-family: 'Vazir', sans-serif;
+}
+
+/* Dark mode */
+@media (prefers-color-scheme: dark) {
+    :root {
+        --progress-bg: #424242;
+        --text-color: #e0e0e0;
+        --success-color: #4caf50;
+        --progress-color-0: #2e7d32;
+        --progress-color-light-0: #388e3c;
+        --progress-color-10: #388e3c;
+        --progress-color-light-10: #43a047;
+        --progress-color-20: #43a047;
+        --progress-color-light-20: #66bb6a;
+        --progress-color-30: #66bb6a;
+        --progress-color-light-30: #81c784;
+        --progress-color-40: #81c784;
+        --progress-color-light-40: #a5d6a7;
+        --progress-color-50: #a5d6a7;
+        --progress-color-light-50: #c8e6c9;
+        --progress-color-60: #c8e6c9;
+        --progress-color-light-60: #e8f5e9;
+        --progress-color-70: #e8f5e9;
+        --progress-color-light-70: #c8e6c9;
+        --progress-color-80: #c8e6c9;
+        --progress-color-light-80: #a5d6a7;
+        --progress-color-90: #a5d6a7;
+        --progress-color-light-90: #81c784;
+        --progress-color-100: #81c784;
+        --progress-color-light-100: #4caf50;
+    }
+}
