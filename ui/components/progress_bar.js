@@ -1,237 +1,255 @@
+
 /**
- * کامپوننت نوار پیشرفت
- * @module progress-bar
- * @version 2.2.0
+ * Progress Bar Component
+ * @module progress_bar
+ * @version 2.3.2
  */
 
-const DEFAULTS = {
-    HEIGHT: '8px',
-    BACKGROUND_COLOR: '#e0e0e0',
-    FILL_COLOR: '#4caf50',
-    ANIMATION_DURATION: '0.3s',
-    BORDER_RADIUS: '4px',
-    LABEL_FONT: '12px sans-serif',
-    LABEL_COLOR: '#000000',
-    MIN_PERCENT: 0,
-    MAX_PERCENT: 100
-};
+const DEFAULTS = Object.freeze({
+    height: '8px',
+    background_color: '#e0e0e0',
+    fill_color: '#4caf50',
+    border_radius: '4px',
+    animation_duration: '0.3s',
+    animation_easing: 'ease-in-out',
+    label_font: '12px sans-serif',
+    label_color: '#000000',
+    label_padding: '8px',
+    min_percent: 0,
+    max_percent: 100
+});
 
-const SUPPORTED_EVENTS = ['complete', 'update', 'destroy'];
+const SUPPORTED_EVENTS = Object.freeze([
+    'update',
+    'complete',
+    'reset',
+    'destroy'
+]);
 
 export class ProgressBar {
     #options;
-    #element;
-    #fillElement;
-    #labelElement;
+    #container;
+    #fill;
+    #label;
     #state;
-    #eventListeners;
-    #instanceId;
+    #listeners;
+    #update_lock = false;
+    #last_width = null;
 
-    constructor(userConfig = {}) {
-        this.#instanceId = `progress-bar-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-        this.#options = this.#mergeWithDefaults(userConfig);
-        this.#element = null;
-        this.#fillElement = null;
-        this.#labelElement = null;
-        this.#state = { mounted: false, lastUpdate: Date.now(), currentPercent: 0, elementId: this.#instanceId };
-        this.#eventListeners = new Map();
-        SUPPORTED_EVENTS.forEach(e => this.#eventListeners.set(e, []));
-        this.update = this.update.bind(this);
-        this.destroy = this.destroy.bind(this);
-        this.reset = this.reset.bind(this);
+    constructor(user_config = {}) {
+        this.#options = this.#deep_merge({
+            animated: true,
+            show_label: false,
+            silent: false,
+            direction: 'ltr',
+            class_name: '',
+            label_styles: {}
+        }, user_config);
+
+        this.#state = {
+            mounted: false,
+            percent: 0,
+            last_update: Date.now()
+        };
+
+        this.#listeners = new Map();
+        SUPPORTED_EVENTS.forEach(e => this.#listeners.set(e, []));
     }
 
-    get percent() { return this.#state.currentPercent; }
-    get isMounted() { return this.#state.mounted; }
-    get id() { return this.#instanceId; }
+    /* ===================== Public API ===================== */
 
-    render(initialPercent = 0, renderConfig = {}) {
-        const validation = this.#validatePercent(initialPercent);
-        if (!validation.valid && !this.#options.silent) throw new Error(`[ProgressBar] ${validation.error}`);
-        const config = this.#mergeConfigs(renderConfig);
-        this.#state.currentPercent = this.#clampPercent(initialPercent);
-        const elements = this.#createElements(config);
-        this.#element = elements.container;
-        this.#fillElement = elements.fill;
-        this.#labelElement = elements.label;
-        this.#applyStyles(config);
-        if (config.className) this.#element.classList.add(...config.className.split(' '));
+    render(initial_percent = 0) {
+        this.#assert_valid_percent(initial_percent);
+
+        this.#container = document.createElement('div');
+        this.#fill = document.createElement('div');
+
+        this.#container.className = 'progress_bar_container';
+        this.#fill.className = 'progress_bar_fill';
+
+        if (this.#options.class_name) {
+            this.#container.classList.add(...this.#options.class_name.split(' '));
+        }
+
+        this.#container.appendChild(this.#fill);
+
+        if (this.#options.show_label) {
+            this.#label = document.createElement('span');
+            this.#label.className = 'progress_bar_label';
+            this.#container.appendChild(this.#label);
+        }
+
+        this.#state.percent = this.#clamp_percent(initial_percent);
+        this.#apply_styles();
+        this.#update_dom(true);
+
+        this.#apply_aria();
+
         this.#state.mounted = true;
-        this.#state.lastUpdate = Date.now();
-
-        // WAI-ARIA
-        this.#element.setAttribute('role', 'progressbar');
-        this.#element.setAttribute('aria-valuemin', DEFAULTS.MIN_PERCENT);
-        this.#element.setAttribute('aria-valuemax', DEFAULTS.MAX_PERCENT);
-        this.#element.setAttribute('aria-valuenow', this.#state.currentPercent);
-        this.#element.setAttribute('aria-valuetext', `${this.#state.currentPercent}%`);
-
-        if (this.#state.currentPercent === DEFAULTS.MAX_PERCENT) this.#emit('complete', this.#state.currentPercent);
-
-        return this.#element;
+        return this.#container;
     }
 
-    update(percent, updateConfig = {}) {
-        if (!this.#state.mounted || !this.#fillElement) {
-            if (this.#options.silent) return false;
-            throw new Error('[ProgressBar] Cannot update: component not rendered');
-        }
-        const validation = this.#validatePercent(percent);
-        if (!validation.valid) {
-            if (this.#options.silent) { console.warn(`[ProgressBar] ${validation.error}`); return false; }
-            throw new Error(`[ProgressBar] ${validation.error}`);
-        }
+    update_percent(percent) {
+        if (!this.#state.mounted || this.#update_lock) return false;
 
-        const clampedPercent = this.#clampPercent(percent);
-        const oldPercent = this.#state.currentPercent;
-        if (oldPercent === clampedPercent && Object.keys(updateConfig).length === 0) return true;
+        this.#assert_valid_percent(percent);
 
-        this.#state.currentPercent = clampedPercent;
-        this.#state.lastUpdate = Date.now();
-        const config = this.#mergeConfigs(updateConfig);
-        this.#applyStyles(config);
-        this.#fillElement.style.width = `${clampedPercent}%`;
-        if (this.#labelElement) this.#labelElement.textContent = `${Math.round(clampedPercent)}%`;
+        const next = this.#clamp_percent(percent);
+        if (next === this.#state.percent) return true;
 
-        // WAI-ARIA update
-        if (this.#element) {
-            this.#element.setAttribute('aria-valuenow', clampedPercent);
-            this.#element.setAttribute('aria-valuetext', `${clampedPercent}%`);
+        this.#update_lock = true;
+
+        const prev = this.#state.percent;
+        this.#state.percent = next;
+        this.#state.last_update = Date.now();
+
+        this.#update_dom();
+
+        this.#emit('update', { previous: prev, current: next });
+
+        if (next === DEFAULTS.max_percent) {
+            this.#emit('complete', next);
         }
 
-        // RTL label overflow fix
-        if (this.#labelElement) {
-            this.#labelElement.style.maxWidth = 'calc(100% - 16px)';
-            this.#labelElement.style.overflow = 'hidden';
-            this.#labelElement.style.textOverflow = 'ellipsis';
-        }
-
-        this.#emit('update', { oldPercent, newPercent: clampedPercent, timestamp: this.#state.lastUpdate });
-        if (clampedPercent === DEFAULTS.MAX_PERCENT && oldPercent !== DEFAULTS.MAX_PERCENT) {
-            this.#emit('complete', clampedPercent);
-            if (typeof config.onComplete === 'function') config.onComplete(clampedPercent);
-        }
+        this.#update_lock = false;
         return true;
     }
 
-    setColors({ fill, background }) {
-        if (fill) { this.#options.fillColor = fill; if (this.#fillElement) this.#fillElement.style.backgroundColor = fill; }
-        if (background) { this.#options.backgroundColor = background; if (this.#element) this.#element.style.backgroundColor = background; }
+    reset(silent = false) {
+        this.update_percent(0);
+        if (!silent) this.#emit('reset');
         return this;
     }
 
-    reset(silent = false) {
-        if (!this.#state.mounted) return false;
-        const success = this.update(0, { animated: false });
-        if (success && !silent) this.#emit('reset', { timestamp: Date.now() });
-        return success;
-    }
-
     on(event, callback) {
-        if (!SUPPORTED_EVENTS.includes(event) && event !== 'reset') { console.warn(`[ProgressBar] Unsupported event: ${event}`); return this; }
-        if (!this.#eventListeners.has(event)) this.#eventListeners.set(event, []);
-        this.#eventListeners.get(event).push(callback);
+        if (!this.#listeners.has(event)) return this;
+        this.#listeners.get(event).push(callback);
         return this;
     }
 
     off(event, callback) {
-        if (!this.#eventListeners.has(event)) return this;
-        if (callback) {
-            const listeners = this.#eventListeners.get(event);
-            const index = listeners.indexOf(callback);
-            if (index !== -1) listeners.splice(index, 1);
-        } else this.#eventListeners.set(event, []);
+        if (!this.#listeners.has(event)) return this;
+        if (!callback) {
+            this.#listeners.set(event, []);
+        } else {
+            const list = this.#listeners.get(event);
+            const idx = list.indexOf(callback);
+            if (idx !== -1) list.splice(idx, 1);
+        }
         return this;
     }
 
     destroy() {
-        if (this.#element?.parentNode) this.#element.parentNode.removeChild(this.#element);
-        this.#element = this.#fillElement = this.#labelElement = null;
+        if (this.#container) {
+            this.#container.remove();
+        }
+
+        this.#listeners.clear();
         this.#state.mounted = false;
-        this.#state.lastUpdate = Date.now();
-        this.#eventListeners.clear();
-        this.#emit('destroy', { instanceId: this.#instanceId });
+        this.#emit('destroy');
+
+        this.#container = null;
+        this.#fill = null;
+        this.#label = null;
     }
 
-    getState() { return { ...this.#state }; }
+    /* ===================== Internals ===================== */
 
-    #mergeWithDefaults(config) {
-        return {
-            height: config.height || DEFAULTS.HEIGHT,
-            backgroundColor: config.backgroundColor || DEFAULTS.BACKGROUND_COLOR,
-            fillColor: config.fillColor || DEFAULTS.FILL_COLOR,
-            animated: config.animated ?? true,
-            showLabel: config.showLabel ?? false,
-            className: config.className || '',
-            onComplete: config.onComplete || null,
-            direction: config.direction || 'ltr',
-            borderRadius: config.borderRadius || DEFAULTS.BORDER_RADIUS,
-            silent: config.silent ?? false,
-            labelStyles: {
-                color: config.labelStyles?.color || DEFAULTS.LABEL_COLOR,
-                font: config.labelStyles?.font || DEFAULTS.LABEL_FONT,
-                textShadow: config.labelStyles?.textShadow || 'none'
+    #apply_styles() {
+        Object.assign(this.#container.style, {
+            height: DEFAULTS.height,
+            backgroundColor: this.#options.background_color ?? DEFAULTS.background_color,
+            borderRadius: DEFAULTS.border_radius,
+            overflow: 'hidden',
+            position: 'relative',
+            direction: this.#options.direction
+        });
+
+        Object.assign(this.#fill.style, {
+            height: '100%',
+            backgroundColor: this.#options.fill_color ?? DEFAULTS.fill_color,
+            transition: this.#options.animated
+                ? `width ${DEFAULTS.animation_duration} ${DEFAULTS.animation_easing}`
+                : 'none',
+            willChange: this.#options.animated ? 'width' : 'auto'
+        });
+
+        if (this.#label) {
+            Object.assign(this.#label.style, {
+                position: 'absolute',
+                top: '50%',
+                transform: 'translateY(-50%)',
+                font: DEFAULTS.label_font,
+                color: DEFAULTS.label_color,
+                pointerEvents: 'none',
+                whiteSpace: 'nowrap',
+                ...(this.#options.direction === 'rtl'
+                    ? { left: DEFAULTS.label_padding }
+                    : { right: DEFAULTS.label_padding })
+            });
+        }
+    }
+
+    #update_dom(force = false) {
+        const width = `${this.#state.percent}%`;
+        if (!force && width === this.#last_width) return;
+
+        this.#fill.style.width = width;
+        if (this.#label) {
+            this.#label.textContent = `${Math.round(this.#state.percent)}%`;
+        }
+
+        this.#last_width = width;
+        this.#apply_aria();
+    }
+
+    #apply_aria() {
+        if (!this.#container) return;
+        this.#container.setAttribute('role', 'progressbar');
+        this.#container.setAttribute('aria-valuemin', DEFAULTS.min_percent);
+        this.#container.setAttribute('aria-valuemax', DEFAULTS.max_percent);
+        this.#container.setAttribute('aria-valuenow', this.#state.percent);
+    }
+
+    #emit(event, payload) {
+        const list = this.#listeners.get(event);
+        if (!list) return;
+
+        list.forEach(fn => {
+            try {
+                fn(payload);
+            } catch (err) {
+                if (!this.#options.silent) {
+                    console.error('[ProgressBar]', err);
+                }
             }
-        };
+        });
     }
 
-    #mergeConfigs(newConfig) {
-        return { ...this.#options, ...newConfig, labelStyles: { ...this.#options.labelStyles, ...(newConfig.labelStyles || {}) } };
-    }
-
-    #createElements(config) {
-        const container = document.createElement('div');
-        container.className = 'progress-bar-container';
-        container.dataset.testid = 'progress-bar';
-        container.dataset.instance = this.#instanceId;
-
-        const fill = document.createElement('div');
-        fill.className = 'progress-bar-fill';
-        fill.dataset.testid = 'progress-bar-fill';
-
-        let label = null;
-        if (config.showLabel) {
-            label = document.createElement('span');
-            label.className = 'progress-bar-label';
-            label.dataset.testid = 'progress-bar-label';
-            label.textContent = `${Math.round(this.#state.currentPercent)}%`;
+    #assert_valid_percent(value) {
+        if (typeof value !== 'number' || !isFinite(value)) {
+            throw new Error('percent must be a finite number');
         }
-        return { container, fill, label };
-    }
-
-    #applyStyles(config) {
-        if (!this.#element || !this.#fillElement) return;
-        Object.assign(this.#element.style, { height: config.height, backgroundColor: config.backgroundColor, borderRadius: config.borderRadius, overflow: 'hidden', position: 'relative', direction: config.direction });
-        Object.assign(this.#fillElement.style, { width: `${this.#state.currentPercent}%`, height: '100%', backgroundColor: config.fillColor, borderRadius: config.borderRadius, transition: config.animated ? `width ${DEFAULTS.ANIMATION_DURATION} ease-in-out` : 'none', willChange: config.animated ? 'width' : 'auto' });
-
-        if (this.#labelElement) {
-            const labelStyles = { position: 'absolute', top: '50%', transform: 'translateY(-50%)', color: config.labelStyles.color, font: config.labelStyles.font, textShadow: config.labelStyles.textShadow, pointerEvents: 'none', userSelect: 'none', whiteSpace: 'nowrap', maxWidth: 'calc(100% - 16px)', overflow: 'hidden', textOverflow: 'ellipsis' };
-            if (config.direction === 'rtl') labelStyles.left = '8px'; else labelStyles.right = '8px';
-            Object.assign(this.#labelElement.style, labelStyles);
+        if (value < DEFAULTS.min_percent || value > DEFAULTS.max_percent) {
+            throw new Error(`percent must be between ${DEFAULTS.min_percent} and ${DEFAULTS.max_percent}`);
         }
     }
 
-    #validatePercent(percent) {
-        const result = { valid: true, error: null };
-        if (percent === null || percent === undefined) { result.valid = false; result.error = 'Percent cannot be null or undefined'; }
-        else if (typeof percent !== 'number') { result.valid = false; result.error = `Percent must be a number, got ${typeof percent}`; }
-        else if (isNaN(percent)) { result.valid = false; result.error = 'Percent cannot be NaN'; }
-        else if (!isFinite(percent)) { result.valid = false; result.error = 'Percent must be finite'; }
-        else if (percent < DEFAULTS.MIN_PERCENT || percent > DEFAULTS.MAX_PERCENT) { result.valid = false; result.error = `Percent must be between ${DEFAULTS.MIN_PERCENT} and ${DEFAULTS.MAX_PERCENT}`; }
-        return result;
+    #clamp_percent(value) {
+        return Math.min(DEFAULTS.max_percent, Math.max(DEFAULTS.min_percent, value));
     }
 
-    #clampPercent(percent) { return Math.min(DEFAULTS.MAX_PERCENT, Math.max(DEFAULTS.MIN_PERCENT, percent)); }
-
-    #emit(event, data) {
-        if (!this.#eventListeners.has(event)) return;
-        this.#eventListeners.get(event).forEach(cb => { try { cb(data); } catch (err) { console.error(`[ProgressBar] Error in ${event} listener:`, err); } });
+    #deep_merge(target, source) {
+        const output = { ...target };
+        for (const key in source) {
+            if (source[key] && typeof source[key] === 'object' && !Array.isArray(source[key])) {
+                output[key] = this.#deep_merge(target[key] || {}, source[key]);
+            } else {
+                output[key] = source[key];
+            }
+        }
+        return output;
     }
 }
 
-// استاتیک
-ProgressBar.create = (config = {}) => new ProgressBar(config);
-ProgressBar.defaults = { ...DEFAULTS };
-ProgressBar.events = [...SUPPORTED_EVENTS, 'reset'];
-if (typeof window !== 'undefined' && window.VITEST) window.__PROGRESS_BAR_V2__ = { ProgressBar };
 export default ProgressBar;
