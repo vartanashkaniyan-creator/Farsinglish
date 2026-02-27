@@ -1,92 +1,106 @@
 /**
- * @file core/db/migrations/index.js
- * @description
- * Single entry point for database migration steps.
- * Responsible only for registration and safe access.
- *
- * Principles:
- * - KISS
- * - SRP
- * - YAGNI
- * - snake_case
+ * core/db/migrations/index.js
+ * Registry مرکزی migration_step ها
+ * Alpha Principles Compliant
  */
 
-'use strict';
+class Migrations {
+  constructor() {
+    /** @type {Map<string, MigrationStep>} */
+    this._steps = new Map();
 
-/**
- * @typedef {import('../validators/migration_step_validator.js').MigrationStep} MigrationStep
- */
+    /** @type {Map<string, Function[]>} */
+    this._listeners = new Map();
+  }
 
-/** @type {Map<string, MigrationStep>} */
-const migration_registry = new Map();
-
-/**
- * Register a migration step.
- * @param {MigrationStep} step
- */
-function register_migration(step) {
-    if (!step || typeof step !== 'object') {
-        throw new TypeError('migration step must be an object');
+  /**
+   * @param {{ step_id: string, migrate: Function, rollback?: Function }} step
+   * @returns {Migrations}
+   */
+  register_migration(step) {
+    if (
+      !step ||
+      typeof step.step_id !== 'string' ||
+      typeof step.migrate !== 'function'
+    ) {
+      throw new Error('Invalid migration_step definition');
     }
 
-    const step_id = String(step.step_id);
-
-    if (!step_id) {
-        throw new Error('migration step_id is required');
+    if (this._steps.has(step.step_id)) {
+      throw new Error(`Migration already registered: ${step.step_id}`);
     }
 
-    if (migration_registry.has(step_id)) {
-        throw new Error(`duplicate migration step_id: ${step_id}`);
-    }
+    this._steps.set(step.step_id, Object.freeze({ ...step }));
+    this._emit_event('migration_registered', step.step_id);
 
-    migration_registry.set(step_id, step);
-}
+    return this;
+  }
 
-/**
- * Register multiple migration steps.
- * @param {MigrationStep[]} steps
- */
-function register_migrations(steps) {
+  /**
+   * @param {Array<object>} steps
+   * @returns {Migrations}
+   */
+  register_migrations(steps) {
     if (!Array.isArray(steps)) {
-        throw new TypeError('migrations must be an array');
+      throw new Error('register_migrations expects an array');
     }
 
-    for (const step of steps) {
-        register_migration(step);
+    steps.forEach((step) => this.register_migration(step));
+    return this;
+  }
+
+  /**
+   * @returns {Array<object>}
+   */
+  get_all_migrations() {
+    return Array.from(this._steps.values());
+  }
+
+  /**
+   * @param {string} step_id
+   * @returns {boolean}
+   */
+  has_migration(step_id) {
+    return this._steps.has(step_id);
+  }
+
+  /**
+   * @param {string} event_name
+   * @param {Function} callback
+   * @returns {Migrations}
+   */
+  on(event_name, callback) {
+    if (typeof callback !== 'function') {
+      throw new Error('Event listener must be a function');
     }
+
+    if (!this._listeners.has(event_name)) {
+      this._listeners.set(event_name, []);
+    }
+
+    this._listeners.get(event_name).push(callback);
+    return this;
+  }
+
+  /**
+   * @param {string} event_name
+   * @param {any} payload
+   * @private
+   */
+  _emit_event(event_name, payload) {
+    const listeners = this._listeners.get(event_name) || [];
+    listeners.forEach((fn) => fn(payload));
+  }
+
+  /**
+   * Debug / Testing only – immutable deep copy
+   * @returns {Map<string, Function[]>}
+   */
+  get_all_events() {
+    return new Map(
+      [...this._listeners.entries()].map(([k, v]) => [k, [...v]])
+    );
+  }
 }
 
-/**
- * Get all registered migrations in insertion order.
- * @returns {MigrationStep[]}
- */
-function get_all_migrations() {
-    return Array.from(migration_registry.values());
-}
-
-/**
- * Check if a migration exists.
- * @param {string} step_id
- * @returns {boolean}
- */
-function has_migration(step_id) {
-    return migration_registry.has(String(step_id));
-}
-
-/**
- * Clear registry (intended for tests only).
- */
-function clear_migrations() {
-    migration_registry.clear();
-}
-
-/**
- * Frozen public API
- */
-export const migrations = Object.freeze({
-    register_migration,
-    register_migrations,
-    get_all_migrations,
-    has_migration,
-    clear_migrations
-});
+export const migrations = new Migrations();
